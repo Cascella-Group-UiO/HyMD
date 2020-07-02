@@ -1,0 +1,13 @@
+Np     = 10000      # Number of particles
+#tau    = 0.7       # ps⁻1
+dt = 0.001
+NSTEPS = 500000
+#T0      = 300         # K 
+Nv = 60
+sigma = 0.5
+nprint = 1000  # Printing frequency
+mass   = 72   # g/mol
+kappa  = 0.05 # kj/mol
+L      = [10.61,10.61,10.61] # nm
+quasi  = 1       # Number of steps between updates
+#read_start = '300.dat'
