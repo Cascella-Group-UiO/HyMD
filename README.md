@@ -6,3 +6,6 @@ The code is contained in main.py, and input files are named CONF.py. To convert 
 To try out the code, simply:
   bash ex.sh
 
+Note that to run the code, the following may need to be installed:
+pip3 install pmesh
+pip3 install pfft-python
