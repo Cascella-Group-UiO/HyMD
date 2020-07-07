@@ -3,7 +3,7 @@ from mpi4py import MPI
 from scipy.spatial.transform import Rotation as R
 from CONF import *     # "myapp" case
 import CONF as sim 
-import pmesh.pm as pm # Particle mesh Routine
+import pmesh.pm as pmesh # Particle mesh Routine
 
 
 
@@ -46,8 +46,8 @@ if "test_quasi" in globals():
     r_zero=np.copy(r)
 
 #Particle-Mesh initialization
-pmesh   = pm.ParticleMesh((Nv,Nv,Nv),BoxSize=L, dtype='f8',comm=comm)
-density = pmesh.create(mode='real')
+pm   = pmesh.ParticleMesh((Nv,Nv,Nv),BoxSize=L, dtype='f8',comm=comm)
+density = pm.create(mode='real')
 indicies=[]
      
 if 'chi' in globals() and 'NB' in globals():
@@ -55,14 +55,14 @@ if 'chi' in globals() and 'NB' in globals():
     indicies.append(np.arange(Np-NB,Np))#B
 
     types = 2
-    layout  = [pmesh.decompose(r[indicies[0]]),pmesh.decompose(r[indicies[1]])]  
+    layout  = [pm.decompose(r[indicies[0]]),pm.decompose(r[indicies[1]])]  
     names=['A']*(Np-NB)+['B']*NB
     
 else:
     names=['A']*Np
     indicies.append(np.arange(Np))
     types=1
-    layout  = [pmesh.decompose(r[indicies[0]])]
+    layout  = [pm.decompose(r[indicies[0]])]
 
 
 # INTILIZE PMESH ARRAYS
@@ -76,16 +76,16 @@ v_pot_fft=[]
 if 'test_quasi' in globals():
     force_test=[]
 for t in range(types):
-    phi.append(pmesh.create('real'))
-    phi_t.append(pmesh.create('real'))
-    phi_fft.append(pmesh.create('complex'))
-    phi_fft_tt.append(pmesh.create('complex'))
-    v_pot.append(pmesh.create('real'))
-    v_pot_fft.append(pmesh.create('complex'))
+    phi.append(pm.create('real'))
+    phi_t.append(pm.create('real'))
+    phi_fft.append(pm.create('complex'))
+    phi_fft_tt.append(pm.create('complex'))
+    v_pot.append(pm.create('real'))
+    v_pot_fft.append(pm.create('complex'))
 
-    force_ds.append([pmesh.create('real') for d in range(3)])
+    force_ds.append([pm.create('real') for d in range(3)])
     if 'test_quasi' in globals():
-        force_test.append([pmesh.create('real') for d in range(3)])
+        force_test.append([pm.create('real') for d in range(3)])
 
 # Output files
 fp_trj = open('trj.gro','w')
@@ -209,7 +209,7 @@ def UPDATE_FIELD(comp_v_pot=False):
     for k in range(types):      
         # Distribute paticles
         phi[k].value[:]=0.0
-        phi[k]=pmesh.paint(r[indicies[k]], layout=layout[k])
+        phi[k]=pm.paint(r[indicies[k]], layout=layout[k])
         phi[k] = phi[k]/dV
 
         phi_fft[k] = phi[k].r2c(out=Ellipsis)
@@ -235,8 +235,8 @@ def UPDATE_FIELD(comp_v_pot=False):
 def COMPUTE_ENERGY():
     E_hpf=0
     for i in range(types):
-        E_hpf = pmesh.comm.allreduce(0.5*np.sum(v_pot[0].readout(r[indicies[i]],layout=layout[i]))) 
-    E_kin = pmesh.comm.allreduce(0.5*mass*np.sum(vel**2))
+        E_hpf = pm.comm.allreduce(0.5*np.sum(v_pot[0].readout(r[indicies[i]],layout=layout[i]))) 
+    E_kin = pm.comm.allreduce(0.5*mass*np.sum(vel**2))
  
     
     
@@ -284,8 +284,8 @@ def TEST_QUASI(step,v_test,force_test):
     E_hpf_zero=0.
     E_hpf_test=0.0
     for t in range(types):
-        E_hpf_test += pmesh.comm.allreduce(0.5*np.sum(v_test[t].readout(r[indicies[t]],layout=layout[t])))
-        E_hpf_zero += pmesh.comm.allreduce(0.5*np.sum(v_test[t].readout(r_0[indicies[t]],layout=layout[t])))
+        E_hpf_test += pm.comm.allreduce(0.5*np.sum(v_test[t].readout(r[indicies[t]],layout=layout[t])))
+        E_hpf_zero += pm.comm.allreduce(0.5*np.sum(v_test[t].readout(r_0[indicies[t]],layout=layout[t])))
         for d in range(3):
             f_test[indicies[t],d] = force_test[t][d].readout(r[indicies[t]], layout=layout[t])
             f_zero[indicies[t],d] = force_test[t][d].readout(r_0[indicies[t]], layout=layout[t])
