@@ -5,7 +5,8 @@ from CONF import *     # "myapp" case
 import CONF as sim 
 import pmesh.pm as pmesh # Particle mesh Routine
 
-
+# Same seed for all simulations
+np.random.seed(0)
 
 #Initialization of simulation variables
 kb=2.479/298
