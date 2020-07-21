@@ -3,9 +3,35 @@ from mpi4py import MPI
 from scipy.spatial.transform import Rotation as R
 import sys
 import pmesh.pm as pmesh # Particle mesh Routine
+import operator
+import functools
+
+
+# INITIALIZE MPIW=
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+NAME=['A','B']
+def scatter_from_root(a):
+    if rank==0:
+        a=np.split(a,size)
+    else:
+        a=None
+
+    a = comm.scatter(a, root=0)
+    return a
+
+def gather_to_root(a):
+    a=comm.gather(a, root=0)
+    if not(rank==0):
+        a=None
+
+    return a
 
 CONF = {}
 exec(open(sys.argv[1]).read(), CONF)
+
+
 
 # Same seed for all simulations
 np.random.seed(0)
@@ -29,44 +55,68 @@ if 'phi0' not in CONF:
     
 
 #Initialize particles
-r=np.zeros((CONF['Np'],3))
-vel=np.zeros((CONF['Np'],3))
+if rank==0:
+    r=np.zeros((CONF['Np'],3))
+    vel=np.zeros((CONF['Np'],3))
+    f=np.zeros((CONF['Np'],3))
+    f_old=np.copy(f)
 
-#Intialize MPI
-comm = MPI.COMM_WORLD
+else:
+    r=None
+    vel=None
+    f=None
+    f_old=None
+
+
  
     
 # SAVE FIRST STEP
-np.savetxt('start.dat',np.hstack((r,vel)))
+if rank==0:
+    np.savetxt('start.dat',np.hstack((r,vel)))
 
 
-# Particle force array
-f=np.zeros((CONF['Np'],3))
-f_old=np.copy(f)
-if "test_quasi" in CONF: 
-    f_test=np.copy(f)
-    f_zero=np.copy(f)
-    r_zero=np.copy(r)
+# # Particle force array
+# # f=np.zeros((CONF['Np'],3))
+# # f_old=np.copy(f)
+# # if "test_quasi" in CONF: 
+# #     f_test=np.copy(f)
+# #     f_zero=np.copy(f)
+# #     r_zero=np.copy(r)
 
 #Particle-Mesh initialization
 pm   = pmesh.ParticleMesh((CONF['Nv'],CONF['Nv'],CONF['Nv']),BoxSize=CONF['L'], dtype='f8',comm=comm)
 density = pm.create(mode='real')
 indicies=[]
-     
+
 if 'chi' in CONF and 'NB' in CONF:
-    indicies.append(np.arange(0,CONF['Np']-CONF['NB']))#A
-    indicies.append(np.arange(CONF['Np']-CONF['NB'],CONF['Np']))#B
-
     types = 2
-    layout  = [pm.decompose(r[indicies[0]]),pm.decompose(r[indicies[1]])]  
-    names=['A']*(CONF['Np']-CONF['NB'])+['B']*CONF['NB']
-    
 else:
-    names=['A']*CONF['Np']
-    indicies.append(np.arange(CONF['Np']))
-    types=1
-    layout  = [pm.decompose(r[indicies[0]])]
+    types = 1
 
+if rank==0:     
+    if 'chi' in CONF and 'NB' in CONF:
+        indicies.append(np.arange(0,CONF['Np']-CONF['NB']))#A
+        indicies.append(np.arange(CONF['Np']-CONF['NB'],CONF['Np']))#B
+
+        indicies2=np.zeros(CONF['Np'])
+        indicies2[CONF['Np']-CONF['NB']:]=1
+        
+
+        
+#        layout  = [pm.decompose(r[indicies[0]]),pm.decompose(r[indicies[1]])]  
+        names=['A']*(CONF['Np']-CONF['NB'])+['B']*CONF['NB']
+    
+    else:
+        names=['A']*CONF['Np']
+        indicies.append(np.arange(CONF['Np']))
+        indicies2=np.zeros(CONF['Np'],dtype=int)
+   
+        names=['A']*(CONF['Np'])
+ 
+      # layout  = [pm.decompose(r[indicies[0]])]
+else:
+    indicies2=None
+    names=None
 
 # INTILIZE PMESH ARRAYS
 phi=[]
@@ -87,14 +137,15 @@ for t in range(types):
     v_pot_fft.append(pm.create('complex'))
 
     force_ds.append([pm.create('real') for d in range(3)])
-    if 'test_quasi' in CONF:
-        force_test.append([pm.create('real') for d in range(3)])
+    # if 'test_quasi' in CONF:
+    #     force_test.append([pm.create('real') for d in range(3)])
 
 # Output files
-fp_trj = open('trj.gro','w')
-fp_E   = open('E.dat','w')
+if rank==0:
+    fp_trj = open('trj.gro','w')
+    fp_E   = open('E.dat','w')
 
-#FUNCTION DEFINITIONS
+# #FUNCTION DEFINITIONS
 
 def GEN_START_VEL(vel):
     #NORMAL DISTRIBUTED PARTICLES FIRST FRAME
@@ -127,11 +178,6 @@ def GEN_START_UNIFORM(r):
         r[j:]=CONF['L']*np.random.random((CONF['Np']-j,3))
     return r
 
-def potential_transfer_function(k, v):
-    return (v * np.exp(-0.5*CONF['sigma']**2*k.normp(p=2))**2)
-def phi_transfer_function(k, v):
-    return v * np.exp(-0.5*CONF['sigma']**2*k.normp(p=2))
-
 def INTEGERATE_POS(x, vel, a):
 # Velocity Verlet integration I
     return x + vel*CONF['dt'] + 0.5*a*CONF['dt']**2
@@ -144,7 +190,8 @@ def VEL_RESCALE(vel, tau):
     #https://doi.org/10.1063/1.2408420
 
     # INITIAL KINETIC ENERGY
-    E_kin  = 0.5*CONF['mass']*np.sum(vel**2)
+    E_kin  = comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
+
 
     #BERENDSEN LIKE TERM
     d1 = (E_kin0-E_kin)*CONF['dt']/tau
@@ -180,7 +227,7 @@ def cube(r):
     return r
 
 
-def WRITE_TRJ_GRO(fp, x, vel,t):    
+def WRITE_TRJ_GRO(fp, x, vel,names,t):    
     fp.write('MD of %d mols, t=%.3f\n'%(CONF['Np'],t))
     fp.write('%-10d\n'%(CONF['Np']))
     for i in range(len(x)):
@@ -205,64 +252,42 @@ def WRITE_TRJ(fp, x, vel,f=None):
 def COMP_FORCE(f, r, force_ds):
     for t in range(types):
         for d in range(3):
-            f[indicies[t], d] = force_ds[t][d].readout(r[indicies[t]], layout=layout[t])
+            f[indicies2==t, d] = force_ds[t][d].readout(r[indicies2==t], layout=layout[t])
 
-def UPDATE_FIELD(comp_v_pot=False):
 
-    for k in range(types):      
-        # Distribute paticles
-        phi[k].value[:]=0.0
-        phi[k]=pm.paint(r[indicies[k]], layout=layout[k])
-        phi[k] = phi[k]/CONF['dV']
+def UPDATE_FIELD(layout,comp_v_pot=False):
 
-        phi_fft[k] = phi[k].r2c(out=Ellipsis)
-        phi_fft_tt[k]=phi_fft[k].copy().apply(potential_transfer_function, out=Ellipsis)
-
-        
-    if types==2:
-        v_pot_fft[0]=((1/(CONF['kappa']*CONF['phi0'])*(phi_fft_tt[0]+phi_fft_tt[1]) + CONF['chi']/CONF['phi0']*phi_fft_tt[1]))
-        v_pot_fft[1]=((1/(CONF['kappa']*CONF['phi0'])*(phi_fft_tt[0]+phi_fft_tt[1]) + CONF['chi']/CONF['phi0']*phi_fft_tt[0]))
-    else:
-        v_pot_fft[0]=(1/(CONF['kappa']*CONF['phi0'])*phi_fft_tt[0])
-        
+    # Filtered density
     for t in range(types):
-        force_d=[]
+        p = pm.paint(r[indicies2==t], layout=layout[t])
+        p = p/CONF['dV']
+        phi_t[t] = p.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
+
+    # External potential
+    for t in range(types):
+        v_p_fft=CONF['V_EXT'][t](phi_t).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis)
+   
+        # Derivative of external potential
         for d in range(3):    
             def force_transfer_function(k, v, d=d):
                 return -k[d] * 1j * v 
-            force_ds[t][d]=(v_pot_fft[t].apply(force_transfer_function).c2r(out=Ellipsis))
+            force_ds[t][d]=(v_p_fft.copy().apply(force_transfer_function).c2r(out=Ellipsis))
+ 
         if(comp_v_pot):
-            v_pot[t]=v_pot_fft[t].c2r(out=Ellipsis)-1./CONF['kappa']
-            phi_t[t]=phi_fft[t].c2r(out=Ellipsis)
-
-def COMPUTE_ENERGY():
-    E_hpf=0
-    for i in range(types):
-        E_hpf = pm.comm.allreduce(0.5*np.sum(v_pot[0].readout(r[indicies[i]],layout=layout[i]))) 
-    E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
+            v_pot[t]=v_p_fft.c2r(out=Ellipsis)
  
     
+
     
-    for k in range(types):
-        phi_t[k]=phi[k].r2c(out=Ellipsis).apply(phi_transfer_function, out=Ellipsis).c2r(out=Ellipsis)
-        
-    if types==2:
-        W=CONF['dV']/CONF['phi0']*np.sum(0.5/CONF['kappa']*(phi_t[0] + phi_t[1]-CONF['phi0'])**2 + CONF['chi']*phi_t[0]*phi_t[1])
-    else:
-        W = 0.5*CONF['dV']/CONF['phi0']*np.sum(1./CONF['kappa']*(phi_t[0]-CONF['phi0'])**2)
+def COMPUTE_ENERGY():
+    E_hpf = 0    
+    E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
+    W = CONF['w'](phi_t)*CONF['dV']
+    #print(W)
+    W = W.csum()
+    #print(W) 
     return E_hpf,E_kin,W
     
-def ANDERSEN(vel):
-    
-    std  = np.sqrt(CONF['kbT0']/CONF['mass']) 
-    change = np.random.random((len(vel))) < taut*CONF['dt']
-
-    if(sum(change)>0):
-        vel[change,0]=np.random.normal(loc=0, scale=std, size=sum(change))
-        vel[change,1]=np.random.normal(loc=0, scale=std, size=sum(change))
-        vel[change,2]=np.random.normal(loc=0, scale=std, size=sum(change))
-    
-    return vel
 
 def PRESET_VEL(vel,T):
     std  = np.sqrt(CONF['kbT0']/CONF['mass'])
@@ -282,73 +307,71 @@ def REMOVE_CM_VEL(vel,T=None):
 
     return (vel-vcm)*np.sqrt(E_KIN_1/E_KIN_2)
 
+ 
 
-def TEST_QUASI(step,v_test,force_test):
-    E_hpf_zero=0.
-    E_hpf_test=0.0
-    for t in range(types):
-        E_hpf_test += pm.comm.allreduce(0.5*np.sum(v_test[t].readout(r[indicies[t]],layout=layout[t])))
-        E_hpf_zero += pm.comm.allreduce(0.5*np.sum(v_test[t].readout(r_0[indicies[t]],layout=layout[t])))
-        for d in range(3):
-            f_test[indicies[t],d] = force_test[t][d].readout(r[indicies[t]], layout=layout[t])
-            f_zero[indicies[t],d] = force_test[t][d].readout(r_0[indicies[t]], layout=layout[t])
+if rank==0:
+    #Degrees of freedom
+    if('read_start' in CONF):
+        dat = np.loadtxt(read_start)
+        r   = dat[:,:3]
+        vel = dat[:,3:6]
 
-    f_mag=np.sqrt(np.mean(np.sum((f)**2,axis=1)))
-    f_test_std=np.sqrt(np.mean(np.sum((f-f_test)**2,axis=1)))
-    f_zero_std=np.sqrt(np.mean(np.sum((f-f_zero)**2,axis=1)))
-                  
-    fp_test.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],E_hpf,E_hpf_test,E_hpf_zero,f_mag, f_test_std,f_zero_std))            
-
-#Degrees of freedom
-if('read_start' in CONF):
-    dat = np.loadtxt(read_start)
-    r   = dat[:,:3]
-    vel = dat[:,3:6]
-
-else:
-    if 'uniform_start' in CONF:
-        if uniform_start==True:
-            r = GEN_START_UNIFORM(r)
+    else:
+        if 'uniform_start' in CONF:
+            if uniform_start==True:
+                r = GEN_START_UNIFORM(r)
+            else:
+                r   = np.random.random((CONF['Np'],3))*CONF['L']
         else:
             r   = np.random.random((CONF['Np'],3))*CONF['L']
-    else:
-        r   = np.random.random((CONF['Np'],3))*CONF['L']
         
 
-if 'T_start' in CONF:
-    vel = np.zeros((CONF['Np'],3))
-    vel = GEN_START_VEL(vel) 
+    if 'T_start' in CONF:
+        vel = np.zeros((CONF['Np'],3))
+        vel = GEN_START_VEL(vel) 
 
-if 'gen_sphere' in CONF:
-    if CONF['gen_sphere']:
-        r=sphere(r)
+    if 'gen_sphere' in CONF:
+        if CONF['gen_sphere']:
+            r=sphere(r)
 
-if 'gen_cube' in CONF:
-    if CONF[gen_cube]:
-        r=cube(r)
+    if 'gen_cube' in CONF:
+        if CONF[gen_cube]:
+            r=cube(r)
     
-if 'rm_cm_vel' in CONF:
-    if CONF['rm_cm_vel']:
-        vel=REMOVE_CM_VEL(vel)    
-# For first step
-UPDATE_FIELD(True)
+    if 'rm_cm_vel' in CONF:
+        if CONF['rm_cm_vel']:
+            vel=REMOVE_CM_VEL(vel)    
+
+# Communicate
+r     = scatter_from_root(r)
+vel   = scatter_from_root(vel)
+f     = scatter_from_root(f)
+f_old = scatter_from_root(f_old)
+
+indicies2=scatter_from_root(indicies2)
+names=[NAME[i] for i in indicies2]
+
+# print(rank,r)
+layout  = [pm.decompose(r[indicies2==t]) for t in range(types)]
+# r=layout.exchange(r)
+# vel=layout.exchange(vel)
+# f=layout.exchange(f)
+# f_old=layout.exchange(f_old)
+# indicies=layout.exchange(indicies)
+
+#
+
+UPDATE_FIELD(layout,True)
 COMP_FORCE(f,r,force_ds)
 
         
-if "test_quasi" in CONF:    
-    force_tests=force_ds.copy()
-    v_test=v_pot.copy()
-    r_0=r.copy()
-
 for step in range(CONF['NSTEPS']):
 
-     
+#    print(rank,step)
     if(np.mod(step,CONF['nprint'])==0):      
         E_hpf, E_kin,W = COMPUTE_ENERGY()        
         T     =   2*E_kin/(kb*3*CONF['Np'])
-        mom=np.sum(vel,axis=0)
-        if "test_quasi" in CONF:        
-            TEST_QUASI(step,v_test,force_tests)
+        mom=pm.comm.allreduce(np.sum(vel,axis=0))
 
     f_old = np.copy(f)
 
@@ -357,15 +380,12 @@ for step in range(CONF['NSTEPS']):
 
     #PERIODIC BC
     r     = np.mod(r, CONF['L'][None,:])
+    
+    layout  = [pm.decompose(r[indicies2==t]) for t in range(types)]
 
     if(np.mod(step+1,CONF['quasi'])==0):
-        UPDATE_FIELD(np.mod(step+1,CONF['quasi'])==0)
+        UPDATE_FIELD(layout,np.mod(step+1,CONF['quasi'])==0)
          
-    if "test_quasi" in CONF:
-        if(np.mod(step+1,test_quasi)==0):
-            force_tests=force_ds.copy()
-            v_test=v_pot.copy()
-            r_0=r.copy()
 
     COMP_FORCE(f,r,force_ds)
     
@@ -374,26 +394,34 @@ for step in range(CONF['NSTEPS']):
 
     # Thermostat
     if('T0' in CONF):
-        #vel = ANDERSEN(vel)
         vel = VEL_RESCALE(vel,tau)
-    # Print trajectory
+
+#    Print trajectory
     if(np.mod(step,CONF['nprint'])==0):
+        r_out= comm.gather(r, root=0)
+        vel_out=comm.gather(vel, root=0)
+        names_out=comm.gather(names, root=0)
         
-        fp_trj=WRITE_TRJ_GRO(fp_trj, r, vel,CONF['dt']*step)
-        fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
+        if(rank==0):
+            names_out=functools.reduce(operator.add,names_out)
+            fp_trj=WRITE_TRJ_GRO(fp_trj, np.concatenate(r_out,axis=0), np.concatenate(vel_out,axis=0),names_out,CONF['dt']*step)
+            fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
+            fp_E.flush()
 
-        fp_E.flush()
-
-
-UPDATE_FIELD(True)
-                              
+        
+UPDATE_FIELD(layout,True)
+                               
 E_hpf, E_kin, W = COMPUTE_ENERGY()
 T     =  2*E_kin/(kb*3*CONF['Np'])
-mom=np.sum(vel,axis=0)
-
-fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(CONF['NSTEPS']*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
+mom=pm.comm.allreduce(np.sum(vel,axis=0))
+if rank==0:
+    fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(CONF['NSTEPS']*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
  
-# Write last frame
-fp_trj=WRITE_TRJ_GRO(fp_trj, r, vel,CONF['dt']*CONF['NSTEPS'])
-
-np.savetxt('final.dat',np.hstack((r,vel,f_old)))
+    # Write last frame
+r_out= comm.gather(r, root=0)
+vel_out=comm.gather(vel, root=0)
+names_out=comm.gather(names, root=0)
+if rank==0:       
+    names_out=functools.reduce(operator.add,names_out)
+    fp_trj=WRITE_TRJ_GRO(fp_trj, np.concatenate(r_out,axis=0), np.concatenate(vel_out,axis=0),names_out,CONF['dt']**CONF['NSTEPS'])
+    np.savetxt('final.dat',np.hstack((r,vel,f_old)))
