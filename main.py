@@ -5,7 +5,7 @@ import sys
 import pmesh.pm as pmesh # Particle mesh Routine
 import operator
 import functools
-
+import time
 
 # INITIALIZE MPIW=
 comm = MPI.COMM_WORLD
@@ -28,15 +28,16 @@ def gather_to_root(a):
 
     return a
 
+# Set simulation input data
 CONF = {}
 exec(open(sys.argv[1]).read(), CONF)
 
 
 
-# Same seed for all simulations
+# Set seed for all simulations
 np.random.seed(0)
 
-#Initialization of simulation variables
+# Initialization of simulation variables
 kb=2.479/298
 if 'T0' in CONF:
     CONF['kbT0']=kb*CONF['T0']
@@ -74,18 +75,9 @@ else:
 if rank==0:
     np.savetxt('start.dat',np.hstack((r,vel)))
 
-
-# # Particle force array
-# # f=np.zeros((CONF['Np'],3))
-# # f_old=np.copy(f)
-# # if "test_quasi" in CONF: 
-# #     f_test=np.copy(f)
-# #     f_zero=np.copy(f)
-# #     r_zero=np.copy(r)
-
 #Particle-Mesh initialization
 pm   = pmesh.ParticleMesh((CONF['Nv'],CONF['Nv'],CONF['Nv']),BoxSize=CONF['L'], dtype='f8',comm=comm)
-density = pm.create(mode='real')
+
 indicies=[]
 
 if 'chi' in CONF and 'NB' in CONF:
@@ -120,25 +112,15 @@ else:
 
 # INTILIZE PMESH ARRAYS
 phi=[]
-phi_fft=[]
-phi_fft_tt=[]
 phi_t=[]
 force_ds=[]
 v_pot=[]
-v_pot_fft=[]
-if 'test_quasi' in CONF:
-    force_test=[]
+
 for t in range(types):
     phi.append(pm.create('real'))
     phi_t.append(pm.create('real'))
-    phi_fft.append(pm.create('complex'))
-    phi_fft_tt.append(pm.create('complex'))
     v_pot.append(pm.create('real'))
-    v_pot_fft.append(pm.create('complex'))
-
     force_ds.append([pm.create('real') for d in range(3)])
-    # if 'test_quasi' in CONF:
-    #     force_test.append([pm.create('real') for d in range(3)])
 
 # Output files
 if rank==0:
@@ -178,6 +160,7 @@ def GEN_START_UNIFORM(r):
         r[j:]=CONF['L']*np.random.random((CONF['Np']-j,3))
     return r
 
+
 def INTEGERATE_POS(x, vel, a):
 # Velocity Verlet integration I
     return x + vel*CONF['dt'] + 0.5*a*CONF['dt']**2
@@ -211,6 +194,7 @@ def VEL_RESCALE(vel, tau):
     vel=vel*alpha
     
     return vel
+
 
 def sphere(r):
     radius=np.linalg.norm(r-CONF['L'][None,:]*0.5,axis=1)
@@ -254,7 +238,21 @@ def COMP_FORCE(f, r, force_ds):
         for d in range(3):
             f[indicies2==t, d] = force_ds[t][d].readout(r[indicies2==t], layout=layout[t])
 
+def COMP_PRESSURE():
+    # COMPUTES HPF PRESSURE FOR EACH MPI TASK
+    P=[]
+    p_val=[]
+    for d in range(3):
+        
+        p = CONF['w'](phi_t)
+        for t in range(CONF['types']):
+            p += -v_pot[t]*phi_t[t] + (v_pot[t].r2c(out=Ellipsis).apply(CONF['kdHdk'])[d]).c2r(out=Ellipsis)
 
+
+        P.append(p*CONF['dV']/CONF['V'])
+        p_val.append(p.csum())
+    return np.array(p_val)
+      
 def UPDATE_FIELD(layout,comp_v_pot=False):
 
     # Filtered density
@@ -342,32 +340,29 @@ if rank==0:
         if CONF['rm_cm_vel']:
             vel=REMOVE_CM_VEL(vel)    
 
-# Communicate
+# Split data and communicate from root to the other mpi-tasks
 r     = scatter_from_root(r)
 vel   = scatter_from_root(vel)
 f     = scatter_from_root(f)
 f_old = scatter_from_root(f_old)
-
 indicies2=scatter_from_root(indicies2)
 names=[NAME[i] for i in indicies2]
 
-# print(rank,r)
+
+
+
+if rank==0:
+    start_t = time.time()
+
+
+# First step
 layout  = [pm.decompose(r[indicies2==t]) for t in range(types)]
-# r=layout.exchange(r)
-# vel=layout.exchange(vel)
-# f=layout.exchange(f)
-# f_old=layout.exchange(f_old)
-# indicies=layout.exchange(indicies)
-
-#
-
 UPDATE_FIELD(layout,True)
 COMP_FORCE(f,r,force_ds)
 
         
 for step in range(CONF['NSTEPS']):
 
-#    print(rank,step)
     if(np.mod(step,CONF['nprint'])==0):      
         E_hpf, E_kin,W = COMPUTE_ENERGY()        
         T     =   2*E_kin/(kb*3*CONF['Np'])
@@ -384,7 +379,7 @@ for step in range(CONF['NSTEPS']):
     layout  = [pm.decompose(r[indicies2==t]) for t in range(types)]
 
     if(np.mod(step+1,CONF['quasi'])==0):
-        UPDATE_FIELD(layout,np.mod(step+1,CONF['quasi'])==0)
+        UPDATE_FIELD(layout, np.mod(step+1,CONF['quasi'])==0)
          
 
     COMP_FORCE(f,r,force_ds)
@@ -396,7 +391,7 @@ for step in range(CONF['NSTEPS']):
     if('T0' in CONF):
         vel = VEL_RESCALE(vel,tau)
 
-#    Print trajectory
+#   Print trajectory
     if(np.mod(step,CONF['nprint'])==0):
         r_out= comm.gather(r, root=0)
         vel_out=comm.gather(vel, root=0)
@@ -407,6 +402,10 @@ for step in range(CONF['NSTEPS']):
             fp_trj=WRITE_TRJ_GRO(fp_trj, np.concatenate(r_out,axis=0), np.concatenate(vel_out,axis=0),names_out,CONF['dt']*step)
             fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
             fp_E.flush()
+
+# End simulation
+if rank==0:
+    print('Simulation time elapsed:', time.time()-start_t)
 
         
 UPDATE_FIELD(layout,True)
@@ -425,3 +424,4 @@ if rank==0:
     names_out=functools.reduce(operator.add,names_out)
     fp_trj=WRITE_TRJ_GRO(fp_trj, np.concatenate(r_out,axis=0), np.concatenate(vel_out,axis=0),names_out,CONF['dt']**CONF['NSTEPS'])
     np.savetxt('final.dat',np.hstack((r,vel,f_old)))
+ 
