@@ -1,11 +1,18 @@
 import numpy as np
 from mpi4py import MPI
+import h5py
 from scipy.spatial.transform import Rotation as R
 import sys
 import pmesh.pm as pmesh # Particle mesh Routine
 import operator
 import functools
 import time
+
+import cProfile
+from mpi4py.MPI import COMM_WORLD
+pr = cProfile.Profile()
+pr.enable()
+
 
 # INITIALIZE MPIW=
 comm = MPI.COMM_WORLD
@@ -50,6 +57,7 @@ Ncells = (CONF['Nv']**3)
 CONF['L']      = np.array(CONF['L'])
 CONF['V']      = CONF['L'][0]*CONF['L'][1]*CONF['L'][2]
 CONF['dV']     = CONF['V']/(CONF['Nv']**3)
+CONF['n_frames'] = CONF['NSTEPS']//CONF['nprint']
 
 if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
@@ -126,6 +134,11 @@ for t in range(types):
 if rank==0:
     fp_trj = open('trj.gro','w')
     fp_E   = open('E.dat','w')
+    f_hd5 = h5py.File('sim.hdf5', 'w')
+    dset_pos  = f_hd5.create_dataset("coordinates", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
+    dset_pos.attrs['units']="nanometers"
+    dset_time = f_hd5.create_dataset("time", shape=(CONF['n_frames'],), dtype="Float32")
+    dset_time.attrs['units']="picoseconds"
 
 # #FUNCTION DEFINITIONS
 
@@ -362,7 +375,7 @@ COMP_FORCE(f,r,force_ds)
 
         
 for step in range(CONF['NSTEPS']):
-
+    frame=step//CONF['nprint']
     if(np.mod(step,CONF['nprint'])==0):      
         E_hpf, E_kin,W = COMPUTE_ENERGY()        
         T     =   2*E_kin/(kb*3*CONF['Np'])
@@ -399,6 +412,10 @@ for step in range(CONF['NSTEPS']):
         
         if(rank==0):
             names_out=functools.reduce(operator.add,names_out)
+
+            dset_pos[frame]=np.concatenate(r_out,axis=0)
+            dset_time[frame]=CONF['dt']*step
+
             fp_trj=WRITE_TRJ_GRO(fp_trj, np.concatenate(r_out,axis=0), np.concatenate(vel_out,axis=0),names_out,CONF['dt']*step)
             fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
             fp_E.flush()
@@ -425,3 +442,13 @@ if rank==0:
     fp_trj=WRITE_TRJ_GRO(fp_trj, np.concatenate(r_out,axis=0), np.concatenate(vel_out,axis=0),names_out,CONF['dt']**CONF['NSTEPS'])
     np.savetxt('final.dat',np.hstack((r,vel,f_old)))
  
+pr.disable()
+
+# Dump results:
+# - for binary dump
+pr.dump_stats('cpu_%d.prof' %comm.rank)
+# - for text dump
+with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
+    sys.stdout = output_file
+    pr.print_stats( sort='time' )
+    sys.stdout = sys.__stdout__
