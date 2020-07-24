@@ -217,7 +217,7 @@ def WRITE_TRJ(fp, x, vel,f=None):
 def COMP_FORCE(f, r, force_ds):
     for t in range(CONF['ntypes']):
         for d in range(3):
-            f[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layout[t])
+            f[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
 
 def COMP_PRESSURE():
     # COMPUTES HPF PRESSURE FOR EACH MPI TASK
@@ -234,11 +234,11 @@ def COMP_PRESSURE():
         p_val.append(p.csum())
     return np.array(p_val)
       
-def UPDATE_FIELD(layout,comp_v_pot=False):
+def UPDATE_FIELD(layouts,comp_v_pot=False):
 
     # Filtered density
     for t in range(CONF['ntypes']):
-        p = pm.paint(r[types==t], layout=layout[t])
+        p = pm.paint(r[types==t], layout=layouts[t])
         p = p/CONF['dV']
         phi_t[t] = p.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
 
@@ -294,9 +294,9 @@ if rank==0:
 
 # First step
 
-layout  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 
-UPDATE_FIELD(layout,True)
+UPDATE_FIELD(layouts,True)
 
 COMP_FORCE(f, r, force_ds)
 
@@ -317,10 +317,10 @@ for step in range(CONF['NSTEPS']):
     #PERIODIC BC
     r     = np.mod(r, CONF['L'][None,:])
     
-    layout  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+    layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 
     if(np.mod(step+1,CONF['quasi'])==0):
-        UPDATE_FIELD(layout, np.mod(step+1,CONF['quasi'])==0)
+        UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
          
 
     COMP_FORCE(f,r,force_ds)
@@ -346,7 +346,7 @@ if rank==0:
     print('Simulation time elapsed:', time.time()-start_t)
 
         
-UPDATE_FIELD(layout,True)
+UPDATE_FIELD(layouts,True)
                                
 E_hpf, E_kin, W = COMPUTE_ENERGY()
 T     =  2*E_kin/(kb*3*CONF['Np'])
