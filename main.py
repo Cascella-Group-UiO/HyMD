@@ -1,15 +1,13 @@
 import numpy as np
 from mpi4py import MPI
 import h5py
-from scipy.spatial.transform import Rotation as R
 import sys
 import pmesh.pm as pmesh # Particle mesh Routine
-import operator
-import functools
 import time
 
-import cProfile
+import cProfile, pstats
 from mpi4py.MPI import COMM_WORLD
+
 pr = cProfile.Profile()
 pr.enable()
 
@@ -41,7 +39,7 @@ Ncells = (CONF['Nv']**3)
 CONF['L']      = np.array(CONF['L'])
 CONF['V']      = CONF['L'][0]*CONF['L'][1]*CONF['L'][2]
 CONF['dV']     = CONF['V']/(CONF['Nv']**3)
-CONF['n_frames'] = CONF['NSTEPS']//CONF['nprint']
+CONF['n_frames'] = CONF['NSTEPS']//CONF['nprint'] + 1
 
 if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
@@ -53,9 +51,9 @@ if rank==size-1:
 else:
     np_cum_mpi=[rank*np_per_MPI,(rank+1)*np_per_MPI]
 
+p_mpi_range = range(np_cum_mpi[0],np_cum_mpi[1])
 
-#if rank==0:
-
+# Read input
 f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=MPI.COMM_WORLD)
 r=f_input['coordinates'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
 vel=f_input['velocities'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
@@ -96,7 +94,9 @@ dset_names=f_hd5.create_dataset("names",  (CONF['Np'],), dtype="S5")
 dset_indicies=f_hd5.create_dataset("indicies",  (CONF['Np'],), dtype='i')
 dset_types=f_hd5.create_dataset("types",  (CONF['Np'],), dtype='i')
 dset_lengths=f_hd5.create_dataset("cell_lengths",  (1,3,3), dtype='Float32')
-
+dset_tot_energy=f_hd5.create_dataset("tot_energy",  (CONF['n_frames'],), dtype='Float32')
+dset_pot_energy=f_hd5.create_dataset("pot_energy",  (CONF['n_frames'],), dtype='Float32')
+dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_names=names
 dset_types[np_cum_mpi[0]:np_cum_mpi[1]]=types
 dset_indicies[np_cum_mpi[0]:np_cum_mpi[1]]=indicies
@@ -105,10 +105,9 @@ dset_lengths[0,1,1]=CONF["L"][1]
 dset_lengths[0,2,2]=CONF["L"][2]
 
 if rank==0:
-    fp_trj = open('trj.gro','w')
     fp_E   = open('E.dat','w')
 
-# #FUNCTION DEFINITIONS
+#FUNCTION DEFINITIONS
 
 def GEN_START_VEL(vel):
     #NORMAL DISTRIBUTED PARTICLES FIRST FRAME
@@ -151,6 +150,7 @@ def INTEGRATE_VEL(vel, a, a_old):
     return vel + 0.5*(a+a_old)*CONF['dt']
 
 def VEL_RESCALE(vel, tau):
+
     #https://doi.org/10.1063/1.2408420
 
     # INITIAL KINETIC ENERGY
@@ -176,43 +176,25 @@ def VEL_RESCALE(vel, tau):
     
     return vel
 
+def STORE_DATA(step,frame):
 
-def sphere(r):
-    radius=np.linalg.norm(r-CONF['L'][None,:]*0.5,axis=1)
-    ind=np.argsort(radius)[::-1]
-    r=r.copy()[ind,:]
+
+    # dset_pos[frame,np_cum_mpi[0]:np_cum_mpi[1]]=r
+    # dset_vel[frame,np_cum_mpi[0]:np_cum_mpi[1]]=vel
+    dset_pos[frame,indicies] = r
+    dset_vel[frame,indicies] = vel
     
-    return r
-
-def cube(r):
-    radius=np.max(np.abs(r-CONF['L'][None,:]*0.5),axis=1)
-    ind=np.argsort(radius)[::-1]
-    r=r.copy()[ind,:]
     
-    return r
+    if rank==0:
+        dset_tot_energy[frame]=W+E_kin
+        dset_pot_energy[frame]=W
+        dset_kin_energy[frame]=E_kin
+        dset_time[frame]=CONF['dt']*step
+
+        fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
+        fp_E.flush()
 
 
-def WRITE_TRJ_GRO(fp, x, vel,names,t):    
-    fp.write('MD of %d mols, t=%.3f\n'%(CONF['Np'],t))
-    fp.write('%-10d\n'%(CONF['Np']))
-    for i in range(len(x)):
-        fp.write("%5d%-5s%5s%5d%8.3f%8.3f%8.3f%8.4f%8.4f%8.4f\n"%(i//10+1,names[i],names[i],i+1,x[i,0],x[i,1],x[i,2],vel[i,0],vel[i,1],vel[i,2]))
-    fp.write("%-5.5f\t%5.5f\t%5.5f\n"%(CONF['L'][0],CONF['L'][1],CONF['L'][2]))
-    fp.flush()
-    return fp
-
-
-def WRITE_TRJ(fp, x, vel,f=None):    
-    fp.write('%d\n'%(len(x)))
-    fp.write('\n')
-    
-    if f==None:
-        for i in range(len(x)):
-            fp.write("%s %f %f %f %f %f %f\n"%(names[i],x[i,0],x[i,1],x[i,2],vel[i,0],vel[i,1],vel[i,2]))
-    else:
-        for i in range(len(x)):
-            fp.write("%s %f %f %f %f %f %f\n"%(names[i],x[i,0],x[i,1],x[i,2],vel[i,0],vel[i,1],vel[i,2],f[i,0],f[i,1],f[i,2]))
-    return fp
 
 def COMP_FORCE(f, r, force_ds):
     for t in range(CONF['ntypes']):
@@ -256,15 +238,28 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
             v_pot[t]=v_p_fft.c2r(out=Ellipsis)
  
     
+def DOMAIN_DECOMPOSITION(layouts):
+    # Does not work
+    # Problems with redefinition of array sizes
+    types_cp=types.copy()
+    for t in range(CONF['ntypes']):
+        r[types==t]         = layouts[t].exchange(r[types==t])
+        mass[types==t]      = layouts[t].exchange(mass[types==t])
+        vel[types==t]       = layouts[t].exchange(vel[types==t])
+        indicies[types==t]  = layouts[t].exchange(indicies[types==t])
+        names[types==t]     = layouts[t].exchange(names[types==t])
+        f[types==t]         = layouts[t].exchange(f[types==t])
+        f_old[types==t]     = layouts[t].exchange(f_old[types==t])
+        types[types_cp==t]  = layouts[t].exchange(types_cp[types==t])
 
-    
+
 def COMPUTE_ENERGY():
     E_hpf = 0    
     E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
     W = CONF['w'](phi_t)*CONF['dV']
-    #print(W)
+
     W = W.csum()
-    #print(W) 
+
     return E_hpf,E_kin,W
     
 
@@ -295,11 +290,8 @@ if rank==0:
 # First step
 
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
-
 UPDATE_FIELD(layouts,True)
-
 COMP_FORCE(f, r, force_ds)
-
 
 for step in range(CONF['NSTEPS']):
     
@@ -319,11 +311,14 @@ for step in range(CONF['NSTEPS']):
     
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 
+
+#    DOMAIN_DECOMPOSITION(layouts)
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
          
 
     COMP_FORCE(f,r,force_ds)
+
     
     # Integrate velocity
     vel = INTEGRATE_VEL(vel, f/CONF['mass'], f_old/CONF['mass'])
@@ -332,14 +327,9 @@ for step in range(CONF['NSTEPS']):
     if('T0' in CONF):
         vel = VEL_RESCALE(vel,tau)
 
-#   Print trajectory
+    # Print trajectory
     if(np.mod(step,CONF['nprint'])==0):
-        dset_pos[frame,np_cum_mpi[0]:np_cum_mpi[1]]=r
-        dset_vel[frame,np_cum_mpi[0]:np_cum_mpi[1]]=vel
-        if rank==0:
-            dset_time[frame]=CONF['dt']*step
-            fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
-            fp_E.flush()
+        STORE_DATA(step, frame)
 
 # End simulation
 if rank==0:
@@ -347,27 +337,25 @@ if rank==0:
 
         
 UPDATE_FIELD(layouts,True)
-                               
-E_hpf, E_kin, W = COMPUTE_ENERGY()
-T     =  2*E_kin/(kb*3*CONF['Np'])
-mom=pm.comm.allreduce(np.sum(vel,axis=0))
-if rank==0:
-    fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(CONF['NSTEPS']*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
-  
-    # Write last frame
-#r_out= comm.gather(r, root=0)
-#vel_out=comm.gather(vel, root=0)
-#names_out=comm.gather(names, root=0)
-#if rank==0:       
-    #names_out=functools.reduce(operator.add,names_out)
-    #fp_trj=WRITE_TRJ_GRO(fp_trj, np.concatenate(r_out,axis=0), np.concatenate(vel_out,axis=0),names_out,CONF['dt']**CONF['NSTEPS'])
-#    np.savetxt('final.dat',np.hstack((r,vel,f_old)))
+
+frame=(step+1)//CONF['nprint']
+
+E_hpf, E_kin,W = COMPUTE_ENERGY()        
+T     =   2*E_kin/(kb*3*CONF['Np'])
+
+STORE_DATA(step,frame)
  
 pr.disable()
 
 # Dump results:
 # - for binary dump
-pr.dump_stats('cpu_%d.prof' %comm.rank)
+#pr.dump_stats('cpu_%d.pstat' %comm.rank)
+
+# stats = pstats.Stats(pr,'profile_stats_%d.pstat'%comm.rank).sort_stats('tottime')
+
+#ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
+#ps.print_stats()
+
 # - for text dump
 f_hd5.close()
 with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
