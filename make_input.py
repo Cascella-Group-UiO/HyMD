@@ -93,8 +93,6 @@ else:
 if 'T_start' in CONF:
     GEN_START_VEL(dset_vel)
 
-
-
 for i in range(CONF['Np']):
     dset_types[i]=0
     dset_names[i]='A'
@@ -110,12 +108,12 @@ if 'chi' in CONF and 'NB' in CONF:
 f_hd5.close()
 
 
-f_hd5      = h5py.File('input.hdf5', 'r')
-print(f_hd5.get('coordinates')[:])
-print(f_hd5.get('velocities')[:])
-print(f_hd5.get('types')[:])
-print(f_hd5.get('names')[:])
-print(f_hd5.get('mass')[:])
-print(f_hd5.get('indicies')[:])
+# f_hd5      = h5py.File('input.hdf5', 'r')
+# print(f_hd5.get('coordinates')[:])
+# print(f_hd5.get('velocities')[:])
+# print(f_hd5.get('types')[:])
+# print(f_hd5.get('names')[:])
+# print(f_hd5.get('mass')[:])
+# print(f_hd5.get('indicies')[:])
 
 
