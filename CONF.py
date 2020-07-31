@@ -19,8 +19,8 @@ types=1
 ntypes=1
 rho0 = Np/(L[0]*L[1]*L[2])
 dV=L[0]*L[1]*L[2]/Nv
-
-
+NAMES=['A','B']
+domain_decompose=True
 
 # hPF potential defined
 phi=sympy.var('phi:%d'%(types))
