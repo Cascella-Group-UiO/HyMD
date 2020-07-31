@@ -55,6 +55,7 @@ p_mpi_range = range(np_cum_mpi[0],np_cum_mpi[1])
 
 # Read input
 f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=MPI.COMM_WORLD)
+
 r=f_input['coordinates'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
 vel=f_input['velocities'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
 f=np.zeros((len(r),3))
@@ -62,6 +63,10 @@ f_old=np.copy(f)
 types=f_input['types'][np_cum_mpi[0]:np_cum_mpi[1]]
 indicies=f_input['indicies'][np_cum_mpi[0]:np_cum_mpi[1]]
 names = f_input['names'][np_cum_mpi[0]:np_cum_mpi[1]]
+
+
+
+
 f_input.close() 
 
 
@@ -181,8 +186,9 @@ def STORE_DATA(step,frame):
 
     # dset_pos[frame,np_cum_mpi[0]:np_cum_mpi[1]]=r
     # dset_vel[frame,np_cum_mpi[0]:np_cum_mpi[1]]=vel
-    dset_pos[frame,indicies] = r
-    dset_vel[frame,indicies] = vel
+    ind_sort=np.argsort(indicies)
+    dset_pos[frame,indicies[ind_sort]] = r[ind_sort]
+    dset_vel[frame,indicies[ind_sort]] = vel[ind_sort]
     
     
     if rank==0:
@@ -237,20 +243,8 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
         if(comp_v_pot):
             v_pot[t]=v_p_fft.c2r(out=Ellipsis)
  
-    
-def DOMAIN_DECOMPOSITION(layouts):
-    # Does not work
-    # Problems with redefinition of array sizes
-    types_cp=types.copy()
-    for t in range(CONF['ntypes']):
-        r[types==t]         = layouts[t].exchange(r[types==t])
-        mass[types==t]      = layouts[t].exchange(mass[types==t])
-        vel[types==t]       = layouts[t].exchange(vel[types==t])
-        indicies[types==t]  = layouts[t].exchange(indicies[types==t])
-        names[types==t]     = layouts[t].exchange(names[types==t])
-        f[types==t]         = layouts[t].exchange(f[types==t])
-        f_old[types==t]     = layouts[t].exchange(f_old[types==t])
-        types[types_cp==t]  = layouts[t].exchange(types_cp[types==t])
+def exchange(layouts,var):
+    return np.concatenate([layouts[t].exchange(var[types==t]) for t in range(CONF['ntypes'])])
 
 
 def COMPUTE_ENERGY():
@@ -289,7 +283,7 @@ if rank==0:
 
 # First step
 
-layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
 COMP_FORCE(f, r, force_ds)
 
@@ -309,10 +303,24 @@ for step in range(CONF['NSTEPS']):
     #PERIODIC BC
     r     = np.mod(r, CONF['L'][None,:])
     
-    layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+    layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
+
+ 
+    if 'domain_decompose' in CONF:
+        if CONF['domain_decompose']==True:
+            r=exchange(layouts, r)
+            vel=exchange(layouts, vel) 
+            f=exchange(layouts, f)
+            indicies=exchange(layouts, indicies)
+            f_old=exchange(layouts, f_old)
+            types=exchange(layouts, types) 
+            layouts=[None,None]
+            names=[CONF["NAMES"][t] for t in types]
+    
+ 
 
 
-#    DOMAIN_DECOMPOSITION(layouts)
+  #  DOMAIN_DECOMPOSITION(layouts)#,r,mass,vel,indicies,names,types,f,f_old)
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
          
