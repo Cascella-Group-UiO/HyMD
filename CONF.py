@@ -3,10 +3,10 @@ import sympy
 
 Np     = 10000      # Number of particles
 #tau    = 0.7       # ps⁻1
-dt = 0.001
+dt = 0.0005
 NSTEPS = 1000
 #T0      = 300         # K 
-Nv = 80
+Nv = 100
 sigma = 0.5
 nprint = 1000  # Printing frequency
 mass   = 72   # g/mol
@@ -20,8 +20,8 @@ ntypes=1
 rho0 = Np/(L[0]*L[1]*L[2])
 dV=L[0]*L[1]*L[2]/Nv
 NAMES=['A','B']
-domain_decompose=True
-
+#uniform_start=True
+#T_start=300
 # hPF potential defined
 phi=sympy.var('phi:%d'%(types))
 
