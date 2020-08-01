@@ -5,7 +5,7 @@ import json
 
 CONF = {}
 exec(open(sys.argv[1]).read(), CONF)
- 
+np.random.seed(0) 
 # Initialization of simulation variables
 kb=2.479/298
 if 'T0' in CONF:
@@ -85,7 +85,7 @@ def GEN_START_VEL(dset):
 
 
 if 'uniform_start' in CONF:
-    if uniform_start==True:
+    if CONF['uniform_start']==True:
         GEN_START_UNIFORM()
 else:
     GEN_RANDOM(dset_pos)
