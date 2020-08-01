@@ -55,7 +55,6 @@ p_mpi_range = range(np_cum_mpi[0],np_cum_mpi[1])
 
 # Read input
 f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=MPI.COMM_WORLD)
-
 r=f_input['coordinates'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
 vel=f_input['velocities'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
 f=np.zeros((len(r),3))
@@ -63,10 +62,6 @@ f_old=np.copy(f)
 types=f_input['types'][np_cum_mpi[0]:np_cum_mpi[1]]
 indicies=f_input['indicies'][np_cum_mpi[0]:np_cum_mpi[1]]
 names = f_input['names'][np_cum_mpi[0]:np_cum_mpi[1]]
-
-
-
-
 f_input.close() 
 
 
@@ -226,9 +221,10 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
 
     # Filtered density
     for t in range(CONF['ntypes']):
-        p = pm.paint(r[types==t], layout=layouts[t])
-        p = p/CONF['dV']
-        phi_t[t] = p.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
+        # p = pm.paint(r[types==t], layout=layouts[t])
+        # p = p/CONF['dV']
+        # phi_t[t] = p.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
+        phi_t[t] = (pm.paint(r[types==t], layout=layouts[t])/CONF['dV']).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
 
     # External potential
     for t in range(CONF['ntypes']):
@@ -242,10 +238,12 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
  
         if(comp_v_pot):
             v_pot[t]=v_p_fft.c2r(out=Ellipsis)
- 
-def exchange(layouts,var):
-    return np.concatenate([layouts[t].exchange(var[types==t]) for t in range(CONF['ntypes'])])
+  
+    
 
+def exchange(layouts,var):
+    # Function for exhanging 1d arrays according to type and layouts
+    return np.concatenate([layouts[t].exchange(var[types==t]) for t in range(CONF['ntypes'])])
 
 def COMPUTE_ENERGY():
     E_hpf = 0    
@@ -283,7 +281,9 @@ if rank==0:
 
 # First step
 
-layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
+layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+#Does not conserve energy
+#layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
 COMP_FORCE(f, r, force_ds)
 
@@ -303,24 +303,21 @@ for step in range(CONF['NSTEPS']):
     #PERIODIC BC
     r     = np.mod(r, CONF['L'][None,:])
     
-    layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
+    layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+    #Does not conserve energy
+    #layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
 
- 
-    if 'domain_decompose' in CONF:
-        if CONF['domain_decompose']==True:
-            r=exchange(layouts, r)
-            vel=exchange(layouts, vel) 
-            f=exchange(layouts, f)
-            indicies=exchange(layouts, indicies)
-            f_old=exchange(layouts, f_old)
-            types=exchange(layouts, types) 
-            layouts=[None,None]
-            names=[CONF["NAMES"][t] for t in types]
-    
- 
-
-
-  #  DOMAIN_DECOMPOSITION(layouts)#,r,mass,vel,indicies,names,types,f,f_old)
+    #Changes number of particles if not smoothing=0
+    # r=exchange(layouts, r)
+    # vel=exchange(layouts, vel) 
+    # f=exchange(layouts, f)
+    # indicies=exchange(layouts, indicies)
+    # f_old=exchange(layouts, f_old)
+    # types=exchange(layouts, types) 
+    # layouts=[None,None]
+    # names=[CONF["NAMES"][t] for t in types]
+   
+#    DOMAIN_DECOMPOSITION(layouts)
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
          
