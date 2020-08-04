@@ -11,7 +11,6 @@ from mpi4py.MPI import COMM_WORLD
 pr = cProfile.Profile()
 pr.enable()
 
-
 # INITIALIZE MPIW=
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -109,36 +108,6 @@ if rank==0:
 
 #FUNCTION DEFINITIONS
 
-def GEN_START_VEL(vel):
-    #NORMAL DISTRIBUTED PARTICLES FIRST FRAME
-    std  = np.sqrt(CONF['kbT_start']/CONF['mass'])
-    vel = np.random.normal(loc=0, scale=std,size=(CONF['Np'],3))
-    
-    vel = vel-np.mean(vel, axis=0)
-    fac= np.sqrt((3*CONF['Np']*CONF['kbT_start']/2.)/(0.5*CONF['mass']*np.sum(vel**2)))
-    
-    return fac*vel
-
- 
-def GEN_START_UNIFORM(r):
-     
-    n=int(np.ceil(CONF['Np']**(1./3.)))
-    l=CONF['L'][0]/n
-    x=np.linspace(0.5*l,(n-0.5)*l,n)
-    
-    j=0
-    for ix in range(n):
-        for iy in range(n):
-            for iz in range(n):
-                if(j<CONF['Np']):
-                    r[j,0]=x[ix]
-                    r[j,1]=x[iy]
-                    r[j,2]=x[iz]
-                
-                j+=1
-    if(j<CONF['Np']):
-        r[j:]=CONF['L']*np.random.random((CONF['Np']-j,3))
-    return r
 
 
 def INTEGERATE_POS(x, vel, a):
@@ -255,24 +224,6 @@ def COMPUTE_ENERGY():
     return E_hpf,E_kin,W
     
 
-def PRESET_VEL(vel,T):
-    std  = np.sqrt(CONF['kbT0']/CONF['mass'])
-    vel[:,0]=np.random.normal(loc=0, scale=std, size=CONF['Np'])
-    vel[change,1]=np.random.normal(loc=0, scale=std, size=CONF['Np'])
-    vel[change,2]=np.random.normal(loc=0, scale=std, size=CONF['Np'])
-    return vel
-
-def REMOVE_CM_VEL(vel,T=None):
-    if T==None:
-        E_KIN_1 = 0.5*CONF['mass']*np.sum(vel**2)
-    else:
-        E_KIN_1 = kb*3*CONF['Np']*T/2.
- 
-    vcm     = -np.mean(vel,axis=0)
-    E_KIN_2 = 0.5*CONF['mass']*np.sum((vel-vcm)**2)
-
-    return (vel-vcm)*np.sqrt(E_KIN_1/E_KIN_2)
-
 
 
 if rank==0:
@@ -338,7 +289,7 @@ for step in range(CONF['NSTEPS']):
 
 # End simulation
 if rank==0:
-    print('Simulation time elapsed:', time.time()-start_t)
+    print('Simulation time elapsed:', time.time()-start_t, "for",size, "cpus")
 
         
 UPDATE_FIELD(layouts,True)
@@ -354,7 +305,7 @@ pr.disable()
 
 # Dump results:
 # - for binary dump
-#pr.dump_stats('cpu_%d.pstat' %comm.rank)
+pr.dump_stats('cpu_%d.prof' %comm.rank)
 
 # stats = pstats.Stats(pr,'profile_stats_%d.pstat'%comm.rank).sort_stats('tottime')
 
