@@ -69,6 +69,16 @@ def GEN_START_UNIFORM():
     return r
 
 def GEN_RANDOM(dset):
+
+    # nrange=[0]
+    # for i in range(CONF['Np']//1000-1):
+    #     nrange.append(i*1000)
+    # nrange.append(-nrange[-1]+CONF['Np'])
+    # for i in range(len(nrange)-1):
+    #     if(print(i,-nrange[i]+nrange[i+1])
+    #     dset[0,i=CONF['L']*np.random.random((nrange[i+1]-nrange[i],3))
+
+#    for i in range(CONF['Np']):
     dset[0,:,:]=CONF['L']*np.random.random((CONF['Np'],3))
     
 def GEN_START_VEL(dset):
@@ -93,17 +103,17 @@ else:
 if 'T_start' in CONF:
     GEN_START_VEL(dset_vel)
 
-for i in range(CONF['Np']):
-    dset_types[i]=0
-    dset_names[i]='A'
-    dset_mass[i]=CONF['mass']
-    dset_indicies[i]=i
+#for i in range(CONF['Np']):
+dset_types[range(CONF['Np'])]=0
+dset_names[range(CONF['Np'])]='A'
+dset_mass[range(CONF['Np'])]=CONF['mass']
+dset_indicies[range(CONF['Np'])]=np.array(range(CONF['Np']))
 
 
 if 'chi' in CONF and 'NB' in CONF:
-    for i in range(CONF['Np']-CONF['NB'],CONF['Np']):
-        dset_types[i]=1
-        dset_names[i]='B'
+   #" for i in range(CONF['Np']-CONF['NB'],CONF['Np']):
+    dset_types[range(CONF['Np']-CONF['NB'],CONF['Np'])]=1
+    dset_names[range(CONF['Np']-CONF['NB'],CONF['Np'])]='B'
      
 f_hd5.close()
 
