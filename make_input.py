@@ -19,7 +19,7 @@ Ncells = (CONF['Nv']**3)
 CONF['L']      = np.array(CONF['L'])
 CONF['V']      = CONF['L'][0]*CONF['L'][1]*CONF['L'][2]
 CONF['dV']     = CONF['V']/(CONF['Nv']**3)
-CONF['n_frames'] = CONF['NSTEPS']//CONF['nprint']
+#CONF['n_frames'] = CONF['NSTEPS']//CONF['nprint']
 
 if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
