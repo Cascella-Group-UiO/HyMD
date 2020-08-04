@@ -38,7 +38,10 @@ Ncells = (CONF['Nv']**3)
 CONF['L']      = np.array(CONF['L'])
 CONF['V']      = CONF['L'][0]*CONF['L'][1]*CONF['L'][2]
 CONF['dV']     = CONF['V']/(CONF['Nv']**3)
-CONF['n_frames'] = CONF['NSTEPS']//CONF['nprint'] + 1
+if CONF['nprint']==0:
+    CONF['n_frames'] = 1
+else:
+    CONF['n_frames'] = CONF['NSTEPS']//CONF['nprint'] + 1
 
 if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
@@ -147,9 +150,6 @@ def VEL_RESCALE(vel, tau):
 
 def STORE_DATA(step,frame):
 
-
-    # dset_pos[frame,np_cum_mpi[0]:np_cum_mpi[1]]=r
-    # dset_vel[frame,np_cum_mpi[0]:np_cum_mpi[1]]=vel
     ind_sort=np.argsort(indicies)
     dset_pos[frame,indicies[ind_sort]] = r[ind_sort]
     dset_vel[frame,indicies[ind_sort]] = vel[ind_sort]
@@ -233,18 +233,18 @@ if rank==0:
 # First step
 
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
-#Does not conserve energy
-#layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
 COMP_FORCE(f, r, force_ds)
 
 for step in range(CONF['NSTEPS']):
-    
-    frame=step//CONF['nprint']
-    if(np.mod(step,CONF['nprint'])==0):      
-        E_hpf, E_kin,W = COMPUTE_ENERGY()        
-        T     =   2*E_kin/(kb*3*CONF['Np'])
-        mom=pm.comm.allreduce(np.sum(vel,axis=0))
+
+    if CONF['nprint']>0:
+        frame=step//CONF['nprint']
+
+        if(np.mod(step,CONF['nprint'])==0):      
+            E_hpf, E_kin,W = COMPUTE_ENERGY()        
+            T     =   2*E_kin/(kb*3*CONF['Np'])
+            mom=pm.comm.allreduce(np.sum(vel,axis=0))
 
     f_old = np.copy(f)
 
@@ -284,22 +284,24 @@ for step in range(CONF['NSTEPS']):
         vel = VEL_RESCALE(vel,tau)
 
     # Print trajectory
-    if(np.mod(step,CONF['nprint'])==0):
-        STORE_DATA(step, frame)
+    if CONF['nprint']>0:
+        if(np.mod(step,CONF['nprint'])==0):
+            STORE_DATA(step, frame)
+        
 
 # End simulation
 if rank==0:
-    print('Simulation time elapsed:', time.time()-start_t, "for",size, "cpus")
+    #print('Simulation time elapsed:', time.time()-start_t, "for",size, "cpus")
+    print(size, time.time()-start_t)
 
         
-UPDATE_FIELD(layouts,True)
 
-frame=(step+1)//CONF['nprint']
-
-E_hpf, E_kin,W = COMPUTE_ENERGY()        
-T     =   2*E_kin/(kb*3*CONF['Np'])
-
-STORE_DATA(step,frame)
+if CONF['nprint']>0:
+    UPDATE_FIELD(layouts,True)
+    frame=(step+1)//CONF['nprint']
+    E_hpf, E_kin,W = COMPUTE_ENERGY()        
+    T     =   2*E_kin/(kb*3*CONF['Np'])
+    STORE_DATA(step,frame)
  
 pr.disable()
 
