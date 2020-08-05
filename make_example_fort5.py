@@ -18,7 +18,9 @@ with open('fort.5', 'w') as out_file:
     out_file.write(f'n_molecules:\n\t{n_molecules}\n')
 
     for p in range(n_polymers):
-        out_file.write(f'molecule_index:\t{p + 1}\n\t\t{n_atoms_per_polymer}\n')
+        out_file.write(
+            f'molecule_index:\t{p + 1}\n\t\t{n_atoms_per_polymer}\n'
+        )
         position_xy = 2.0 + p
 
         z_start = np.random.uniform(low=0.0, high=7.0, size=1)[0]
@@ -36,7 +38,7 @@ with open('fort.5', 'w') as out_file:
                 bonds = 2
                 bonds_indices = (atom_index - 1, atom_index + 1, 0, 0, 0, 0)
 
-            out_file.write(f'{atom_index:4}\t{atom_type_name:4}\t{atom_index:4}\t{bonds:4}')  # noqa: E501
+            out_file.write(f'{atom_index:4}\t{atom_type_name:4}\t{atom_type:4}\t{bonds:4}')  # noqa: E501
             out_file.write(f'\t\t{x:.3f}\t{y:.3f}\t{z:.3f}')
             out_file.write(f'\t{0.0:.3f}\t{0.0:.3f}\t{0.0:.3f}\t')
             for b in bonds_indices:
@@ -52,7 +54,7 @@ with open('fort.5', 'w') as out_file:
         bonds = 0
         bonds_indices = (0, 0, 0, 0, 0, 0)
 
-        out_file.write(f'{atom_index:4}\t{atom_type_name:4}\t{atom_index:4}\t{bonds:4}')  # noqa: E501
+        out_file.write(f'{atom_index:4}\t{atom_type_name:4}\t{atom_type:4}\t{bonds:4}')  # noqa: E501
         out_file.write(f'\t\t{x:.3f}\t{y:.3f}\t{z:.3f}')
         out_file.write(f'\t{0.0:.3f}\t{0.0:.3f}\t{0.0:.3f}\t')
         for b in bonds_indices:
