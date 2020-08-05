@@ -36,7 +36,7 @@ plt.savefig('steps_per_atom_per_time.png')
 plt.xlabel('# cpu')
 plt.tight_layout()
 
-plt.figure(1,figsize=size)
+plt.figure(2,figsize=size)
 plt.plot(data[:,0],data[:,0]/data[:,1],'r')
 
 plt.plot(data[:,0],data[0,1]*data[0,0]/data[:,1],'k')
