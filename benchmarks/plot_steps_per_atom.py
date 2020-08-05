@@ -4,7 +4,7 @@ import numpy as np
 import sys
 matplotlib.style.use('default')
 from matplotlib import rc
-plt.style.use('../fig.mplstyle')
+plt.style.use('../../fig.mplstyle')
 plt.rc('font', family='sans-serif')
 SMALL_SIZE = 8
 MEDIUM_SIZE = 10
@@ -31,17 +31,15 @@ data=data[ind,:]
 plt.plot(data[:,0],STEPS/N/data[:,1],'k')
 plt.ylabel('step/(atom*time)')
 
+plt.savefig('steps_per_atom_per_time.png')
 
 plt.xlabel('# cpu')
 plt.tight_layout()
-plt.savefig('steps_per_atom_per_time.png')
 
+plt.figure(1,figsize=size)
+plt.plot(data[:,0],data[:,0]/data[:,1],'r')
 
-plt.figure(2,figsize=size)
-
-plt.plot(data[:,0],data[0,1]*data[0,0]/data[:,1],'k',label='hPF-MD')
-plt.plot(data[:,0],data[:,0],'r',label='ideal')
-plt.legend()
+plt.plot(data[:,0],data[0,1]*data[0,0]/data[:,1],'k')
 plt.ylabel('speedup')
 plt.xlabel('# cpu')
 plt.tight_layout()
