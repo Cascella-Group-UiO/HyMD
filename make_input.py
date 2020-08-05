@@ -38,6 +38,15 @@ dset_mass = f_hd5.create_dataset("mass",  (CONF['Np'],), dtype="Float32")
 dset_pos.attrs['units']="nanometers"
 dset_pos.attrs['units']="nanometers/picoseconds"
 
+indicies=[]
+parts=1000
+n=int(CONF['Np']/parts)
+#print(n,CONF['Np'])
+for i in range(parts-1):
+    indicies.append(range(i*n,(i+1)*n))
+ 
+if not(n*i==CONF['Np']):
+    indicies.append(range((i+1)*n,CONF['Np']))
 
 
 def cube(r):
@@ -79,7 +88,8 @@ def GEN_RANDOM(dset):
     #     dset[0,i=CONF['L']*np.random.random((nrange[i+1]-nrange[i],3))
 
 #    for i in range(CONF['Np']):
-    dset[0,:,:]=CONF['L']*np.random.random((CONF['Np'],3))
+    for ind in indicies:
+        dset[0,ind,:]=CONF['L']*np.random.random((len(ind),3))
     
 def GEN_START_VEL(dset):
     #NORMAL DISTRIBUTED PARTICLES FIRST FRAME
@@ -104,17 +114,24 @@ if 'T_start' in CONF:
     GEN_START_VEL(dset_vel)
 
 #for i in range(CONF['Np']):
-dset_types[range(CONF['Np'])]=0
-dset_names[range(CONF['Np'])]='A'
-dset_mass[range(CONF['Np'])]=CONF['mass']
-dset_indicies[range(CONF['Np'])]=np.array(range(CONF['Np']))
 
 
+for ind in indicies:
+    dset_types[ind]=0
+    dset_names[ind]='A'
+    dset_mass[ind]=CONF['mass']
+    dset_indicies[ind]=np.array(ind)
+
+ 
 if 'chi' in CONF and 'NB' in CONF:
    #" for i in range(CONF['Np']-CONF['NB'],CONF['Np']):
-    dset_types[range(CONF['Np']-CONF['NB'],CONF['Np'])]=1
-    dset_names[range(CONF['Np']-CONF['NB'],CONF['Np'])]='B'
-     
+    #indicies2=np.array(range(CONF['Np']-CONF['NB']))
+    for ind in np.split(indicies,100):
+        ind2=ind[ind>CONF['Np']-CONF['NB']]
+        if(len(ind2)>0):
+            dset_types[ind2]=1
+            dset_names[ind2]='B'
+      
 f_hd5.close()
 
 
