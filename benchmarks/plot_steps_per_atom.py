@@ -37,9 +37,10 @@ plt.xlabel('# cpu')
 plt.tight_layout()
 
 plt.figure(2,figsize=size)
-plt.plot(data[:,0],data[:,0]/data[:,1],'r')
 
 plt.plot(data[:,0],data[0,1]*data[0,0]/data[:,1],'k')
+
+plt.plot(data[:,0],data[:,0],'r')
 plt.ylabel('speedup')
 plt.xlabel('# cpu')
 plt.tight_layout()
