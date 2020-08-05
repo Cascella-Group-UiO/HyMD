@@ -1,12 +1,16 @@
-import numpy as np
 from mpi4py import MPI
+#from mpi4py.MPI import COMM_WORLD
+import cProfile, pstats
+
+import numpy as np
 import h5py
 import sys
 import pmesh.pm as pmesh # Particle mesh Routine
 import time
 
-import cProfile, pstats
-from mpi4py.MPI import COMM_WORLD
+# pr0 = cProfile.Profile()
+# pr0.enable()
+
 
 pr = cProfile.Profile()
 pr.enable()
@@ -56,7 +60,7 @@ else:
 p_mpi_range = range(np_cum_mpi[0],np_cum_mpi[1])
 
 # Read input
-f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=MPI.COMM_WORLD)
+f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=comm)
 r=f_input['coordinates'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
 vel=f_input['velocities'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
 f=np.zeros((len(r),3))
@@ -84,7 +88,7 @@ for t in range(CONF['ntypes']):
     force_ds.append([pm.create('real') for d in range(3)])
 
 # Output files
-f_hd5 = h5py.File('sim.hdf5', 'w',driver='mpio', comm=MPI.COMM_WORLD)
+f_hd5 = h5py.File('sim.hdf5', 'w',driver='mpio', comm=comm)
 dset_pos  = f_hd5.create_dataset("coordinates", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 dset_vel  = f_hd5.create_dataset("velocities", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 
@@ -225,6 +229,8 @@ def COMPUTE_ENERGY():
     
 
 
+# pr = cProfile.Profile()
+# pr.enable()
 
 if rank==0:
     start_t = time.time()
@@ -302,21 +308,30 @@ if CONF['nprint']>0:
     E_hpf, E_kin,W = COMPUTE_ENERGY()        
     T     =   2*E_kin/(kb*3*CONF['Np'])
     STORE_DATA(step,frame)
- 
+
+f_hd5.close() 
 pr.disable()
 
 # Dump results:
 # - for binary dump
 pr.dump_stats('cpu_%d.prof' %comm.rank)
-
+ 
+with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
+    sys.stdout = output_file
+    pr.print_stats( sort='time' )
+    sys.stdout = sys.__stdout__
+ 
 # stats = pstats.Stats(pr,'profile_stats_%d.pstat'%comm.rank).sort_stats('tottime')
 
 #ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
 #ps.print_stats()
 
 # - for text dump
-f_hd5.close()
-with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
-    sys.stdout = output_file
-    pr.print_stats( sort='time' )
-    sys.stdout = sys.__stdout__
+
+# pr0.disable()
+# pr0.dump_stats('cpu_whole_%d.prof' %comm.rank)
+ 
+# with open( 'cpu_whole_%d.txt' %comm.rank, 'w') as output_file:
+#     sys.stdout = output_file
+#     pr0.print_stats( sort='time' )
+#     sys.stdout = sys.__stdout__
