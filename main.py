@@ -49,7 +49,7 @@ else:
 
 if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
-    
+
 
 np_per_MPI=CONF['Np']//size
 if rank==size-1:
@@ -68,12 +68,12 @@ f_old=np.copy(f)
 types=f_input['types'][np_cum_mpi[0]:np_cum_mpi[1]]
 indicies=f_input['indicies'][np_cum_mpi[0]:np_cum_mpi[1]]
 names = f_input['names'][np_cum_mpi[0]:np_cum_mpi[1]]
-f_input.close() 
+f_input.close()
 
 
 #Particle-Mesh initialization
 pm   = pmesh.ParticleMesh((CONF['Nv'],CONF['Nv'],CONF['Nv']),BoxSize=CONF['L'], dtype='f8',comm=comm)
- 
+
 
 # INTILIZE PMESH ARRAYS
 phi=[]
@@ -103,7 +103,7 @@ dset_lengths=f_hd5.create_dataset("cell_lengths",  (1,3,3), dtype='Float32')
 dset_tot_energy=f_hd5.create_dataset("tot_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_pot_energy=f_hd5.create_dataset("pot_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
-dset_names=names
+dset_names[np_cum_mpi[0]:np_cum_mpi[1]]=names
 dset_types[np_cum_mpi[0]:np_cum_mpi[1]]=types
 dset_indicies[np_cum_mpi[0]:np_cum_mpi[1]]=indicies
 dset_lengths[0,0,0]=CONF["L"][0]
@@ -149,7 +149,7 @@ def VEL_RESCALE(vel, tau):
     alpha = np.sqrt(E_kin_target/E_kin)
 
     vel=vel*alpha
-    
+
     return vel
 
 def STORE_DATA(step,frame):
@@ -157,8 +157,8 @@ def STORE_DATA(step,frame):
     ind_sort=np.argsort(indicies)
     dset_pos[frame,indicies[ind_sort]] = r[ind_sort]
     dset_vel[frame,indicies[ind_sort]] = vel[ind_sort]
-    
-    
+
+
     if rank==0:
         dset_tot_energy[frame]=W+E_kin
         dset_pot_energy[frame]=W
@@ -180,7 +180,7 @@ def COMP_PRESSURE():
     P=[]
     p_val=[]
     for d in range(3):
-        
+
         p = CONF['w'](phi_t)
         for t in range(CONF['ntypes']):
             p += -v_pot[t]*phi_t[t] + (v_pot[t].r2c(out=Ellipsis).apply(CONF['kdHdk'])[d]).c2r(out=Ellipsis)
@@ -189,7 +189,7 @@ def COMP_PRESSURE():
         P.append(p*CONF['dV']/CONF['V'])
         p_val.append(p.csum())
     return np.array(p_val)
-      
+
 def UPDATE_FIELD(layouts,comp_v_pot=False):
 
     # Filtered density
@@ -202,31 +202,31 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
     # External potential
     for t in range(CONF['ntypes']):
         v_p_fft=CONF['V_EXT'][t](phi_t).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis)
-   
+
         # Derivative of external potential
-        for d in range(3):    
+        for d in range(3):
             def force_transfer_function(k, v, d=d):
-                return -k[d] * 1j * v 
+                return -k[d] * 1j * v
             force_ds[t][d]=(v_p_fft.copy().apply(force_transfer_function).c2r(out=Ellipsis))
- 
+
         if(comp_v_pot):
             v_pot[t]=v_p_fft.c2r(out=Ellipsis)
-  
-    
+
+
 
 def exchange(layouts,var):
     # Function for exhanging 1d arrays according to type and layouts
     return np.concatenate([layouts[t].exchange(var[types==t]) for t in range(CONF['ntypes'])])
 
 def COMPUTE_ENERGY():
-    E_hpf = 0    
+    E_hpf = 0
     E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
     W = CONF['w'](phi_t)*CONF['dV']
 
     W = W.csum()
 
     return E_hpf,E_kin,W
-    
+
 
 
 # pr = cProfile.Profile()
@@ -234,7 +234,7 @@ def COMPUTE_ENERGY():
 
 if rank==0:
     start_t = time.time()
-  
+
 
 # First step
 
@@ -247,8 +247,8 @@ for step in range(CONF['NSTEPS']):
     if CONF['nprint']>0:
         frame=step//CONF['nprint']
 
-        if(np.mod(step,CONF['nprint'])==0):      
-            E_hpf, E_kin,W = COMPUTE_ENERGY()        
+        if(np.mod(step,CONF['nprint'])==0):
+            E_hpf, E_kin,W = COMPUTE_ENERGY()
             T     =   2*E_kin/(kb*3*CONF['Np'])
             mom=pm.comm.allreduce(np.sum(vel,axis=0))
 
@@ -259,29 +259,29 @@ for step in range(CONF['NSTEPS']):
 
     #PERIODIC BC
     r     = np.mod(r, CONF['L'][None,:])
-    
+
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
     #Does not conserve energy
     #layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
 
     #Changes number of particles if not smoothing=0
     # r=exchange(layouts, r)
-    # vel=exchange(layouts, vel) 
+    # vel=exchange(layouts, vel)
     # f=exchange(layouts, f)
     # indicies=exchange(layouts, indicies)
     # f_old=exchange(layouts, f_old)
-    # types=exchange(layouts, types) 
+    # types=exchange(layouts, types)
     # layouts=[None,None]
     # names=[CONF["NAMES"][t] for t in types]
-   
+
 #    DOMAIN_DECOMPOSITION(layouts)
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
-         
+
 
     COMP_FORCE(f,r,force_ds)
 
-    
+
     # Integrate velocity
     vel = INTEGRATE_VEL(vel, f/CONF['mass'], f_old/CONF['mass'])
 
@@ -293,34 +293,34 @@ for step in range(CONF['NSTEPS']):
     if CONF['nprint']>0:
         if(np.mod(step,CONF['nprint'])==0):
             STORE_DATA(step, frame)
-        
+
 
 # End simulation
 if rank==0:
     #print('Simulation time elapsed:', time.time()-start_t, "for",size, "cpus")
     print(size, time.time()-start_t)
 
-        
+
 
 if CONF['nprint']>0:
     UPDATE_FIELD(layouts,True)
     frame=(step+1)//CONF['nprint']
-    E_hpf, E_kin,W = COMPUTE_ENERGY()        
+    E_hpf, E_kin,W = COMPUTE_ENERGY()
     T     =   2*E_kin/(kb*3*CONF['Np'])
     STORE_DATA(step,frame)
 
-f_hd5.close() 
+f_hd5.close()
 pr.disable()
 
 # Dump results:
 # - for binary dump
 pr.dump_stats('cpu_%d.prof' %comm.rank)
- 
+
 with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
     sys.stdout = output_file
     pr.print_stats( sort='time' )
     sys.stdout = sys.__stdout__
- 
+
 # stats = pstats.Stats(pr,'profile_stats_%d.pstat'%comm.rank).sort_stats('tottime')
 
 #ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
@@ -330,7 +330,7 @@ with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
 
 # pr0.disable()
 # pr0.dump_stats('cpu_whole_%d.prof' %comm.rank)
- 
+
 # with open( 'cpu_whole_%d.txt' %comm.rank, 'w') as output_file:
 #     sys.stdout = output_file
 #     pr0.print_stats( sort='time' )
