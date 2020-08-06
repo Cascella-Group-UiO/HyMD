@@ -61,13 +61,13 @@ p_mpi_range = range(np_cum_mpi[0],np_cum_mpi[1])
 
 # Read input
 f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=comm)
-r=f_input['coordinates'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
-vel=f_input['velocities'][-1,np_cum_mpi[0]:np_cum_mpi[1],:]
+r=f_input['coordinates'][-1,p_mpi_range,:]
+vel=f_input['velocities'][-1,p_mpi_range,:]
 f=np.zeros((len(r),3))
 f_old=np.copy(f)
-types=f_input['types'][np_cum_mpi[0]:np_cum_mpi[1]]
-indicies=f_input['indicies'][np_cum_mpi[0]:np_cum_mpi[1]]
-names = f_input['names'][np_cum_mpi[0]:np_cum_mpi[1]]
+types=f_input['types'][p_mpi_range]
+indicies=f_input['indicies'][p_mpi_range]
+names = f_input['names'][p_mpi_range]
 f_input.close()
 
 
@@ -104,9 +104,9 @@ dset_tot_energy=f_hd5.create_dataset("tot_energy",  (CONF['n_frames'],), dtype='
 dset_pot_energy=f_hd5.create_dataset("pot_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
 
-dset_names[np_cum_mpi[0]:np_cum_mpi[1]]=names
-dset_types[np_cum_mpi[0]:np_cum_mpi[1]]=types
-dset_indicies[np_cum_mpi[0]:np_cum_mpi[1]]=indicies
+dset_names[p_mpi_range]=names
+dset_types[p_mpi_range]=types
+dset_indicies[p_mpi_range]=indicies
 dset_lengths[0,0,0]=CONF["L"][0]
 dset_lengths[0,1,1]=CONF["L"][1]
 dset_lengths[0,2,2]=CONF["L"][2]
@@ -198,8 +198,10 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
         # p = pm.paint(r[types==t], layout=layouts[t])
         # p = p/CONF['dV']
         # phi_t[t] = p.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
-        phi_t[t] = (pm.paint(r[types==t], layout=layouts[t])/CONF['dV']).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
+        # phi_t[t] = (pm.paint(r[types==t])/CONF['dV']).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
 
+        phi_t[t] = (pm.paint(r[types==t], layout=layouts[t])/CONF['dV']).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
+        
     # External potential
     for t in range(CONF['ntypes']):
         v_p_fft=CONF['V_EXT'][t](phi_t).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis)
@@ -214,10 +216,6 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
             v_pot[t]=v_p_fft.c2r(out=Ellipsis)
 
 
-
-def exchange(layouts,var):
-    # Function for exhanging 1d arrays according to type and layouts
-    return np.concatenate([layouts[t].exchange(var[types==t]) for t in range(CONF['ntypes'])])
 
 def COMPUTE_ENERGY():
     E_hpf = 0
@@ -238,8 +236,19 @@ if rank==0:
 
 
 # First step
-
-layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+if "domain_decomp" in CONF:
+    #Particles are exchanged between mpi-processors
+    layout=pm.decompose(r,smoothing=0)
+    r=layout.exchange(r)
+    vel=layout.exchange(vel)
+    f=layout.exchange(f)
+    indicies=layout.exchange(indicies)
+    f_old=layout.exchange(f_old)
+    types=layout.exchange(types)
+    layouts=[None,None]
+    names=[CONF["NAMES"][t] for t in types]
+else:
+    layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
 COMP_FORCE(f, r, force_ds)
 
