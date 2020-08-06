@@ -246,7 +246,7 @@ if "domain_decomp" in CONF:
     f_old=layout.exchange(f_old)
     types=layout.exchange(types)
     layouts=[None,None]
-    names=[CONF["NAMES"][t] for t in types]
+    names=layout.exchange(names)#[CONF["NAMES"][t] for t in types]
 else:
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
@@ -280,7 +280,7 @@ for step in range(CONF['NSTEPS']):
         f_old=layout.exchange(f_old)
         types=layout.exchange(types)
         layouts=[None,None]
-        names=[CONF["NAMES"][t] for t in types]
+        names=layout.exchange(names)
 
     else:
         # Particles are kept on mpi-task
