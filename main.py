@@ -8,9 +8,6 @@ import sys
 import pmesh.pm as pmesh # Particle mesh Routine
 import time
 
-# pr0 = cProfile.Profile()
-# pr0.enable()
-
 
 pr = cProfile.Profile()
 pr.enable()
@@ -127,8 +124,17 @@ def INTEGRATE_VEL(vel, a, a_old):
     return vel + 0.5*(a+a_old)*CONF['dt']
 
 def VEL_RESCALE(vel, tau):
-
-    #https://doi.org/10.1063/1.2408420
+    """ Velocity rescale thermostat, see 
+        https://doi.org/10.1063/1.2408420
+            Parameters
+            ----------
+            vel : [N_mpi,3] float array beloning to MPI-task
+            tau : float, relaxation time of thermostat.
+            Returns:
+            ----------
+            out : vel
+            Thermostatted velocity array.  
+    """    
 
     # INITIAL KINETIC ENERGY
     E_kin  = comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
@@ -154,7 +160,14 @@ def VEL_RESCALE(vel, tau):
     return vel
 
 def STORE_DATA(step,frame):
-
+    """ prints positions, velocities and energies sim.hdf5
+            Parameters
+            ----------
+            step : int
+                current MD step 
+            frame : int
+                current data frame used store data.
+    """
     ind_sort=np.argsort(indicies)
     dset_pos[frame,indicies[ind_sort]] = r[ind_sort]
     dset_vel[frame,indicies[ind_sort]] = vel[ind_sort]
@@ -195,11 +208,6 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
 
     # Filtered density
     for t in range(CONF['ntypes']):
-        # p = pm.paint(r[types==t], layout=layouts[t])
-        # p = p/CONF['dV']
-        # phi_t[t] = p.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
-        # phi_t[t] = (pm.paint(r[types==t])/CONF['dV']).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
-
         phi_t[t] = (pm.paint(r[types==t], layout=layouts[t])/CONF['dV']).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
         
     # External potential
@@ -333,17 +341,3 @@ with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
     pr.print_stats( sort='time' )
     sys.stdout = sys.__stdout__
 
-# stats = pstats.Stats(pr,'profile_stats_%d.pstat'%comm.rank).sort_stats('tottime')
-
-#ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
-#ps.print_stats()
-
-# - for text dump
-
-# pr0.disable()
-# pr0.dump_stats('cpu_whole_%d.prof' %comm.rank)
-
-# with open( 'cpu_whole_%d.txt' %comm.rank, 'w') as output_file:
-#     sys.stdout = output_file
-#     pr0.print_stats( sort='time' )
-#     sys.stdout = sys.__stdout__
