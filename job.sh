@@ -13,5 +13,5 @@ module load pfft-python/0.1.21-foss-2020a-Python-3.8.2
 cp ../hPF_MD_PMESH/{make_input.py,main.py} .
 bash ../hPF_MD_PMESH/ex.sh
 
-python gprof2dot.py -f pstats cpu_0.prof | dot -Tpng -o profile_graph.png
+#python gprof2dot.py -f pstats cpu_0.prof | dot -Tpng -o profile_graph.png
 #mpirun python3  ../hPF_MD_PMESH/main.py CONF.py input.hdf5 

@@ -96,13 +96,14 @@ dset_pos.attrs['units']="nanometers"
 dset_time = f_hd5.create_dataset("time", shape=(CONF['n_frames'],), dtype="Float32")
 
 dset_time.attrs['units']="picoseconds"
-dset_names=f_hd5.create_dataset("names",  (CONF['Np'],), dtype="S5")
+dset_names=f_hd5.create_dataset("names",  (CONF['Np'],), dtype="S10")
 dset_indicies=f_hd5.create_dataset("indicies",  (CONF['Np'],), dtype='i')
 dset_types=f_hd5.create_dataset("types",  (CONF['Np'],), dtype='i')
 dset_lengths=f_hd5.create_dataset("cell_lengths",  (1,3,3), dtype='Float32')
 dset_tot_energy=f_hd5.create_dataset("tot_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_pot_energy=f_hd5.create_dataset("pot_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
+
 dset_names[np_cum_mpi[0]:np_cum_mpi[1]]=names
 dset_types[np_cum_mpi[0]:np_cum_mpi[1]]=types
 dset_indicies[np_cum_mpi[0]:np_cum_mpi[1]]=indicies
@@ -260,19 +261,21 @@ for step in range(CONF['NSTEPS']):
     #PERIODIC BC
     r     = np.mod(r, CONF['L'][None,:])
 
-    layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
-    #Does not conserve energy
-    #layouts  = [pm.decompose(r[types==t],smoothing=0) for t in range(CONF['ntypes'])]
+    if "domain_decomp" in CONF:
+        #Particles are exchanged between mpi-processors
+        layout=pm.decompose(r,smoothing=0)
+        r=layout.exchange(r)
+        vel=layout.exchange(vel)
+        f=layout.exchange(f)
+        indicies=layout.exchange(indicies)
+        f_old=layout.exchange(f_old)
+        types=layout.exchange(types)
+        layouts=[None,None]
+        names=[CONF["NAMES"][t] for t in types]
 
-    #Changes number of particles if not smoothing=0
-    # r=exchange(layouts, r)
-    # vel=exchange(layouts, vel)
-    # f=exchange(layouts, f)
-    # indicies=exchange(layouts, indicies)
-    # f_old=exchange(layouts, f_old)
-    # types=exchange(layouts, types)
-    # layouts=[None,None]
-    # names=[CONF["NAMES"][t] for t in types]
+    else:
+        # Particles are kept on mpi-task
+        layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 
 #    DOMAIN_DECOMPOSITION(layouts)
     if(np.mod(step+1,CONF['quasi'])==0):

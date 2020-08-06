@@ -32,7 +32,7 @@ dset_types    = f_hd5.create_dataset("types",       (CONF['Np'],), dtype="i")
 dset_indicies = f_hd5.create_dataset("indicies",    (CONF['Np'],), dtype="i")
 
 dt =  h5py.string_dtype(encoding='ascii')
-dset_names = f_hd5.create_dataset("names",  (CONF['Np'],), dtype=dt)
+dset_names = f_hd5.create_dataset("names",  (CONF['Np'],), dtype="S10")
 dset_mass = f_hd5.create_dataset("mass",  (CONF['Np'],), dtype="Float32")
 
 dset_pos.attrs['units']="nanometers"
@@ -118,7 +118,7 @@ if 'T_start' in CONF:
 
 for ind in indicies:
     dset_types[ind]=0
-    dset_names[ind]='A'
+    dset_names[ind]=np.string_("A")
     dset_mass[ind]=CONF['mass']
     dset_indicies[ind]=np.array(ind)
 
@@ -130,7 +130,7 @@ if 'chi' in CONF and 'NB' in CONF:
         ind2=ind[ind>CONF['Np']-CONF['NB']]
         if(len(ind2)>0):
             dset_types[ind2]=1
-            dset_names[ind2]='B'
+            dset_names[ind2]=np.string_("B")
       
 f_hd5.close()
 
