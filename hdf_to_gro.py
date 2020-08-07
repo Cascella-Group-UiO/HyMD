@@ -1,12 +1,11 @@
 import h5py
 import argparse
+import numpy as np
 
 description = 'Convert .hdf5 data files to .gro format'
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('hdf5_file', type=str, help='input .hdf5 file name')
 parser.add_argument('--out', type=str, help='output file name', default=None)
-parser.add_argument('--molecule_file', type=str,
-                    help='optional .hdf5 file containing molecule details')
 args = parser.parse_args()
 
 f_hd5 = h5py.File(args.hdf5_file, 'r')
@@ -19,14 +18,19 @@ else:
 shape = f_hd5['coordinates'].shape[0]
 names = f_hd5['names'][:]
 Np = f_hd5['coordinates'].shape[1]
+molecules = np.array(list(range(1, len(names) + 1)))
+if 'molecules' in f_hd5:
+    molecules = f_hd5['molecules'][:]
+
 
 for f in range(shape):
     fp.write('MD of %d mols, t=%.3f\n' % (Np, f_hd5['time'][f]))
     fp.write('%-10d\n' % (Np))
     for i in range(Np):
         name = names[i].decode('UTF-8').strip()
+
         dump_str = "%5d%-5s%5s%5d%8.3f%8.3f%8.3f%8.4f%8.4f%8.4f\n" % (
-            i//10+1,
+            molecules[i],
             name,
             name,
             i+1,
