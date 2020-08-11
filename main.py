@@ -1,18 +1,16 @@
 from mpi4py import MPI
 #from mpi4py.MPI import COMM_WORLD
 import cProfile, pstats
-
 import numpy as np
 import h5py
 import sys
 import pmesh.pm as pmesh # Particle mesh Routine
 import time
 
-
 pr = cProfile.Profile()
 pr.enable()
 
-# INITIALIZE MPIW=
+# INITIALIZE MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -20,8 +18,6 @@ size = comm.Get_size()
 # Set simulation input data
 CONF = {}
 exec(open(sys.argv[1]).read(), CONF)
-
-
 
 # Set seed for all simulations
 np.random.seed(0)
@@ -32,8 +28,6 @@ if 'T0' in CONF:
     CONF['kbT0']=kb*CONF['T0']
     E_kin0 = kb*3*CONF['Np']*CONF['T0']/2.
 
-if 'T_start' in CONF:
-    CONF['kbT_start']=kb*CONF['T_start']
 
 Ncells = (CONF['Nv']**3)
 CONF['L']      = np.array(CONF['L'])
@@ -48,15 +42,14 @@ if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
 
 
+# Create index ranges for MPI
 np_per_MPI=CONF['Np']//size
 if rank==size-1:
-    np_cum_mpi=[rank*np_per_MPI,CONF['Np']]
+    p_mpi_range = range(rank*np_per_MPI,CONF['Np'])
 else:
-    np_cum_mpi=[rank*np_per_MPI,(rank+1)*np_per_MPI]
+    p_mpi_range = range(rank*np_per_MPI,(rank+1)*np_per_MPI)
 
-p_mpi_range = range(np_cum_mpi[0],np_cum_mpi[1])
-
-# Read input
+# Read input to each mpi-task
 f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=comm)
 r=f_input['coordinates'][-1,p_mpi_range,:]
 vel=f_input['velocities'][-1,p_mpi_range,:]
@@ -73,13 +66,12 @@ pm   = pmesh.ParticleMesh((CONF['Nv'],CONF['Nv'],CONF['Nv']),BoxSize=CONF['L'], 
 
 
 # INTILIZE PMESH ARRAYS
-phi=[]
+
 phi_t=[]
 force_ds=[]
 v_pot=[]
 
 for t in range(CONF['ntypes']):
-    phi.append(pm.create('real'))
     phi_t.append(pm.create('real'))
     v_pot.append(pm.create('real'))
     force_ds.append([pm.create('real') for d in range(3)])
@@ -253,10 +245,9 @@ if "domain_decomp" in CONF:
     indicies=layout.exchange(indicies)
     f_old=layout.exchange(f_old)
     types=layout.exchange(types)
-    layouts=[None,None]
-    
-else:
-    layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+    layouts=[None,None]    
+
+layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
 COMP_FORCE(f, r, force_ds)
 
@@ -290,11 +281,9 @@ for step in range(CONF['NSTEPS']):
         layouts=[None,None]
         
 
-    else:
-        # Particles are kept on mpi-task
-        layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+    # Particles are kept on mpi-task
+    layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 
-#    DOMAIN_DECOMPOSITION(layouts)
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
 
