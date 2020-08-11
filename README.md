@@ -27,15 +27,15 @@ brew install hdf5-mpi
 brew install pgk-config
 pip3 install mpi4py pmesh numpy sympy pfft-python mpsort  cython 
 
-# Using LLVM default compiler from Xcode
+Using LLVM default compiler from Xcode
 mpicc --showme
 >>> clang -I/usr/local/Cellar/open-mpi/4.0.4_1/include -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/4.0.4_1/lib -lmpi
 
-# compile h5py from source
+compile h5py from source
 git clone git@github.com:h5py.git
 cd h5py
 
-# master is probably fine, but I used this specific one
-# The lastest github release 2.10.0 from Sep 2019 does *not* work
+master is probably fine, but I used this specific one
+The lastest github release 2.10.0 from Sep 2019 does *not* work
 git checkout 6f4c578f78321b857da31eee0ce8d9b1ba291888
 HDF5_MPI="ON" pip3 install -v .
