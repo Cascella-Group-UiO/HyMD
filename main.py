@@ -176,7 +176,7 @@ def STORE_DATA(step,frame):
 
 
 
-def COMP_FORCE(f, r, force_ds):
+def COMP_FORCE(layouts, f, r, force_ds):
     for t in range(CONF['ntypes']):
         for d in range(3):
             f[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
@@ -235,8 +235,10 @@ if rank==0:
     start_t = time.time()
 
 
-# First step
-if "domain_decomp" in CONF:
+def DOMAIN_DECOMP(r, vel, f, indices, f_old, types):
+    E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
+    if pm.comm.rank == 0:
+        print('Kin energy before domain', E_kin)
     #Particles are exchanged between mpi-processors
     layout=pm.decompose(r,smoothing=0)
     r=layout.exchange(r)
@@ -245,11 +247,19 @@ if "domain_decomp" in CONF:
     indicies=layout.exchange(indicies)
     f_old=layout.exchange(f_old)
     types=layout.exchange(types)
-    layouts=[None,None]    
+
+    E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
+    if pm.comm.rank == 0:
+        print('Kin energy after domain', E_kin)
+    return r, vel, f, indices, f_old, types
+
+# First step
+if "domain_decomp" in CONF:
+    r, vel, f, indices, f_old, types = DOMAIN_DECOMP(r, vel, f, indices, f_old, types)
 
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
-COMP_FORCE(f, r, force_ds)
+COMP_FORCE(layouts, f, r, force_ds)
 
 for step in range(CONF['NSTEPS']):
 
@@ -270,16 +280,7 @@ for step in range(CONF['NSTEPS']):
     r     = np.mod(r, CONF['L'][None,:])
 
     if "domain_decomp" in CONF:
-        #Particles are exchanged between mpi-processors
-        layout=pm.decompose(r,smoothing=0)
-        r=layout.exchange(r)
-        vel=layout.exchange(vel)
-        f=layout.exchange(f)
-        indicies=layout.exchange(indicies)
-        f_old=layout.exchange(f_old)
-        types=layout.exchange(types)
-        layouts=[None,None]
-        
+        r, vel, f, indices, f_old, types = DOMAIN_DECOMP(r, vel, f, indices, f_old, types)
 
     # Particles are kept on mpi-task
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
@@ -288,7 +289,7 @@ for step in range(CONF['NSTEPS']):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
 
 
-    COMP_FORCE(f,r,force_ds)
+    COMP_FORCE(layouts,f,r,force_ds)
 
 
     # Integrate velocity
