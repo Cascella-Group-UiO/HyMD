@@ -45,9 +45,9 @@ if 'phi0' not in CONF:
 # Create index ranges for MPI
 np_per_MPI=CONF['Np']//size
 if rank==size-1:
-    p_mpi_range = range(rank*np_per_MPI,CONF['Np'])
+    p_mpi_range = list(range(rank*np_per_MPI,CONF['Np']))
 else:
-    p_mpi_range = range(rank*np_per_MPI,(rank+1)*np_per_MPI)
+    p_mpi_range = list(range(rank*np_per_MPI,(rank+1)*np_per_MPI))
 
 # Read input to each mpi-task
 f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=comm)
@@ -56,7 +56,7 @@ vel=f_input['velocities'][-1,p_mpi_range,:]
 f=np.zeros((len(r),3))
 f_old=np.copy(f)
 types=f_input['types'][p_mpi_range]
-indicies=f_input['indicies'][p_mpi_range]
+indices=f_input['indicies'][p_mpi_range]
 names = f_input['names'][p_mpi_range]
 f_input.close()
 
@@ -86,7 +86,7 @@ dset_time = f_hd5.create_dataset("time", shape=(CONF['n_frames'],), dtype="Float
 
 dset_time.attrs['units']="picoseconds"
 dset_names=f_hd5.create_dataset("names",  (CONF['Np'],), dtype="S10")
-dset_indicies=f_hd5.create_dataset("indicies",  (CONF['Np'],), dtype='i')
+dset_indices=f_hd5.create_dataset("indices",  (CONF['Np'],), dtype='i')
 dset_types=f_hd5.create_dataset("types",  (CONF['Np'],), dtype='i')
 dset_lengths=f_hd5.create_dataset("cell_lengths",  (1,3,3), dtype='Float32')
 dset_tot_energy=f_hd5.create_dataset("tot_energy",  (CONF['n_frames'],), dtype='Float32')
@@ -95,7 +95,7 @@ dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='
 
 dset_names[p_mpi_range]=names
 dset_types[p_mpi_range]=types
-dset_indicies[p_mpi_range]=indicies
+dset_indices[p_mpi_range]=indices
 dset_lengths[0,0,0]=CONF["L"][0]
 dset_lengths[0,1,1]=CONF["L"][1]
 dset_lengths[0,2,2]=CONF["L"][2]
@@ -160,9 +160,9 @@ def STORE_DATA(step,frame):
             frame : int
                 current data frame used store data.
     """
-    ind_sort=np.argsort(indicies)
-    dset_pos[frame,indicies[ind_sort]] = r[ind_sort]
-    dset_vel[frame,indicies[ind_sort]] = vel[ind_sort]
+    ind_sort=np.argsort(indices)
+    dset_pos[frame,indices[ind_sort]] = r[ind_sort]
+    dset_vel[frame,indices[ind_sort]] = vel[ind_sort]
 
 
     if rank==0:
@@ -236,21 +236,21 @@ if rank==0:
 
 
 def DOMAIN_DECOMP(r, vel, f, indices, f_old, types):
-    E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
-    if pm.comm.rank == 0:
-        print('Kin energy before domain', E_kin)
+    # E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
+    # if pm.comm.rank == 0:
+    #     print('Kin energy before domain', E_kin)
     #Particles are exchanged between mpi-processors
     layout=pm.decompose(r,smoothing=0)
     r=layout.exchange(r)
     vel=layout.exchange(vel)
     f=layout.exchange(f)
-    indicies=layout.exchange(indicies)
+    indices=layout.exchange(indices)
     f_old=layout.exchange(f_old)
     types=layout.exchange(types)
 
-    E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
-    if pm.comm.rank == 0:
-        print('Kin energy after domain', E_kin)
+    #E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
+    # if pm.comm.rank == 0:
+    #     print('Kin energy after domain', E_kin)
     return r, vel, f, indices, f_old, types
 
 # First step
