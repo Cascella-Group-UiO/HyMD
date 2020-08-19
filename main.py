@@ -42,41 +42,48 @@ if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
 
 
-
 np_per_MPI=CONF['Np']//size
 if rank==size-1:
-    _np_cum_mpi=[rank*np_per_MPI,CONF['Np']]
+    np_cum_mpi=[rank*np_per_MPI,CONF['Np']]
 else:
-    _np_cum_mpi=[rank*np_per_MPI,(rank+1)*np_per_MPI]
+    np_cum_mpi=[rank*np_per_MPI,(rank+1)*np_per_MPI]
 
 grab_extra = 30
-_np_cum_mpi[0] = max(0, _np_cum_mpi[0] - grab_extra)
-_np_cum_mpi[1] = min(CONF['Np'], _np_cum_mpi[1] + grab_extra)
+_np_cum_mpi = np.empty(shape=(2,), dtype=int)
+_np_cum_mpi[0] = max(0, np_cum_mpi[0] - grab_extra)
+_np_cum_mpi[1] = min(CONF['Np'], np_cum_mpi[1] + grab_extra)
 _p_mpi_range = list(range(_np_cum_mpi[0], _np_cum_mpi[1]))
 
 # Read input
 f_input = h5py.File(sys.argv[2], 'r', driver='mpio', comm=comm)
-molecules = f_input['molecules'][_p_mpi_range]
-indices = f_input['indices'][_p_mpi_range]
+molecules_flag = False
+if 'molecules' in f_input:
+    molecules_flag = True
+    molecules = f_input['molecules'][_p_mpi_range]
+    indices = f_input['indices'][_p_mpi_range]
 
-if rank == 0:
-    mpi_range_start = 0
+    if rank == 0:
+        mpi_range_start = 0
+    else:
+        mpi_range_start = grab_extra
+        while molecules[mpi_range_start - 1] == molecules[mpi_range_start]:
+            mpi_range_start += 1
+    mpi_range_start = indices[mpi_range_start]
+
+    if rank == size - 1:
+        mpi_range_end = CONF['Np']
+    else:
+        mpi_range_end = grab_extra + np_per_MPI if rank != 0 else np_per_MPI
+        while molecules[mpi_range_end - 1] == molecules[mpi_range_end]:
+            mpi_range_end += 1
+        mpi_range_end = indices[mpi_range_end]
+    p_mpi_range = list(range(mpi_range_start, mpi_range_end))
 else:
-    mpi_range_start = grab_extra
-    while molecules[mpi_range_start - 1] == molecules[mpi_range_start]:
-        mpi_range_start += 1
-mpi_range_start = indices[mpi_range_start]
+    p_mpi_range = list(range(np_cum_mpi[0], np_cum_mpi[1]))
 
-if rank == size - 1:
-    mpi_range_end = CONF['Np']
-else:
-    mpi_range_end = grab_extra + np_per_MPI if rank != 0 else np_per_MPI
-    while molecules[mpi_range_end - 1] == molecules[mpi_range_end]:
-        mpi_range_end += 1
-    mpi_range_end = indices[mpi_range_end]
-p_mpi_range = list(range(mpi_range_start, mpi_range_end))
+if molecules_flag:
+    molecules = f_input['molecules'][p_mpi_range]
 
-molecules = f_input['molecules'][p_mpi_range]
 indices = f_input['indices'][p_mpi_range]
 r=f_input['coordinates'][-1,p_mpi_range,:]
 vel=f_input['velocities'][-1,p_mpi_range,:]
@@ -218,10 +225,14 @@ def STORE_DATA(step,frame):
         dset_tot_energy[frame]=W+E_kin
         dset_pot_energy[frame]=W
         dset_kin_energy[frame]=E_kin
-        dset_bond_energy[frame]=bond_energy
+        if molecules_flag:
+            dset_bond_energy[frame]=bond_energy
         dset_time[frame]=CONF['dt']*step
 
-        fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
+        if molecules_flag:
+            fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,bond_energy,T,mom[0],mom[1],mom[2]))
+        else:
+            fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
         fp_E.flush()
 
 
@@ -280,6 +291,10 @@ def COMP_BONDS(f_bonds, r):
             if bond != -1:
                 global_index_j = bond
                 local_index_j = np.squeeze(np.where(indices == global_index_j))
+
+                if global_index_i < global_index_j:
+                    continue
+
                 ri = r[local_index_i, :]
                 rj = r[local_index_j, :]
                 rij = rj - ri
@@ -291,10 +306,10 @@ def COMP_BONDS(f_bonds, r):
                 dr = np.linalg.norm(rij)
                 df = - k * (dr - r0)
                 f_bond_vector = df * rij / dr
-                f_bonds[local_index_i, :] -= 0.5 * f_bond_vector
-                f_bonds[local_index_j, :] += 0.5 * f_bond_vector
+                f_bonds[local_index_i, :] -= f_bond_vector
+                f_bonds[local_index_j, :] += f_bond_vector
 
-                energy += 0.25 * k * (dr - r0)**2
+                energy += 0.5 * k * (dr - r0)**2
     global bond_energy
     bond_energy = comm.allreduce(energy, MPI.SUM)
 
@@ -341,9 +356,12 @@ if "domain_decomp" in CONF:
 
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
-COMP_FORCE(layouts, f, r, force_ds)
-COMP_BONDS(f_bonds, r)
-f = f_field + f_bonds
+COMP_FORCE(layouts, f_field, r, force_ds)
+if molecules_flag:
+    COMP_BONDS(f_bonds, r)
+    f = f_field + f_bonds
+else:
+    f = f_field
 
 for step in range(CONF['NSTEPS']):
 
@@ -372,10 +390,12 @@ for step in range(CONF['NSTEPS']):
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
 
-    COMP_FORCE(layouts,f,r,force_ds)
-    COMP_BONDS(f_bonds,r)
-    f = f_field + f_bonds
-
+    COMP_FORCE(layouts, f_field, r, force_ds)
+    if molecules_flag:
+        COMP_BONDS(f_bonds,r)
+        f = f_field + f_bonds
+    else:
+        f = f_field
 
     # Integrate velocity
     vel = INTEGRATE_VEL(vel, f/CONF['mass'], f_old/CONF['mass'])
