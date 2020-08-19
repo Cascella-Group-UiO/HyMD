@@ -42,23 +42,71 @@ if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
 
 
-# Create index ranges for MPI
+
 np_per_MPI=CONF['Np']//size
 if rank==size-1:
-    p_mpi_range = list(range(rank*np_per_MPI,CONF['Np']))
+    _np_cum_mpi=[rank*np_per_MPI,CONF['Np']]
 else:
-    p_mpi_range = list(range(rank*np_per_MPI,(rank+1)*np_per_MPI))
+    _np_cum_mpi=[rank*np_per_MPI,(rank+1)*np_per_MPI]
 
-# Read input to each mpi-task
-f_input = h5py.File(sys.argv[2], 'r',driver='mpio', comm=comm)
+grab_extra = 30
+_np_cum_mpi[0] = max(0, _np_cum_mpi[0] - grab_extra)
+_np_cum_mpi[1] = min(CONF['Np'], _np_cum_mpi[1] + grab_extra)
+_p_mpi_range = list(range(_np_cum_mpi[0], _np_cum_mpi[1]))
+
+# Read input
+f_input = h5py.File(sys.argv[2], 'r', driver='mpio', comm=comm)
+molecules = f_input['molecules'][_p_mpi_range]
+indices = f_input['indices'][_p_mpi_range]
+
+if rank == 0:
+    mpi_range_start = 0
+else:
+    mpi_range_start = grab_extra
+    while molecules[mpi_range_start - 1] == molecules[mpi_range_start]:
+        mpi_range_start += 1
+mpi_range_start = indices[mpi_range_start]
+
+if rank == size - 1:
+    mpi_range_end = CONF['Np']
+else:
+    mpi_range_end = grab_extra + np_per_MPI if rank != 0 else np_per_MPI
+    while molecules[mpi_range_end - 1] == molecules[mpi_range_end]:
+        mpi_range_end += 1
+    mpi_range_end = indices[mpi_range_end]
+p_mpi_range = list(range(mpi_range_start, mpi_range_end))
+
+molecules = f_input['molecules'][p_mpi_range]
+indices = f_input['indices'][p_mpi_range]
 r=f_input['coordinates'][-1,p_mpi_range,:]
 vel=f_input['velocities'][-1,p_mpi_range,:]
 f=np.zeros((len(r),3))
+f_bonds=np.zeros((len(r),3))
+f_field=np.zeros((len(r),3))
 f_old=np.copy(f)
 types=f_input['types'][p_mpi_range]
-indices=f_input['indicies'][p_mpi_range]
 names = f_input['names'][p_mpi_range]
+bonds = f_input['bonds'][p_mpi_range]
 f_input.close()
+
+
+def GEN_START_VEL(dset):
+    #NORMAL DISTRIBUTED PARTICLES FIRST FRAME
+    std  = np.sqrt(CONF['kbT_start']/CONF['mass'])
+    tmp = np.random.normal(loc=0, scale=std, size=(CONF['Np'],3))
+    # print(dset.shape)
+    # print(tmp.shape, p_mpi_range, dset[:,:].shape)
+    dset[:,:] = tmp[p_mpi_range,:]
+    dset[:,:] = dset[:,:]-np.mean(dset[:,:], axis=0)
+    fac= np.sqrt((3*len(p_mpi_range)*CONF['kbT_start']/2.)/(0.5*CONF['mass']*np.sum(dset[:,:]**2)))
+
+    dset[:,:]=dset[:,:]*fac
+
+if 'T_start' in CONF:
+    GEN_START_VEL(vel)
+
+bond_energy = 0.0
+# print(f'{rank}: {Counter(names)}\n{molecules}\n{indices}\n{bonds}\n')
 
 
 #Particle-Mesh initialization
@@ -91,6 +139,7 @@ dset_types=f_hd5.create_dataset("types",  (CONF['Np'],), dtype='i')
 dset_lengths=f_hd5.create_dataset("cell_lengths",  (1,3,3), dtype='Float32')
 dset_tot_energy=f_hd5.create_dataset("tot_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_pot_energy=f_hd5.create_dataset("pot_energy",  (CONF['n_frames'],), dtype='Float32')
+dset_bond_energy=f_hd5.create_dataset("bond_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
 
 dset_names[p_mpi_range]=names
@@ -116,7 +165,7 @@ def INTEGRATE_VEL(vel, a, a_old):
     return vel + 0.5*(a+a_old)*CONF['dt']
 
 def VEL_RESCALE(vel, tau):
-    """ Velocity rescale thermostat, see 
+    """ Velocity rescale thermostat, see
         https://doi.org/10.1063/1.2408420
             Parameters
             ----------
@@ -125,8 +174,8 @@ def VEL_RESCALE(vel, tau):
             Returns:
             ----------
             out : vel
-            Thermostatted velocity array.  
-    """    
+            Thermostatted velocity array.
+    """
 
     # INITIAL KINETIC ENERGY
     E_kin  = comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
@@ -156,7 +205,7 @@ def STORE_DATA(step,frame):
             Parameters
             ----------
             step : int
-                current MD step 
+                current MD step
             frame : int
                 current data frame used store data.
     """
@@ -169,6 +218,7 @@ def STORE_DATA(step,frame):
         dset_tot_energy[frame]=W+E_kin
         dset_pot_energy[frame]=W
         dset_kin_energy[frame]=E_kin
+        dset_bond_energy[frame]=bond_energy
         dset_time[frame]=CONF['dt']*step
 
         fp_E.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n"%(step*CONF['dt'],W+E_kin,W,E_kin,T,mom[0],mom[1],mom[2]))
@@ -179,7 +229,7 @@ def STORE_DATA(step,frame):
 def COMP_FORCE(layouts, f, r, force_ds):
     for t in range(CONF['ntypes']):
         for d in range(3):
-            f[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
+            f_field[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
 
 def COMP_PRESSURE():
     # COMPUTES HPF PRESSURE FOR EACH MPI TASK
@@ -201,7 +251,7 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
     # Filtered density
     for t in range(CONF['ntypes']):
         phi_t[t] = (pm.paint(r[types==t], layout=layouts[t])/CONF['dV']).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
-        
+
     # External potential
     for t in range(CONF['ntypes']):
         v_p_fft=CONF['V_EXT'][t](phi_t).r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis)
@@ -215,6 +265,38 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
         if(comp_v_pot):
             v_pot[t]=v_p_fft.c2r(out=Ellipsis)
 
+
+def COMP_BONDS(f_bonds, r):
+    k = CONF['bond_strenght']
+    r0 = CONF['bond_length']
+
+    f_bonds.fill(0.0)
+    energy = 0.0
+
+    for i, atom_bonds in enumerate(bonds):
+        global_index_i = indices[i]
+        local_index_i = i
+        for bond in atom_bonds:
+            if bond != -1:
+                global_index_j = bond
+                local_index_j = np.squeeze(np.where(indices == global_index_j))
+                ri = r[local_index_i, :]
+                rj = r[local_index_j, :]
+                rij = rj - ri
+                rij = np.squeeze(rij)
+
+                # Apply periodic boundary conditions to the distance rij
+                for dim in range(len(rij)):
+                    rij[dim] -= CONF['L'][dim] * np.around(rij[dim] / CONF['L'][dim])
+                dr = np.linalg.norm(rij)
+                df = - k * (dr - r0)
+                f_bond_vector = df * rij / dr
+                f_bonds[local_index_i, :] -= 0.5 * f_bond_vector
+                f_bonds[local_index_j, :] += 0.5 * f_bond_vector
+
+                energy += 0.25 * k * (dr - r0)**2
+    global bond_energy
+    bond_energy = comm.allreduce(energy, MPI.SUM)
 
 
 def COMPUTE_ENERGY():
@@ -260,6 +342,8 @@ if "domain_decomp" in CONF:
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
 COMP_FORCE(layouts, f, r, force_ds)
+COMP_BONDS(f_bonds, r)
+f = f_field + f_bonds
 
 for step in range(CONF['NSTEPS']):
 
@@ -288,8 +372,9 @@ for step in range(CONF['NSTEPS']):
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
 
-
     COMP_FORCE(layouts,f,r,force_ds)
+    COMP_BONDS(f_bonds,r)
+    f = f_field + f_bonds
 
 
     # Integrate velocity
@@ -297,13 +382,14 @@ for step in range(CONF['NSTEPS']):
 
     # Thermostat
     if('T0' in CONF):
-        vel = VEL_RESCALE(vel,tau)
+        vel = VEL_RESCALE(vel,CONF['tau'])
 
     # Print trajectory
     if CONF['nprint']>0:
         if(np.mod(step,CONF['nprint'])==0):
             STORE_DATA(step, frame)
-
+            if rank == 0:
+                print(f"Step: {step:5} | {100.0 * step / float(CONF['NSTEPS']):5.2f} % | t={step*CONF['dt']:5.4f}  Max(avg) f_bonds: {np.max(f_bonds):10.5f} ({np.mean(f_bonds):5.3f})\tMax(avg) f_field: {np.max(f_field):10.5f} ({np.mean(f_field):5.3f})\tE: {W+E_kin+bond_energy:10.5f}\tEk {E_kin:10.5f}\tW: {W:10.5f}\tEb: {bond_energy:10.5f}")
 
 # End simulation
 if rank==0:
@@ -330,4 +416,3 @@ with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
     sys.stdout = output_file
     pr.print_stats( sort='time' )
     sys.stdout = sys.__stdout__
-
