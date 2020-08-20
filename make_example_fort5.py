@@ -61,7 +61,7 @@ def write_fort5(box_size,
 
             for a in range(n_atoms_per_polymer):
                 R = Rotation.random()
-                displacement = np.array([1, 0, 0])
+                displacement = np.array([0.25, 0, 0])
                 displacement = R.apply(displacement)
                 position = position + displacement
                 position = np.squeeze(position)
@@ -69,7 +69,7 @@ def write_fort5(box_size,
                 for dim in range(len(position)):
                     while position[dim] > box_size[dim]:
                         position[dim] -= box_size[dim]
-                    while position[dim] < box_size[dim]:
+                    while position[dim] < 0.0:
                         position[dim] += box_size[dim]
 
                 atom_type_name = polymer_topology[a]
@@ -83,7 +83,7 @@ def write_fort5(box_size,
                         bonds_adjusted[i] = b + p * n_atoms_per_polymer
 
                 out_file.write(f'{atom_index:4}\t{atom_type_name:4}\t{atom_type:4}\t{num_bonds:4}')  # noqa: E501
-                out_file.write(f'\t\t{position[0]:.3f}\t{position[1]:.3f}\t{position[2]:.3f}')  # noqa: E501
+                out_file.write(f'\t\t{position[0]:.16f}\t{position[1]:.16f}\t{position[2]:.16f}')  # noqa: E501
                 out_file.write(f'\t{0.0:.3f}\t{0.0:.3f}\t{0.0:.3f}\t')
                 for b in bonds_adjusted:
                     out_file.write(f'\t{b:4}')
@@ -117,9 +117,9 @@ if __name__ == '__main__':
     parser.add_argument('--box', type=int, nargs=3,
                         help='simulation box length')
     parser.add_argument('--n-molecules', type=int, dest='n_molecules',
-                        help='number of molecules')
+                        help='number of molecules', default=0)
     parser.add_argument('--n-solvent', type=int, dest='n_solvent',
-                        help='number of solvent atoms')
+                        help='number of solvent atoms', default=0)
     parser.add_argument('--system', type=str,
                         help='what kind of system to generate',
                         choices=['diblock-copolymer'])
