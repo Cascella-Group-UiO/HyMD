@@ -61,6 +61,7 @@ if 'molecules' in f_input:
     molecules_flag = True
     molecules = f_input['molecules'][_p_mpi_range]
     indices = f_input['indices'][_p_mpi_range]
+    bonds = f_input['bonds'][p_mpi_range]
 
     if rank == 0:
         mpi_range_start = 0
@@ -93,7 +94,6 @@ f_field=np.zeros((len(r),3))
 f_old=np.copy(f)
 types=f_input['types'][p_mpi_range]
 names = f_input['names'][p_mpi_range]
-bonds = f_input['bonds'][p_mpi_range]
 f_input.close()
 
 
