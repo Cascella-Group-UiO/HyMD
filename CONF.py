@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import sympy
 
 Np     = 10000      # Number of particles
