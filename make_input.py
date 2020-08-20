@@ -43,10 +43,10 @@ parts=1000
 n=int(CONF['Np']/parts)
 #print(n,CONF['Np'])
 for i in range(parts-1):
-    indices.append(range(i*n,(i+1)*n))
+    indices.append(list(range(i*n,(i+1)*n)))
 
 if not(n*i==CONF['Np']):
-    indices.append(range((i+1)*n,CONF['Np']))
+    indices.append(list(range((i+1)*n,CONF['Np'])))
 
 
 def cube(r):
