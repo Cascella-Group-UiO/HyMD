@@ -97,21 +97,6 @@ names = f_input['names'][p_mpi_range]
 f_input.close()
 
 
-def GEN_START_VEL(dset):
-    #NORMAL DISTRIBUTED PARTICLES FIRST FRAME
-    std  = np.sqrt(CONF['kbT_start']/CONF['mass'])
-    tmp = np.random.normal(loc=0, scale=std, size=(CONF['Np'],3))
-    # print(dset.shape)
-    # print(tmp.shape, p_mpi_range, dset[:,:].shape)
-    dset[:,:] = tmp[p_mpi_range,:]
-    dset[:,:] = dset[:,:]-np.mean(dset[:,:], axis=0)
-    fac= np.sqrt((3*len(p_mpi_range)*CONF['kbT_start']/2.)/(0.5*CONF['mass']*np.sum(dset[:,:]**2)))
-
-    dset[:,:]=dset[:,:]*fac
-
-if 'T_start' in CONF:
-    GEN_START_VEL(vel)
-
 bond_energy = 0.0
 # print(f'{rank}: {Counter(names)}\n{molecules}\n{indices}\n{bonds}\n')
 
