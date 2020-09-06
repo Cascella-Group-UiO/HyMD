@@ -6,6 +6,15 @@ import h5py
 import sys
 import pmesh.pm as pmesh # Particle mesh Routine
 import time
+import logging
+
+logging.basicConfig(level=logging.INFO,
+    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+)
+def clog(level, msg, *args, **kwargs):
+    comm = kwargs.pop('comm', MPI.COMM_WORLD)
+    if comm.rank == 0:
+        logging.log(level, msg, *args, **kwargs)
 
 pr = cProfile.Profile()
 pr.enable()
@@ -85,6 +94,7 @@ else:
 if molecules_flag:
     molecules = f_input['molecules'][p_mpi_range]
 
+logging.log(logging.INFO, "Rank = %d: p_mpi_range = %s", comm.rank, p_mpi_range)
 indices = f_input['indices'][p_mpi_range]
 r=f_input['coordinates'][-1,p_mpi_range,:]
 vel=f_input['velocities'][-1,p_mpi_range,:]
@@ -104,6 +114,7 @@ bond_energy = 0.0
 #Particle-Mesh initialization
 pm   = pmesh.ParticleMesh((CONF['Nv'],CONF['Nv'],CONF['Nv']),BoxSize=CONF['L'], dtype='f8',comm=comm)
 
+clog(logging.INFO, "ProcMesh = %s", str(pm.np))
 
 # INTILIZE PMESH ARRAYS
 
@@ -349,6 +360,7 @@ else:
     f = f_field
 
 for step in range(CONF['NSTEPS']):
+    clog(logging.INFO, "=> step = %d", step)
 
     if CONF['nprint']>0:
         frame=step//CONF['nprint']
@@ -371,6 +383,9 @@ for step in range(CONF['NSTEPS']):
 
     # Particles are kept on mpi-task
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+    for t in range(CONF['ntypes']):
+        clog(logging.INFO, "GHOSTS: Total number of particles (%d) to be exchanged = %d",
+             t, np.sum(layouts[t].get_exchange_cost()))
 
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
