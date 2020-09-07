@@ -1,0 +1,10 @@
+pytest
+networkx
+cython
+numpy
+sympy
+mpi4py
+mpsort
+pfft-python
+pmesh
+h5py
