@@ -1,23 +1,79 @@
+from argparse import ArgumentParser
+import atexit
 from mpi4py import MPI
 #from mpi4py.MPI import COMM_WORLD
 import cProfile, pstats
 import numpy as np
 import h5py
-import sys
+import os
 import pmesh.pm as pmesh # Particle mesh Routine
 import time
+import logging
 
-pr = cProfile.Profile()
-pr.enable()
+def clog(level, msg, *args, **kwargs):
+    comm = kwargs.pop('comm', MPI.COMM_WORLD)
+    if comm.rank == 0:
+        logging.log(level, msg, *args, **kwargs)
+
+def CONFIGURE_RUNTIME(comm):
+    ap = ArgumentParser()
+    ap.add_argument("--verbose", default=False, action='store_true')
+    ap.add_argument("--profile", default=False, action='store_true')
+    ap.add_argument("--disable-mpio", default=False, action='store_true', help="Avoid using h5py-mpi, IO performance suffers.")
+    ap.add_argument("--destdir", default=".", help="Write to destdir")
+    ap.add_argument("confscript", help="CONF.py")
+    ap.add_argument("input", help="input.hdf5")
+    args = ap.parse_args()
+
+    if comm.rank == 0:
+        os.makedirs(args.destdir, exist_ok=True)
+    comm.barrier()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO,
+            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+        )
+
+    if args.profile:
+        output_file = open(os.path.join(args.destdir,
+            'cpu.txt-%05d-of-%05d' % (comm.rank, comm.size))
+        , 'w')
+        pr = cProfile.Profile()
+        def profile_atexit():
+            pr.disable()
+            # Dump results:
+            # - for binary dump
+            pr.dump_stats(os.path.join(args.destdir,
+                'cpu.prof-%05d-of-%05d' % (comm.rank, comm.size))
+            )
+            stats = pstats.Stats(pr, stream=output_file)
+            stats.sort_stats('time').print_stats()
+            output_file.close()
+
+        # TODO: if we have a main function then we can properly do set up and teardown
+        # without using atexit.
+        atexit.register(profile_atexit)
+
+        pr.enable()
+
+    CONF = {}
+    exec(open(args.confscript).read(), CONF)
+
+    for key, value in sorted(CONF.items()):
+        if key.startswith("_"):
+            continue
+        clog(logging.INFO, "%s = %s", key, value)
+
+    return args, CONF
 
 # INITIALIZE MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+args, CONF = CONFIGURE_RUNTIME(comm)
+
 # Set simulation input data
-CONF = {}
-exec(open(sys.argv[1]).read(), CONF)
 
 # Set seed for all simulations
 np.random.seed(0)
@@ -55,7 +111,11 @@ _np_cum_mpi[1] = min(CONF['Np'], np_cum_mpi[1] + grab_extra)
 _p_mpi_range = list(range(_np_cum_mpi[0], _np_cum_mpi[1]))
 
 # Read input
-f_input = h5py.File(sys.argv[2], 'r', driver='mpio', comm=comm)
+if args.disable_mpio:
+    f_input = h5py.File(args.input, 'r')
+else:
+    f_input = h5py.File(args.input, 'r', driver='mpio', comm=comm)
+
 molecules_flag = False
 if 'molecules' in f_input:
     molecules_flag = True
@@ -90,7 +150,6 @@ r=f_input['coordinates'][-1,p_mpi_range,:]
 vel=f_input['velocities'][-1,p_mpi_range,:]
 f=np.zeros((len(r),3))
 f_bonds=np.zeros((len(r),3))
-f_field=np.zeros((len(r),3))
 f_old=np.copy(f)
 types=f_input['types'][p_mpi_range]
 names = f_input['names'][p_mpi_range]
@@ -104,6 +163,7 @@ bond_energy = 0.0
 #Particle-Mesh initialization
 pm   = pmesh.ParticleMesh((CONF['Nv'],CONF['Nv'],CONF['Nv']),BoxSize=CONF['L'], dtype='f8',comm=comm)
 
+clog(logging.INFO, "ProcMesh = %s", str(pm.np))
 
 # INTILIZE PMESH ARRAYS
 
@@ -117,7 +177,15 @@ for t in range(CONF['ntypes']):
     force_ds.append([pm.create('real') for d in range(3)])
 
 # Output files
-f_hd5 = h5py.File('sim.hdf5', 'w',driver='mpio', comm=comm)
+if args.disable_mpio:
+    # FIXME(rainwoodman): This does not crash, but
+    # we shall not create one file per rank with most ranges in the file untouched.
+    # A Proper fix is the ranks shall open sim.hdf5 in round-robin; however
+    # the dset_xxx aliases are getting in the way.
+    f_hd5 = h5py.File(os.path.join(args.destdir, 'sim.hdf5-%06d-of-%06d' % (comm.rank, comm.size)), 'w')
+else:
+    f_hd5 = h5py.File(os.path.join(args.destdir, 'sim.hdf5'), 'w', driver='mpio', comm=comm)
+
 dset_pos  = f_hd5.create_dataset("coordinates", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 dset_vel  = f_hd5.create_dataset("velocities", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 
@@ -134,6 +202,7 @@ dset_pot_energy=f_hd5.create_dataset("pot_energy",  (CONF['n_frames'],), dtype='
 dset_bond_energy=f_hd5.create_dataset("bond_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
 
+# FIXME: this can be inefficient if p_mpi_range is discontiguous (depends on hdf-mpi impl detail)
 dset_names[p_mpi_range]=names
 dset_types[p_mpi_range]=types
 dset_indices[p_mpi_range]=indices
@@ -142,7 +211,7 @@ dset_lengths[0,1,1]=CONF["L"][1]
 dset_lengths[0,2,2]=CONF["L"][2]
 
 if rank==0:
-    fp_E   = open('E.dat','w')
+    fp_E   = open(os.path.join(args.destdir, 'E.dat'),'w')
 
 #FUNCTION DEFINITIONS
 
@@ -222,10 +291,15 @@ def STORE_DATA(step,frame):
 
 
 
-def COMP_FORCE(layouts, f, r, force_ds):
+def COMP_FORCE(layouts, r, force_ds, out=None):
+    if out is None:
+        out = np.zeros((len(r),3))
+    else:
+        assert out.shape == r.shape
     for t in range(CONF['ntypes']):
         for d in range(3):
-            f_field[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
+            out[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
+    return out
 
 def COMP_PRESSURE():
     # COMPUTES HPF PRESSURE FOR EACH MPI TASK
@@ -323,17 +397,10 @@ def DOMAIN_DECOMP(r, vel, f, indices, f_old, types):
     #     print('Kin energy before domain', E_kin)
     #Particles are exchanged between mpi-processors
     layout=pm.decompose(r,smoothing=0)
-    r=layout.exchange(r)
-    vel=layout.exchange(vel)
-    f=layout.exchange(f)
-    indices=layout.exchange(indices)
-    f_old=layout.exchange(f_old)
-    types=layout.exchange(types)
+    clog(logging.INFO, "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
+        np.sum(layout.get_exchange_cost()))
 
-    #E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
-    # if pm.comm.rank == 0:
-    #     print('Kin energy after domain', E_kin)
-    return r, vel, f, indices, f_old, types
+    return layout.exchange(r, vel, f, indices, f_old, types)
 
 # First step
 if "domain_decomp" in CONF:
@@ -341,7 +408,7 @@ if "domain_decomp" in CONF:
 
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
-COMP_FORCE(layouts, f_field, r, force_ds)
+f_field = COMP_FORCE(layouts, r, force_ds)
 if molecules_flag:
     COMP_BONDS(f_bonds, r)
     f = f_field + f_bonds
@@ -349,6 +416,7 @@ else:
     f = f_field
 
 for step in range(CONF['NSTEPS']):
+    clog(logging.INFO, "=> step = %d", step)
 
     if CONF['nprint']>0:
         frame=step//CONF['nprint']
@@ -371,11 +439,14 @@ for step in range(CONF['NSTEPS']):
 
     # Particles are kept on mpi-task
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+    for t in range(CONF['ntypes']):
+        clog(logging.INFO, "GHOSTS: Total number of particles (%d) to be exchanged = %d",
+             t, np.sum(layouts[t].get_exchange_cost()))
 
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
 
-    COMP_FORCE(layouts, f_field, r, force_ds)
+    f_field = COMP_FORCE(layouts, r, force_ds)
     if molecules_flag:
         COMP_BONDS(f_bonds,r)
         f = f_field + f_bonds
@@ -411,13 +482,4 @@ if CONF['nprint']>0:
     STORE_DATA(step,frame)
 
 f_hd5.close()
-pr.disable()
 
-# Dump results:
-# - for binary dump
-pr.dump_stats('cpu_%d.prof' %comm.rank)
-
-with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
-    sys.stdout = output_file
-    pr.print_stats( sort='time' )
-    sys.stdout = sys.__stdout__
