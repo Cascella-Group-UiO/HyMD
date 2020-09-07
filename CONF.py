@@ -20,6 +20,7 @@ ntypes=1
 rho0 = Np/(L[0]*L[1]*L[2])
 dV=L[0]*L[1]*L[2]/Nv
 NAMES=np.array(np.string_(a) for a in ["A","B"])
+domain_decomp=True
 #uniform_start=True
 #T_start=300
 # hPF potential defined
