@@ -19,6 +19,7 @@ def CONFIGURE_RUNTIME(comm):
     ap = ArgumentParser()
     ap.add_argument("--verbose", default=False, action='store_true')
     ap.add_argument("--profile", default=False, action='store_true')
+    ap.add_argument("--disable-mpio", default=False, action='store_true', help="Avoid using h5py-mpi, IO performance suffers.")
     ap.add_argument("--destdir", default=".", help="Write to destdir")
     ap.add_argument("confscript", help="CONF.py")
     ap.add_argument("input", help="input.hdf5")
@@ -35,7 +36,7 @@ def CONFIGURE_RUNTIME(comm):
 
     if args.profile:
         output_file = open(os.path.join(args.destdir,
-            'cpu.txt-%06d-of-%06d' % (comm.rank, comm.size))
+            'cpu.txt-%05d-of-%05d' % (comm.rank, comm.size))
         , 'w')
         pr = cProfile.Profile()
         def profile_atexit():
@@ -43,7 +44,7 @@ def CONFIGURE_RUNTIME(comm):
             # Dump results:
             # - for binary dump
             pr.dump_stats(os.path.join(args.destdir,
-                'cpu.prof-%06d-of-%06d' % (comm.rank, comm.size))
+                'cpu.prof-%05d-of-%05d' % (comm.rank, comm.size))
             )
             stats = pstats.Stats(pr, stream=output_file)
             stats.sort_stats('time').print_stats()
@@ -110,7 +111,11 @@ _np_cum_mpi[1] = min(CONF['Np'], np_cum_mpi[1] + grab_extra)
 _p_mpi_range = list(range(_np_cum_mpi[0], _np_cum_mpi[1]))
 
 # Read input
-f_input = h5py.File(args.input, 'r')
+if args.disable_mpio:
+    f_input = h5py.File(args.input, 'r')
+else:
+    f_input = h5py.File(args.input, 'r', driver='mpio', comm=comm)
+
 molecules_flag = False
 if 'molecules' in f_input:
     molecules_flag = True
@@ -172,7 +177,15 @@ for t in range(CONF['ntypes']):
     force_ds.append([pm.create('real') for d in range(3)])
 
 # Output files
-f_hd5 = h5py.File(os.path.join(args.destdir, 'sim.hdf5-%06d-of%06d' % (comm.rank, comm.size)), 'w')
+if args.disable_mpio:
+    # FIXME(rainwoodman): This does not crash, but
+    # we shall not create one file per rank with most ranges in the file untouched.
+    # A Proper fix is the ranks shall open sim.hdf5 in round-robin; however
+    # the dset_xxx aliases are getting in the way.
+    f_hd5 = h5py.File(os.path.join(args.destdir, 'sim.hdf5-%06d-of-%06d' % (comm.rank, comm.size)), 'w')
+else:
+    f_hd5 = h5py.File(os.path.join(args.destdir, 'sim.hdf5'), 'w', driver='mpio', comm=comm)
+
 dset_pos  = f_hd5.create_dataset("coordinates", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 dset_vel  = f_hd5.create_dataset("velocities", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 
@@ -189,6 +202,7 @@ dset_pot_energy=f_hd5.create_dataset("pot_energy",  (CONF['n_frames'],), dtype='
 dset_bond_energy=f_hd5.create_dataset("bond_energy",  (CONF['n_frames'],), dtype='Float32')
 dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
 
+# FIXME: this can be inefficient if p_mpi_range is discontiguous (depends on hdf-mpi impl detail)
 dset_names[p_mpi_range]=names
 dset_types[p_mpi_range]=types
 dset_indices[p_mpi_range]=indices
