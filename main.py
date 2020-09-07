@@ -1,32 +1,78 @@
+from argparse import ArgumentParser
+import atexit
 from mpi4py import MPI
 #from mpi4py.MPI import COMM_WORLD
 import cProfile, pstats
 import numpy as np
 import h5py
-import sys
+import os
 import pmesh.pm as pmesh # Particle mesh Routine
 import time
 import logging
 
-logging.basicConfig(level=logging.INFO,
-    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-)
 def clog(level, msg, *args, **kwargs):
     comm = kwargs.pop('comm', MPI.COMM_WORLD)
     if comm.rank == 0:
         logging.log(level, msg, *args, **kwargs)
 
-pr = cProfile.Profile()
-pr.enable()
+def CONFIGURE_RUNTIME(comm):
+    ap = ArgumentParser()
+    ap.add_argument("--verbose", default=False, action='store_true')
+    ap.add_argument("--profile", default=False, action='store_true')
+    ap.add_argument("--destdir", default=".", help="Write to destdir")
+    ap.add_argument("confscript", help="CONF.py")
+    ap.add_argument("input", help="input.hdf5")
+    args = ap.parse_args()
+
+    if comm.rank == 0:
+        os.makedirs(args.destdir, exist_ok=True)
+    comm.barrier()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO,
+            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+        )
+
+    if args.profile:
+        output_file = open(os.path.join(args.destdir,
+            'cpu.txt-%06d-of-%06d' % (comm.rank, comm.size))
+        , 'w')
+        pr = cProfile.Profile()
+        def profile_atexit():
+            pr.disable()
+            # Dump results:
+            # - for binary dump
+            pr.dump_stats(os.path.join(args.destdir,
+                'cpu.prof-%06d-of-%06d' % (comm.rank, comm.size))
+            )
+            stats = pstats.Stats(pr, stream=output_file)
+            stats.sort_stats('time').print_stats()
+            output_file.close()
+
+        # TODO: if we have a main function then we can properly do set up and teardown
+        # without using atexit.
+        atexit.register(profile_atexit)
+
+        pr.enable()
+
+    CONF = {}
+    exec(open(args.confscript).read(), CONF)
+
+    for key, value in sorted(CONF.items()):
+        if key.startswith("_"):
+            continue
+        clog(logging.INFO, "%s = %s", key, value)
+
+    return args, CONF
 
 # INITIALIZE MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+args, CONF = CONFIGURE_RUNTIME(comm)
+
 # Set simulation input data
-CONF = {}
-exec(open(sys.argv[1]).read(), CONF)
 
 # Set seed for all simulations
 np.random.seed(0)
@@ -64,7 +110,7 @@ _np_cum_mpi[1] = min(CONF['Np'], np_cum_mpi[1] + grab_extra)
 _p_mpi_range = list(range(_np_cum_mpi[0], _np_cum_mpi[1]))
 
 # Read input
-f_input = h5py.File(sys.argv[2], 'r', driver='mpio', comm=comm)
+f_input = h5py.File(args.input, 'r')
 molecules_flag = False
 if 'molecules' in f_input:
     molecules_flag = True
@@ -94,7 +140,6 @@ else:
 if molecules_flag:
     molecules = f_input['molecules'][p_mpi_range]
 
-logging.log(logging.INFO, "Rank = %d: p_mpi_range = %s", comm.rank, p_mpi_range)
 indices = f_input['indices'][p_mpi_range]
 r=f_input['coordinates'][-1,p_mpi_range,:]
 vel=f_input['velocities'][-1,p_mpi_range,:]
@@ -127,7 +172,7 @@ for t in range(CONF['ntypes']):
     force_ds.append([pm.create('real') for d in range(3)])
 
 # Output files
-f_hd5 = h5py.File('sim.hdf5', 'w',driver='mpio', comm=comm)
+f_hd5 = h5py.File(os.path.join(args.destdir, 'sim.hdf5-%06d-of%06d' % (comm.rank, comm.size)), 'w')
 dset_pos  = f_hd5.create_dataset("coordinates", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 dset_vel  = f_hd5.create_dataset("velocities", (CONF['n_frames'],CONF['Np'],3), dtype="Float32")
 
@@ -152,7 +197,7 @@ dset_lengths[0,1,1]=CONF["L"][1]
 dset_lengths[0,2,2]=CONF["L"][2]
 
 if rank==0:
-    fp_E   = open('E.dat','w')
+    fp_E   = open(os.path.join(args.destdir, 'E.dat'),'w')
 
 #FUNCTION DEFINITIONS
 
@@ -423,13 +468,4 @@ if CONF['nprint']>0:
     STORE_DATA(step,frame)
 
 f_hd5.close()
-pr.disable()
 
-# Dump results:
-# - for binary dump
-pr.dump_stats('cpu_%d.prof' %comm.rank)
-
-with open( 'cpu_%d.txt' %comm.rank, 'w') as output_file:
-    sys.stdout = output_file
-    pr.print_stats( sort='time' )
-    sys.stdout = sys.__stdout__
