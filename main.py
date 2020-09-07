@@ -100,7 +100,6 @@ r=f_input['coordinates'][-1,p_mpi_range,:]
 vel=f_input['velocities'][-1,p_mpi_range,:]
 f=np.zeros((len(r),3))
 f_bonds=np.zeros((len(r),3))
-f_field=np.zeros((len(r),3))
 f_old=np.copy(f)
 types=f_input['types'][p_mpi_range]
 names = f_input['names'][p_mpi_range]
@@ -233,10 +232,15 @@ def STORE_DATA(step,frame):
 
 
 
-def COMP_FORCE(layouts, f, r, force_ds):
+def COMP_FORCE(layouts, r, force_ds, out=None):
+    if out is None:
+        out = np.zeros((len(r),3))
+    else:
+        assert out.shape == r.shape
     for t in range(CONF['ntypes']):
         for d in range(3):
-            f_field[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
+            out[types==t, d] = force_ds[t][d].readout(r[types==t], layout=layouts[t])
+    return out
 
 def COMP_PRESSURE():
     # COMPUTES HPF PRESSURE FOR EACH MPI TASK
@@ -334,17 +338,10 @@ def DOMAIN_DECOMP(r, vel, f, indices, f_old, types):
     #     print('Kin energy before domain', E_kin)
     #Particles are exchanged between mpi-processors
     layout=pm.decompose(r,smoothing=0)
-    r=layout.exchange(r)
-    vel=layout.exchange(vel)
-    f=layout.exchange(f)
-    indices=layout.exchange(indices)
-    f_old=layout.exchange(f_old)
-    types=layout.exchange(types)
+    clog(logging.INFO, "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
+        np.sum(layout.get_exchange_cost()))
 
-    #E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
-    # if pm.comm.rank == 0:
-    #     print('Kin energy after domain', E_kin)
-    return r, vel, f, indices, f_old, types
+    return layout.exchange(r, vel, f, indices, f_old, types)
 
 # First step
 if "domain_decomp" in CONF:
@@ -352,7 +349,7 @@ if "domain_decomp" in CONF:
 
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
 UPDATE_FIELD(layouts,True)
-COMP_FORCE(layouts, f_field, r, force_ds)
+f_field = COMP_FORCE(layouts, r, force_ds)
 if molecules_flag:
     COMP_BONDS(f_bonds, r)
     f = f_field + f_bonds
@@ -390,7 +387,7 @@ for step in range(CONF['NSTEPS']):
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
 
-    COMP_FORCE(layouts, f_field, r, force_ds)
+    f_field = COMP_FORCE(layouts, r, force_ds)
     if molecules_flag:
         COMP_BONDS(f_bonds,r)
         f = f_field + f_bonds
