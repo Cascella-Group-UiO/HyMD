@@ -1,20 +1,52 @@
-# Hamiltonian and Alias-Free Hybrid Particle-Field Molecular Dynamics MPI VERSION
-This depository contains a simple python-code implementation of hybrid particle-field molecular dynamics (hPF-MD) that allows one to conserve energy and reduce aliasing by refinement of grid. The code supports monoatom particles of any amount of types and interactions.
+Hamiltonian and alias-free hPF-MD &middot; [![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/mortele/hPF_MD_PMESH_MPI/workflows/build/badge.svg)
+---------
+A simple python implementation of hybrid particle-field molecular dynamics (hPF-MD) which allows conservation of energy and reduces aliasing by refinement of the grid.
 
-The code is contained in main.py and input files are created with make_input.py from CONF.py. To convert results to unitless units the units.py module is provided.
+The code is contained in main.py and input files are created with make_input.py from CONF.py. To convert results to dimensionless units the `units.py` module is provided.
 
-To try out the code, simply:
-   python make_input.py CONF.py 
-   mpirun python main.py CONF.py input.hdf5
+#### Run using Docker
+Pull a pre-build docker image with everything setup by `docker pull mortele/hpf:1.0` and then run in a container by
+```bash
+git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
+docker run -it --mount src=hPF-MD/,target=/app/hPF,type=bind mortele/hpf:1.0
+```
+```bash
+python3 utils/make_input.py examples/CONF.py
+export OMP_NUM_THREADS=1
+export OMPI_MCA_btl_vader_single_copy_mechanism=none
+export NPROCS=4
+mpirun --allow-run-as-root -n ${NPROCS} python3 hPF/main.py CONF.py input.hdf5 --destdir=CONF
+```
 
-Note that to run the code, the following may need to be installed:
-pip3 install pmesh
-pip3 install pfft-python
+If you need to build the image yourself, you can do so by
+```bash
+git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
+cd hPF-MD/.docker/hpf/
+docker build --tag hpf:1.0
+```
 
-# MPI configured h5py
+### Build
+Installing the necessary dependencies requires building `h5py` with MPI support from source.
 
-The following procedure worked to install mpi configured h5py on a macbook pro running macOS Catalina 10.15.3
+#### Ubuntu 20.04
+Building on Ubuntu 20.04 (assumes Python`>=3.7` with pip, and curl are present):
+```bash
+apt-get update
+apt-get install libopenmpi-dev libhdf5-openmpi-dev pkg-configx
 
+pip3 install --upgrade pip
+pip3 install --upgrade numpy mpi4py cython
+pip3 install networkx sympy pytest mpsort pfft-python pmesh
+
+# Build h5py from source with MPI support
+git clone git@github.com:h5py.git
+cd h5py
+git checkout 6f4c578f78321b857da31eee0ce8d9b1ba291888
+HDF5_MPI="ON" pip3 install -v .
+```
+
+#### MacOS Catalina 10.15.3
+Building on OSX 10.15.3:
 ```bash
 > brew --version
 Homebrew 2.4.9
@@ -26,7 +58,7 @@ pip 20.1.1 from usr/local/lib/python3.8/site-packages/pip (python 3.8 )
 > brew install open-mpi
 > brew install hdf5-mpi
 > brew install pgk-config
-> pip3 install mpi4py pmesh numpy sympy pfft-python mpsort  cython 
+> pip3 install mpi4py pmesh numpy sympy pfft-python mpsort  cython
 
 # Using LLVM default compiler from Xcode
 > mpicc --showme
