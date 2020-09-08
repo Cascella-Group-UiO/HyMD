@@ -11,6 +11,7 @@ import time
 import logging
 from distribute_input import distribute_input
 from force import prepare_bonds, compute_bond_forces, compute_angle_forces
+from integrator import integrate_velocity, integrate_position
 
 
 def clog(level, msg, *args, **kwargs):
@@ -362,8 +363,9 @@ for step in range(CONF['NSTEPS']):
 
     f_old = np.copy(f)
 
-    #Integrate positions
-    r     = INTEGERATE_POS(r, vel, f/CONF['mass'])
+    # First half Velocity Verlet step
+    vel = integrate_velocity(vel, f / CONF['mass'], CONF['dt'])
+    r = integrate_position(r, vel, CONF['dt'])
 
     #PERIODIC BC
     r     = np.mod(r, CONF['L'][None,:])
@@ -395,8 +397,8 @@ for step in range(CONF['NSTEPS']):
     else:
         f = f_field
 
-    # Integrate velocity
-    vel = INTEGRATE_VEL(vel, f/CONF['mass'], f_old/CONF['mass'])
+    # Second half Velocity Verlet step
+    vel = integrate_velocity(vel, f / CONF['mass'], CONF['dt'])
 
     # Thermostat
     if('T0' in CONF):
