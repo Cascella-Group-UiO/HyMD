@@ -7,15 +7,15 @@ The code is contained in main.py and input files are created with make_input.py 
 #### Run using Docker
 Pull a pre-build docker image with everything setup by `docker pull mortele/hpf:1.0` and then run in a container by
 ```bash
-git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
-docker run -it --mount src=hPF-MD/,target=/app/hPF,type=bind mortele/hpf:1.0
+> git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
+> docker run -it --mount src=hPF-MD/,target=/app/hPF,type=bind mortele/hpf:1.0
 ```
-```bash
-python3 utils/make_input.py examples/CONF.py
-export OMP_NUM_THREADS=1
-export OMPI_MCA_btl_vader_single_copy_mechanism=none
-export NPROCS=4
-mpirun --allow-run-as-root -n ${NPROCS} python3 hPF/main.py CONF.py input.hdf5 --destdir=CONF
+```C
+root@d6abeeee1a2d:/app# python3 utils/make_input.py examples/CONF.py
+root@d6abeeee1a2d:/app# export OMP_NUM_THREADS=1
+root@d6abeeee1a2d:/app# export OMPI_MCA_btl_vader_single_copy_mechanism=none
+root@d6abeeee1a2d:/app# export NPROCS=4
+root@d6abeeee1a2d:/app# mpirun --allow-run-as-root -n ${NPROCS} python3 hPF/main.py CONF.py input.hdf5 --destdir=CONF
 ```
 
 If you need to build the image yourself, you can do so by
@@ -28,25 +28,25 @@ docker build --tag hpf:1.0
 ### Build
 Installing the necessary dependencies requires building `h5py` with MPI support from source.
 
-#### Ubuntu 20.04
+#### Ubuntu
 Building on Ubuntu 20.04 (assumes Python`>=3.7` with pip, and curl are present):
 ```bash
-apt-get update
-apt-get install libopenmpi-dev libhdf5-openmpi-dev pkg-configx
+> apt-get update
+> apt-get install libopenmpi-dev libhdf5-openmpi-dev pkg-configx
 
-pip3 install --upgrade pip
-pip3 install --upgrade numpy mpi4py cython
-pip3 install networkx sympy pytest mpsort pfft-python pmesh
+> pip3 install --upgrade pip
+> pip3 install --upgrade numpy mpi4py cython
+> pip3 install networkx sympy pytest mpsort pfft-python pmesh
 
 # Build h5py from source with MPI support
-git clone git@github.com:h5py.git
-cd h5py
-git checkout 6f4c578f78321b857da31eee0ce8d9b1ba291888
-HDF5_MPI="ON" pip3 install -v .
+> git clone git@github.com:h5py.git
+> cd h5py
+> git checkout 6f4c578f78321b857da31eee0ce8d9b1ba291888
+> HDF5_MPI="ON" pip3 install -v .
 ```
 
-#### MacOS Catalina 10.15.3
-Building on OSX 10.15.3:
+#### MacOS
+Building on OSX Catalina 10.15.3:
 ```bash
 > brew --version
 Homebrew 2.4.9
