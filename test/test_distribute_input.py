@@ -1,14 +1,16 @@
 import numpy as np
+import h5py
 from hPF.distribute_input import distribute_input
 
 
 def _distribute_nranks(size, in_path, n_particles):
     distr = [None] * size
-    for rank in range(size):
-        rank_range, molecules_flag = distribute_input(
-            in_path, rank, size, n_particles, driver=None
-        )
-        distr[rank] = (rank_range, molecules_flag)
+    with h5py.File(in_path, 'r', driver=None) as in_file:
+        for rank in range(size):
+            rank_range, molecules_flag = distribute_input(
+                in_file, rank, size, n_particles
+            )
+            distr[rank] = (rank_range, molecules_flag)
     return distr
 
 
