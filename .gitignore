@@ -1,0 +1,13 @@
+_build
+_static
+_templates
+hPF.egg-info
+.hypothesis
+.mypy_cache
+.pytest_cache
+.eggs
+.coverage
+hPF/__pycache__
+test/__pycache__
+coverage.xml
+.DS_Store
