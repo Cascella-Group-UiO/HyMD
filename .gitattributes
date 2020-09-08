@@ -9,3 +9,5 @@
 *.9 linguist-generated
 *.10 linguist-generated
 *.11 linguist-generated
+*.h5 linguist-generated
+*.hdf5 linguist-generated
