@@ -10,6 +10,7 @@ import pmesh.pm as pmesh
 import time
 import logging
 from distribute_input import distribute_input
+from force import prepare_bonds, compute_bond_forces, compute_angle_forces
 
 
 def clog(level, msg, *args, **kwargs):
@@ -116,9 +117,11 @@ with h5py.File(args.input, 'r', driver=driver, comm=MPI.COMM_WORLD) as in_file:
 
 f = np.zeros((len(r), 3))
 f_bonds = np.zeros((len(r), 3))
+f_angles = np.zeros((len(r), 3))
 f_old = np.copy(f)
 
 bond_energy = 0.0
+angle_energy = 0.0
 # print(f'{rank}: {Counter(names)}\n{molecules}\n{indices}\n{bonds}\n')
 
 
@@ -298,43 +301,6 @@ def UPDATE_FIELD(layouts,comp_v_pot=False):
             v_pot[t]=v_p_fft.c2r(out=Ellipsis)
 
 
-def COMP_BONDS(f_bonds, r):
-    k = CONF['bond_strenght']
-    r0 = CONF['bond_length']
-
-    f_bonds.fill(0.0)
-    energy = 0.0
-
-    for i, atom_bonds in enumerate(bonds):
-        global_index_i = indices[i]
-        local_index_i = i
-        for bond in atom_bonds:
-            if bond != -1:
-                global_index_j = bond
-                local_index_j = np.squeeze(np.where(indices == global_index_j))
-
-                if global_index_i < global_index_j:
-                    continue
-
-                ri = r[local_index_i, :]
-                rj = r[local_index_j, :]
-                rij = rj - ri
-                rij = np.squeeze(rij)
-
-                # Apply periodic boundary conditions to the distance rij
-                for dim in range(len(rij)):
-                    rij[dim] -= CONF['L'][dim] * np.around(rij[dim] / CONF['L'][dim])
-                dr = np.linalg.norm(rij)
-                df = - k * (dr - r0)
-                f_bond_vector = df * rij / dr
-                f_bonds[local_index_i, :] -= f_bond_vector
-                f_bonds[local_index_j, :] += f_bond_vector
-
-                energy += 0.5 * k * (dr - r0)**2
-    global bond_energy
-    bond_energy = comm.allreduce(energy, MPI.SUM)
-
-
 def COMPUTE_ENERGY():
     E_hpf = 0
     E_kin = pm.comm.allreduce(0.5*CONF['mass']*np.sum(vel**2))
@@ -369,11 +335,17 @@ if "domain_decomp" in CONF:
     r, vel, f, indices, f_old, types = DOMAIN_DECOMP(r, vel, f, indices, f_old, types)
 
 layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
+
 UPDATE_FIELD(layouts,True)
 f_field = COMP_FORCE(layouts, r, force_ds)
 if molecules_flag:
-    COMP_BONDS(f_bonds, r)
-    f = f_field + f_bonds
+    bonds_2, bonds_3 = prepare_bonds(molecules, names, bonds, indices, CONF)
+    eb = compute_bond_forces(f_bonds, r, bonds_2, CONF['L'], MPI.COMM_WORLD)
+    ea = compute_angle_forces(f_angles, r, bonds_3, CONF['L'], MPI.COMM_WORLD)
+    bond_energy = MPI.COMM_WORLD.allreduce(eb, MPI.SUM)
+    angle_energy = MPI.COMM_WORLD.allreduce(ea, MPI.SUM)
+
+    f = f_field + f_bonds + f_angles
 else:
     f = f_field
 
@@ -398,6 +370,9 @@ for step in range(CONF['NSTEPS']):
 
     if "domain_decomp" in CONF:
         r, vel, f, indices, f_old, types = DOMAIN_DECOMP(r, vel, f, indices, f_old, types)
+        if molecules_flag:
+            bonds_2, bonds_3 = prepare_bonds(molecules, names, bonds, indices,
+                                             CONF)
 
     # Particles are kept on mpi-task
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
@@ -410,8 +385,13 @@ for step in range(CONF['NSTEPS']):
 
     f_field = COMP_FORCE(layouts, r, force_ds)
     if molecules_flag:
-        COMP_BONDS(f_bonds,r)
-        f = f_field + f_bonds
+        eb = compute_bond_forces(f_bonds, r, bonds_2, CONF['L'],
+                                 MPI.COMM_WORLD)
+        ea = compute_angle_forces(f_angles, r, bonds_3, CONF['L'],
+                                  MPI.COMM_WORLD)
+        bond_energy = MPI.COMM_WORLD.allreduce(eb, MPI.SUM)
+        angle_energy = MPI.COMM_WORLD.allreduce(ea, MPI.SUM)
+        f = f_field + f_bonds + f_angles
     else:
         f = f_field
 
@@ -427,7 +407,13 @@ for step in range(CONF['NSTEPS']):
         if(np.mod(step,CONF['nprint'])==0):
             STORE_DATA(step, frame)
             if rank == 0:
-                print(f"Step: {step:5} | {100.0 * step / float(CONF['NSTEPS']):5.2f} % | t={step*CONF['dt']:5.4f}  Max(avg) f_bonds: {np.max(f_bonds):10.5f} ({np.mean(f_bonds):5.3f})\tMax(avg) f_field: {np.max(f_field):10.5f} ({np.mean(f_field):5.3f})\tE: {W+E_kin+bond_energy:10.5f}\tEk {E_kin:10.5f}\tW: {W:10.5f}\tEb: {bond_energy:10.5f}")
+                print(f"Step: {step:5} | {100.0 * step / float(CONF['NSTEPS']):5.2f} % |", end="")
+                print(f"t={step*CONF['dt']:5.4f} f_bonds:{np.max(f_bonds):10.5f} ", end="")
+                print(f"f_angle:{np.max(f_angles):10.5f} ", end="")
+                print(f"f_field:{np.max(f_field):10.5f} ", end="")
+                print(f" E: {W+E_kin+bond_energy:10.5f} Ek:", end="")
+                print(f"{E_kin:10.5f} W: {W:10.5f} Eb: {bond_energy:10.5f}", end="")
+                print(f" Ea: {angle_energy:10.5f} mom: {mom[0]:10.5f} {mom[1]:10.5f} {mom[2]:10.5f}")
 
 # End simulation
 if rank==0:
