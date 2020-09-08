@@ -5,6 +5,30 @@ import collections
 
 
 @pytest.fixture
+def three_atoms():
+    indices = np.array([0, 1, 2], dtype=int)
+    molecules = np.array([0, 1, 2], dtype=int)
+    bonds = np.empty(shape=(3, 3), dtype=int).fill(-1)
+    positions = np.array([
+        [3.3373791310195866, 3.0606470524188550, 3.6534883423600704],
+        [4.2567447747360480, 3.3079639873791216, 4.7134201398123450],
+        [2.1642221859524686, 2.2122847674657260, 4.1836737698720112]
+    ], dtype=np.float64)
+    velocities = np.array([
+        [0.25247916327420140, -0.4067773212594663, -0.2957983111297534],
+        [-0.1180891285878425,  0.4014440048143856,  0.3836539403365794],
+        [0.35245160777096232,  0.1512649589924152,  0.0694415026280095]
+    ], dtype=np.float64)
+    names = np.array([b'A', b'B', b'C'], dtype='S5')
+
+    CONF = {}
+    for k, v in {'Np': 3, 'types': 3, 'mass': 86.05955822385427,
+                 'L': [10.0, 10.0, 10.0], 'dt': 0.0180532028101793}.items():
+        CONF[k] = v
+    return indices, bonds, names, molecules, positions, velocities, CONF
+
+
+@pytest.fixture
 def dppc_single():
     """
     Sets up a single DPPC molecule test system
