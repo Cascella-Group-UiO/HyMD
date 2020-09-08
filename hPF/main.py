@@ -1,14 +1,16 @@
 from argparse import ArgumentParser
 import atexit
 from mpi4py import MPI
-#from mpi4py.MPI import COMM_WORLD
-import cProfile, pstats
+import cProfile
+import pstats
 import numpy as np
 import h5py
 import os
-import pmesh.pm as pmesh # Particle mesh Routine
+import pmesh.pm as pmesh
 import time
 import logging
+from distribute_input import distribute_input
+
 
 def clog(level, msg, *args, **kwargs):
     comm = kwargs.pop('comm', MPI.COMM_WORLD)
@@ -98,63 +100,23 @@ if 'phi0' not in CONF:
     CONF['phi0']=CONF['Np']/CONF['V']
 
 
-np_per_MPI=CONF['Np']//size
-if rank==size-1:
-    np_cum_mpi=[rank*np_per_MPI,CONF['Np']]
-else:
-    np_cum_mpi=[rank*np_per_MPI,(rank+1)*np_per_MPI]
+driver = 'mpio' if not args.disable_mpio else None
+with h5py.File(args.input, 'r', driver=driver, comm=MPI.COMM_WORLD) as in_file:
+    rank_range, molecules_flag = distribute_input(
+        in_file, rank, size, CONF['Np']
+    )
+    indices = in_file['indices'][rank_range]
+    r = in_file['coordinates'][-1, rank_range, :]
+    vel = in_file['velocities'][-1, rank_range, :]
+    types = in_file['types'][rank_range]
+    names = in_file['names'][rank_range]
+    if molecules_flag:
+        molecules = in_file['molecules'][rank_range]
+        bonds = in_file['bonds'][rank_range]
 
-grab_extra = 30
-_np_cum_mpi = np.empty(shape=(2,), dtype=int)
-_np_cum_mpi[0] = max(0, np_cum_mpi[0] - grab_extra)
-_np_cum_mpi[1] = min(CONF['Np'], np_cum_mpi[1] + grab_extra)
-_p_mpi_range = list(range(_np_cum_mpi[0], _np_cum_mpi[1]))
-
-# Read input
-if args.disable_mpio:
-    f_input = h5py.File(args.input, 'r')
-else:
-    f_input = h5py.File(args.input, 'r', driver='mpio', comm=comm)
-
-molecules_flag = False
-if 'molecules' in f_input:
-    molecules_flag = True
-    molecules = f_input['molecules'][_p_mpi_range]
-    indices = f_input['indices'][_p_mpi_range]
-    bonds = f_input['bonds'][p_mpi_range]
-
-    if rank == 0:
-        mpi_range_start = 0
-    else:
-        mpi_range_start = grab_extra
-        while molecules[mpi_range_start - 1] == molecules[mpi_range_start]:
-            mpi_range_start += 1
-    mpi_range_start = indices[mpi_range_start]
-
-    if rank == size - 1:
-        mpi_range_end = CONF['Np']
-    else:
-        mpi_range_end = grab_extra + np_per_MPI if rank != 0 else np_per_MPI
-        while molecules[mpi_range_end - 1] == molecules[mpi_range_end]:
-            mpi_range_end += 1
-        mpi_range_end = indices[mpi_range_end]
-    p_mpi_range = list(range(mpi_range_start, mpi_range_end))
-else:
-    p_mpi_range = list(range(np_cum_mpi[0], np_cum_mpi[1]))
-
-if molecules_flag:
-    molecules = f_input['molecules'][p_mpi_range]
-
-indices = f_input['indices'][p_mpi_range]
-r=f_input['coordinates'][-1,p_mpi_range,:]
-vel=f_input['velocities'][-1,p_mpi_range,:]
-f=np.zeros((len(r),3))
-f_bonds=np.zeros((len(r),3))
-f_old=np.copy(f)
-types=f_input['types'][p_mpi_range]
-names = f_input['names'][p_mpi_range]
-f_input.close()
-
+f = np.zeros((len(r), 3))
+f_bonds = np.zeros((len(r), 3))
+f_old = np.copy(f)
 
 bond_energy = 0.0
 # print(f'{rank}: {Counter(names)}\n{molecules}\n{indices}\n{bonds}\n')
@@ -203,9 +165,9 @@ dset_bond_energy=f_hd5.create_dataset("bond_energy",  (CONF['n_frames'],), dtype
 dset_kin_energy=f_hd5.create_dataset("kin_energy",  (CONF['n_frames'],), dtype='Float32')
 
 # FIXME: this can be inefficient if p_mpi_range is discontiguous (depends on hdf-mpi impl detail)
-dset_names[p_mpi_range]=names
-dset_types[p_mpi_range]=types
-dset_indices[p_mpi_range]=indices
+dset_names[rank_range]=names
+dset_types[rank_range]=types
+dset_indices[rank_range]=indices
 dset_lengths[0,0,0]=CONF["L"][0]
 dset_lengths[0,1,1]=CONF["L"][1]
 dset_lengths[0,2,2]=CONF["L"][2]
@@ -482,4 +444,3 @@ if CONF['nprint']>0:
     STORE_DATA(step,frame)
 
 f_hd5.close()
-
