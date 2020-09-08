@@ -1,8 +1,13 @@
-Hamiltonian and alias-free hPF-MD &middot; [![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/mortele/hPF_MD_PMESH_MPI/workflows/build/badge.svg)
+Hamiltonian and alias-free hPF-MD &middot; [![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/sigbjobo/hPF_MD_PMESH_MPI/workflows/build/badge.svg)
 ---------
 A simple python implementation of hybrid particle-field molecular dynamics (hPF-MD) which allows conservation of energy and reduces aliasing by refinement of the grid.
 
-The code is contained in main.py and input files are created with make_input.py from CONF.py. To convert results to dimensionless units the `units.py` module is provided.
+Run a simple example simulation with
+```bash
+> mkdir RUN/
+> python3 utils/make_input.py examples/CONF.py && mv input.hdf5 RUN/
+> mpirun -n 6 python3 hPF/main.py examples/CONF.py RUN/input.hdf5 --destdir=RUN
+```
 
 #### Run using Docker
 Pull a pre-build docker image with everything setup by `docker pull mortele/hpf:1.0` and then run in a container by
@@ -20,9 +25,9 @@ root@d6abeeee1a2d:/app# mpirun --allow-run-as-root -n ${NPROCS} python3 hPF/main
 
 If you need to build the image yourself, you can do so by
 ```bash
-git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
-cd hPF-MD/.docker/hpf/
-docker build --tag hpf:1.0
+> git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
+> cd hPF-MD/.docker/hpf/
+> docker build --tag hpf:1.0
 ```
 
 ### Build
