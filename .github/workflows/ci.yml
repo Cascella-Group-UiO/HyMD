@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: [ master, bonds-dev ]
+    branches: [ master, MPI ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, MPI ]
 
 jobs:
   build:
