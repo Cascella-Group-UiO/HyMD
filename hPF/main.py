@@ -89,6 +89,10 @@ if 'T0' in CONF:
     E_kin0 = kb*3*CONF['Np']*CONF['T0']/2.
 
 
+if 'RESPA' in CONF or 'respa' in CONF:
+    respa_inner = CONF['RESPA'] if 'RESPA' in CONF else CONF['respa']
+else:
+    respa_inner = 1
 Ncells = (CONF['Nv']**3)
 CONF['L']      = np.array(CONF['L'])
 CONF['V']      = CONF['L'][0]*CONF['L'][1]*CONF['L'][2]
@@ -363,12 +367,36 @@ for step in range(CONF['NSTEPS']):
 
     f_old = np.copy(f)
 
-    # First half Velocity Verlet step
-    vel = integrate_velocity(vel, f / CONF['mass'], CONF['dt'])
-    r = integrate_position(r, vel, CONF['dt'])
+    # Initial rRESPA velocity step
+    vel = integrate_velocity(vel, f_field / CONF['mass'], CONF['dt'])
 
-    #PERIODIC BC
-    r     = np.mod(r, CONF['L'][None,:])
+    # Inner rRESPA steps
+    for inner in range(respa_inner):
+        vel = integrate_velocity(vel, (f_bonds + f_angles) / CONF['mass'],
+                                 CONF['dt'] / respa_inner)
+        r = integrate_position(r, vel, CONF['dt'] / respa_inner)
+        r = np.mod(r, CONF['L'][None, :])
+
+        # Update fast forces
+        if molecules_flag:
+            eb = compute_bond_forces(f_bonds, r, bonds_2, CONF['L'],
+                                     MPI.COMM_WORLD)
+            ea = compute_angle_forces(f_angles, r, bonds_3, CONF['L'],
+                                      MPI.COMM_WORLD)
+        vel = integrate_velocity(vel, (f_bonds + f_angles) / CONF['mass'],
+                                 CONF['dt'] / respa_inner)
+
+    # Update slow forces
+    f_field = COMP_FORCE(layouts, r, force_ds)
+
+    # Second rRESPA velocity step
+    vel = integrate_velocity(vel, f_field / CONF['mass'], CONF['dt'])
+
+    # Only compute and keep the molecular bond energy from the last rRESPA
+    # inner step
+    if molecules_flag:
+        bond_energy = MPI.COMM_WORLD.allreduce(eb, MPI.SUM)
+        angle_energy = MPI.COMM_WORLD.allreduce(ea, MPI.SUM)
 
     if "domain_decomp" in CONF:
         r, vel, f, indices, f_old, types = DOMAIN_DECOMP(r, vel, f, indices, f_old, types)
@@ -384,21 +412,6 @@ for step in range(CONF['NSTEPS']):
 
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
-
-    f_field = COMP_FORCE(layouts, r, force_ds)
-    if molecules_flag:
-        eb = compute_bond_forces(f_bonds, r, bonds_2, CONF['L'],
-                                 MPI.COMM_WORLD)
-        ea = compute_angle_forces(f_angles, r, bonds_3, CONF['L'],
-                                  MPI.COMM_WORLD)
-        bond_energy = MPI.COMM_WORLD.allreduce(eb, MPI.SUM)
-        angle_energy = MPI.COMM_WORLD.allreduce(ea, MPI.SUM)
-        f = f_field + f_bonds + f_angles
-    else:
-        f = f_field
-
-    # Second half Velocity Verlet step
-    vel = integrate_velocity(vel, f / CONF['mass'], CONF['dt'])
 
     # Thermostat
     if('T0' in CONF):
