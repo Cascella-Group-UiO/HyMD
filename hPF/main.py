@@ -14,11 +14,6 @@ from force import prepare_bonds, compute_bond_forces, compute_angle_forces
 from integrator import integrate_velocity, integrate_position
 
 
-def clog(level, msg, *args, **kwargs):
-    comm = kwargs.pop('comm', MPI.COMM_WORLD)
-    if comm.rank == 0:
-        logging.log(level, msg, *args, **kwargs)
-
 def CONFIGURE_RUNTIME(comm):
     ap = ArgumentParser()
     ap.add_argument("--verbose", default=False, action='store_true')
