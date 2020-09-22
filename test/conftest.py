@@ -95,35 +95,90 @@ def dppc_single():
     return indices, bonds, names, molecules, r, CONF
 
 
-@pytest.fixture(scope='session')
-def h5py_molecules_file(tmp_path_factory):
+@pytest.fixture()
+def h5py_molecules_file(mpi_file_name):
     n_particles = 1000
-    out_path = tmp_path_factory.mktemp('test').joinpath(
-        f'mols-{MPI.COMM_WORLD.Get_rank()}.hdf5'
-    )
     indices = np.empty(1000, dtype=int)
     molecules = np.empty(1000, dtype=int)
 
-    with h5py.File(out_path, 'w') as out_file:
-        mol_len = np.array([21, 34, 18, 23, 19, 11, 18, 24, 13, 19, 27, 11, 31,
-                            14, 37, 30, 38, 24, 16,  5, 30, 25, 19,  5, 31, 14,
-                            21, 15, 13, 27, 13, 12,  8,  2, 15, 31, 13, 31, 20,
-                            11,  7, 22,  3, 31,  4, 24, 30,  4, 36,  5,  1,  1,
-                            1,   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-                            1,   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-                            1,   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-                            1,   1,  1,  1], dtype=int)
-        indices = np.arange(n_particles)
-        current_ind = 0
-        for ind, mol in enumerate(mol_len):
-            next_ind = current_ind + mol
-            molecules[current_ind:next_ind].fill(ind)
-            current_ind = next_ind
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        with h5py.File(mpi_file_name, 'w') as out_file:
+            mol_len = np.array([21, 34, 18, 23, 19, 11, 18, 24, 13, 19, 27, 11,
+                                31, 14, 37, 30, 38, 24, 16,  5, 30, 25, 19,  5,
+                                31, 14, 21, 15, 13, 27, 13, 12,  8,  2, 15, 31,
+                                13, 31, 20, 11,  7, 22,  3, 31,  4, 24, 30,  4,
+                                36,  5,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                                1,   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                                1,   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                                1,   1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+                               dtype=int)
+            indices = np.arange(n_particles)
+            current_ind = 0
+            for ind, mol in enumerate(mol_len):
+                next_ind = current_ind + mol
+                molecules[current_ind:next_ind].fill(ind)
+                current_ind = next_ind
 
-        dset_indices = out_file.create_dataset('indices', (n_particles,),
-                                               dtype='i')
-        dset_molecules = out_file.create_dataset('molecules', (n_particles,),
-                                                 dtype='i')
-        dset_indices[:] = indices[:]
-        dset_molecules[:] = molecules[:]
-    return out_path, n_particles, indices, molecules
+            dset_indices = out_file.create_dataset('indices', (n_particles,),
+                                                   dtype='i')
+            dset_molecules = out_file.create_dataset('molecules',
+                                                     (n_particles,), dtype='i')
+            dset_indices[:] = indices[:]
+            dset_molecules[:] = molecules[:]
+    MPI.COMM_WORLD.Barrier()
+    return mpi_file_name, n_particles, indices, molecules
+
+
+@pytest.fixture()
+def config_toml(mpi_file_name):
+    out_str = """
+    [meta]
+    name = "example config.toml"
+    tags = ["example", "config"]
+
+    [particles]
+    n_particles = 10000
+    mass = 72.0
+    max_molecule_size = 50
+
+    [simulation]
+    n_steps = 100
+    n_print = 10
+    time_step = 0.03
+    box_size = [10.0, 10.0, 10.0]
+    integrator = "respa"
+    respa_inner = 5
+
+    [field]
+    mesh_size = 40
+    chi = [
+      [["C", "W"], [42.24]],
+      [["G", "C"], [10.47]],
+      [["N", "W"], [-3.77]],
+      [["G", "W"],  [4.53]],
+      [["N", "P"], [-9.34]],
+      [["P", "G"],  [8.04]],
+      [["N", "G"],  [1.97]],
+      [["P", "C"], [14.72]],
+      [["P", "W"], [-1.51]],
+      [["N", "C"], [13.56]],
+    ]
+
+    [bonds]
+    bonds = [
+      [["A", "A"], [0.25, 1000.0]],
+      [["A", "B"], [0.30, 1250.0]],
+      [["B", "B"], [0.21, 1500.0]]
+    ]
+    angle_bonds = [
+      [["A", "A", "A"], [180.0, 25.0]],
+      [["A", "B", "B"], [120.0, 25.0]],
+      [["A", "B", "C"], [180.0, 25.0]],
+      [["A", "B", "C"], [180.0, 25.0]]
+    ]
+    """
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        with open(mpi_file_name, 'w') as out_file:
+            out_file.write(out_str)
+    MPI.COMM_WORLD.Barrier()
+    return mpi_file_name, out_str
