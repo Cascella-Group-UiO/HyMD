@@ -1,8 +1,13 @@
+import copy
 import toml
+import logging
+import warnings
 import numpy as np
+from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union
 from hPF.force import Bond, Angle, Chi
+from hPF.logger import clog
 
 
 @dataclass
@@ -68,3 +73,29 @@ def parse_config_toml(toml_content, file_path=None):
             config_dict.pop(k)
     return Config(file_name=file_path, bonds=bonds, angle_bonds=angle_bonds,
                   chi=chi, **config_dict)
+
+
+def check_n_particles(config, indices):
+    n_particles = MPI.COMM_WORLD.allreduce(len(indices))
+    if config.n_particles is None:
+        config = copy.deepcopy(config)
+        config.n_particles = len(indices)
+        info_str = (
+            f'No n_particles found in toml file {config.file_name}, defaulting'
+            f' to indices.shape ({len(indices)})'
+        )
+        clog(logging.INFO, info_str, comm=MPI.COMM_WORLD)
+        return config
+
+    if n_particles != config.n_particles:
+        warn_str = (
+            f'n_particles in {config.file_name} ({config.n_particles}) does '
+            'not match the shape of the indices array in the .HDF5 file '
+            f'({len(indices)}). Defaulting to using indices.shape '
+            f'({len(indices)})')
+        clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            warnings.warn(warn_str)
+        config = copy.deepcopy(config)
+        config.n_particles = len(indices)
+    return config
