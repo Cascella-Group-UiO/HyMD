@@ -1,0 +1,73 @@
+[meta]
+# Name of the simulation. May be ommitted.
+name = "DPPC bilayer with ML interaction parameters"
+# Tags classifying the simulation. May be ommitted.
+tags = ["bilayer", "solvent", "DPPC"]
+
+[particles]
+# Number of total particles in the simulation. If an input .hdf5 format file is
+# specified, the number of particles will be inferred from this and *may* be
+# ommited.
+n_particles = 10000
+# Mass of the particles in [g/mol]. All masses are assumed equal.
+mass = 72.0
+# Maximum number of particles per molecules present in the system. A default of
+# 200 is assumed, and this keyword may be ommitted for any system with smaller
+# molecules.
+max_molecule_size = 15
+
+[simulation]
+# Number of total time steps in the simulation in [picoseconds].
+n_steps = 100
+# Frequency of trajectory/energy file output in time steps.
+n_print = 10
+# Time step used in the simulation in [picoseconds].
+time_step = 0.03
+# Simulation box size in [nanometers].
+box_size = [10.0, 10.0, 10.0]
+# Time integrator used in the simulation. Either "velocity-verlet" or "respa".
+# If "respa", specify also the number of small rRESPA time steps per large
+# time_step with the respa_inner keyword.
+integrator = "respa"
+respa_inner = 5
+
+[field]
+# Particle-mesh grid size, either a single integer or an array of 3 integers
+# (number of grid points in each dimension). In order to guarantee consistency
+# and speed in the PFFT routines, the actual mesh grid will be changed to ensure
+# that each dimension of the 2d PFFT process grid divides each dimension of the
+# mesh grid size.
+mesh_size = [40, 40, 40]
+# Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
+# [kJ/mol])).
+chi = [
+  [["C", "W"], [42.24]],
+  [["G", "C"], [10.47]],
+  [["N", "W"], [-3.77]],
+  [["G", "W"],  [4.53]],
+  [["N", "P"], [-9.34]],
+  [["P", "G"],  [8.04]],
+  [["N", "G"],  [1.97]],
+  [["P", "C"], [14.72]],
+  [["P", "W"], [-1.51]],
+  [["N", "C"], [13.56]],
+]
+
+[bonds]
+# Two-particle bonds, ((atom name 1, atom name 2), (equilibrium length in
+# [nanometers], bond strenght in [kJ/mol])). Note the two
+bonds = [
+  [["N", "P"], [0.47, 1250.0]],
+  [["P", "G"], [0.47, 1250.0]],
+  [["G", "G"], [0.37, 1250.0]],
+  [["G", "C"], [0.47, 1250.0]],
+  [["C", "C"], [0.47, 1250.0]],
+]
+# Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
+# (equilibrium angle in [degrees], bond strenght in [kJ/mol])).
+angle_bonds = [
+  [["P", "G", "G"], [120.0, 25.0]],
+  [["P", "G", "C"], [180.0, 25.0]],
+  [["G", "C", "C"], [180.0, 25.0]],
+  [["C", "C", "C"], [180.0, 25.0]],
+]
