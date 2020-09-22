@@ -99,3 +99,28 @@ def check_n_particles(config, indices):
         config = copy.deepcopy(config)
         config.n_particles = len(indices)
     return config
+
+
+def check_max_molecule_size(config):
+    if config.max_molecule_size is None:
+        info_str = (
+            f'No max_molecule_size found in toml file {config.file_name}, '
+            f'defaulting to 201'
+        )
+        clog(logging.INFO, info_str, comm=MPI.COMM_WORLD)
+        config = copy.deepcopy(config)
+        config.max_molecule_size = 201
+        return config
+
+    if config.max_molecule_size < 1:
+        warn_str = (
+            f'max_molecule_size in {config.file_name} must be a positive '
+            f'integer, not {config.max_molecule_size}, defaulting to 201'
+        )
+        clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            warnings.warn(warn_str)
+        config = copy.deepcopy(config)
+        config.max_molecule_size = 201
+        return config
+    return config
