@@ -1,3 +1,4 @@
+from mpi4py import MPI
 import numpy as np
 import h5py
 import pytest
@@ -97,7 +98,9 @@ def dppc_single():
 @pytest.fixture(scope='session')
 def h5py_molecules_file(tmp_path_factory):
     n_particles = 1000
-    out_path = tmp_path_factory.mktemp('test').joinpath('mols.hdf5')
+    out_path = tmp_path_factory.mktemp('test').joinpath(
+        f'mols-{MPI.COMM_WORLD.Get_rank()}.hdf5'
+    )
     indices = np.empty(1000, dtype=int)
     molecules = np.empty(1000, dtype=int)
 
