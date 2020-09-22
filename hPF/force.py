@@ -1,5 +1,26 @@
 import numpy as np
 import networkx as nx
+from dataclasses import dataclass
+
+
+@dataclass
+class Bond:
+    atom_1: str
+    atom_2: str
+    equilibrium: float
+    strenght: float
+
+
+@dataclass
+class Angle(Bond):
+    atom_3: str
+
+
+@dataclass
+class Chi:
+    atom_1: str
+    atom_2: str
+    interaction_energy: float
 
 
 def prepare_bonds(molecules, names, bonds, indices, CONF):
