@@ -6,7 +6,7 @@ import numpy as np
 from mpi4py import MPI
 from hPF.input_parser import (Config, read_config_toml, parse_config_toml,
                               check_n_particles, check_max_molecule_size,
-                              check_bonds)
+                              check_bonds, check_chi)
 
 
 def test_input_parser_read_config_toml(config_toml):
@@ -106,16 +106,16 @@ def test_input_parser_check_optionals(config_toml, caplog):
             assert all([(s in log) for s in ('must be', 'integer', '201')])
 
 
-def _add_bonds(config_str, new_bond_str):
+def _add_to_config(config_str, new_str, header_str):
     sio = io.StringIO(config_str)
     sio_new = []
-    bonds_flag = False
+    header_flag = False
     for line in sio:
-        if line.strip().startswith('bonds ='):
-            bonds_flag = True
-        if bonds_flag and line.strip() == ']':
-            bonds_flag = False
-            sio_new.append(new_bond_str)
+        if line.strip().startswith(f'{header_str} ='):
+            header_flag = True
+        if header_flag and line.strip() == ']':
+            header_flag = False
+            sio_new.append(new_str)
         sio_new.append(line.rstrip())
     return '\n'.join(s for s in sio_new)
 
@@ -144,7 +144,7 @@ def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
                  ['A--B', 'neither A, nor B']]
 
     for a, w in zip(add_bonds, warn_strs):
-        added_bonds_toml_str = _add_bonds(config_toml_str, a)
+        added_bonds_toml_str = _add_to_config(config_toml_str, a, 'bonds')
         config = parse_config_toml(added_bonds_toml_str)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
@@ -153,6 +153,47 @@ def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
             warning = None
         with pytest.warns(warning) as recorded_warning:
             config = check_bonds(config, names_take)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                assert all([(s in message) for s in w])
+                assert all([(s in log) for s in w])
+        caplog.clear()
+
+
+@pytest.mark.mpi()
+def test_input_parser_check_chi(config_toml, dppc_single, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    _, _, names, _, _, _ = dppc_single
+    solvent_names = np.empty((8), dtype='a5')
+    solvent_names.fill('W')
+    names = np.concatenate((names, solvent_names))
+
+    name_slices = np.array_split(names, MPI.COMM_WORLD.Get_size())
+    names_take = name_slices[MPI.COMM_WORLD.Get_rank()]
+
+    add_chi = ['  [["A", "C"], [1.2398]],',
+               '  [["A", "A"], [-9.0582]],',
+               '  [["P", "B"], [-8.8481]],',
+               '  [["A", "A"], [3.1002]],',
+               '  [["A", "B"], [2.7815]],']
+    warn_strs = [['A--C', 'no A'],
+                 ['A--A', 'no A'],
+                 ['P--B', 'no B'],
+                 ['A--A', 'no A'],
+                 ['A--B', 'neither A, nor B']]
+
+    for a, w in zip(add_chi, warn_strs):
+        added_chi_toml_str = _add_to_config(config_toml_str, a, 'chi')
+        config = parse_config_toml(added_chi_toml_str)
+
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            warning = Warning
+        else:
+            warning = None
+        with pytest.warns(warning) as recorded_warning:
+            config = check_chi(config, names_take)
             if MPI.COMM_WORLD.Get_rank() == 0:
                 message = recorded_warning[0].message.args[0]
                 log = caplog.text
