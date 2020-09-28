@@ -224,4 +224,22 @@ def check_chi(config, names):
             clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
             if MPI.COMM_WORLD.Get_rank() == 0:
                 warnings.warn(warn_str)
+
+    for i, n in enumerate(unique_names):
+        for m in unique_names[i+1:]:
+            found = False
+            for c in config.chi:
+                if ((c.atom_1 == n and c.atom_2 == m) or
+                        (c.atom_1 == m and c.atom_2 == n)):
+                    found = True
+            if not found:
+                warn_str = (
+                    f'Atom types {n} and {m} found in the '
+                    f'system, but no chi interaction {n}--{m} '
+                    f'specified in {config.file_name}. Defaulting to '
+                    f'chi[{n}, {m}] = 0'
+                )
+                clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    warnings.warn(warn_str)
     return config
