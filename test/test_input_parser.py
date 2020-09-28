@@ -1,10 +1,12 @@
 import pytest
 import re
+import io
 import logging
 import numpy as np
 from mpi4py import MPI
 from hPF.input_parser import (Config, read_config_toml, parse_config_toml,
-                              check_n_particles, check_max_molecule_size)
+                              check_n_particles, check_max_molecule_size,
+                              check_bonds)
 
 
 def test_input_parser_read_config_toml(config_toml):
@@ -19,15 +21,22 @@ def test_input_parser_file(config_toml):
     assert isinstance(config, Config)
 
 
+@pytest.mark.mpi()
 def test_input_parser_file_check_n_particles(config_toml, caplog):
     caplog.set_level(logging.INFO)
     _, config_toml_str = config_toml
     config = parse_config_toml(config_toml_str)
     n_particles_config = config.n_particles
     indices = np.empty((n_particles_config + 1,))
+    indices_slices = np.array_split(indices, MPI.COMM_WORLD.Get_size())
+    indices_take = indices_slices[MPI.COMM_WORLD.Get_rank()]
 
-    with pytest.warns(Warning) as recorded_warning:
-        config_ = check_n_particles(config, indices)
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        warning = Warning
+    else:
+        warning = None
+    with pytest.warns(warning) as recorded_warning:
+        config_ = check_n_particles(config, indices_take)
         assert config_.n_particles == 10001
         if MPI.COMM_WORLD.Get_rank() == 0:
             message = recorded_warning[0].message.args[0]
@@ -37,12 +46,16 @@ def test_input_parser_file_check_n_particles(config_toml, caplog):
 
     caplog.clear()
     indices = np.empty((n_particles_config,))
+    indices_slices = np.array_split(indices, MPI.COMM_WORLD.Get_size())
+    indices_take = indices_slices[MPI.COMM_WORLD.Get_rank()]
+
     with pytest.warns(None) as recorded_warning:
-        check_n_particles(config, indices)
+        check_n_particles(config, indices_take)
         assert not recorded_warning
         assert not caplog.text
 
 
+@pytest.mark.mpi()
 def test_input_parser_check_optionals(config_toml, caplog):
     caplog.set_level(logging.INFO)
     _, config_toml_str = config_toml
@@ -52,7 +65,10 @@ def test_input_parser_check_optionals(config_toml, caplog):
     config = parse_config_toml(config_toml_no_n_particles)
     assert config.n_particles is None
     indices = np.empty((100,))
-    config = check_n_particles(config, indices)
+    indices_slices = np.array_split(indices, MPI.COMM_WORLD.Get_size())
+    indices_take = indices_slices[MPI.COMM_WORLD.Get_rank()]
+
+    config = check_n_particles(config, indices_take)
     assert config.n_particles == 100
     if MPI.COMM_WORLD.Get_rank() == 0:
         assert all([(s in caplog.text) for s in
@@ -70,12 +86,17 @@ def test_input_parser_check_optionals(config_toml, caplog):
                     ('No', 'max_molecule_size', '201')])
     caplog.clear()
 
-    config_toml_wrong_type_max_molecule_size = re.sub(
+    config_toml_wrong_max_molecule_size = re.sub(
         'max_molecule_size[ \t]*=[ \t]*[0-9]+',
         'max_molecule_size = 0', config_toml_str
     )
-    with pytest.warns(Warning) as recorded_warning:
-        config = parse_config_toml(config_toml_wrong_type_max_molecule_size)
+
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        warning = Warning
+    else:
+        warning = None
+    with pytest.warns(warning) as recorded_warning:
+        config = parse_config_toml(config_toml_wrong_max_molecule_size)
         config = check_max_molecule_size(config)
         assert config.max_molecule_size == 201
         if MPI.COMM_WORLD.Get_rank() == 0:
@@ -83,3 +104,58 @@ def test_input_parser_check_optionals(config_toml, caplog):
             log = caplog.text
             assert all([(s in message) for s in ('must be', 'integer', '201')])
             assert all([(s in log) for s in ('must be', 'integer', '201')])
+
+
+def _add_bonds(config_str, new_bond_str):
+    sio = io.StringIO(config_str)
+    sio_new = []
+    bonds_flag = False
+    for line in sio:
+        if line.strip().startswith('bonds ='):
+            bonds_flag = True
+        if bonds_flag and line.strip() == ']':
+            bonds_flag = False
+            sio_new.append(new_bond_str)
+        sio_new.append(line.rstrip())
+    return '\n'.join(s for s in sio_new)
+
+
+@pytest.mark.mpi()
+def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    _, _, names, _, _, _ = dppc_single
+    solvent_names = np.empty((8), dtype='a5')
+    solvent_names.fill('W')
+    names = np.concatenate((names, solvent_names))
+
+    name_slices = np.array_split(names, MPI.COMM_WORLD.Get_size())
+    names_take = name_slices[MPI.COMM_WORLD.Get_rank()]
+
+    add_bonds = ['  [["A", "C"], [0.47, 1250.0]],',
+                 '  [["A", "A"], [0.47, 1250.0]],',
+                 '  [["P", "B"], [0.47, 1250.0]],',
+                 '  [["A", "A"], [0.47, 1250.0]],',
+                 '  [["A", "B"], [0.47, 1250.0]],']
+    warn_strs = [['A--C', 'no A'],
+                 ['A--A', 'no A'],
+                 ['P--B', 'no B'],
+                 ['A--A', 'no A'],
+                 ['A--B', 'neither A, nor B']]
+
+    for a, w in zip(add_bonds, warn_strs):
+        added_bonds_toml_str = _add_bonds(config_toml_str, a)
+        config = parse_config_toml(added_bonds_toml_str)
+
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            warning = Warning
+        else:
+            warning = None
+        with pytest.warns(warning) as recorded_warning:
+            config = check_bonds(config, names_take)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                assert all([(s in message) for s in w])
+                assert all([(s in log) for s in w])
+        caplog.clear()
