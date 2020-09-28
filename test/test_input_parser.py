@@ -6,7 +6,7 @@ import numpy as np
 from mpi4py import MPI
 from hPF.input_parser import (Config, read_config_toml, parse_config_toml,
                               check_n_particles, check_max_molecule_size,
-                              check_bonds, check_chi)
+                              check_bonds, check_angles, check_chi)
 
 
 def test_input_parser_read_config_toml(config_toml):
@@ -53,6 +53,7 @@ def test_input_parser_file_check_n_particles(config_toml, caplog):
         check_n_particles(config, indices_take)
         assert not recorded_warning
         assert not caplog.text
+    MPI.COMM_WORLD.Barrier()
 
 
 @pytest.mark.mpi()
@@ -104,6 +105,7 @@ def test_input_parser_check_optionals(config_toml, caplog):
             log = caplog.text
             assert all([(s in message) for s in ('must be', 'integer', '201')])
             assert all([(s in log) for s in ('must be', 'integer', '201')])
+    MPI.COMM_WORLD.Barrier()
 
 
 def _add_to_config(config_str, new_str, header_str):
@@ -168,6 +170,50 @@ def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
                 assert all([(s in message) for s in w])
                 assert all([(s in log) for s in w])
         caplog.clear()
+    MPI.COMM_WORLD.Barrier()
+
+
+@pytest.mark.mpi()
+def test_input_parser_check_angles(config_toml, dppc_single, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    _, _, names, _, _, _ = dppc_single
+    solvent_names = np.empty((8), dtype='a5')
+    solvent_names.fill('W')
+    names = np.concatenate((names, solvent_names))
+
+    name_slices = np.array_split(names, MPI.COMM_WORLD.Get_size())
+    names_take = name_slices[MPI.COMM_WORLD.Get_rank()]
+
+    add_angles = ['  [["A", "C", "C"], [115.9, 25.0]],',
+                  '  [["A", "A", "A"], [158.5, 25.0]],',
+                  '  [["P", "B", "C"], [  1.5, 25.0]],',
+                  '  [["A", "A", "B"], [ 99.8, 25.0]],',
+                  '  [["A", "B", "K"], [119.8, 25.0]],']
+    warn_strs = [['A--C--C', 'no A'],
+                 ['A--A--A', 'no A'],
+                 ['P--B--C', 'no B'],
+                 ['A--A--B', 'no A, B'],
+                 ['A--B--K', 'no A, B, K']]
+
+    for a, w in zip(add_angles, warn_strs):
+        added_angles_toml_str = _add_to_config(config_toml_str, a,
+                                               'angle_bonds')
+        config = parse_config_toml(added_angles_toml_str)
+
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            warning = Warning
+        else:
+            warning = None
+        with pytest.warns(warning) as recorded_warning:
+            config = check_angles(config, names_take)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                assert all([(s in message) for s in w])
+                assert all([(s in log) for s in w])
+        caplog.clear()
+    MPI.COMM_WORLD.Barrier()
 
 
 @pytest.mark.mpi()
@@ -232,14 +278,7 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
             if MPI.COMM_WORLD.Get_rank() == 0:
                 message = recorded_warning[0].message.args[0]
                 log = caplog.text
-                print("------------------------")
-                print("------------------------")
-                print(r)
-                print(w)
-                print(message)
-                print(log)
-                print("------------------------")
-                print("------------------------")
                 assert all([(s in message) for s in w])
                 assert all([(s in log) for s in w])
         caplog.clear()
+    MPI.COMM_WORLD.Barrier()

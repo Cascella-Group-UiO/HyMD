@@ -195,6 +195,35 @@ def check_bonds(config, names):
     return config
 
 
+def check_angles(config, names):
+    if not hasattr(config, 'unique_names'):
+        _find_unique_names(config, names)
+    unique_names = config.unique_names
+
+    for a in config.angle_bonds:
+        if (a.atom_1 not in unique_names or
+                a.atom_2 not in unique_names or
+                a.atom_3 not in unique_names):
+            missing = [a.atom_1 not in unique_names,
+                       a.atom_2 not in unique_names,
+                       a.atom_3 not in unique_names]
+            missing_names = [atom for i, atom in enumerate([a.atom_1,
+                                                            a.atom_2,
+                                                            a.atom_3]) if
+                             missing[i]]
+            missing_str = ', '.join(np.unique(missing_names))
+
+            warn_str = (
+                f'Angle bond type {a.atom_1}--{a.atom_2}--{a.atom_3} '
+                f'specified in {config.file_name} but no {missing_str} atoms '
+                f'are present in the specified system (names array)'
+            )
+            clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                warnings.warn(warn_str)
+    return config
+
+
 def check_chi(config, names):
     if not hasattr(config, 'unique_names'):
         _find_unique_names(config, names)
