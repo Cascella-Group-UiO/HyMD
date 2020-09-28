@@ -120,6 +120,15 @@ def _add_to_config(config_str, new_str, header_str):
     return '\n'.join(s for s in sio_new)
 
 
+def _remove_from_config(config_str, remove_str):
+    sio = io.StringIO(config_str)
+    sio_new = []
+    for line in sio:
+        if remove_str not in line.strip():
+            sio_new.append(line.rstrip())
+    return '\n'.join(s for s in sio_new)
+
+
 @pytest.mark.mpi()
 def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
     caplog.set_level(logging.INFO)
@@ -197,6 +206,40 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
             if MPI.COMM_WORLD.Get_rank() == 0:
                 message = recorded_warning[0].message.args[0]
                 log = caplog.text
+                assert all([(s in message) for s in w])
+                assert all([(s in log) for s in w])
+        caplog.clear()
+
+    remove_chi = ['[["C", "W"], [42.24]],',
+                  '[["N", "P"], [-9.34]],',
+                  '[["N", "C"], [13.56]],',
+                  '[["P", "C"], [14.72]],']
+    warn_strs = [['C and W', 'no chi interaction C--W', 'Defaulting'],
+                 ['N and P', 'no chi interaction N--P', 'Defaulting'],
+                 ['C and N', 'no chi interaction C--N', 'Defaulting'],
+                 ['C and P', 'no chi interaction C--P', 'Defaulting']]
+
+    for r, w in zip(remove_chi, warn_strs):
+        removed_chi_toml_str = _remove_from_config(config_toml_str, r)
+        config = parse_config_toml(removed_chi_toml_str)
+
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            warning = Warning
+        else:
+            warning = None
+        with pytest.warns(warning) as recorded_warning:
+            config = check_chi(config, names_take)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                print("------------------------")
+                print("------------------------")
+                print(r)
+                print(w)
+                print(message)
+                print(log)
+                print("------------------------")
+                print("------------------------")
                 assert all([(s in message) for s in w])
                 assert all([(s in log) for s in w])
         caplog.clear()
