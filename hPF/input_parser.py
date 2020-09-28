@@ -151,7 +151,7 @@ def check_max_molecule_size(config):
     return config
 
 
-def check_bonds(config, names):
+def _find_unique_names(config, names):
     unique_names = np.unique(names)
     receive_buffer = MPI.COMM_WORLD.gather(unique_names, root=0)
 
@@ -160,6 +160,13 @@ def check_bonds(config, names):
         gathered_unique_names = np.unique(np.concatenate(receive_buffer))
     unique_names = MPI.COMM_WORLD.bcast(gathered_unique_names, root=0)
     unique_names = [n.decode('UTF-8') for n in unique_names]
+    config.unique_names = unique_names
+
+
+def check_bonds(config, names):
+    if not hasattr(config, 'unique_names'):
+        _find_unique_names(config, names)
+    unique_names = config.unique_names
 
     for b in config.bonds:
         if b.atom_1 not in unique_names or b.atom_2 not in unique_names:
@@ -185,5 +192,36 @@ def check_bonds(config, names):
             clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
             if MPI.COMM_WORLD.Get_rank() == 0:
                 warnings.warn(warn_str)
+    return config
 
+
+def check_chi(config, names):
+    if not hasattr(config, 'unique_names'):
+        _find_unique_names(config, names)
+    unique_names = config.unique_names
+
+    for c in config.chi:
+        if c.atom_1 not in unique_names or c.atom_2 not in unique_names:
+            missing_str = ''
+            if c.atom_1 not in unique_names:
+                if c.atom_2 not in unique_names:
+                    if c.atom_1 == c.atom_2:
+                        missing_str = f'no {c.atom_1} atoms'
+                    else:
+                        missing_str = (
+                            f'neither {c.atom_1}, nor {c.atom_2} atoms'
+                        )
+                else:
+                    missing_str = f'no {c.atom_1} atoms'
+            else:
+                missing_str = f'no {c.atom_2} atoms'
+
+            warn_str = (
+                f'Chi interaction {c.atom_1}--{c.atom_2} specified in '
+                f'{config.file_name} but {missing_str} are present in the '
+                f'specified system (names array)'
+            )
+            clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                warnings.warn(warn_str)
     return config
