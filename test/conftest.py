@@ -145,7 +145,7 @@ def config_toml(mpi_file_name):
     n_steps = 100
     n_print = 10
     time_step = 0.03
-    box_size = [10.0, 10.0, 10.0]
+    box_size = [2.1598, 11.2498, 5.1009]
     integrator = "respa"
     respa_inner = 5
 

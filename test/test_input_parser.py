@@ -6,7 +6,8 @@ import numpy as np
 from mpi4py import MPI
 from hPF.input_parser import (Config, read_config_toml, parse_config_toml,
                               check_n_particles, check_max_molecule_size,
-                              check_bonds, check_angles, check_chi)
+                              check_bonds, check_angles, check_chi,
+                              check_box_size, check_integrator)
 
 
 def test_input_parser_read_config_toml(config_toml):
@@ -131,6 +132,17 @@ def _remove_from_config(config_str, remove_str):
     return '\n'.join(s for s in sio_new)
 
 
+def _change_in_config(config_str, old_line, new_line):
+    sio = io.StringIO(config_str)
+    sio_new = []
+    for line in sio:
+        if line.strip().startswith(old_line.strip()):
+            sio_new.append(new_line.rstrip())
+        else:
+            sio_new.append(line.rstrip())
+    return '\n'.join(s for s in sio_new)
+
+
 @pytest.mark.mpi()
 def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
     caplog.set_level(logging.INFO)
@@ -220,6 +232,13 @@ def test_input_parser_check_angles(config_toml, dppc_single, caplog):
 def test_input_parser_check_chi(config_toml, dppc_single, caplog):
     caplog.set_level(logging.INFO)
     _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    for c in config.chi:
+        if c.atom_1 == "G" and c.atom_2 == "W":
+            assert c.interaction_energy == pytest.approx(4.53, abs=1e-2)
+        elif c.atom_1 == "P" and c.atom_2 == "C":
+            assert c.interaction_energy == pytest.approx(14.72, abs=1e-2)
+
     _, _, names, _, _, _ = dppc_single
     solvent_names = np.empty((8), dtype='a5')
     solvent_names.fill('W')
@@ -282,3 +301,47 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
                 assert all([(s in log) for s in w])
         caplog.clear()
     MPI.COMM_WORLD.Barrier()
+
+
+def test_input_parser_check_box_size(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    assert np.allclose(np.array([2.1598, 11.2498, 5.1009]), config.box_size,
+                       atol=1e-4)
+
+    changed_box_toml_str = _change_in_config(config_toml_str,
+                                             'box_size = [',
+                                             'box_size = [2.25, -3.91, 4.11]')
+    config = parse_config_toml(changed_box_toml_str)
+
+    with pytest.raises(ValueError) as recorded_error:
+        _ = check_box_size(config)
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            log = caplog.text
+            assert all([(s in log) for s in ('Invalid', 'box')])
+    message = str(recorded_error.value)
+    assert all([(s in message) for s in ('Invalid', 'box')])
+    caplog.clear()
+
+
+def test_input_parser_check_integrator(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    assert config.integrator == 'respa'
+    assert config.respa_inner == 5
+
+    changed_integrator_toml_str = _change_in_config(config_toml_str,
+                                                    'integrator = ',
+                                                    'integrator = "rsjgyu"')
+    config = parse_config_toml(changed_integrator_toml_str)
+
+    with pytest.raises(ValueError) as recorded_error:
+        _ = check_integrator(config)
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            log = caplog.text
+            assert all([(s in log) for s in ('Invalid', 'integrator')])
+    message = str(recorded_error.value)
+    assert all([(s in message) for s in ('Invalid', 'integrator')])
+    caplog.clear()

@@ -18,9 +18,9 @@ class Config:
     time_step: float
     box_size: Union[List[float], np.ndarray]
     integrator: str
-    respa_inner: int
     mesh_size: Union[Union[List[int], np.ndarray], int]
 
+    respa_inner: int = 1
     file_name: str = '<config-file>'
     name: str = None
     tags: List[str] = field(default_factory=list)
@@ -271,4 +271,79 @@ def check_chi(config, names):
                 clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
                 if MPI.COMM_WORLD.Get_rank() == 0:
                     warnings.warn(warn_str)
+    return config
+
+
+def check_box_size(config):
+    for b in config.box_size:
+        if b <= 0.0:
+            err_str = (
+                f'Invalid box size specified in {config.file_name}: '
+                f'{config.box_size}'
+            )
+            clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+            raise ValueError(err_str)
+    return config
+
+
+def check_integrator(config):
+    if config.integrator.lower() not in ('velocity-verlet', 'respa'):
+        err_str = (
+            f'Invalid integrator specified in {config.file_name}: '
+            f'{config.integrator}. Available options "velocity-verlet" or '
+            f'"respa".'
+        )
+        clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+        raise ValueError(err_str)
+
+    if config.integrator.lower() == 'respa':
+        if not isinstance(config.respa_inner, int):
+            if isinstance(config.respa_inner, float):
+                if config.respa_inner.is_int():
+                    warn_str = (
+                        f'Number of inner rRESPA time steps in '
+                        f'{config.file_name}: {config.respa_inner} specified '
+                        f'as float, using {int(config.respa_inner)}'
+                    )
+                    clog(logging.WARNING, err_str, comm=MPI.COMM_WORLD)
+                    if MPI.COMM_WORLD.Get_rank() == 0:
+                        warnings.warn(warn_str)
+                    config.respa_inner = int(config.respa_inner)
+                else:
+                    err_str = (
+                        f'Invalid number of inner rRESPA time steps in '
+                        f'{config.file_name}: {config.respa_inner}. Must be '
+                        f'positive integer'
+                    )
+                    clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+                    raise ValueError(err_str)
+            else:
+                err_str = (
+                    f'Invalid number of inner rRESPA time steps in '
+                    f'{config.file_name}: {config.respa_inner}. Must be '
+                    f'positive integer'
+                )
+                clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+                raise TypeError(err_str)
+        else:
+            err_str = (
+                f'Invalid number of inner rRESPA time steps in '
+                f'{config.file_name}: {config.respa_inner}. Must be positive'
+                f'integer'
+            )
+            clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+            raise TypeError(err_str)
+
+    if (config.integrator.lower() == 'velocity-verlet' and
+            config.respa_inner != 1):
+        warn_str = (
+            f'Integrator type Velocity-Verlet specified in {config.file_name} '
+            f'and inner rRESPA time steps set to {config.respa_inner}. '
+            f'Using respa_inner = 1'
+        )
+        clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            warnings.warn(warn_str)
+        config.respa_inner = 1
+
     return config
