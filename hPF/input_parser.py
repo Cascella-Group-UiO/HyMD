@@ -6,8 +6,8 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union
-from hPF.force import Bond, Angle, Chi
-from hPF.logger import clog
+from force import Bond, Angle, Chi
+from logger import Logger
 
 
 @dataclass
@@ -20,6 +20,7 @@ class Config:
     integrator: str
     mesh_size: Union[Union[List[int], np.ndarray], int]
 
+    kappa: float = 0.05
     respa_inner: int = 1
     file_name: str = '<config-file>'
     name: str = None
@@ -55,7 +56,43 @@ class Config:
         return ret_str
 
 
+def convert_CONF_to_config(CONF, file_path=None):
+    # Name in CONF.py, name in class Config, default if not present in CONF.py
+    vars_names_defaults = [
+        ('mass', 'mass', 72.0),
+        ('NSTEPS', 'n_steps', 1),
+        ('nprint', 'n_print', -1),
+        ('dt', 'time_step', 0.03),
+        ('L', 'box_size', [1.0, 1.0, 1.0]),
+        ('Nv', 'mesh_size', 50),
+        ('Np', 'n_particles', -1)
+    ]
+    config_dict = {}
+    for x in vars_names_defaults:
+        CONF_name = x[0]
+        config_name = x[1]
+        default = x[2]
+        config_dict[config_name] = (
+            CONF[CONF_name] if CONF_name in CONF else default
+        )
+        CONF.pop(CONF_name)
+
+    if file_path is not None:
+        config_dict['file_path'] = file_path
+    if 'respa' in CONF or 'RESPA' in CONF:
+        config_dict['integrator'] = 'respa'
+        config_dict['respa_inner'] = (
+            CONF['respa_inner'] if 'respa_inner' in CONF else 1
+        )
+
+
+
+
 def read_config_toml(file_path):
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        print("read_config")
+        print(logging.getLogger('root'))
+        print(hex(id(logging.getLogger('root'))))
     with open(file_path, 'r') as in_file:
         toml_content = in_file.read()
     return toml_content
@@ -109,7 +146,7 @@ def check_n_particles(config, indices):
             f'No n_particles found in toml file {config.file_name}, defaulting'
             f' to indices.shape ({n_particles})'
         )
-        clog(logging.INFO, info_str, comm=MPI.COMM_WORLD)
+        Logger.rank0.log(logging.INFO, info_str)
         return config
 
     if n_particles != config.n_particles:
@@ -118,7 +155,7 @@ def check_n_particles(config, indices):
             'not match the shape of the indices array in the .HDF5 file '
             f'({n_particles}). Defaulting to using indices.shape '
             f'({n_particles})')
-        clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+        Logger.rank0.log(logging.WARNING, warn_str)
         if MPI.COMM_WORLD.Get_rank() == 0:
             warnings.warn(warn_str)
         config = copy.deepcopy(config)
@@ -132,7 +169,7 @@ def check_max_molecule_size(config):
             f'No max_molecule_size found in toml file {config.file_name}, '
             f'defaulting to 201'
         )
-        clog(logging.INFO, info_str, comm=MPI.COMM_WORLD)
+        Logger.rank0.log(logging.INFO, info_str)
         config = copy.deepcopy(config)
         config.max_molecule_size = 201
         return config
@@ -142,7 +179,7 @@ def check_max_molecule_size(config):
             f'max_molecule_size in {config.file_name} must be a positive '
             f'integer, not {config.max_molecule_size}, defaulting to 201'
         )
-        clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+        Logger.rank0.log(logging.WARNING, warn_str)
         if MPI.COMM_WORLD.Get_rank() == 0:
             warnings.warn(warn_str)
         config = copy.deepcopy(config)
@@ -161,11 +198,12 @@ def _find_unique_names(config, names):
     unique_names = MPI.COMM_WORLD.bcast(gathered_unique_names, root=0)
     unique_names = [n.decode('UTF-8') for n in unique_names]
     config.unique_names = unique_names
+    return config
 
 
 def check_bonds(config, names):
     if not hasattr(config, 'unique_names'):
-        _find_unique_names(config, names)
+        config = _find_unique_names(config, names)
     unique_names = config.unique_names
 
     for b in config.bonds:
@@ -189,7 +227,7 @@ def check_bonds(config, names):
                 f'{config.file_name} but {missing_str} are present in the '
                 f'specified system (names array)'
             )
-            clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+            Logger.rank0.log(logging.WARNING, warn_str)
             if MPI.COMM_WORLD.Get_rank() == 0:
                 warnings.warn(warn_str)
     return config
@@ -197,7 +235,7 @@ def check_bonds(config, names):
 
 def check_angles(config, names):
     if not hasattr(config, 'unique_names'):
-        _find_unique_names(config, names)
+        config = _find_unique_names(config, names)
     unique_names = config.unique_names
 
     for a in config.angle_bonds:
@@ -218,7 +256,7 @@ def check_angles(config, names):
                 f'specified in {config.file_name} but no {missing_str} atoms '
                 f'are present in the specified system (names array)'
             )
-            clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+            Logger.rank0.log(logging.WARNING, warn_str)
             if MPI.COMM_WORLD.Get_rank() == 0:
                 warnings.warn(warn_str)
     return config
@@ -226,7 +264,7 @@ def check_angles(config, names):
 
 def check_chi(config, names):
     if not hasattr(config, 'unique_names'):
-        _find_unique_names(config, names)
+        config = _find_unique_names(config, names)
     unique_names = config.unique_names
 
     for c in config.chi:
@@ -250,7 +288,7 @@ def check_chi(config, names):
                 f'{config.file_name} but {missing_str} are present in the '
                 f'specified system (names array)'
             )
-            clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+            Logger.rank0.log(logging.WARNING, warn_str)
             if MPI.COMM_WORLD.Get_rank() == 0:
                 warnings.warn(warn_str)
 
@@ -268,7 +306,7 @@ def check_chi(config, names):
                     f'specified in {config.file_name}. Defaulting to '
                     f'chi[{n}, {m}] = 0'
                 )
-                clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+                Logger.rank0.log(logging.WARNING, warn_str)
                 if MPI.COMM_WORLD.Get_rank() == 0:
                     warnings.warn(warn_str)
     return config
@@ -281,7 +319,7 @@ def check_box_size(config):
                 f'Invalid box size specified in {config.file_name}: '
                 f'{config.box_size}'
             )
-            clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+            Logger.rank0.log(logging.ERROR, err_str)
             raise ValueError(err_str)
     return config
 
@@ -293,7 +331,7 @@ def check_integrator(config):
             f'{config.integrator}. Available options "velocity-verlet" or '
             f'"respa".'
         )
-        clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+        Logger.rank0.log(logging.ERROR, err_str)
         raise ValueError(err_str)
 
     if config.integrator.lower() == 'respa':
@@ -305,7 +343,7 @@ def check_integrator(config):
                         f'{config.file_name}: {config.respa_inner} specified '
                         f'as float, using {int(config.respa_inner)}'
                     )
-                    clog(logging.WARNING, err_str, comm=MPI.COMM_WORLD)
+                    Logger.rank0.log(logging.WARNING, err_str)
                     if MPI.COMM_WORLD.Get_rank() == 0:
                         warnings.warn(warn_str)
                     config.respa_inner = int(config.respa_inner)
@@ -315,7 +353,7 @@ def check_integrator(config):
                         f'{config.file_name}: {config.respa_inner}. Must be '
                         f'positive integer'
                     )
-                    clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+                    Logger.rank0.log(logging.ERROR, err_str)
                     raise ValueError(err_str)
             else:
                 err_str = (
@@ -323,7 +361,7 @@ def check_integrator(config):
                     f'{config.file_name}: {config.respa_inner}. Must be '
                     f'positive integer'
                 )
-                clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+                Logger.rank0.log(logging.ERROR, err_str)
                 raise TypeError(err_str)
         else:
             err_str = (
@@ -331,7 +369,7 @@ def check_integrator(config):
                 f'{config.file_name}: {config.respa_inner}. Must be positive'
                 f'integer'
             )
-            clog(logging.ERROR, err_str, comm=MPI.COMM_WORLD)
+            Logger.rank0.log(logging.ERROR, err_str)
             raise TypeError(err_str)
 
     if (config.integrator.lower() == 'velocity-verlet' and
@@ -341,7 +379,7 @@ def check_integrator(config):
             f'and inner rRESPA time steps set to {config.respa_inner}. '
             f'Using respa_inner = 1'
         )
-        clog(logging.WARNING, warn_str, comm=MPI.COMM_WORLD)
+        Logger.rank0.log(logging.WARNING, warn_str)
         if MPI.COMM_WORLD.Get_rank() == 0:
             warnings.warn(warn_str)
         config.respa_inner = 1
