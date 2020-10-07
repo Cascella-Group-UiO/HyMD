@@ -4,10 +4,10 @@ import io
 import logging
 import numpy as np
 from mpi4py import MPI
-from hPF.input_parser import (Config, read_config_toml, parse_config_toml,
-                              check_n_particles, check_max_molecule_size,
-                              check_bonds, check_angles, check_chi,
-                              check_box_size, check_integrator)
+from input_parser import (Config, read_config_toml, parse_config_toml,
+                          check_n_particles, check_max_molecule_size,
+                          check_bonds, check_angles, check_chi,
+                          check_box_size, check_integrator)
 
 
 def test_input_parser_read_config_toml(config_toml):

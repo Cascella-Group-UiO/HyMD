@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from hPF.integrator import integrate_velocity, integrate_position
+from integrator import integrate_velocity, integrate_position
 
 
 def test_integrator_velocity_zero_force(three_atoms):

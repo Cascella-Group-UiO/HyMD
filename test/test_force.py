@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from mpi4py import MPI
-from hPF.force import compute_bond_forces, compute_angle_forces, prepare_bonds
+from force import compute_bond_forces, compute_angle_forces, prepare_bonds
 
 
 def test_prepare_bonds_2(dppc_single):
