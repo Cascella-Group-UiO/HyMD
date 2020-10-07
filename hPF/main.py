@@ -9,18 +9,31 @@ import os
 import pmesh.pm as pmesh
 import time
 import logging
+
 from distribute_input import distribute_input
 from force import prepare_bonds, compute_bond_forces, compute_angle_forces
 from integrator import integrate_velocity, integrate_position
+from input_parser import Config, read_config_toml, parse_config_toml
+from logger import Logger
 
 
 def CONFIGURE_RUNTIME(comm):
     ap = ArgumentParser()
-    ap.add_argument("--verbose", default=False, action='store_true')
-    ap.add_argument("--profile", default=False, action='store_true')
-    ap.add_argument("--disable-mpio", default=False, action='store_true', help="Avoid using h5py-mpi, IO performance suffers.")
-    ap.add_argument("--destdir", default=".", help="Write to destdir")
-    ap.add_argument("confscript", help="CONF.py")
+    ap.add_argument("--verbose", default=False, action='store_true',
+                    help="Increase logging verbosity")
+    ap.add_argument("--profile", default=False, action='store_true',
+                    help="Profile program execution with cProfile")
+    ap.add_argument("--disable-mpio", default=False, action='store_true',
+                    help=("Avoid using h5py-mpi, potentially decreasing IO "
+                          "performance"))
+    ap.add_argument("--destdir", default=".",
+                    help="Write output to specified directory")
+    ap.add_argument("--seed", default=None,
+                    help="Set the numpy random generator seed for every rank")
+    ap.add_argument("--logfile", default=None,
+                    help="Redirect event logging to specified file")
+    ap.add_argument("config",
+                    help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args()
 
@@ -28,42 +41,81 @@ def CONFIGURE_RUNTIME(comm):
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
 
-    if args.verbose:
-        logging.basicConfig(level=logging.INFO,
-            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-        )
+    if args.seed is not None:
+        np.random.seed(args.seed)
+    else:
+        np.random.seed()
+
+    # Setup logger
+    Logger.setup(default_level=logging.INFO,
+                 log_file=args.logfile,
+                 log_to_stdout=args.verbose)
 
     if args.profile:
-        output_file = open(os.path.join(args.destdir,
-            'cpu.txt-%05d-of-%05d' % (comm.rank, comm.size))
-        , 'w')
+        prof_file_name = 'cpu.txt-%05d-of-%05d' % (comm.rank, comm.size)
+        output_file = open(os.path.join(args.destdir, prof_file_name), 'w')
         pr = cProfile.Profile()
+
         def profile_atexit():
             pr.disable()
             # Dump results:
             # - for binary dump
-            pr.dump_stats(os.path.join(args.destdir,
-                'cpu.prof-%05d-of-%05d' % (comm.rank, comm.size))
-            )
+            prof_file_bin = 'cpu.prof-%05d-of-%05d' % (comm.rank, comm.size)
+            pr.dump_stats(os.path.join(args.destdir, prof_file_bin))
             stats = pstats.Stats(pr, stream=output_file)
             stats.sort_stats('time').print_stats()
             output_file.close()
 
-        # TODO: if we have a main function then we can properly do set up and teardown
-        # without using atexit.
+        # TODO: if we have a main function then we can properly do set up and
+        # teardown without using atexit.
         atexit.register(profile_atexit)
 
         pr.enable()
 
-    CONF = {}
-    exec(open(args.confscript).read(), CONF)
+    try:
+        Logger.rank0.log(
+            logging.INFO,
+            f'Attempting to parse config file {args.config} as .toml'
+        )
+        toml_config = read_config_toml(args.config)
+        _ = parse_config_toml(toml_config, file_path=args.config)
+        Logger.rank0.log(
+            logging.INFO,
+            f'Successfully parsed {args.config} as .toml file'
+        )
+    except ValueError as ve:
+        try:
+            Logger.rank0.log(
+                logging.INFO,
+                (f'Attempt to parse {args.config} as .toml failed, trying '
+                 'to parse as python file')
+            )
+            CONF = {}
+            exec(open(args.config).read(), CONF)
 
-    for key, value in sorted(CONF.items()):
-        if key.startswith("_"):
-            continue
-        clog(logging.INFO, "%s = %s", key, value)
-
+            Logger.rank0.log(
+                logging.INFO,
+                f'Successfully parsed {args.config} as .py file'
+            )
+            for key, value in sorted(CONF.items()):
+                if key.startswith("_"):
+                    continue
+                Logger.rank0.log(logging.INFO, f"{key} = {value}")
+        except NameError as ne:
+            Logger.rank0.log(
+                logging.ERROR,
+                (f"Attempt to parse {args.config} as .py failed"
+                 f", ")
+            )
+            raise ValueError(
+                f"Unable to parse configuration file {args.config}" +
+                "\n\ntoml parse traceback:" +
+                repr(ve) +
+                "\n\npython parse traceback:" +
+                repr(ne)
+            )
     return args, CONF
+
 
 # INITIALIZE MPI
 comm = MPI.COMM_WORLD
@@ -74,8 +126,6 @@ args, CONF = CONFIGURE_RUNTIME(comm)
 
 # Set simulation input data
 
-# Set seed for all simulations
-np.random.seed(0)
 
 # Initialization of simulation variables
 kb=2.479/298
@@ -128,7 +178,7 @@ angle_energy = 0.0
 #Particle-Mesh initialization
 pm   = pmesh.ParticleMesh((CONF['Nv'],CONF['Nv'],CONF['Nv']),BoxSize=CONF['L'], dtype='f8',comm=comm)
 
-clog(logging.INFO, "ProcMesh = %s", str(pm.np))
+Logger.rank0.log(logging.INFO, "ProcMesh = %s", str(pm.np))
 
 # INTILIZE PMESH ARRAYS
 
@@ -325,8 +375,11 @@ def DOMAIN_DECOMP(r, vel, f, indices, f_old, types):
     #     print('Kin energy before domain', E_kin)
     #Particles are exchanged between mpi-processors
     layout=pm.decompose(r,smoothing=0)
-    clog(logging.INFO, "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
-        np.sum(layout.get_exchange_cost()))
+    Logger.rank0.log(
+        logging.INFO,
+        "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
+        np.sum(layout.get_exchange_cost())
+    )
 
     return layout.exchange(r, vel, f, indices, f_old, types)
 
@@ -350,7 +403,7 @@ else:
     f = f_field
 
 for step in range(CONF['NSTEPS']):
-    clog(logging.INFO, "=> step = %d", step)
+    Logger.rank0.log(logging.INFO, "=> step = %d", step)
 
     if CONF['nprint']>0:
         frame=step//CONF['nprint']
@@ -402,8 +455,12 @@ for step in range(CONF['NSTEPS']):
     # Particles are kept on mpi-task
     layouts  = [pm.decompose(r[types==t]) for t in range(CONF['ntypes'])]
     for t in range(CONF['ntypes']):
-        clog(logging.INFO, "GHOSTS: Total number of particles (%d) to be exchanged = %d",
-             t, np.sum(layouts[t].get_exchange_cost()))
+        Logger.rank0.log(
+            logging.INFO,
+            "GHOSTS: Total number of particles (%d) to be exchanged = %d",
+            t,
+            np.sum(layouts[t].get_exchange_cost())
+        )
 
     if(np.mod(step+1,CONF['quasi'])==0):
         UPDATE_FIELD(layouts, np.mod(step+1,CONF['quasi'])==0)
