@@ -38,6 +38,8 @@ respa_inner = 5
 # that each dimension of the 2d PFFT process grid divides each dimension of the
 # mesh grid size.
 mesh_size = [40, 40, 40]
+# Compressibility used in the relaxed incompressibility term of W[phi].
+kappa = 0.05
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
 chi = [

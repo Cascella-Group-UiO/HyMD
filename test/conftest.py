@@ -1,8 +1,17 @@
 from mpi4py import MPI
+import sys
+import os
 import numpy as np
 import h5py
 import pytest
 import collections
+
+# TODO: Remove this when we have a working pip installable main package and
+# can test against installed package by
+#
+# pip3 install -e . && python3 -m pytest
+curr_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(curr_path, os.pardir, 'hPF'))
 
 
 @pytest.fixture
@@ -151,6 +160,7 @@ def config_toml(mpi_file_name):
 
     [field]
     mesh_size = 40
+    kappa = 0.05
     chi = [
       [["C", "W"], [42.24]],
       [["G", "C"], [10.47]],

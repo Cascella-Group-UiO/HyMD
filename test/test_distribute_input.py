@@ -1,6 +1,6 @@
 import numpy as np
 import h5py
-from hPF.distribute_input import distribute_input
+from distribute_input import distribute_input
 
 
 def _distribute_nranks(size, in_path, n_particles):

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from hPF.hamiltonian import DefaultNoChi, DefaultWithChi
-from hPF.input_parser import parse_config_toml, _find_unique_names
+from hamiltonian import DefaultNoChi, DefaultWithChi
+from input_parser import parse_config_toml, _find_unique_names
 
 
 def test_DefaultNoChi(dppc_single, config_toml):
