@@ -7,7 +7,8 @@ from mpi4py import MPI
 from input_parser import (Config, read_config_toml, parse_config_toml,
                           check_n_particles, check_max_molecule_size,
                           check_bonds, check_angles, check_chi,
-                          check_box_size, check_integrator)
+                          check_box_size, check_integrator,
+                          convert_CONF_to_config)
 
 
 def test_input_parser_read_config_toml(config_toml):
@@ -317,9 +318,8 @@ def test_input_parser_check_box_size(config_toml, caplog):
 
     with pytest.raises(ValueError) as recorded_error:
         _ = check_box_size(config)
-        if MPI.COMM_WORLD.Get_rank() == 0:
-            log = caplog.text
-            assert all([(s in log) for s in ('Invalid', 'box')])
+        log = caplog.text
+        assert all([(s in log) for s in ('Invalid', 'box')])
     message = str(recorded_error.value)
     assert all([(s in message) for s in ('Invalid', 'box')])
     caplog.clear()
@@ -344,4 +344,33 @@ def test_input_parser_check_integrator(config_toml, caplog):
             assert all([(s in log) for s in ('Invalid', 'integrator')])
     message = str(recorded_error.value)
     assert all([(s in message) for s in ('Invalid', 'integrator')])
+    caplog.clear()
+
+
+def test_input_parser_convert_CONF_to_config(config_CONF, caplog):
+    caplog.set_level(logging.INFO)
+    file_name, conf_str = config_CONF
+    CONF = {}
+    CONF_ = {}
+    exec(conf_str, CONF)
+    exec(conf_str, CONF_)
+
+    with pytest.warns(Warning) as recorded_warning:
+        config = convert_CONF_to_config(CONF, file_path=file_name)
+        assert recorded_warning[0].message.args[0]
+        assert caplog.text
+
+    convert_names = [('mass', 'mass'),
+                     ('NSTEPS', 'n_steps'),
+                     ('nprint', 'n_print'),
+                     ('dt', 'time_step'),
+                     ('L', 'box_size'),
+                     ('Nv', 'mesh_size'),
+                     ('Np', 'n_particles'),
+                     ('domain_decomp', 'domain_decomposition'),
+                     ('sigma', 'sigma'),
+                     ('T_start', 'start_temperature'),
+                     ('T0', 'target_temperature')]
+    for names in convert_names:
+        assert CONF_[names[0]] == getattr(config, names[1])
     caplog.clear()
