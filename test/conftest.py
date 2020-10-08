@@ -157,10 +157,15 @@ def config_toml(mpi_file_name):
     box_size = [2.1598, 11.2498, 5.1009]
     integrator = "respa"
     respa_inner = 5
+    domain_decomposition = false
+    start_temperature = false
+    target_temperature = 323
+    tau = 0.7
 
     [field]
     mesh_size = 40
     kappa = 0.05
+    sigma = 0.5
     chi = [
       [["C", "W"], [42.24]],
       [["G", "C"], [10.47]],
@@ -188,6 +193,62 @@ def config_toml(mpi_file_name):
       [["G", "C", "C"], [180.0, 25.0]],
       [["C", "C", "C"], [180.0, 25.0]],
     ]
+    """
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        with open(mpi_file_name, 'w') as out_file:
+            out_file.write(out_str)
+    MPI.COMM_WORLD.Barrier()
+    return mpi_file_name, out_str
+
+
+@pytest.fixture()
+def config_CONF(mpi_file_name):
+    out_str = """
+import numpy as np
+import sympy
+
+Np = 10000
+tau = 0.7
+dt = 0.0005
+NSTEPS = 100
+T0 = 323
+Nv = 100
+sigma = 0.5
+nprint = 10
+mass = 72
+kappa = 0.05
+L = [10.61,10.61,10.61]
+types = 1
+ntypes = 1
+rho0 = Np/(L[0]*L[1]*L[2])
+dV=L[0]*L[1]*L[2]/Nv
+NAMES = np.array(np.string_(a) for a in ["A","B"])
+domain_decomp = True
+T_start = 300
+
+phi = sympy.var('phi:%d'%(types))
+
+def w(phi):
+    return 0.5 / (kappa * rho0) * (sum(phi) - rho0)**2
+
+V_EXT = [sympy.lambdify([phi], sympy.diff(w(phi),'phi%d'%(i)))
+         for i in range(types)]
+w     = sympy.lambdify([phi], w(phi))
+k=sympy.var('k:%d'%(3))
+
+def H1(k):
+    return sympy.functions.elementary.exponential.exp(
+        -0.5*sigma**2*(k0**2+k1**2+k2**2)
+    )
+
+kdHdk = [k0*sympy.diff(H1(k),'k0'),
+         k1*sympy.diff(H1(k),'k1'),
+         k2*sympy.diff(H1(k),'k2')]
+kdHdk = [sympy.lambdify([k], kdHdk[i]) for i in range(3)]
+H1=sympy.lambdify([k],H1(k))
+
+def H(k, v):
+    return v * H1(k) # numpy.exp(-0.5*sigma**2*k.normp(p=2))
     """
     if MPI.COMM_WORLD.Get_rank() == 0:
         with open(mpi_file_name, 'w') as out_file:

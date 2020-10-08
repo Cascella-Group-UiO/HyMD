@@ -19,7 +19,12 @@ class Config:
     box_size: Union[List[float], np.ndarray]
     integrator: str
     mesh_size: Union[Union[List[int], np.ndarray], int]
+    sigma: float
+    start_temperature: Union[float, bool]
+    target_temperature: Union[float, bool]
+    tau: float
 
+    domain_decomposition: Union[int, bool] = False
     kappa: float = 0.05
     respa_inner: int = 1
     file_name: str = '<config-file>'
@@ -65,7 +70,13 @@ def convert_CONF_to_config(CONF, file_path=None):
         ('dt', 'time_step', 0.03),
         ('L', 'box_size', [1.0, 1.0, 1.0]),
         ('Nv', 'mesh_size', 50),
-        ('Np', 'n_particles', -1)
+        ('Np', 'n_particles', -1),
+        ('domain_decomp', 'domain_decomposition', False),
+        ('sigma', 'sigma', 0.5),
+        ('T_start', 'start_temperature', False),
+        ('T0', 'target_temperature', False),
+        ('kappa', 'kappa', 0.05),
+        ('tau', 'tau', 0.7)
     ]
     config_dict = {}
     for x in vars_names_defaults:
@@ -78,14 +89,54 @@ def convert_CONF_to_config(CONF, file_path=None):
         CONF.pop(CONF_name)
 
     if file_path is not None:
-        config_dict['file_path'] = file_path
+        config_dict['file_name'] = file_path
     if 'respa' in CONF or 'RESPA' in CONF:
         config_dict['integrator'] = 'respa'
         config_dict['respa_inner'] = (
             CONF['respa_inner'] if 'respa_inner' in CONF else 1
         )
+        CONF.pop('respa') if 'respa' in CONF else CONF.pop('RESPA')
+        CONF.pop('respa_inner')
+    else:
+        config_dict['integrator'] = 'velocity-verlet'
+    for k in ('bonds', 'angle_bonds', 'chi'):
+        config_dict[k] = []
 
+    if 'bonds' in CONF:
+        bonds = [None] * len(CONF['bonds'])
+        for i, b in enumerate(CONF['bonds']):
+            bonds[i] = Bond(atom_1=b[0][0], atom_2=b[0][1],
+                            equilibrium=b[1][0], strenght=b[1][1])
+        config_dict['bonds'] = bonds
+        CONF.pop('bonds')
+    if 'angle_bonds' in CONF:
+        angle_bonds = [None] * len(CONF['angle_bonds'])
+        for i, b in enumerate(CONF['angle_bonds']):
+            angle_bonds[i] = Angle(atom_1=b[0][0], atom_2=b[0][1],
+                                   atom_3=b[0][2], equilibrium=b[1][0],
+                                   strenght=b[1][1])
+        config_dict['angle_bonds'] = angle_bonds
+        CONF.pop('angle_bonds')
+    if 'chi' in CONF:
+        chi = [None] * len(CONF['chi'])
+        for i, c in enumerate(CONF['chi']):
+            chi[i] = Chi(atom_1=c[0][0], atom_2=c[0][1],
+                         interaction_energy=c[1][0])
+        config_dict['chi'] = chi
+        CONF.pop('chi')
 
+    ignore_names = ['dV', 'k', 'k0', 'k1', 'k2', 'kdHdk', 'np', 'ntypes',
+                    'rho0', 'sympy', 'phi', 'phi0', 'phi1', 'phi2', 'phi3',
+                    'phi4', 'phi5', 'phi6', 'phi7', 'phi8', 'phi9', 'types']
+    ignore_names.append([f'phi{i}' for i in range(100)])
+    for k, v in sorted(CONF.items()):
+        if not k.startswith("_") and k not in ignore_names:
+            warn_str = (f'{k} = {v} in '
+                        f'{file_path if file_path else "config file"}'
+                        f' ignored when converting to Config object.')
+            Logger.rank0.log(logging.WARNING, warn_str)
+            warnings.warn(warn_str)
+    return Config(**config_dict)
 
 
 def read_config_toml(file_path):
