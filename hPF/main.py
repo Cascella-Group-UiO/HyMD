@@ -191,9 +191,9 @@ force_ds=[]
 v_pot=[]
 
 for t in range(CONF['ntypes']):
-    phi_t.append(pm.create('real'))
-    v_pot.append(pm.create('real'))
-    force_ds.append([pm.create('real') for d in range(3)])
+    phi_t.append(pm.create('real', value=0.0))
+    v_pot.append(pm.create('real', value=0.0))
+    force_ds.append([pm.create('real', value=0.0) for d in range(3)])
 
 # Output files
 if args.disable_mpio:
