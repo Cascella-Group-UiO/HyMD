@@ -68,19 +68,30 @@ class DefaultNoChi(Hamiltonian):
 
 
 class DefaultWithChi(Hamiltonian):
-    def __init__(self, config):
-        super(DefaultNoChi, self).__init__(config)
-        super(DefaultNoChi, self)._setup()
-        self.setup()
+    def __init__(self, config, unique_names, type_to_name_map):
+        super(DefaultWithChi, self).__init__(config)
+        super(DefaultWithChi, self)._setup()
+        self.setup(unique_names, type_to_name_map)
 
-    def setup(self):
+    def setup(self, unique_names, type_to_name_map):
+        self.type_to_name_map = type_to_name_map
+        self.chi_type_dictionary = {
+            tuple(sorted([c.atom_1, c.atom_2])): c.interaction_energy
+            for c in self.config.chi
+        }
+
         def w(phi, kappa=self.config.kappa, rho0=self.config.rho0,
-              chi=self.config.chi):
-            triu_ind = np.triu_indices(types, k=1)
-            interaction = 0.0
-            for i, j in zip(triu_ind[0], triu_ind[1]):
-                interaction += chi[i, j] * phi[i] * phi[j]
-            interaction *= 0.5 / rho0
+              chi=self.config.chi, type_to_name_map=self.type_to_name_map,
+              chi_type_dictionary=self.chi_type_dictionary):
+
+            interaction = 0
+            for i in range(self.config.n_types):
+                for j in range(i + 1, self.config.n_types):
+                    ni = type_to_name_map[i]
+                    nj = type_to_name_map[j]
+                    names = sorted([ni, nj])
+                    c = chi_type_dictionary[tuple(names)]
+                    interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - rho0)**2
             return incompressibility + interaction
 
