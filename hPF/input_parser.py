@@ -140,10 +140,6 @@ def convert_CONF_to_config(CONF, file_path=None):
 
 
 def read_config_toml(file_path):
-    if MPI.COMM_WORLD.Get_rank() == 0:
-        print("read_config")
-        print(logging.getLogger('root'))
-        print(hex(id(logging.getLogger('root'))))
     with open(file_path, 'r') as in_file:
         toml_content = in_file.read()
     return toml_content
@@ -247,7 +243,7 @@ def _find_unique_names(config, names):
     if MPI.COMM_WORLD.Get_rank() == 0:
         gathered_unique_names = np.unique(np.concatenate(receive_buffer))
     unique_names = MPI.COMM_WORLD.bcast(gathered_unique_names, root=0)
-    unique_names = [n.decode('UTF-8') for n in unique_names]
+    unique_names = sorted([n.decode('UTF-8') for n in unique_names])
     config.unique_names = unique_names
     return config
 

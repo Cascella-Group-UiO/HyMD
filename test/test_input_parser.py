@@ -2,6 +2,7 @@ import pytest
 import re
 import io
 import logging
+from types import ModuleType
 import numpy as np
 from mpi4py import MPI
 from input_parser import (Config, read_config_toml, parse_config_toml,
@@ -352,11 +353,15 @@ def test_input_parser_convert_CONF_to_config(config_CONF, caplog):
     file_name, conf_str = config_CONF
     CONF = {}
     CONF_ = {}
-    exec(conf_str, CONF)
-    exec(conf_str, CONF_)
+    exec(open(file_name).read(), CONF)
+    exec(open(file_name).read(), CONF_)
+    CONF = {k: v for k, v in CONF.items() if (not k.startswith('_') and
+                                              not isinstance(v, ModuleType))}
+    CONF_ = {k: v for k, v in CONF_.items() if (not k.startswith('_') and
+                                                not isinstance(v, ModuleType))}
 
     with pytest.warns(Warning) as recorded_warning:
-        config = convert_CONF_to_config(CONF, file_path=file_name)
+        config = convert_CONF_to_config(CONF_, file_path=file_name)
         assert recorded_warning[0].message.args[0]
         assert caplog.text
 
@@ -372,5 +377,5 @@ def test_input_parser_convert_CONF_to_config(config_CONF, caplog):
                      ('T_start', 'start_temperature'),
                      ('T0', 'target_temperature')]
     for names in convert_names:
-        assert CONF_[names[0]] == getattr(config, names[1])
+        assert CONF[names[0]] == getattr(config, names[1])
     caplog.clear()
