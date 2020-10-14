@@ -207,22 +207,22 @@ def config_CONF(mpi_file_name):
 import numpy as np
 import sympy
 
-Np = 10000
+Np = 5
 tau = 0.7
 dt = 0.0005
 NSTEPS = 100
 T0 = 323
-Nv = 100
-sigma = 0.5
+Nv = 8
+sigma = 0.2988365823859701
 nprint = 10
 mass = 72
-kappa = 0.05
-L = [10.61,10.61,10.61]
-types = 1
-ntypes = 1
+kappa = 0.0524828568359992
+L = [7.1598, 11.2498, 5.1009]
+types = 2
+ntypes = 2
 rho0 = Np/(L[0]*L[1]*L[2])
 dV=L[0]*L[1]*L[2]/Nv
-NAMES = np.array(np.string_(a) for a in ["A","B"])
+NAMES = np.array([np.string_(a) for a in ["A", "B"]])
 domain_decomp = True
 T_start = 300
 
