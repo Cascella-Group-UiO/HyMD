@@ -174,7 +174,8 @@ def parse_config_toml(toml_content, file_path=None):
         if k == 'chi':
             chi = [None] * len(v)
             for i, c in enumerate(v):
-                chi[i] = Chi(atom_1=c[0][0], atom_2=c[0][1],
+                c_ = sorted([c[0][0], c[0][1]])
+                chi[i] = Chi(atom_1=c_[0], atom_2=c_[1],
                              interaction_energy=c[1][0])
     for k in ('bonds', 'angle_bonds', 'chi'):
         if k in config_dict:
@@ -245,6 +246,7 @@ def _find_unique_names(config, names):
     unique_names = MPI.COMM_WORLD.bcast(gathered_unique_names, root=0)
     unique_names = sorted([n.decode('UTF-8') for n in unique_names])
     config.unique_names = unique_names
+    config.n_types = len(unique_names)
     return config
 
 
