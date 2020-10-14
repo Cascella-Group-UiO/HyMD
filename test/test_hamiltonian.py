@@ -4,8 +4,9 @@ import logging
 import pmesh
 from types import ModuleType
 import numpy as np
-from hamiltonian import Hamiltonian, DefaultNoChi, SquaredPhi
+from hamiltonian import Hamiltonian, DefaultNoChi, DefaultWithChi, SquaredPhi
 from input_parser import _find_unique_names, convert_CONF_to_config
+from force import Chi
 
 
 def test_DefaultNoChi_window_function(dppc_single, config_CONF, caplog):
@@ -238,3 +239,133 @@ def test_Hamiltonian_no_chi_gaussian_core(config_CONF, caplog):
     # 0.841170282039712 --> grid 640
     # 0.841170282039712  --> grid 320
     # 0.8411702820397121 --> grid 160
+
+
+def test_Hamiltonian_with_chi_gaussian_core(config_CONF, caplog):
+    caplog.set_level(logging.INFO)
+    conf_file_name, _ = config_CONF
+    CONF = {}
+    exec(open(conf_file_name).read(), CONF)
+    CONF = {k: v for k, v in CONF.items() if (not k.startswith('_') and
+                                              not isinstance(v, ModuleType))}
+    with pytest.warns(Warning) as recorded_warning:
+        config_conf = convert_CONF_to_config(CONF)
+        assert recorded_warning[0].message.args[0]
+        assert caplog.text
+
+    names = np.array([np.string_(s) for s in ['A', 'A', 'B', 'C', 'C']])
+    types = np.array([0, 0, 1, 2, 2])
+    config = _find_unique_names(config_conf, names)
+    config.box_size = np.array([15.0, 15.0, 15.0])
+    config.mesh_size = np.array([160, 160, 160])
+    config.n_particles = 5
+    r = np.array(
+        [[1.50, 0.75, 2.25],
+         [2.25, 0.00, 3.00],
+         [4.50, 1.50, 2.25],
+         [1.50, 1.50, 0.75],
+         [3.00, 4.50, 1.50]]
+    )
+    pm = pmesh.ParticleMesh(config.mesh_size, BoxSize=config.box_size,
+                            dtype='f8', comm=MPI.COMM_WORLD)
+    V = np.prod(config.box_size)
+    n_mesh__cells = np.prod(np.full(3, config.mesh_size))
+    volume_per_cell = V / n_mesh__cells
+
+    layouts = [pm.decompose(r[types == t]) for t in range(config.n_types)]
+    phi = [pm.paint(r[types == t], layout=layouts[t]) / volume_per_cell
+           for t in range(config.n_types)]
+    # assert sum(phi).csum() == pytest.approx(config.n_particles/volume_per_cell, abs=1e-14)    <<<<<---- FIXME
+    hamiltonian = Hamiltonian(config)
+    for t in range(config.n_types):
+        phi[t] = (phi[t].r2c(out=Ellipsis)
+                        .apply(hamiltonian.H, out=Ellipsis)
+                        .c2r(out=Ellipsis))
+    # assert sum(phi).csum() == pytest.approx(config.n_particles/volume_per_cell, abs=1e-14)      <<<<<---- FIXME
+
+    chi_ = [
+      [['A', 'B'],   [9.6754032616815161]],
+      [['A', 'C'], [-13.2596290315913623]],
+      [['B', 'C'],   [0.3852001771213374]]
+    ]
+    chi_dict = {("A", "B"):   9.6754032616815161,
+                ("A", "C"): -13.2596290315913623,
+                ("B", "C"):   0.3852001771213374}
+    chi = [None] * ((config.n_types - 1) * config.n_types // 2)
+    for i, c in enumerate(chi_):
+        chi[i] = Chi(
+            atom_1=c[0][0], atom_2=c[0][1], interaction_energy=c[1][0]
+        )
+    config.chi = chi
+    type_to_name_map = {0: 'A', 1: 'B', 2: 'C'}
+
+    W = DefaultWithChi(config, config.unique_names, type_to_name_map)
+    W_ = DefaultNoChi(config)
+    w = (W.w(phi) * volume_per_cell).csum()
+    w_ = (W_.w(phi) * volume_per_cell).csum()
+
+    # Gaussian core model energy
+    pi32 = np.arccos(-1.0)**(3.0 / 2.0)
+    c = 16.0 * pi32 * config.kappa * config.sigma**3 * config.rho0
+    diag = config.n_particles / c
+    offdiag = 0
+    for i in range(config.n_particles):
+        for j in range(i + 1, config.n_particles):
+            rij = r[i, :] - r[j, :]
+            rij2 = np.dot(rij, rij)
+            offdiag += 2 * np.exp(- rij2 / (4.0 * config.sigma**2)) / c
+    E = diag + offdiag - 0.5 * config.n_particles / config.kappa
+    assert w_ == pytest.approx(E, abs=1e-6)
+
+    interaction_energy = 0
+    for i in range(config.n_particles):
+        for j in range(i + 1, config.n_particles):
+            ni = names[i].decode('utf-8')
+            nj = names[j].decode('utf-8')
+            if ni != nj:
+                rij = r[i, :] - r[j, :]
+                rij2 = np.dot(rij, rij)
+                c_ = 2 * config.kappa * chi_dict[tuple(sorted([ni, nj]))] / c
+                interaction_energy += (
+                    c_ * np.exp(- rij2 / (4.0 * config.sigma**2))
+                )
+    E = E + interaction_energy
+    assert w == pytest.approx(E, abs=1e-6)
+
+    # five particles, three types, W=sum chi(i,j) phi(i) phi(j)
+    # -2.8663135769749566  --> mathematica
+    # -2.8663135769747057 --> grid 640
+    # -2.866313576974921 --> grid 320
+    # -2.866313576974796 --> grid 160
+
+
+"""
+import numpy as np
+pi = np.arccos(-1.0)
+chi_ = {'AA': 0.0, 'AB': 9.6754032616815161, 'BB': 0.0, 'AC': -13.2596290315913623, 'CC': 0.0, 'BC': 0.3852001771213374}
+names = ['A', 'A', 'B', 'C', 'C']
+types = np.array([0, 0, 1, 2, 2])
+chi = np.zeros(shape=(5, 5))
+for i, ni in enumerate(names):
+        for j, nj in enumerate(names):
+                ninj = ''.join(sorted([ni, nj]))
+                if j < i:
+                        chi[i, j] = 0.0
+                else:
+                        chi[i, j] = chi_[ninj]
+
+r = np.array([[1.50, 0.75, 2.25],[2.25, 0.00, 3.00],[4.50, 1.50, 2.25],[1.50, 1.50, 0.75],[3.00, 4.50, 1.50]])
+rij2 = np.zeros(shape=(5, 5))
+for i in range(5):
+        for j in range(5):
+            rij2[i, j] = np.linalg.norm(r[i, :] - r[j, :])**2
+
+pi32 = pi**(3.0/2.0)
+sigma = 0.2988365823859701
+kappa = 0.0524828568359992
+phi0 = 5 / 15.0**3
+const = 8.0 * pi32 * sigma**3 * phi0
+interaction = np.sum(chi * np.exp(-rij2 / (4.0 * sigma**2))) / const
+interaction
+
+"""
