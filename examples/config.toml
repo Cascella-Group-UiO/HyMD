@@ -27,9 +27,22 @@ time_step = 0.03
 box_size = [10.0, 10.0, 10.0]
 # Time integrator used in the simulation. Either "velocity-verlet" or "respa".
 # If "respa", specify also the number of small rRESPA time steps per large
-# time_step with the respa_inner keyword.
+# time_step with the 'respa_inner' keyword.
 integrator = "respa"
 respa_inner = 5
+# Perform MPI rank domain decomposition every x time steps to (hopefully)
+# reduce the amount of neccessary communication between ranks in the pmesh
+# procedures. Ommit or set to 'false' or '0' to not perform any domain
+# decomposition.
+domain_decomposition = false
+# Starting temperature to generate before simulation begins in [kelvin]. Ommit
+# or set to 'false' to not change the temperature before starting.
+start_temperature = false
+# Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
+# or set to 'false' to use no thermostat, i.e. a constant energy simulation.
+target_temperature = 323
+# Thermostat collision frequency in [1/picoseconds].
+tau = 0.7
 
 [field]
 # Particle-mesh grid size, either a single integer or an array of 3 integers
@@ -38,8 +51,13 @@ respa_inner = 5
 # that each dimension of the 2d PFFT process grid divides each dimension of the
 # mesh grid size.
 mesh_size = [40, 40, 40]
-# Compressibility used in the relaxed incompressibility term of W[phi].
+# Compressibility used in the relaxed incompressibility term of W(phi) in
+# [mol/kJ].
 kappa = 0.05
+# Standard deviation in the Gaussian filter (window function) in [nanometers].
+# This value is a characteristic length scale for the size of the particles in
+# the simulation.
+sigma = 0.5
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
 chi = [
