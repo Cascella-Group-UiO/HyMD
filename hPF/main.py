@@ -9,11 +9,12 @@ import os
 import pmesh.pm as pmesh
 import time
 import logging
+from types import ModuleType as moduleobj
 
 from distribute_input import distribute_input
 from force import prepare_bonds, compute_bond_forces, compute_angle_forces
 from integrator import integrate_velocity, integrate_position
-from input_parser import Config, read_config_toml, parse_config_toml
+from input_parser import read_config_toml, parse_config_toml
 from logger import Logger
 
 
@@ -78,11 +79,12 @@ def CONFIGURE_RUNTIME(comm):
             f'Attempting to parse config file {args.config} as .toml'
         )
         toml_config = read_config_toml(args.config)
-        _ = parse_config_toml(toml_config, file_path=args.config)
+        config = parse_config_toml(toml_config, file_path=args.config)
         Logger.rank0.log(
             logging.INFO,
             f'Successfully parsed {args.config} as .toml file'
         )
+        Logger.rank0.log(logging.INFO, str(config))
     except ValueError as ve:
         try:
             Logger.rank0.log(
@@ -92,14 +94,16 @@ def CONFIGURE_RUNTIME(comm):
             )
             CONF = {}
             exec(open(args.config).read(), CONF)
+            CONF = {
+                k: v for k, v in CONF.items() if (not k.startswith('_') and
+                                                  not isinstance(v, moduleobj))
+            }
 
             Logger.rank0.log(
                 logging.INFO,
                 f'Successfully parsed {args.config} as .py file'
             )
             for key, value in sorted(CONF.items()):
-                if key.startswith("_"):
-                    continue
                 Logger.rank0.log(logging.INFO, f"{key} = {value}")
         except NameError as ne:
             Logger.rank0.log(
