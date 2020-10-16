@@ -23,8 +23,8 @@ class MPIFilterAll(logging.Filter):
 class Logger:
     level = None
     log_file = None
-    format = '%(levelname)-8s [%(filename)s:%(lineno)d] <%(funcName)s> {rank %(rank)/%(size)} %(message)s'  # noqa: E501
-    date_format = '%(asctime)s,%(msecs)d'
+    format = ' %(levelname)-8s [%(filename)s:%(lineno)d] <%(funcName)s> {rank %(rank)d/%(size)d} %(message)s'  # noqa: E501
+    date_format = '%(asctime)s'
     formatter = logging.Formatter(fmt=date_format + format)
     rank0 = logging.getLogger('HyMD.rank_0')
     all_ranks = logging.getLogger('HyMD.all_ranks')
