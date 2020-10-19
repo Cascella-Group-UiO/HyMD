@@ -35,12 +35,18 @@ class Logger:
 
     @classmethod
     def setup(cls, default_level=logging.INFO, log_file=None,
-              log_to_stdout=False):
+              verbose=False):
         cls.level = default_level
         cls.log_file = log_file
 
-        cls.rank0.setLevel(default_level)
-        cls.all_ranks.setLevel(default_level)
+        if verbose:
+            log_to_stdout = True
+
+        level = default_level
+        if not verbose:
+            level = logging.WARNING
+        cls.rank0.setLevel(level)
+        cls.all_ranks.setLevel(level)
 
         cls.rank0.addFilter(MPIFilterRoot())
         cls.all_ranks.addFilter(MPIFilterAll())
@@ -49,7 +55,7 @@ class Logger:
             return
         if log_file:
             cls.log_file_handler = logging.FileHandler(log_file)
-            cls.log_file_handler.setLevel(default_level)
+            cls.log_file_handler.setLevel(level)
             cls.log_file_handler.setFormatter(cls.formatter)
 
             cls.rank0.addHandler(cls.log_file_handler)
@@ -58,7 +64,7 @@ class Logger:
         if log_to_stdout:
             cls.log_to_stdout = True
             cls.stdout_handler = logging.StreamHandler()
-            cls.stdout_handler.setLevel(default_level)
+            cls.stdout_handler.setLevel(level)
             cls.stdout_handler.setStream(sys.stdout)
             cls.stdout_handler.setFormatter(cls.formatter)
 
