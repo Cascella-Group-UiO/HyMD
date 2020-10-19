@@ -18,9 +18,9 @@ max_molecule_size = 15
 
 [simulation]
 # Number of total time steps in the simulation in [picoseconds].
-n_steps = 100
+n_steps = 5000
 # Frequency of trajectory/energy file output in time steps.
-n_print = 10
+n_print = 100
 # Time step used in the simulation in [picoseconds].
 time_step = 0.03
 # Simulation box size in [nanometers].
@@ -43,6 +43,13 @@ start_temperature = false
 target_temperature = 323
 # Thermostat collision frequency in [1/picoseconds].
 tau = 0.7
+# The energy functional W[phi] to use. Options:
+#    "SquaredPhi":      φ² / 2κφ₀,
+#    "DefaultNoChi":   (φ - φ₀)² / 2κφ₀
+#    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
+# Subclass Hamiltonian to create a new energy functional.
+hamiltonian = 'DefaultNoChi'
+
 
 [field]
 # Particle-mesh grid size, either a single integer or an array of 3 integers
