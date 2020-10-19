@@ -27,7 +27,8 @@ class OutDataset:
         self.define_datasets(config.n_particles,
                              config.n_steps // config.n_print + 1)
 
-    def close_file(self):
+    def close_file(self, comm=MPI.COMM_WORLD):
+        comm.Barrier()
         self.file.close()
 
     def define_datasets(self, n_particles, n_frames):
@@ -132,20 +133,19 @@ def store_data(out_dataset, step, frame, indices, positions, velocities,
                     "total Px",
                     "total Py",
                     "total Pz"))
-        data = (
-            '{:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15}'  # noqa: E501
-            .format(step,
-                    time_step * step,
-                    temperature,
-                    kinetic_energy + potential_energy,
-                    kinetic_energy,
-                    potential_energy,
-                    field_energy,
-                    bond2_energy,
-                    bond3_energy,
-                    total_momentum[0],
-                    total_momentum[1],
-                    total_momentum[2]))
+        data_fmt = f'{"{:15}"} {11 * "{:15.10g}" }'
+        data = data_fmt.format(step,
+                               time_step * step,
+                               temperature,
+                               kinetic_energy + potential_energy,
+                               kinetic_energy,
+                               potential_energy,
+                               field_energy,
+                               bond2_energy,
+                               bond3_energy,
+                               total_momentum[0],
+                               total_momentum[1],
+                               total_momentum[2])
         Logger.rank0.log(
             logging.INFO, ('\n' + header + '\n' + data)
         )
