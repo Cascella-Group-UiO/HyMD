@@ -1,5 +1,6 @@
 import copy
 import toml
+import datetime
 import logging
 import warnings
 import numpy as np
@@ -13,20 +14,20 @@ from logger import Logger
 @dataclass
 class Config:
     n_steps: int
-    n_print: int
     time_step: float
     box_size: Union[List[float], np.ndarray]
-    integrator: str
     mesh_size: Union[Union[List[int], np.ndarray], int]
     sigma: float
-    start_temperature: Union[float, bool]
-    target_temperature: Union[float, bool]
-    tau: float
+    kappa: float
 
+    n_print: int = None
+    tau: float = None
+    start_temperature: Union[float, bool] = None
+    target_temperature: Union[float, bool] = None
     mass: float = None
     hamiltonian: str = None
     domain_decomposition: Union[int, bool] = None
-    kappa: float = 0.05
+    integrator: str = None
     respa_inner: int = 1
     file_name: str = '<config file path unknown>'
     name: str = None
@@ -146,9 +147,19 @@ def read_config_toml(file_path):
     return toml_content
 
 
-def parse_config_toml(toml_content, file_path=None):
+def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     parsed_toml = toml.loads(toml_content)
     config_dict = {}
+
+    # Defaults = None
+    for n in ('n_print', 'tau', 'start_temperature', 'target_temperature',
+              'mass', 'hamiltonian', 'domain_decomposition', 'integrator',
+              'name', 'n_particles', 'max_molecule_size'):
+        config_dict[n] = None
+
+    # Defaults = []
+    for n in ('bonds', 'angle_bonds', 'chi', 'tags'):
+        config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
     # any).
@@ -157,40 +168,46 @@ def parse_config_toml(toml_content, file_path=None):
             for nested_k, nested_v in v.items():
                 config_dict[nested_k] = nested_v
 
-    bonds = []
-    angle_bonds = []
-    chi = []
-    hamiltonian = 'DefaultWithChi' if 'chi' in parsed_toml else 'DefaultNoChi'
-
     for k, v in config_dict.items():
         if k == 'bonds':
-            bonds = [None] * len(v)
+            config_dict['bonds'] = [None] * len(v)
             for i, b in enumerate(v):
-                bonds[i] = Bond(atom_1=b[0][0], atom_2=b[0][1],
-                                equilibrium=b[1][0], strenght=b[1][1])
+                config_dict['bonds'][i] = Bond(
+                    atom_1=b[0][0], atom_2=b[0][1], equilibrium=b[1][0],
+                    strenght=b[1][1]
+                )
         if k == 'angle_bonds':
-            angle_bonds = [None] * len(v)
+            config_dict['angle_bonds'] = [None] * len(v)
             for i, b in enumerate(v):
-                angle_bonds[i] = Angle(atom_1=b[0][0], atom_2=b[0][1],
-                                       atom_3=b[0][2], equilibrium=b[1][0],
-                                       strenght=b[1][1])
+                config_dict['angle_bonds'][i] = Angle(
+                    atom_1=b[0][0], atom_2=b[0][1], atom_3=b[0][2],
+                    equilibrium=b[1][0], strenght=b[1][1]
+                )
         if k == 'chi':
-            chi = [None] * len(v)
+            config_dict['chi'] = [None] * len(v)
             for i, c in enumerate(v):
                 c_ = sorted([c[0][0], c[0][1]])
-                chi[i] = Chi(atom_1=c_[0], atom_2=c_[1],
-                             interaction_energy=c[1][0])
-    for k in ('bonds', 'angle_bonds', 'chi'):
-        if k in config_dict:
-            config_dict.pop(k)
+                config_dict['chi'][i] = Chi(atom_1=c_[0], atom_2=c_[1],
+                                            interaction_energy=c[1][0])
+
     if file_path is not None:
         config_dict['file_name'] = file_path
-    return Config(bonds=bonds, angle_bonds=angle_bonds, chi=chi,
-                  hamiltonian=hamiltonian, **config_dict)
+
+    for n in ('n_steps', 'time_step', 'box_size', 'mesh_size', 'sigma',
+              'kappa'):
+        if n not in config_dict:
+            err_str = (
+                f'No {n} specified in config file {file_path}. Unable to start'
+                f' simulation.'
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+    return Config(**config_dict)
 
 
-def check_n_particles(config, indices):
-    n_particles = MPI.COMM_WORLD.allreduce(len(indices), MPI.SUM)
+def check_n_particles(config, indices, comm=MPI.COMM_WORLD):
+    n_particles = comm.allreduce(len(indices), MPI.SUM)
     if config.n_particles is None:
         config = copy.deepcopy(config)
         config.n_particles = n_particles
@@ -208,14 +225,14 @@ def check_n_particles(config, indices):
             f'({n_particles}). Defaulting to using indices.shape '
             f'({n_particles})')
         Logger.rank0.log(logging.WARNING, warn_str)
-        if MPI.COMM_WORLD.Get_rank() == 0:
+        if comm.Get_rank() == 0:
             warnings.warn(warn_str)
         config = copy.deepcopy(config)
         config.n_particles = n_particles
     return config
 
 
-def check_max_molecule_size(config):
+def check_max_molecule_size(config, comm=MPI.COMM_WORLD):
     if config.max_molecule_size is None:
         info_str = (
             f'No max_molecule_size found in toml file {config.file_name}, '
@@ -232,7 +249,7 @@ def check_max_molecule_size(config):
             f'integer, not {config.max_molecule_size}, defaulting to 201'
         )
         Logger.rank0.log(logging.WARNING, warn_str)
-        if MPI.COMM_WORLD.Get_rank() == 0:
+        if comm.Get_rank() == 0:
             warnings.warn(warn_str)
         config = copy.deepcopy(config)
         config.max_molecule_size = 201
@@ -275,12 +292,10 @@ def _setup_type_to_name_map(config, names, types, comm=MPI.COMM_WORLD):
     name_to_type_map = comm.bcast(gathered_dict, root=0)
     config.name_to_type_map = name_to_type_map
     config.type_to_name_map = {v: k for k, v in name_to_type_map.items()}
-    print('type->name', config.type_to_name_map)
-    print('name->type', config.name_to_type_map)
     return config
 
 
-def check_bonds(config, names):
+def check_bonds(config, names, comm=MPI.COMM_WORLD):
     if not hasattr(config, 'unique_names'):
         config = _find_unique_names(config, names)
     unique_names = config.unique_names
@@ -307,12 +322,12 @@ def check_bonds(config, names):
                 f'specified system (names array)'
             )
             Logger.rank0.log(logging.WARNING, warn_str)
-            if MPI.COMM_WORLD.Get_rank() == 0:
+            if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
     return config
 
 
-def check_angles(config, names):
+def check_angles(config, names, comm=MPI.COMM_WORLD):
     if not hasattr(config, 'unique_names'):
         config = _find_unique_names(config, names)
     unique_names = config.unique_names
@@ -336,12 +351,12 @@ def check_angles(config, names):
                 f'are present in the specified system (names array)'
             )
             Logger.rank0.log(logging.WARNING, warn_str)
-            if MPI.COMM_WORLD.Get_rank() == 0:
+            if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
     return config
 
 
-def check_chi(config, names):
+def check_chi(config, names, comm=MPI.COMM_WORLD):
     if not hasattr(config, 'unique_names'):
         config = _find_unique_names(config, names)
     unique_names = config.unique_names
@@ -368,7 +383,7 @@ def check_chi(config, names):
                 f'specified system (names array)'
             )
             Logger.rank0.log(logging.WARNING, warn_str)
-            if MPI.COMM_WORLD.Get_rank() == 0:
+            if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
 
     for i, n in enumerate(unique_names):
@@ -386,12 +401,12 @@ def check_chi(config, names):
                     f'chi[{n}, {m}] = 0'
                 )
                 Logger.rank0.log(logging.WARNING, warn_str)
-                if MPI.COMM_WORLD.Get_rank() == 0:
+                if comm.Get_rank() == 0:
                     warnings.warn(warn_str)
     return config
 
 
-def check_box_size(config):
+def check_box_size(config, comm=MPI.COMM_WORLD):
     for b in config.box_size:
         if b <= 0.0:
             err_str = (
@@ -399,11 +414,12 @@ def check_box_size(config):
                 f'{config.box_size}'
             )
             Logger.rank0.log(logging.ERROR, err_str)
-            raise ValueError(err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
     return config
 
 
-def check_integrator(config):
+def check_integrator(config, comm=MPI.COMM_WORLD):
     if config.integrator.lower() not in ('velocity-verlet', 'respa'):
         err_str = (
             f'Invalid integrator specified in {config.file_name}: '
@@ -411,7 +427,8 @@ def check_integrator(config):
             f'"respa".'
         )
         Logger.rank0.log(logging.ERROR, err_str)
-        raise ValueError(err_str)
+        if comm.Get_rank() == 0:
+            raise ValueError(err_str)
 
     if config.integrator.lower() == 'respa':
         if not isinstance(config.respa_inner, int):
@@ -423,7 +440,7 @@ def check_integrator(config):
                         f'as float, using {int(config.respa_inner)}'
                     )
                     Logger.rank0.log(logging.WARNING, err_str)
-                    if MPI.COMM_WORLD.Get_rank() == 0:
+                    if comm.Get_rank() == 0:
                         warnings.warn(warn_str)
                     config.respa_inner = int(config.respa_inner)
                 else:
@@ -433,7 +450,8 @@ def check_integrator(config):
                         f'positive integer'
                     )
                     Logger.rank0.log(logging.ERROR, err_str)
-                    raise ValueError(err_str)
+                    if comm.Get_rank() == 0:
+                        raise ValueError(err_str)
             else:
                 err_str = (
                     f'Invalid number of inner rRESPA time steps in '
@@ -441,15 +459,8 @@ def check_integrator(config):
                     f'positive integer'
                 )
                 Logger.rank0.log(logging.ERROR, err_str)
-                raise TypeError(err_str)
-        else:
-            err_str = (
-                f'Invalid number of inner rRESPA time steps in '
-                f'{config.file_name}: {config.respa_inner}. Must be positive '
-                f'integer'
-            )
-            Logger.rank0.log(logging.ERROR, err_str)
-            raise TypeError(err_str)
+                if comm.Get_rank() == 0:
+                    raise TypeError(err_str)
 
     if (config.integrator.lower() == 'velocity-verlet' and
             config.respa_inner != 1):
@@ -459,14 +470,14 @@ def check_integrator(config):
             f'Using respa_inner = 1'
         )
         Logger.rank0.log(logging.WARNING, warn_str)
-        if MPI.COMM_WORLD.Get_rank() == 0:
+        if comm.Get_rank() == 0:
             warnings.warn(warn_str)
         config.respa_inner = 1
 
     return config
 
 
-def check_hamiltonian(config):
+def check_hamiltonian(config, comm=MPI.COMM_WORLD):
     if config.hamiltonian is None:
         if len(config.chi) == 0:
             warn_str = (
@@ -474,7 +485,7 @@ def check_hamiltonian(config):
                 f'{config.file_name}, defaulting to DefaultNoChi hamiltonian'
             )
             Logger.rank0.log(logging.WARNING, warn_str)
-            if MPI.COMM_WORLD.Get_rank() == 0:
+            if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
             config.hamiltonian = 'DefaultNoChi'
         else:
@@ -484,9 +495,131 @@ def check_hamiltonian(config):
                 f'DefaultWithChi hamiltonian'
             )
             Logger.rank0.log(logging.WARNING, warn_str)
-            if MPI.COMM_WORLD.Get_rank() == 0:
+            if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
             config.hamiltonian = 'DefaultWithChi'
+    return config
+
+
+def check_n_print(config, comm=MPI.COMM_WORLD):
+    if config.n_print is None or config.n_print < 0:
+        config.n_print = False
+        return config
+    elif not isinstance(config.n_print, int):
+        if isinstance(config.n_print, float) and config.n_print.is_int():
+            config.n_print = int(config.n_print)
+        elif isinstance(config.n_print, int):
+            warn_str = (
+                f'n_print is a float ({config.n_print}), not int, using '
+                f'{int(round(config.n_print))}'
+            )
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+            if (n_print := int(round(config.n_print))) > 0:
+                config.n_print = n_print
+            else:
+                config.n_print = False
+    return config
+
+
+def check_tau(config, comm=MPI.COMM_WORLD):
+    if config.tau is None and config.target_temperature is not None:
+        warn_str = (
+            'target temp specified but no tau, defaulting 0.7'
+        )
+        config.tau = 0.7
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0:
+            warnings.warn(warn_str)
+    return config
+
+
+def check_start_and_target_temperature(config, comm=MPI.COMM_WORLD):
+    for t in ('start_temperature', 'target_temperature'):
+        if getattr(config, t) < 0:
+            warn_str = (
+                't set to negative value, defaulting 0'
+            )
+            setattr(config, t, 0.0)
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+    return config
+
+
+def check_mass(config, comm=MPI.COMM_WORLD):
+    if config.mass is not None:
+        try:
+            config.mass = float(config.mass)
+            return config
+        except ValueError:
+            pass
+
+    if config.mass is None:
+        info_str = (
+            'no mass specified, defaulting to 72.0'
+        )
+        config.mass = 72.0
+        Logger.rank0.log(logging.INFO, info_str)
+    elif (isinstance(config.mass, int) or
+          isinstance(config.mass, float)):
+        err_str = (
+            f'specified mass is invalid type {config.mass}, '
+            f'({type(config.mass)})'
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+        if comm.Get_rank() == 0:
+            raise TypeError(err_str)
+    elif config.mass < 0:
+        err_str = (
+            f'invalid mass specified, {config.mass}'
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+        if comm.Get_rank() == 0:
+            raise TypeError(err_str)
+    return config
+
+
+def check_domain_decomposition(config, comm=MPI.COMM_WORLD):
+    if config.domain_decomposition is None:
+        config.domain_decomposition = False
+    dd = config.domain_decomposition
+    assert isinstance(dd, int) or isinstance(dd, float) or (dd is None)
+    if isinstance(dd, int):
+        if dd < 0:
+            warn_str = (
+                'negative domain_decomposition specified, using False'
+            )
+            config.domain_decomposition = False
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+    if isinstance(dd, float):
+        if not dd.is_int():
+            warn_str = (
+                f'domain_decomposition ({config.domain_decomposition})is not '
+                f'an integer, using {int(round(dd))}'
+            )
+            config.domain_decomposition = int(round(dd))
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+    return config
+
+
+def check_name(config, comm=MPI.COMM_WORLD):
+    if config.name is None:
+        root_current_time = ''
+        if comm.Get_rank() == 0:
+            root_current_time = (
+                datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            )
+        current_time = comm.bcast(root_current_time, root=0)
+
+        if config.name is None:
+            config.name = 'sim' + current_time
+    return config
 
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
@@ -494,11 +627,17 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
         config = _setup_type_to_name_map(config, names, types, comm=comm)
-    config = check_box_size(config)
-    config = check_integrator(config)
-    config = check_max_molecule_size(config)
-    config = check_n_particles(config, indices)
-    config = check_chi(config, names)
-    config = check_angles(config, names)
-    config = check_bonds(config, names)
-    config = check_hamiltonian(config)
+    config = check_box_size(config, comm=comm)
+    config = check_integrator(config, comm=comm)
+    config = check_max_molecule_size(config, comm=comm)
+    config = check_tau(config, comm=comm)
+    config = check_start_and_target_temperature(config, comm=comm)
+    config = check_mass(config, comm=comm)
+    config = check_domain_decomposition(config, comm=comm)
+    config = check_name(config, comm=comm)
+    config = check_n_particles(config, indices, comm=comm)
+    config = check_chi(config, names, comm=comm)
+    config = check_angles(config, names, comm=comm)
+    config = check_bonds(config, names, comm=comm)
+    config = check_hamiltonian(config, comm=comm)
+    return config
