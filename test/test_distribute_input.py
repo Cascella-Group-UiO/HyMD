@@ -1,6 +1,6 @@
 import numpy as np
 import h5py
-from distribute_input import distribute_input
+from file_io import distribute_input
 
 
 def _distribute_nranks(size, in_path, n_particles):
@@ -14,7 +14,7 @@ def _distribute_nranks(size, in_path, n_particles):
     return distr
 
 
-def test_distribute_input_size_1(h5py_molecules_file):
+def test_file_io_distribute_input_size_1(h5py_molecules_file):
     in_path, n_particles, _, _ = h5py_molecules_file
     size = 1
     distr = _distribute_nranks(size, in_path, n_particles)
@@ -25,7 +25,7 @@ def test_distribute_input_size_1(h5py_molecules_file):
     assert len(rank_range) == n_particles
 
 
-def test_distribute_input_size_2(h5py_molecules_file):
+def test_file_io_distribute_input_size_2(h5py_molecules_file):
     in_path, n_particles, indices, molecules = h5py_molecules_file
     size = 2
     distr = _distribute_nranks(size, in_path, n_particles)
@@ -46,7 +46,7 @@ def test_distribute_input_size_2(h5py_molecules_file):
     assert np.equal(rank_range_all, np.arange(n_particles)).all()
 
 
-def test_distribute_input_size_3(h5py_molecules_file):
+def test_file_io_distribute_input_size_3(h5py_molecules_file):
     in_path, n_particles, indices, molecules = h5py_molecules_file
     size = 3
     distr = _distribute_nranks(size, in_path, n_particles)
@@ -71,7 +71,7 @@ def test_distribute_input_size_3(h5py_molecules_file):
     assert np.equal(rank_range_all, np.arange(n_particles)).all()
 
 
-def test_distribute_input_various_sizes(h5py_molecules_file):
+def test_file_io_distribute_input_various_sizes(h5py_molecules_file):
     in_path, n_particles, indices, molecules = h5py_molecules_file
     for size in (5, 9, 11, 14, 19, 25):
         distr = _distribute_nranks(size, in_path, n_particles)

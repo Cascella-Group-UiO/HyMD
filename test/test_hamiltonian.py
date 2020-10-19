@@ -337,35 +337,3 @@ def test_Hamiltonian_with_chi_gaussian_core(config_CONF, caplog):
     # -2.8663135769747057 --> grid 640
     # -2.866313576974921 --> grid 320
     # -2.866313576974796 --> grid 160
-
-
-"""
-import numpy as np
-pi = np.arccos(-1.0)
-chi_ = {'AA': 0.0, 'AB': 9.6754032616815161, 'BB': 0.0, 'AC': -13.2596290315913623, 'CC': 0.0, 'BC': 0.3852001771213374}
-names = ['A', 'A', 'B', 'C', 'C']
-types = np.array([0, 0, 1, 2, 2])
-chi = np.zeros(shape=(5, 5))
-for i, ni in enumerate(names):
-        for j, nj in enumerate(names):
-                ninj = ''.join(sorted([ni, nj]))
-                if j < i:
-                        chi[i, j] = 0.0
-                else:
-                        chi[i, j] = chi_[ninj]
-
-r = np.array([[1.50, 0.75, 2.25],[2.25, 0.00, 3.00],[4.50, 1.50, 2.25],[1.50, 1.50, 0.75],[3.00, 4.50, 1.50]])
-rij2 = np.zeros(shape=(5, 5))
-for i in range(5):
-        for j in range(5):
-            rij2[i, j] = np.linalg.norm(r[i, :] - r[j, :])**2
-
-pi32 = pi**(3.0/2.0)
-sigma = 0.2988365823859701
-kappa = 0.0524828568359992
-phi0 = 5 / 15.0**3
-const = 8.0 * pi32 * sigma**3 * phi0
-interaction = np.sum(chi * np.exp(-rij2 / (4.0 * sigma**2))) / const
-interaction
-
-"""

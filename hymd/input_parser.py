@@ -12,7 +12,6 @@ from logger import Logger
 
 @dataclass
 class Config:
-    mass: float
     n_steps: int
     n_print: int
     time_step: float
@@ -24,10 +23,12 @@ class Config:
     target_temperature: Union[float, bool]
     tau: float
 
-    domain_decomposition: Union[int, bool] = False
+    mass: float = None
+    hamiltonian: str = None
+    domain_decomposition: Union[int, bool] = None
     kappa: float = 0.05
     respa_inner: int = 1
-    file_name: str = '<config-file>'
+    file_name: str = '<config file path unknown>'
     name: str = None
     tags: List[str] = field(default_factory=list)
     chi: List[Chi] = field(default_factory=list)
@@ -159,6 +160,8 @@ def parse_config_toml(toml_content, file_path=None):
     bonds = []
     angle_bonds = []
     chi = []
+    hamiltonian = 'DefaultWithChi' if 'chi' in parsed_toml else 'DefaultNoChi'
+
     for k, v in config_dict.items():
         if k == 'bonds':
             bonds = [None] * len(v)
@@ -181,8 +184,9 @@ def parse_config_toml(toml_content, file_path=None):
         if k in config_dict:
             config_dict.pop(k)
     if file_path is not None:
-        config_dict['file_path'] = file_path
-    return Config(bonds=bonds, angle_bonds=angle_bonds, chi=chi, **config_dict)
+        config_dict['file_name'] = file_path
+    return Config(bonds=bonds, angle_bonds=angle_bonds, chi=chi,
+                  hamiltonian=hamiltonian, **config_dict)
 
 
 def check_n_particles(config, indices):
@@ -236,17 +240,43 @@ def check_max_molecule_size(config):
     return config
 
 
-def _find_unique_names(config, names):
+def _find_unique_names(config, names, comm=MPI.COMM_WORLD):
     unique_names = np.unique(names)
     receive_buffer = MPI.COMM_WORLD.gather(unique_names, root=0)
 
     gathered_unique_names = None
-    if MPI.COMM_WORLD.Get_rank() == 0:
+    if comm.Get_rank() == 0:
         gathered_unique_names = np.unique(np.concatenate(receive_buffer))
-    unique_names = MPI.COMM_WORLD.bcast(gathered_unique_names, root=0)
+    unique_names = comm.bcast(gathered_unique_names, root=0)
     unique_names = sorted([n.decode('UTF-8') for n in unique_names])
     config.unique_names = unique_names
     config.n_types = len(unique_names)
+    return config
+
+
+def _setup_type_to_name_map(config, names, types, comm=MPI.COMM_WORLD):
+    if not hasattr(config, 'unique_names'):
+        config = _find_unique_names(config, names)
+    name_to_type_ = {}
+    for n, t in zip(names, types):
+        n = n.decode('utf-8')
+        if n not in name_to_type_:
+            name_to_type_[n] = t
+    receive_buffer = comm.gather(name_to_type_, root=0)
+    gathered_dict = None
+    if comm.Get_rank() == 0:
+        gathered_dict = {}
+        for d in receive_buffer:
+            for k, v in d.items():
+                if k not in gathered_dict:
+                    gathered_dict[k] = v
+                else:
+                    assert v == gathered_dict[k]
+    name_to_type_map = comm.bcast(gathered_dict, root=0)
+    config.name_to_type_map = name_to_type_map
+    config.type_to_name_map = {v: k for k, v in name_to_type_map.items()}
+    print('type->name', config.type_to_name_map)
+    print('name->type', config.name_to_type_map)
     return config
 
 
@@ -415,7 +445,7 @@ def check_integrator(config):
         else:
             err_str = (
                 f'Invalid number of inner rRESPA time steps in '
-                f'{config.file_name}: {config.respa_inner}. Must be positive'
+                f'{config.file_name}: {config.respa_inner}. Must be positive '
                 f'integer'
             )
             Logger.rank0.log(logging.ERROR, err_str)
@@ -434,3 +464,41 @@ def check_integrator(config):
         config.respa_inner = 1
 
     return config
+
+
+def check_hamiltonian(config):
+    if config.hamiltonian is None:
+        if len(config.chi) == 0:
+            warn_str = (
+                f'No hamiltonian form and no chi interactions specified in '
+                f'{config.file_name}, defaulting to DefaultNoChi hamiltonian'
+            )
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                warnings.warn(warn_str)
+            config.hamiltonian = 'DefaultNoChi'
+        else:
+            warn_str = (
+                f'No hamiltonian form specified in {config.file_name}, but '
+                f'chi interactions are specified, defaulting to '
+                f'DefaultWithChi hamiltonian'
+            )
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                warnings.warn(warn_str)
+            config.hamiltonian = 'DefaultWithChi'
+
+
+def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
+    config.box_size = np.array(config.box_size)                                 ######## <<<<< FIX ME
+    config = _find_unique_names(config, names, comm=comm)
+    if types is not None:
+        config = _setup_type_to_name_map(config, names, types, comm=comm)
+    config = check_box_size(config)
+    config = check_integrator(config)
+    config = check_max_molecule_size(config)
+    config = check_n_particles(config, indices)
+    config = check_chi(config, names)
+    config = check_angles(config, names)
+    config = check_bonds(config, names)
+    config = check_hamiltonian(config)
