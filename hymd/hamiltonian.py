@@ -79,6 +79,7 @@ class DefaultWithChi(Hamiltonian):
             tuple(sorted([c.atom_1, c.atom_2])): c.interaction_energy
             for c in self.config.chi
         }
+        print(self.chi_type_dictionary)
 
         def w(phi, kappa=self.config.kappa, rho0=self.config.rho0,
               chi=self.config.chi, type_to_name_map=self.type_to_name_map,
@@ -89,8 +90,12 @@ class DefaultWithChi(Hamiltonian):
                 for j in range(i + 1, self.config.n_types):
                     ni = type_to_name_map[i]
                     nj = type_to_name_map[j]
+                    print(i, ni)
+                    print(j, nj)
                     names = sorted([ni, nj])
+                    print(names)
                     c = chi_type_dictionary[tuple(names)]
+
                     interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - rho0)**2
             return incompressibility + interaction

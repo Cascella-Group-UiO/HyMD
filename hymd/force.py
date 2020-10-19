@@ -23,7 +23,7 @@ class Chi:
     interaction_energy: float
 
 
-def prepare_bonds(molecules, names, bonds, indices, CONF):
+def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
     different_molecules = np.unique(molecules)
@@ -48,7 +48,7 @@ def prepare_bonds(molecules, names, bonds, indices, CONF):
                     name_i = bond_graph.nodes()[i]['name']
                     name_j = bond_graph.nodes()[j]['name']
 
-                    for b in CONF['bond_2']:
+                    for b in config.bonds:
                         match_forward = (name_i == b.atom_1 and
                                          name_j == b.atom_2)
                         match_backward = (name_j == b.atom_2 and
@@ -66,7 +66,7 @@ def prepare_bonds(molecules, names, bonds, indices, CONF):
                     name_mid = bond_graph.nodes()[path[1]]['name']
                     name_j = bond_graph.nodes()[j]['name']
 
-                    for a in CONF['bond_3']:
+                    for a in config.angle_bonds:
                         match_forward = (name_i == a.atom_1 and
                                          name_mid == a.atom_2 and
                                          name_j == a.atom_3)

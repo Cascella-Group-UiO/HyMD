@@ -5,6 +5,8 @@ from mpi4py import MPI
 
 class MPIFilterRoot(logging.Filter):
     def filter(self, record):
+        if record.funcName == '<module>':
+            record.funcName = 'main'
         if MPI.COMM_WORLD.Get_rank() == 0:
             record.rank = MPI.COMM_WORLD.Get_rank()
             record.size = MPI.COMM_WORLD.Get_size()
@@ -15,6 +17,8 @@ class MPIFilterRoot(logging.Filter):
 
 class MPIFilterAll(logging.Filter):
     def filter(self, record):
+        if record.funcName == '<module>':
+            record.funcName = 'main'
         record.rank = MPI.COMM_WORLD.Get_rank()
         record.size = MPI.COMM_WORLD.Get_size()
         return True
