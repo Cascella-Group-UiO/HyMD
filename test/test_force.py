@@ -2,11 +2,15 @@ import pytest
 import numpy as np
 from mpi4py import MPI
 from force import compute_bond_forces, compute_angle_forces, prepare_bonds
+from input_parser import Config
 
 
 def test_prepare_bonds_2(dppc_single):
     indices, bonds, names, molecules, r, CONF = dppc_single
-    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, CONF)
+    config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
+                    box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
+    config.bonds = CONF['bond_2']
+    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, config)
     bonds_2_ind = [b[:2] for b in bonds_2]
     bonds_2_val = [b[2:] for b in bonds_2]
 
@@ -32,7 +36,10 @@ def test_prepare_bonds_2(dppc_single):
 
 def test_comp_bonds(dppc_single):
     indices, bonds, names, molecules, r, CONF = dppc_single
-    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, CONF)
+    config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
+                    box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
+    config.bonds = CONF['bond_2']
+    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, config)
 
     expected_energies = np.array([0.24545803261508981,
                                   0.76287125411373635,
@@ -88,7 +95,10 @@ def test_comp_bonds(dppc_single):
 
 def test_prepare_bonds_3(dppc_single):
     indices, bonds, names, molecules, r, CONF = dppc_single
-    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, CONF)
+    config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
+                    box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
+    config.angle_bonds = CONF['bond_3']
+    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, config)
     bonds_3_ind = [b[:3] for b in bonds_3]
     bonds_3_val = [b[3:] for b in bonds_3]
 
@@ -112,7 +122,10 @@ def test_prepare_bonds_3(dppc_single):
 
 def test_comp_angles(dppc_single):
     indices, bonds, names, molecules, r, CONF = dppc_single
-    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, CONF)
+    config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
+                    box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
+    config.angle_bonds = CONF['bond_3']
+    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, config)
 
     expected_energies = np.array([0.24138227262192161,
                                   12.962077271327919,
