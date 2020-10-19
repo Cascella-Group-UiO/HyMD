@@ -256,7 +256,7 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
                '  [["A", "B"], [2.7815]],']
     warn_strs = [['A--C', 'no A'],
                  ['A--A', 'no A'],
-                 ['P--B', 'no B'],
+                 ['B--P', 'no B'],
                  ['A--A', 'no A'],
                  ['A--B', 'neither A, nor B']]
 
@@ -379,3 +379,28 @@ def test_input_parser_convert_CONF_to_config(config_CONF, caplog):
     for names in convert_names:
         assert CONF[names[0]] == getattr(config, names[1])
     caplog.clear()
+
+
+def test_input_parser_check_n_print():
+    ...                                                                         ##### <<<< FIX ME
+
+
+def test_input_parser_check_tau():                                              ##### <<<< FIX ME
+    ...
+
+
+def test_input_parser_check_start_and_target_temperature():                     ##### <<<< FIX ME
+    ...
+
+
+def test_input_parser_check_mass():                                             ##### <<<< FIX ME
+    ...
+
+
+def test_input_parser_check_domain_decomposition():                             ##### <<<< FIX ME
+    ...
+
+
+@pytest.mark.mpi()
+def test_input_parser_check_name():                                             ##### <<<< FIX ME
+    ...
