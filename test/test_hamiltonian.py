@@ -186,7 +186,7 @@ def test_Hamiltonian_no_chi_gaussian_core(config_CONF, caplog):
               .apply(hamiltonian.H, out=Ellipsis)
               .c2r(out=Ellipsis))
     assert phi.csum() == pytest.approx(config.n_particles / volume_per_cell,
-                                       abs=1e-14)
+                                       abs=1e-13)
 
     for W in [SquaredPhi(config), DefaultNoChi(config)]:
         w = (W.w([phi]) * volume_per_cell).csum()
