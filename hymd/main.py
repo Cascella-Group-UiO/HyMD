@@ -3,12 +3,12 @@ from mpi4py import MPI
 import atexit
 import cProfile
 import pstats
-import numpy as np
+import warnings
 import h5py
 import os
-import time
+import datetime
 import logging
-import warnings
+import numpy as np
 import pmesh.pm as pmesh
 from types import ModuleType as moduleobj
 
@@ -23,9 +23,21 @@ from field import (compute_field_force, update_field,
                    compute_field_and_kinetic_energy, domain_decomposition)
 
 
+def fmtdt(timedelta):                                                           ### FIX ME (move this somewhere else)
+    days = timedelta.days
+    hours, rem = divmod(timedelta.seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    microseconds = timedelta.microseconds
+    ret_str = ''
+    if days != 0:
+        ret_str += f'{days} days '
+    ret_str += f'{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}'
+    return ret_str
+
+
 def configure_runtime(comm):
     ap = ArgumentParser()
-    ap.add_argument("--verbose", default=False, action='store_true',
+    ap.add_argument("-v", "--verbose", default=0, type=int, nargs='?',
                     help="Increase logging verbosity")
     ap.add_argument("--profile", default=False, action='store_true',
                     help="Profile program execution with cProfile")
@@ -34,7 +46,7 @@ def configure_runtime(comm):
                           "performance"))
     ap.add_argument("--destdir", default=".",
                     help="Write output to specified directory")
-    ap.add_argument("--seed", default=None,
+    ap.add_argument("--seed", default=None, type=int,
                     help="Set the numpy random generator seed for every rank")
     ap.add_argument("--logfile", default=None,
                     help="Redirect event logging to specified file")
@@ -42,6 +54,11 @@ def configure_runtime(comm):
                     help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args()
+
+    # Given as '--verbose' or '-v' without a specific value specified,
+    # default to 1
+    if args.verbose is None:
+        args.verbose = 1
 
     if comm.rank == 0:
         os.makedirs(args.destdir, exist_ok=True)
@@ -55,7 +72,7 @@ def configure_runtime(comm):
     # Setup logger
     Logger.setup(default_level=logging.INFO,
                  log_file=args.logfile,
-                 log_to_stdout=args.verbose)
+                 verbose=args.verbose)
 
     if args.profile:
         prof_file_name = 'cpu.txt-%05d-of-%05d' % (comm.rank, comm.size)
@@ -84,7 +101,8 @@ def configure_runtime(comm):
             f'Attempting to parse config file {args.config} as .toml'
         )
         toml_config = read_config_toml(args.config)
-        config = parse_config_toml(toml_config, file_path=args.config)
+        config = parse_config_toml(toml_config, file_path=args.config,
+                                   comm=comm)
         Logger.rank0.log(
             logging.INFO,
             f'Successfully parsed {args.config} as .toml file'
@@ -159,9 +177,14 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
 
 
 if __name__ == '__main__':
+
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
+
+    if rank == 0:
+        start_time = datetime.datetime.now()
+
     args, config = configure_runtime(comm)
 
     driver = 'mpio' if not args.disable_mpio else None
@@ -183,7 +206,7 @@ if __name__ == '__main__':
             bonds = in_file['bonds'][rank_range]
 
     # config.box_size = np.array(config.box_size)                                 ######## <<<<< FIX ME
-    config = check_config(config, indices, names, types, comm=MPI.COMM_WORLD)
+    config = check_config(config, indices, names, types, comm=comm)
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
@@ -198,20 +221,30 @@ if __name__ == '__main__':
     angle_energy = 0.0
     kinetic_energy = 0.0
 
-    pm = pmesh.ParticleMesh(config.mesh_size, BoxSize=config.box_size,
-                            dtype='f8', comm=comm)
+    # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
+    # ragged nested sequences until it is fixed in pmesh
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action='ignore', category=np.VisibleDeprecationWarning,
+            message=r'Creating an ndarray from ragged nested sequences'
+        )
+        pm = pmesh.ParticleMesh(config.mesh_size, BoxSize=config.box_size,
+                                dtype='f8', comm=comm)
+
     if config.hamiltonian.lower() == 'defaultnochi':
         hamiltonian = DefaultNoChi(config)
     elif config.hamiltonian.lower() == 'defaultwithchi':
         hamiltonian = DefaultWithChi(config, config.unique_names,
                                      config.type_to_name_map)
     else:
-        warn_str = 'No hamiltonian specified, defaulting to DefaultNoChi'
-        Logger.rank0.log(logging.WARNING, warn_str)
+        err_str = (
+            f'The specified Hamiltonian {config.hamiltonian} was not '
+            f'recognized as a valid Hamiltonian.'
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
         if rank == 0:
-            warnings.warn(warn_str)
+            raise NotImplementedError()
 
-    print(config.type_to_name_map)
     Logger.rank0.log(logging.INFO, f'pfft-python processor mesh: {str(pm.np)}')
 
     phi = [pm.create('real', value=0.0) for _ in range(config.n_types)]
@@ -225,9 +258,6 @@ if __name__ == '__main__':
                              disable_mpio=args.disable_mpio)
     store_static(out_dataset, rank_range, names, types, indices,
                  config.box_size, comm=comm)
-
-    if rank == 0:
-        start_time = time.time()
 
     if config.domain_decomposition:
         positions, velocities, forces, indices, types = domain_decomposition(
@@ -255,8 +285,39 @@ if __name__ == '__main__':
 
     forces = field_forces + bond_forces + angle_forces
 
+    if rank == 0:
+        loop_start_time = datetime.datetime.now()
+        last_step_time = datetime.datetime.now()
+
     for step in range(config.n_steps):
-        Logger.rank0.log(logging.INFO, f'MD step = {step}')
+        current_step_time = datetime.datetime.now()
+
+        if step == 0:
+            Logger.rank0.log(logging.INFO, f'MD step = {step:10d}')
+        else:
+            if rank == 0:
+                step_t = current_step_time - last_step_time
+                tot_t = current_step_time - loop_start_time
+                avg_t = (current_step_time - loop_start_time) / (step + 1)
+                ns_sim = (step + 1) * config.time_step / 1000
+
+                seconds_per_day = 24 * 60 * 60
+                seconds_elapsed = tot_t.days * seconds_per_day
+                seconds_elapsed += tot_t.seconds
+                seconds_elapsed += 1e-6 * tot_t.microseconds
+                hours_elapsed = seconds_elapsed / 60
+                days_elapsed = hours_elapsed / 24
+
+                ns_per_day = ns_sim / days_elapsed
+                hours_per_ns = hours_elapsed / ns_sim
+                steps_per_s = (step + 1) / seconds_elapsed
+                info_str = (
+                    f'MD step = {step:10d}   step time: '
+                    f'{fmtdt(step_t):22s}   Performance: '
+                    f'{ns_per_day:.3f} ns/day   {hours_per_ns:.3f} hours/ns   '
+                    f'{steps_per_s:.3f} steps/s'
+                )
+                Logger.rank0.log(logging.INFO, info_str)
 
         # Initial rRESPA velocity step
         velocities = integrate_velocity(velocities, field_forces / config.mass,
@@ -313,13 +374,15 @@ if __name__ == '__main__':
             pm.decompose(positions[types == t]) for t in range(config.n_types)
         ]
         for t in range(config.n_types):
-            exchange_cost = layouts[t].get_exchange_cost()
-            Logger.all_ranks.log(
-                logging.INFO,
-                (f'(GHOSTS: Total number of particles of type '
-                 f'{config.type_to_name_map} to be '
-                 f'exchanged = {exchange_cost[rank]}')
-            )
+            # Only if '--verbose 2' or higher is given as command line input
+            if args.verbose > 1:
+                exchange_cost = layouts[t].get_exchange_cost()
+                Logger.all_ranks.log(
+                    logging.INFO,
+                    (f'(GHOSTS: Total number of particles of type '
+                     f'{config.type_to_name_map} to be '
+                     f'exchanged = {exchange_cost[rank]}')
+                )
 
         compute_field_energy = np.mod(step + 1, config.n_print) == 0
         update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
@@ -346,12 +409,24 @@ if __name__ == '__main__':
                            kinetic_energy, bond_energy, angle_energy,
                            field_energy, config.time_step, config, comm=comm)
 
+        last_step_time = current_step_time
+
     # End simulation
-    Logger.rank0(logging.INFO, f'Elapsed time: {time.time() - start_time}')
+    if rank == 0:
+        end_time = datetime.datetime.now()
+        sim_time = end_time - start_time
+        setup_time = loop_start_time - start_time
+        loop_time = end_time - loop_start_time
+        Logger.rank0.log(
+            logging.INFO,
+            (f'Elapsed time: {fmtdt(sim_time)}   '
+             f'Setup time: {fmtdt(setup_time)}   '
+             f'MD loop time: {fmtdt(loop_time)}')
+        )
 
     if config.n_print > 0:
-        update_field(phi, layouts, types, pm, positions, config.n_types,
-                     compute_potential=True)
+        update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
+                     types, config, external_potential, compute_potential=True)
         frame = (step + 1) // config.n_print
         field_energy, kinetic_energy = compute_field_and_kinetic_energy(
             phi, velocities, hamiltonian, pm, config
@@ -364,4 +439,4 @@ if __name__ == '__main__':
                    angle_energy, field_energy, config.time_step, config,
                    comm=comm)
 
-    out_dataset.close()
+    out_dataset.close_file()
