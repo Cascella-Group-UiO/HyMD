@@ -11,7 +11,7 @@ import collections
 #
 # pip3 install -e . && python3 -m pytest
 curr_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(curr_path, os.pardir, 'hPF'))
+sys.path.insert(0, os.path.join(curr_path, os.pardir, 'hymd'))
 
 
 @pytest.fixture
