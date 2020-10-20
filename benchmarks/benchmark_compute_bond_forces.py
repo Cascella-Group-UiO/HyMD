@@ -5,6 +5,7 @@ import sys
 import os
 import arrays_dppc_only
 import functools
+from _compute_bond_forces import cbf
 
 sys.path.append(os.path.join(os.pardir, 'hymd'))
 from force import prepare_bonds  # noqa: E402
@@ -136,6 +137,14 @@ def compute_bond_forces__numba_fastmath(f_bonds, r, box_size, bonds_2_atom1,
     return energy
 
 
+@timing(n_times=1000, hot_start=False, print_return=True)
+def compute_bond_forces__fortran(f_bonds, r, box_size, bonds_2_atom1,
+                                 bonds_2_atom2, bonds_2_equilibrium,
+                                 bonds_2_stength):
+    return cbf(f_bonds, r, box_size, bonds_2_atom1, bonds_2_atom2,
+               bonds_2_equilibrium, bonds_2_stength)
+
+
 if __name__ == '__main__':
     """
     compute_bond_forces__plain (1000 times):
@@ -149,6 +158,10 @@ if __name__ == '__main__':
     compute_bond_forces__numba_fastmath (1000 times):
     00:00:05.850952
     E =           7770.150099065346694
+
+    compute_bond_forces__fortran (1000 times):
+    00:00:00.107869
+    E =           7770.150099065346694
     """
     indices, names, bonds, positions, types, molecules = (
         arrays_dppc_only.arrays()
@@ -159,6 +172,7 @@ if __name__ == '__main__':
     toml_config = read_config_toml(config_file_path)
     config = parse_config_toml(toml_config, file_path=config_file_path)
     config.n_particles = 6337
+    config.box_size = [13.0, 13.0, 14.0]
     box_size = np.array(config.box_size)
     config = check_config(config, indices, names, types)
 
@@ -184,5 +198,12 @@ if __name__ == '__main__':
 
     E = compute_bond_forces__numba_fastmath(
         f_bonds, positions, box_size, bonds_2_atom1, bonds_2_atom2,
+        bonds_2_equilibrium, bonds_2_stength
+    )
+
+    f_bonds_fortran = np.asfortranarray(f_bonds, dtype=np.float64)
+    r_fortran = np.asfortranarray(positions, dtype=np.float64)
+    E = compute_bond_forces__fortran(
+        f_bonds_fortran, r_fortran, box_size, bonds_2_atom1, bonds_2_atom2,
         bonds_2_equilibrium, bonds_2_stength
     )
