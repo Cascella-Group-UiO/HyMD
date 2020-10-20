@@ -48,7 +48,7 @@ def timing(function=None, n_times=1, hot_start=False, print_return=False):
     return _decorator(function) if callable(function) else _decorator
 
 
-@timing(n_times=1000, hot_start=False, print_return=True)
+@timing(n_times=1, hot_start=False, print_return=True)
 def compute_bond_forces__plain(f_bonds, r, bonds_2, box_size):
     f_bonds.fill(0.0)
     energy = 0.0
@@ -73,7 +73,7 @@ def compute_bond_forces__plain(f_bonds, r, bonds_2, box_size):
     return energy
 
 
-@timing(n_times=1000, hot_start=True, print_return=True)
+@timing(n_times=1, hot_start=True, print_return=True)
 @numba.jit(nopython=True, fastmath=False)
 def compute_bond_forces__numba(f_bonds, r, box_size, bonds_2_atom1,
                                bonds_2_atom2, bonds_2_equilibrium,
@@ -105,7 +105,7 @@ def compute_bond_forces__numba(f_bonds, r, box_size, bonds_2_atom1,
     return energy
 
 
-@timing(n_times=1000, hot_start=True, print_return=True)
+@timing(n_times=1, hot_start=True, print_return=True)
 @numba.jit(nopython=True, fastmath=True)
 def compute_bond_forces__numba_fastmath(f_bonds, r, box_size, bonds_2_atom1,
                                         bonds_2_atom2, bonds_2_equilibrium,
@@ -159,9 +159,13 @@ if __name__ == '__main__':
     00:00:05.850952
     E =           7770.150099065346694
 
-    compute_bond_forces__fortran (1000 times):
+    compute_bond_forces__fortran_float64 (1000 times):
     00:00:00.107869
     E =           7770.150099065346694
+
+    compute_bond_forces__fortran_float32 (1000 times):
+    00:00:00.126171
+    E =           7770.150119979173724
     """
     indices, names, bonds, positions, types, molecules = (
         arrays_dppc_only.arrays()
@@ -201,8 +205,8 @@ if __name__ == '__main__':
         bonds_2_equilibrium, bonds_2_stength
     )
 
-    f_bonds_fortran = np.asfortranarray(f_bonds, dtype=np.float64)
-    r_fortran = np.asfortranarray(positions, dtype=np.float64)
+    f_bonds_fortran = np.asfortranarray(f_bonds, dtype=np.float32)
+    r_fortran = np.asfortranarray(positions, dtype=np.float32)
     E = compute_bond_forces__fortran(
         f_bonds_fortran, r_fortran, box_size, bonds_2_atom1, bonds_2_atom2,
         bonds_2_equilibrium, bonds_2_stength
