@@ -20,10 +20,12 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
     real(8),                intent(out)     :: energy
 
     integer :: ind, ii, jj
-    real(8) :: rij, rij_x, rij_y, rij_z, df, bx, by, bz
+    real(8) :: rij, rij_x, rij_y, rij_z, df
+    real(8) :: bx, by, bz
 
     energy = 0.0d0
-    f = 0.0d0 ! Set all array elements
+    f = 0.0 ! Set all array elements
+
     bx = 1.0d0 / box(1)
     by = 1.0d0 / box(2)
     bz = 1.0d0 / box(3)

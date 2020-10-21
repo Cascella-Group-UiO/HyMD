@@ -13,7 +13,8 @@ from input_parser import (parse_config_toml, read_config_toml,  # noqa: E402
                           check_config)  # noqa: E402
 
 
-def timing(function=None, n_times=1, hot_start=False, print_return=False):
+def timing(function=None, n_times=1, hot_start=False, print_return=False,
+           silent=False):
     assert callable(function) or function is None
 
     def _decorator(function_):
@@ -36,12 +37,16 @@ def timing(function=None, n_times=1, hot_start=False, print_return=False):
             hours, rem = divmod(timedelta.seconds, 3600)
             minutes, seconds = divmod(rem, 60)
             microseconds = timedelta.microseconds
-            print(f'{function_.__name__} ({n_times} times):')
-            print(f'{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds}')
+            if not silent:
+                print(f'{function_.__name__} ({n_times} times):')
+                print(
+                    f'{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds}'
+                )
 
-            if print_return:
+            if print_return and not silent:
                 print(f'E = {ret:30.15f}')
-            print()
+            if not silent:
+                print()
 
             return ret
         return wrapper
@@ -147,6 +152,14 @@ def compute_bond_forces__fortran(f_bonds, r, box_size, bonds_2_atom1,
 
 if __name__ == '__main__':
     """
+    Fortran code roughly 1750 times faster than plain python.
+    Numba code roughly 33.5 times faster than plain python.
+    Fortran code roughly 50 times faster than numba implementation.
+
+    - fastmath has no impact on numba execution time.
+    - using single precision has no impact on fortran excution time.
+    ============================================================================
+
     compute_bond_forces__plain (1000 times):
     00:03:06.434376
     E =           7770.150099065346694
@@ -166,6 +179,7 @@ if __name__ == '__main__':
     compute_bond_forces__fortran_float32 (1000 times):
     00:00:00.126171
     E =           7770.150119979173724
+
     """
     indices, names, bonds, positions, types, molecules = (
         arrays_dppc_only.arrays()
@@ -183,8 +197,6 @@ if __name__ == '__main__':
     bonds_2, bonds_3 = prepare_bonds(molecules, names, bonds, indices,
                                      config)
 
-    E = compute_bond_forces__plain(f_bonds, positions, bonds_2, box_size)
-
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
     bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float32)
@@ -194,6 +206,8 @@ if __name__ == '__main__':
         bonds_2_atom2[i] = b[1]
         bonds_2_equilibrium[i] = b[2]
         bonds_2_stength[i] = b[3]
+
+    E = compute_bond_forces__plain(f_bonds, positions, bonds_2, box_size)
 
     E = compute_bond_forces__numba(
         f_bonds, positions, box_size, bonds_2_atom1, bonds_2_atom2,
