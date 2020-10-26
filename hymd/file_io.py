@@ -2,6 +2,7 @@ import numpy as np
 import h5py
 import os
 import logging
+import getpass
 from mpi4py import MPI
 from logger import Logger
 
@@ -20,138 +21,264 @@ class OutDataset:
             )
         else:
             self.file = h5py.File(
-                os.path.join(dest_directory,
-                             'sim.hdf5'),
+                os.path.join(dest_directory, 'sim.h5'),
                 'w', driver='mpio', comm=comm
             )
-        self.define_datasets(config.n_particles,
-                             config.n_steps // config.n_print + 1)
 
     def close_file(self, comm=MPI.COMM_WORLD):
         comm.Barrier()
         self.file.close()
 
-    def define_datasets(self, n_particles, n_frames):
-        self.position = self.file.create_dataset(
-            'coordinates', (n_frames, n_particles, 3), dtype="Float32")
-        self.velocity = self.file.create_dataset(
-            'velocities', (n_frames, n_particles, 3), dtype="Float32")
-        self.time = self.file.create_dataset(
-            'time', shape=(n_frames,), dtype="Float32")
-        self.box_size = self.file.create_dataset(
-            'cell_lengths', (n_frames, 3, 3), dtype='Float32')
-        self.box_angles = self.file.create_dataset(
-            'cell_angles', (n_frames, 3, 3), dtype='Float32')
-        self.temperature = self.file.create_dataset(
-            'temperature', (n_frames,), dtype='Float32')
-        self.names = self.file.create_dataset(
-            'names', (n_particles,), dtype="S10")
-        self.indices = self.file.create_dataset(
-            'indices', (n_particles,), dtype='i')
-        self.types = self.file.create_dataset(
-            'types', (n_particles,), dtype='i')
-        self.total_momentum = self.file.create_dataset(
-            'total_momentum', (n_frames, 3), dtype="Float32")
-        self.total_energy = self.file.create_dataset(
-            'totalEnergy', (n_frames,), dtype='Float32')
-        self.potential_energy = self.file.create_dataset(
-            'potentialEnergy', (n_frames,), dtype='Float32')
-        self.kinetic_energy = self.file.create_dataset(
-            'kineticEnergy', (n_frames,), dtype='Float32')
-        self.bond2_energy = self.file.create_dataset(
-            'bond2Energy', (n_frames,), dtype='Float32')
-        self.bond3_energy = self.file.create_dataset(
-            'bond3Energy', (n_frames,), dtype='Float32')
-        self.field_energy = self.file.create_dataset(
-            'fieldEnergy', (n_frames,), dtype='Float32')
 
-        self.position.attrs['units'] = 'nanometers'
-        self.velocity.attrs['units'] = 'nanometers/picosecond'
-        self.time.attrs['units'] = 'picoseconds'
-        self.box_size.attrs['units'] = 'nanometers'
-        self.box_angles.attrs['units'] = 'degrees'
-        self.temperature.attrs['units'] = 'Kelvin'
-        self.total_momentum.attrs['units'] = 'nanometers g/picosecond mol'
-        for e in (self.total_energy, self.potential_energy, self.bond2_energy,
-                  self.bond3_energy, self.field_energy):
-            e.attrs['units'] = 'kJ/mol'
+def setup_time_dependent_element(name, parent_group, n_frames, shape, dtype,
+                                 units=None):
+    group = parent_group.create_group(name)
+    step = group.create_dataset('step', n_frames, 'Int32')
+    time = group.create_dataset('time', n_frames, 'Int32')
+    value = group.create_dataset('value', (n_frames, *shape), dtype)
+    if units is not None:
+        group.attrs['units'] = units
+    return group, step, time, value
 
 
-def store_static(out_dataset, rank_range, names, types, indices, box_size,
-                 comm=MPI.COMM_WORLD):
-    # FIXME: this can be inefficient if p_mpi_range is discontiguous (depends
-    # on hdf-mpi impl detail)
-    out_dataset.names[rank_range] = names
-    out_dataset.types[rank_range] = types
-    out_dataset.indices[rank_range] = indices
-    if comm.rank == 0:
-        out_dataset.box_size[0, 0, 0] = box_size[0]
-        out_dataset.box_size[0, 1, 1] = box_size[1]
-        out_dataset.box_size[0, 2, 2] = box_size[2]
-        out_dataset.box_angles[0, :] = np.full((3, 3), 90.0, dtype='Float32')
+def store_static(h5md, rank_range, names, types, indices, config,
+                 bonds_2_atom1, bonds_2_atom2, comm=MPI.COMM_WORLD):
+    h5md_group = h5md.file.create_group('/h5md')
+    h5md.h5md_group = h5md_group
+    h5md.observables = h5md.file.create_group('/observables')
+    h5md.connectivity = h5md.file.create_group('/connectivity')
+    h5md.parameters = h5md.file.create_group('/parameters')
+
+    h5md_group.attrs['version'] = np.array([1, 1], dtype=int)
+    author_group = h5md_group.create_group('author')
+    author_group.attrs['name'] = np.string_(getpass.getuser())
+    creator_group = h5md_group.create_group('creator')
+    creator_group.attrs['name'] = np.string_('Hylleraas MD')
+
+    # Check if we are in a git repo and grab the commit hash and the branch if
+    # we are, append it to the version number in the output specification. Also
+    # grab the user email from git config if we can find it.
+    try:
+        import git
+        try:
+            repo_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                    os.pardir))
+            repo = git.Repo(repo_dir)
+            commit = repo.head.commit
+            branch = repo.active_branch
+            version_add = f'[{branch}-branch commit {commit}]'
+            try:
+                reader = repo.config_reader()
+                user_email = reader.get_value('user', 'email')
+                author_group.attrs['email'] = np.string_(user_email)
+            except KeyError:
+                ...
+        except git.exc.InvalidGitRepositoryError:
+            version_add = ''
+    except ModuleNotFoundError:
+        version_add = ''
+    creator_group.attrs['version'] = np.string_('0.0 ' + version_add)
+
+    h5md.particles_group = h5md.file.create_group('/particles')
+    h5md.all_particles = h5md.particles_group.create_group('all')
+    mass = h5md.all_particles.create_dataset('mass', (config.n_particles,),
+                                             'Float32')
+    mass[:].fill(config.mass)
+    box = h5md.all_particles.create_group('box')
+    box.attrs['dimension'] = 3
+    box.attrs['boundary'] = np.array([np.string_(s) for s in 3 * ['periodic']],
+                                     dtype='S8')
+    h5md.edges = box.create_dataset('edges', (3,), 'Float32')
+    h5md.edges[:] = np.array(config.box_size)
+
+    n_frames = config.n_steps // config.n_print
+    if np.mod(config.n_steps - 1, config.n_print) != 0:
+        n_frames += 1
+
+    # Time dependent box, fix this later.
+    # h5md.box_step = h5md.edges.create_dataset('step', (n_frames,), 'i')
+    # h5md.box_time = h5md.edges.create_dataset('time', (n_frames,), 'Float32')
+    # h5md.box_value = h5md.edges.create_dataset('value', (n_frames, 3), 'Float32')  # noqa: E501
+
+    species = h5md.all_particles.create_dataset('species', (config.n_particles,),  # noqa: E501
+                                                dtype="i")
+    _, h5md.positions_step, h5md.positions_time, h5md.positions = (
+        setup_time_dependent_element('position', h5md.all_particles, n_frames,
+                                     (config.n_particles, 3), 'Float32',
+                                     units='nanometers')
+    )
+    _, h5md.velocities_step, h5md.velocities_time, h5md.velocities = (
+        setup_time_dependent_element('velocity', h5md.all_particles, n_frames,
+                                     (config.n_particles, 3), 'Float32',
+                                     units='nanometers/picosecond')
+    )
+    _, h5md.total_energy_step, h5md.total_energy_time, h5md.total_energy = (
+        setup_time_dependent_element('total_energy', h5md.observables,
+                                     n_frames, (1,), 'Float32',
+                                     units='kJ/mol')
+    )
+    _, h5md.kinetc_energy_step, h5md.kinetc_energy_time, h5md.kinetc_energy = (
+        setup_time_dependent_element('kinetic_energy', h5md.observables,
+                                     n_frames, (1,), 'Float32',
+                                     units='kJ/mol')
+    )
+    _, h5md.potential_energy_step, h5md.potential_energy_time, h5md.potential_energy = (  # noqa: E501
+        setup_time_dependent_element('potential_energy', h5md.observables,
+                                     n_frames, (1,), 'Float32',
+                                     units='kJ/mol')
+    )
+    _, h5md.bond_energy_step, h5md.bond_energy_time, h5md.bond_energy = (
+        setup_time_dependent_element('bond_energy', h5md.observables,
+                                     n_frames, (1,), 'Float32',
+                                     units='kJ/mol')
+    )
+    _, h5md.angle_energy_step, h5md.angle_energy_time, h5md.angle_energy = (
+        setup_time_dependent_element('angle_energy', h5md.observables,
+                                     n_frames, (1,), 'Float32',
+                                     units='kJ/mol')
+    )
+    _, h5md.field_energy_step, h5md.field_energy_time, h5md.field_energy = (
+        setup_time_dependent_element('field_energy', h5md.observables,
+                                     n_frames, (1,), 'Float32',
+                                     units='kJ/mol')
+    )
+    _, h5md.total_momentum_step, h5md.total_momentum_time, h5md.total_momentum = (  # noqa: E501
+        setup_time_dependent_element('total_momentum', h5md.observables,
+                                     n_frames, (3,), 'Float32',
+                                     units='nanometers g/picosecond mol')
+    )
+    _, h5md.temperature_step, h5md.temperature_time, h5md.temperature = (
+        setup_time_dependent_element('temperature', h5md.observables,
+                                     n_frames, (3,), 'Float32',
+                                     units='Kelvin')
+    )
+
+    ind_sort = np.argsort(indices)
+    for i in ind_sort:
+        species[indices[i]] = config.name_to_type_map[names[i].decode('utf-8')]
+
+    h5md.parameters.attrs['config.toml'] = np.string_(str(config))
+    vmd_group = h5md.parameters.create_group('vmd_structure')
+    index_of_species = vmd_group.create_dataset(
+        'indexOfSpecies', (config.n_types,), 'i'
+    )
+    index_of_species[:] = np.array(list(range(config.n_types)))
+
+    # VMD-h5mdplugin maximum name/type name length is 16 characters (for
+    # whatever reason [VMD internals?]).
+    name_dataset = vmd_group.create_dataset('name', (config.n_types,), 'S16')
+    type_dataset = vmd_group.create_dataset('type', (config.n_types,), 'S16')
+    for i, n in config.type_to_name_map.items():
+        name_dataset[i] = np.string_(n[:16])
+        if n == 'W':
+            type_dataset[i] = np.string_('solvent')
+        else:
+            type_dataset[i] = np.string_('membrane')
+
+    total_bonds = comm.allreduce(len(bonds_2_atom1), MPI.SUM)
+    n_bonds_local = len(bonds_2_atom1)
+
+    receive_buffer = MPI.COMM_WORLD.gather(n_bonds_local, root=0)
+    n_bonds_global = None
+    if comm.Get_rank() == 0:
+        n_bonds_global = receive_buffer
+    n_bonds_global = np.array(comm.bcast(n_bonds_global, root=0))
+    rank_bond_start = np.sum(n_bonds_global[:comm.Get_rank()])
+    bonds_from = vmd_group.create_dataset('bond_from', (total_bonds,), 'i')
+    bonds_to = vmd_group.create_dataset('bond_to', (total_bonds,), 'i')
+
+    for i in range(n_bonds_local):
+        a = bonds_2_atom1[i]
+        b = bonds_2_atom2[i]
+        bonds_from[rank_bond_start + i] = indices[a]
+        bonds_to[rank_bond_start + i] = indices[b]
 
 
-def store_data(out_dataset, step, frame, indices, positions, velocities,
+def store_data(h5md, step, frame, indices, positions, velocities,
                box_size, temperature, kinetic_energy, bond2_energy,
                bond3_energy, field_energy, time_step, config,
                comm=MPI.COMM_WORLD):
-    ind_sort = np.argsort(indices)
-    out_dataset.position[frame, indices[ind_sort]] = positions[ind_sort]
-    out_dataset.velocity[frame, indices[ind_sort]] = velocities[ind_sort]
+    for dset in (h5md.positions_step,
+                 h5md.velocities_step,
+                 h5md.total_energy_step,
+                 h5md.potential_energy,
+                 h5md.kinetc_energy_step,
+                 h5md.bond_energy_step,
+                 h5md.angle_energy_step,
+                 h5md.field_energy_step,
+                 h5md.total_momentum_step,
+                 h5md.temperature_step):
+        dset[frame] = step
 
+    for dset in (h5md.positions_time,
+                 h5md.velocities_time,
+                 h5md.total_energy_time,
+                 h5md.potential_energy_time,
+                 h5md.kinetc_energy_time,
+                 h5md.bond_energy_time,
+                 h5md.angle_energy_time,
+                 h5md.field_energy_time,
+                 h5md.total_momentum_time,
+                 h5md.temperature_time):
+        dset[frame] = step * time_step
+
+    # Time dependent box, fix this later.
+    # h5md.box_step[frame] = step
+    # h5md.box_time[frame] = step * time_step
+    # h5md.box_value[frame, ...] = np.array(box_size)
+
+    ind_sort = np.argsort(indices)
+    h5md.positions[frame, indices[ind_sort]] = positions[ind_sort]
+    h5md.velocities[frame, indices[ind_sort]] = velocities[ind_sort]
+
+    potential_energy = bond2_energy + bond3_energy + field_energy
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0),
                                                   MPI.SUM)
     assert len(total_momentum) == 3                                             ############################## <<<< CHECK-ME
-    if comm.rank == 0:
-        out_dataset.time[frame] = time_step * step
-        out_dataset.temperature[frame] = temperature
-        out_dataset.total_momentum[frame, :] = total_momentum
-
-        out_dataset.box_size[0, 0, 0] = box_size[0]
-        out_dataset.box_size[0, 1, 1] = box_size[1]
-        out_dataset.box_size[0, 2, 2] = box_size[2]
-
-        potential_energy = bond2_energy + bond3_energy + field_energy
-        out_dataset.bond2_energy[frame] = bond2_energy
-        out_dataset.bond3_energy[frame] = bond3_energy
-        out_dataset.field_energy[frame] = field_energy
-        out_dataset.kinetic_energy[frame] = kinetic_energy
-        out_dataset.potential_energy[frame] = potential_energy
-        out_dataset.total_energy[frame] = kinetic_energy + potential_energy
-
-        header = (
-            '{:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15}'  # noqa: E501
-            .format("step",
-                    "time",
-                    "temperature",
-                    "total E",
-                    "kinetic E",
-                    "potential E",
-                    "field E",
-                    "bond E",
-                    "angle E",
-                    "total Px",
-                    "total Py",
-                    "total Pz"))
-        data_fmt = f'{"{:15}"} {11 * "{:15.10g}" }'
-        data = data_fmt.format(step,
-                               time_step * step,
-                               temperature,
-                               kinetic_energy + potential_energy,
-                               kinetic_energy,
-                               potential_energy,
-                               field_energy,
-                               bond2_energy,
-                               bond3_energy,
-                               total_momentum[0],
-                               total_momentum[1],
-                               total_momentum[2])
-        Logger.rank0.log(
-            logging.INFO, ('\n' + header + '\n' + data)
-        )
+    h5md.total_energy[frame] = kinetic_energy + potential_energy
+    h5md.potential_energy[frame] = potential_energy
+    h5md.kinetc_energy[frame] = kinetic_energy
+    h5md.bond_energy[frame] = bond2_energy
+    h5md.angle_energy[frame] = bond3_energy
+    h5md.field_energy[frame] = field_energy
+    h5md.total_momentum[frame, :] = total_momentum
+    h5md.temperature[frame] = temperature
+    header = (
+        '{:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15}'  # noqa: E501
+        .format("step",
+                "time",
+                "temperature",
+                "total E",
+                "kinetic E",
+                "potential E",
+                "field E",
+                "bond E",
+                "angle E",
+                "total Px",
+                "total Py",
+                "total Pz"))
+    data_fmt = f'{"{:15}"} {11 * "{:15.10g}" }'
+    data = data_fmt.format(step,
+                           time_step * step,
+                           temperature,
+                           kinetic_energy + potential_energy,
+                           kinetic_energy,
+                           potential_energy,
+                           field_energy,
+                           bond2_energy,
+                           bond3_energy,
+                           total_momentum[0],
+                           total_momentum[1],
+                           total_momentum[2])
+    Logger.rank0.log(
+        logging.INFO, ('\n' + header + '\n' + data)
+    )
 
 
-def distribute_input(in_file, rank, size, n_particles, max_molecule_size=201):
+def distribute_input(in_file, rank, size, n_particles, max_molecule_size=201,
+                     comm=MPI.COMM_WORLD):
+    if n_particles is None:
+        n_particles = len(in_file['indices'])
     np_per_MPI = n_particles // size
 
     molecules_flag = False
