@@ -13,9 +13,9 @@ import pmesh.pm as pmesh
 from types import ModuleType as moduleobj
 
 from file_io import distribute_input, OutDataset, store_static, store_data
-from force import (prepare_bonds, compute_bond_forces, compute_angle_forces,
-                   compute_bond_forces__plain, compute_angle_forces__plain,
-                   prepare_bonds_old)
+from force import prepare_bonds
+from force import compute_bond_forces__fortran as compute_bond_forces
+from force import compute_angle_forces__fortran as compute_angle_forces
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
 from thermostat import velocity_rescale
@@ -203,7 +203,7 @@ if __name__ == '__main__':
             comm=comm
         )
         indices = in_file['indices'][rank_range]
-        positions = in_file['coordinates'][-1, rank_range, :]
+        positions_ = in_file['coordinates'][-1, rank_range, :]
         velocities = in_file['velocities'][-1, rank_range, :]
         names = in_file['names'][rank_range]
 
@@ -215,15 +215,16 @@ if __name__ == '__main__':
             molecules = in_file['molecules'][rank_range]
             bonds = in_file['bonds'][rank_range]
 
+    positions = np.asfortranarray(positions_.astype(np.float32))
     # config.box_size = np.array(config.box_size)                                 ######## <<<<< FIX ME
     config = check_config(config, indices, names, types, comm=comm)
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
 
-    bond_forces = np.zeros(shape=(len(positions), 3))
-    angle_forces = np.zeros(shape=(len(positions), 3))
-    field_forces = np.zeros(shape=(len(positions), 3))
+    bond_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32, order='F')  # noqa: E501
+    angle_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32, order='F')  # noqa: E501
+    field_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32)
 
     field_energy = 0.0
     bond_energy = 0.0
@@ -238,7 +239,7 @@ if __name__ == '__main__':
             message=r'Creating an ndarray from ragged nested sequences'
         )
         pm = pmesh.ParticleMesh(config.mesh_size, BoxSize=config.box_size,
-                                dtype='f8', comm=comm)
+                                dtype='f4', comm=comm)
 
     if config.hamiltonian.lower() == 'defaultnochi':
         hamiltonian = DefaultNoChi(config)
@@ -292,20 +293,14 @@ if __name__ == '__main__':
             bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
             bonds_3_stength
         )
-        bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices,
-                                             config)
-        bond_energy_ = compute_bond_forces__plain(
-            bond_forces, positions, bonds_2, config.box_size
-        )
-        angle_energy_ = compute_angle_forces__plain(
-            angle_forces, positions, bonds_3, config.box_size
-        )
         bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
         angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
         if args.disable_bonds:
             bond_energy = 0.0
+            bond_forces.fill(0.0)
         if args.disable_angle_bonds:
             angle_energy = 0.0
+            angle_forces.fill(0.0)
     else:
         bonds_2_atom1, bonds_2_atom2 = None, None
 
@@ -375,14 +370,11 @@ if __name__ == '__main__':
 
         # Inner rRESPA steps
         for inner in range(config.respa_inner):
-            if args.disable_bonds:
-                bond_forces.fill(0.0)
-            if args.disable_angle_bonds:
-                angle_forces.fill(0.0)
             velocities = integrate_velocity(
                 velocities, (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner
             )
+
             positions = integrate_position(
                 positions, velocities, config.time_step / config.respa_inner
             )
@@ -399,7 +391,6 @@ if __name__ == '__main__':
                     bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
                     bonds_3_stength
                 )
-
             if args.disable_bonds:
                 bond_forces.fill(0.0)
             if args.disable_angle_bonds:
@@ -410,8 +401,8 @@ if __name__ == '__main__':
             )
 
         # Update slow forces
-        field_forces = compute_field_force(layouts, positions, force_on_grid,
-                                           types, config.n_types)
+        field_forces = compute_field_force(layouts, positions,  # noqa: E501
+                                           force_on_grid, types, config.n_types)  # noqa: E501
         if args.disable_field:
             field_forces.fill(0.0)
 
@@ -442,7 +433,8 @@ if __name__ == '__main__':
 
             # Particles are kept on mpi-task
             layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)  # noqa: E501
+                pm.decompose(positions[types == t])
+                for t in range(config.n_types)
             ]
         for t in range(config.n_types):
             # Only if '--verbose 2' or higher is given as command line input
@@ -474,8 +466,8 @@ if __name__ == '__main__':
                 temperature = (
                     (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)  # noqa: E501
                 )
-                # field_energy = 0.0                                                  ########## REMOVE
-
+                if args.disable_field:
+                    field_energy = 0.0
                 store_data(out_dataset, step, frame, indices, positions,
                            velocities, config.box_size, temperature,
                            kinetic_energy, bond_energy, angle_energy,
@@ -506,6 +498,8 @@ if __name__ == '__main__':
         temperature = (
             (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
         )
+        if args.disable_field:
+            field_energy = 0.0
         store_data(out_dataset, step, frame, indices, positions, velocities,
                    config.box_size, temperature, kinetic_energy, bond_energy,
                    angle_energy, field_energy, config.time_step, config,
