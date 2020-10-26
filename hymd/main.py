@@ -13,7 +13,9 @@ import pmesh.pm as pmesh
 from types import ModuleType as moduleobj
 
 from file_io import distribute_input, OutDataset, store_static, store_data
-from force import prepare_bonds, compute_bond_forces, compute_angle_forces
+from force import (prepare_bonds, compute_bond_forces, compute_angle_forces,
+                   compute_bond_forces__plain, compute_angle_forces__plain,
+                   prepare_bonds_old)
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
 from thermostat import velocity_rescale
@@ -41,6 +43,12 @@ def configure_runtime(comm):
                     help="Increase logging verbosity")
     ap.add_argument("--profile", default=False, action='store_true',
                     help="Profile program execution with cProfile")
+    ap.add_argument("--disable-field", default=False, action='store_true',
+                    help="Disable field forces")
+    ap.add_argument("--disable-bonds", default=False, action='store_true',
+                    help="Disable two-particle bond forces")
+    ap.add_argument("--disable-angle-bonds", default=False, action='store_true',
+                    help="Disable three-particle angle bond forces")
     ap.add_argument("--disable-mpio", default=False, action='store_true',
                     help=("Avoid using h5py-mpi, potentially decreasing IO "
                           "performance"))
@@ -190,8 +198,9 @@ if __name__ == '__main__':
     driver = 'mpio' if not args.disable_mpio else None
     with h5py.File(args.input, 'r', driver=driver, comm=comm) as in_file:
         rank_range, molecules_flag = distribute_input(
-            in_file, rank, size, config.n_particles,
-            config.max_molecule_size if config.max_molecule_size else 201
+            in_file, rank, size, config.n_particles,                            ### << USE config here, update n_particles if not given
+            config.max_molecule_size if config.max_molecule_size else 201,
+            comm=comm
         )
         indices = in_file['indices'][rank_range]
         positions = in_file['coordinates'][-1, rank_range, :]
@@ -199,6 +208,7 @@ if __name__ == '__main__':
         names = in_file['names'][rank_range]
 
         types = None
+        bonds = None
         if 'types' in in_file:
             types = in_file['types'][rank_range]
         if molecules_flag:
@@ -211,7 +221,6 @@ if __name__ == '__main__':
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
 
-    forces = np.zeros(shape=(len(positions), 3))
     bond_forces = np.zeros(shape=(len(positions), 3))
     angle_forces = np.zeros(shape=(len(positions), 3))
     field_forces = np.zeros(shape=(len(positions), 3))
@@ -243,7 +252,7 @@ if __name__ == '__main__':
         )
         Logger.rank0.log(logging.ERROR, err_str)
         if rank == 0:
-            raise NotImplementedError()
+            raise NotImplementedError(err_str)
 
     Logger.rank0.log(logging.INFO, f'pfft-python processor mesh: {str(pm.np)}')
 
@@ -253,11 +262,6 @@ if __name__ == '__main__':
     external_potential = [
         pm.create('real', value=0.0) for _ in range(config.n_types)
     ]
-
-    out_dataset = OutDataset(args.destdir, config,
-                             disable_mpio=args.disable_mpio)
-    store_static(out_dataset, rank_range, names, types, indices,
-                 config.box_size, comm=comm)
 
     if config.domain_decomposition:
         positions, velocities, forces, indices, types = domain_decomposition(
@@ -271,20 +275,60 @@ if __name__ == '__main__':
                  types, config, external_potential, compute_potential=True)
     field_forces = compute_field_force(layouts, positions, force_on_grid,
                                        types, config.n_types)
+    if args.disable_field:
+        field_forces.fill(0.0)                                                  ########## REMOVE
     if molecules_flag:
-        bonds_2, bonds_3 = prepare_bonds(molecules, names, bonds, indices,
-                                         config)
+        bonds_prep = prepare_bonds(molecules, names, bonds, indices,
+                                   config)
+        (bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium,
+         bonds_2_stength, bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
+         bonds_3_equilibrium, bonds_3_stength) = bonds_prep
         bond_energy_ = compute_bond_forces(
-            bond_forces, positions, bonds_2, config.box_size, comm
+            bond_forces, positions, config.box_size, bonds_2_atom1,
+            bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
         )
         angle_energy_ = compute_angle_forces(
-            angle_forces, positions, bonds_3, config.box_size, comm
+            angle_forces, positions, config.box_size, bonds_3_atom1,
+            bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
+            bonds_3_stength
+        )
+        bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices,
+                                             config)
+        bond_energy_ = compute_bond_forces__plain(
+            bond_forces, positions, bonds_2, config.box_size
+        )
+        angle_energy_ = compute_angle_forces__plain(
+            angle_forces, positions, bonds_3, config.box_size
         )
         bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
         angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+        if args.disable_bonds:
+            bond_energy = 0.0
+        if args.disable_angle_bonds:
+            angle_energy = 0.0
+    else:
+        bonds_2_atom1, bonds_2_atom2 = None, None
 
-    forces = field_forces + bond_forces + angle_forces
+    out_dataset = OutDataset(args.destdir, config,
+                             disable_mpio=args.disable_mpio)
+    store_static(out_dataset, rank_range, names, types, indices, config,
+                 bonds_2_atom1, bonds_2_atom2, comm=comm)
 
+    if config.n_print > 0:
+        step = 0
+        frame = 0
+        field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+            phi, velocities, hamiltonian, pm, config
+        )
+        if args.disable_field:
+            field_energy = 0.0
+        temperature = (
+            (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        )
+        store_data(out_dataset, step, frame, indices, positions,
+                   velocities, config.box_size, temperature,
+                   kinetic_energy, bond_energy, angle_energy,
+                   field_energy, config.time_step, config, comm=comm)
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -295,7 +339,13 @@ if __name__ == '__main__':
         if step == 0:
             Logger.rank0.log(logging.INFO, f'MD step = {step:10d}')
         else:
-            if rank == 0:
+            log_step = False
+            if config.n_steps < 1000:
+                log_step = True
+            elif (np.mod(step, config.n_steps // 1000) == 0 or
+                  np.mod(step, config.n_print) == 0):
+                log_step = True
+            if rank == 0 and log_step and args.verbose > 1:
                 step_t = current_step_time - last_step_time
                 tot_t = current_step_time - loop_start_time
                 avg_t = (current_step_time - loop_start_time) / (step + 1)
@@ -325,6 +375,10 @@ if __name__ == '__main__':
 
         # Inner rRESPA steps
         for inner in range(config.respa_inner):
+            if args.disable_bonds:
+                bond_forces.fill(0.0)
+            if args.disable_angle_bonds:
+                angle_forces.fill(0.0)
             velocities = integrate_velocity(
                 velocities, (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner
@@ -337,22 +391,32 @@ if __name__ == '__main__':
             # Update fast forces
             if molecules_flag:
                 bond_energy_ = compute_bond_forces(
-                    bond_forces, positions, bonds_2, config.box_size, comm
+                    bond_forces, positions, config.box_size, bonds_2_atom1,
+                    bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
                 )
                 angle_energy_ = compute_angle_forces(
-                    angle_forces, positions, bonds_3, config.box_size, comm
+                    angle_forces, positions, config.box_size, bonds_3_atom1,
+                    bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
+                    bonds_3_stength
                 )
+
+            if args.disable_bonds:
+                bond_forces.fill(0.0)
+            if args.disable_angle_bonds:
+                angle_forces.fill(0.0)
             velocities = integrate_velocity(
                 velocities, (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner
             )
 
         # Update slow forces
-        field_force = compute_field_force(layouts, positions, force_on_grid,
-                                          types, config.n_types)
+        field_forces = compute_field_force(layouts, positions, force_on_grid,
+                                           types, config.n_types)
+        if args.disable_field:
+            field_forces.fill(0.0)
 
         # Second rRESPA velocity step
-        vel = integrate_velocity(velocities, field_force / config.mass,
+        vel = integrate_velocity(velocities, field_forces / config.mass,
                                  config.time_step)
 
         # Only compute and keep the molecular bond energy from the last rRESPA
@@ -360,22 +424,29 @@ if __name__ == '__main__':
         if molecules_flag:
             bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+            if args.disable_bonds:
+                bond_energy = 0.0
+            if args.disable_angle_bonds:
+                angle_energy = 0.0
 
         if config.domain_decomposition:
             positions, velocities, forces, indices, types = domain_decomposition(  # noqa: E501
                 positions, velocities, forces, indices, types, pm
             )
             if molecules_flag:
-                bonds_2, bonds_3 = prepare_bonds(molecules, names, bonds,
-                                                 indices, config)
+                bonds_prep = prepare_bonds(molecules, names, bonds, indices,
+                                           config)
+                (bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium,
+                 bonds_2_stength, bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
+                 bonds_3_equilibrium, bonds_3_stength) = bonds_prep
 
-        # Particles are kept on mpi-task
-        layouts = [
-            pm.decompose(positions[types == t]) for t in range(config.n_types)
-        ]
+            # Particles are kept on mpi-task
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)  # noqa: E501
+            ]
         for t in range(config.n_types):
             # Only if '--verbose 2' or higher is given as command line input
-            if args.verbose > 1:
+            if args.verbose > 2:
                 exchange_cost = layouts[t].get_exchange_cost()
                 Logger.all_ranks.log(
                     logging.INFO,
@@ -395,14 +466,15 @@ if __name__ == '__main__':
 
         # Print trajectory
         if config.n_print > 0:
-            if np.mod(step, config.n_print) == 0:
-                frame = (step + 1) // config.n_print
+            if np.mod(step, config.n_print) == 0 and step != 0:
+                frame = step // config.n_print
                 field_energy, kinetic_energy = compute_field_and_kinetic_energy(  # noqa: E501
                     phi, velocities, hamiltonian, pm, config
                 )
                 temperature = (
                     (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)  # noqa: E501
                 )
+                # field_energy = 0.0                                                  ########## REMOVE
 
                 store_data(out_dataset, step, frame, indices, positions,
                            velocities, config.box_size, temperature,
@@ -424,7 +496,7 @@ if __name__ == '__main__':
              f'MD loop time: {fmtdt(loop_time)}')
         )
 
-    if config.n_print > 0:
+    if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
         update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
                      types, config, external_potential, compute_potential=True)
         frame = (step + 1) // config.n_print
@@ -438,5 +510,4 @@ if __name__ == '__main__':
                    config.box_size, temperature, kinetic_energy, bond_energy,
                    angle_energy, field_energy, config.time_step, config,
                    comm=comm)
-
     out_dataset.close_file()
