@@ -49,6 +49,8 @@ def configure_runtime(comm):
                     help="Disable two-particle bond forces")
     ap.add_argument("--disable-angle-bonds", default=False, action='store_true',
                     help="Disable three-particle angle bond forces")
+    ap.add_argument("--dump-per-particle", default=False, action='store_true',
+                    help="Log energy values per particle, not total")
     ap.add_argument("--disable-mpio", default=False, action='store_true',
                     help=("Avoid using h5py-mpi, potentially decreasing IO "
                           "performance"))
@@ -323,7 +325,8 @@ if __name__ == '__main__':
         store_data(out_dataset, step, frame, indices, positions,
                    velocities, config.box_size, temperature,
                    kinetic_energy, bond_energy, angle_energy,
-                   field_energy, config.time_step, config, comm=comm)
+                   field_energy, config.time_step, config,
+                   dump_per_particle=args.dump_per_particle, comm=comm)
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -331,7 +334,7 @@ if __name__ == '__main__':
     for step in range(config.n_steps):
         current_step_time = datetime.datetime.now()
 
-        if step == 0:
+        if step == 0 and args.verbose > 1:
             Logger.rank0.log(logging.INFO, f'MD step = {step:10d}')
         else:
             log_step = False
@@ -471,7 +474,8 @@ if __name__ == '__main__':
                 store_data(out_dataset, step, frame, indices, positions,
                            velocities, config.box_size, temperature,
                            kinetic_energy, bond_energy, angle_energy,
-                           field_energy, config.time_step, config, comm=comm)
+                           field_energy, config.time_step, config,
+                           dump_per_particle=args.dump_per_particle, comm=comm)
 
         last_step_time = current_step_time
 
@@ -503,5 +507,5 @@ if __name__ == '__main__':
         store_data(out_dataset, step, frame, indices, positions, velocities,
                    config.box_size, temperature, kinetic_energy, bond_energy,
                    angle_energy, field_energy, config.time_step, config,
-                   comm=comm)
+                   dump_per_particle=args.dump_per_particle, comm=comm)
     out_dataset.close_file()
