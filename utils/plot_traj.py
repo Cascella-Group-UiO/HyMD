@@ -11,11 +11,12 @@ def parse_args():
                      'using matplotlib. Supported properties: Total energy '
                      '(E), potential energy (PE), kinetic energy (KE), bond '
                      'energy (BE), angular bond energy (AE), and total center '
-                     'of mass momentum (P).')
+                     'of mass momentum (P). Plot all available observables by '
+                     'specifying "all".')
     )
     parser.add_argument('property', default='E', type=str, nargs='+',
                         help='Properties to plot',
-                        choices=['E', 'PE', 'KE', 'BE', 'FE', 'AE'])
+                        choices=['E', 'PE', 'KE', 'BE', 'FE', 'AE', 'P', 'all'])  # noqa: E501
     parser.add_argument('--file', type=str, default='sim.h5',
                         help='H5MD file')
     parser.add_argument('--per-particle', default=False, action='store_true',
@@ -23,6 +24,8 @@ def parse_args():
     parser.add_argument('--subtract-mean', default=False, action='store_true',
                         help=('Subtract the mean, plotting deviations from '
                               'the average'))
+    parser.add_argument('--no-plot', default=False, action='store_true',
+                        help='Do not show the plot')
     args = parser.parse_args()
     return args
 
@@ -36,14 +39,58 @@ def close_h5md_file(in_file):
     in_file.close()
 
 
+def print_statistics(name, time, values, n_particles):
+    len_name = len(name)
+    len_pad = (80 - len_name) // 2 - 2
+    title = (f'{len_pad * "="} {name.replace("_", " ").capitalize()} '
+             f'{len_pad * "="}{"=" if len_name % 2 != 0 else ""}')
+    info = (f' * {values.shape[0]:>10} samples \n'
+            f' * {time[-1]:>10.3f} ps sampled')
+    print(title)
+    print(info)
+
+    mean = np.mean(values, axis=0)
+    std = np.std(values, axis=0)
+    print(f' - {"mean(v):":<35} ', end='')
+    for m in mean:
+        print(f'{m:>30.15f}', end='')
+    print(f'\n - {"std.deviation(v):":<35} ', end='')
+    for s in std:
+        print(f'{s:>30.15f}', end='')
+
+    std_subs = np.std(values - np.mean(values, axis=0), axis=0)
+    print(f'\n - {"std.deviation(v - mean(v)):":<35} ', end='')
+    for s in std_subs:
+        print(f'{s:>30.15f}', end='')
+
+    mean_per = np.mean(values / n_particles, axis=0)
+    std_per = np.std(values / n_particles, axis=0)
+
+    print(f'\n - {"mean(v / N):":<35} ', end='')
+    for m in mean_per:
+        print(f'{m:>30.15f}', end='')
+    print(f'\n - {"std.deviation(v / N):":<35} ', end='')
+    for s in std_per:
+        print(f'{s:>30.15f}', end='')
+
+    std_per_subs = np.std((values / n_particles)
+                          - np.mean(values / n_particles, axis=0), axis=0)
+    print(f'\n - {"std.deviation(v / N - mean(v / N)):":<35} ', end='')
+    for s in std_per_subs:
+        print(f'{s:>30.15f}', end='')
+    print()
+
+
 def extract_property(h5md_file, property, args):
     observables_group = h5md_file['/observables/']
     particles_group = h5md_file['/particles/all/']
     keyword_to_group_name = {
         'E': 'total_energy', 'PE': 'potential_energy', 'KE': 'kinetic_energy',
-        'BE': 'bond_energy', 'AE': 'angle_energy', 'P': 'total_momentum'
+        'BE': 'bond_energy', 'AE': 'angle_energy', 'FE': 'field_energy',
+        'P': 'total_momentum'
     }
-    property_group = observables_group[keyword_to_group_name[property]]
+    name = keyword_to_group_name[property]
+    property_group = observables_group[name]
     values = property_group['value'][:]
     times = property_group['time'][:]
     plot_kwargs = {'label': keyword_to_group_name[property]}
@@ -58,8 +105,8 @@ def extract_property(h5md_file, property, args):
             ylabel = 'energy per particle [kJ/mol]'
     if args.subtract_mean:
         values -= np.mean(values)
-    return (times, values, keyword_to_group_name[property], plot_kwargs,
-            xlabel, ylabel)
+    print_statistics(name, times, property_group['value'][:], n_particles)
+    return times, values, name, plot_kwargs, xlabel, ylabel
 
 
 class Property:
@@ -75,6 +122,8 @@ class Property:
 
 if __name__ == '__main__':
     args = parse_args()
+    if 'all' in args.property:
+        args.property = ['E', 'PE', 'KE', 'BE', 'FE', 'AE', 'P']
     file_path = os.path.abspath(args.file)
     h5md_file = open_h5md_file(file_path)
 
@@ -96,4 +145,5 @@ if __name__ == '__main__':
         ax.plot(p.times, p.values, **p.plot_args)
     ax.legend()
     plt.tight_layout()
-    plt.show()
+    if not args.no_plot:
+        plt.show()
