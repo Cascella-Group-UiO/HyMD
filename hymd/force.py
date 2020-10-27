@@ -1,6 +1,9 @@
+import numba
 import numpy as np
 import networkx as nx
 from dataclasses import dataclass
+from compute_bond_forces import cbf as compute_bond_forces__fortran  # noqa: F401, E501
+from compute_angle_forces import caf as compute_angle_forces__fortran  # noqa: F401, E501
 
 
 @dataclass
@@ -8,7 +11,7 @@ class Bond:
     atom_1: str
     atom_2: str
     equilibrium: float
-    strenght: float
+    strength: float
 
 
 @dataclass
@@ -23,7 +26,7 @@ class Chi:
     interaction_energy: float
 
 
-def prepare_bonds(molecules, names, bonds, indices, config):
+def prepare_bonds_old(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
     different_molecules = np.unique(molecules)
@@ -58,7 +61,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
                                 bond_graph.nodes()[i]['local_index'],
                                 bond_graph.nodes()[j]['local_index'],
                                 b.equilibrium,
-                                b.strenght
+                                b.strength
                             ])
 
                 if len(path) == 3 and path[-1] > path[0]:
@@ -79,12 +82,74 @@ def prepare_bonds(molecules, names, bonds, indices, config):
                                 bond_graph.nodes()[path[1]]['local_index'],
                                 bond_graph.nodes()[j]['local_index'],
                                 np.radians(a.equilibrium),
-                                a.strenght
+                                a.strength
                             ])
     return bonds_2, bonds_3
 
 
-def compute_bond_forces(f_bonds, r, bonds_2, box_size, comm):
+def prepare_bonds(molecules, names, bonds, indices, config):
+    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices,
+                                         config)
+    bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
+    bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
+    bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float32)
+    bonds_2_stength = np.empty(len(bonds_2), dtype=np.float32)
+    for i, b in enumerate(bonds_2):
+        bonds_2_atom1[i] = b[0]
+        bonds_2_atom2[i] = b[1]
+        bonds_2_equilibrium[i] = b[2]
+        bonds_2_stength[i] = b[3]
+    bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
+    bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
+    bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
+    bonds_3_equilibrium = np.empty(len(bonds_3), dtype=np.float32)
+    bonds_3_stength = np.empty(len(bonds_3), dtype=np.float32)
+    for i, b in enumerate(bonds_3):
+        bonds_3_atom1[i] = b[0]
+        bonds_3_atom2[i] = b[1]
+        bonds_3_atom3[i] = b[2]
+        bonds_3_equilibrium[i] = b[3]
+        bonds_3_stength[i] = b[4]
+    return (
+        bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength,
+        bonds_3_atom1, bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
+        bonds_3_stength
+    )
+
+
+@numba.jit(nopython=True, fastmath=True)
+def compute_bond_forces__numba(f_bonds, r, box_size, bonds_2_atom1,
+                               bonds_2_atom2, bonds_2_equilibrium,
+                               bonds_2_stength):
+    f_bonds.fill(0.0)
+    energy = 0.0
+
+    for ind in range(len(bonds_2_atom1)):
+        i = bonds_2_atom1[ind]
+        j = bonds_2_atom2[ind]
+        r0 = bonds_2_equilibrium[ind]
+        k = bonds_2_stength[ind]
+        ri = r[i, :]
+        rj = r[j, :]
+        rij = rj - ri
+
+        # Apply periodic boundary conditions to the distance rij
+        rij[0] -= box_size[0] * np.around(rij[0] / box_size[0])
+        rij[1] -= box_size[1] * np.around(rij[1] / box_size[1])
+        rij[2] -= box_size[2] * np.around(rij[2] / box_size[2])
+
+        dr = np.linalg.norm(rij)
+        df = -k * (dr - r0)
+
+        f_bond_vector = df * rij / dr
+        f_bonds[i, :] -= f_bond_vector
+        f_bonds[j, :] += f_bond_vector
+
+        energy += 0.5 * k * (dr - r0)**2
+    return energy
+
+
+def compute_bond_forces__plain(f_bonds, r, bonds_2, box_size):
     f_bonds.fill(0.0)
     energy = 0.0
 
@@ -92,7 +157,6 @@ def compute_bond_forces(f_bonds, r, bonds_2, box_size, comm):
         ri = r[i, :]
         rj = r[j, :]
         rij = rj - ri
-        rij = np.squeeze(rij)
 
         # Apply periodic boundary conditions to the distance rij
         for dim in range(len(rij)):
@@ -107,7 +171,59 @@ def compute_bond_forces(f_bonds, r, bonds_2, box_size, comm):
     return energy
 
 
-def compute_angle_forces(f_angles, r, bonds_3, box_size, comm):
+@numba.jit(nopython=True, fastmath=True)
+def compute_angle_forces__numba(f_angles, r, box_size, bonds_3_atom1,
+                                bonds_3_atom2, bonds_3_atom3,
+                                bonds_3_equilibrium, bonds_3_stength):
+    f_angles.fill(0.0)
+    energy = 0.0
+
+    for ind in range(len(bonds_3_atom1)):
+        a = bonds_3_atom1[ind]
+        b = bonds_3_atom2[ind]
+        c = bonds_3_atom3[ind]
+        theta0 = bonds_3_equilibrium[ind]
+        k = bonds_3_stength[ind]
+
+        ra = r[a, :] - r[b, :]
+        rc = r[c, :] - r[b, :]
+
+        ra[0] -= box_size[0] * np.around(ra[0] / box_size[0])
+        ra[1] -= box_size[1] * np.around(ra[1] / box_size[1])
+        ra[2] -= box_size[2] * np.around(ra[2] / box_size[2])
+
+        rc[0] -= box_size[0] * np.around(rc[0] / box_size[0])
+        rc[1] -= box_size[1] * np.around(rc[1] / box_size[1])
+        rc[2] -= box_size[2] * np.around(rc[2] / box_size[2])
+
+        xra = 1.0 / np.sqrt(np.dot(ra, ra))
+        xrc = 1.0 / np.sqrt(np.dot(rc, rc))
+        ea = ra * xra
+        ec = rc * xrc
+
+        cosphi = np.dot(ea, ec)
+        theta = np.arccos(cosphi)
+        xsinph = 1.0 / np.sqrt(1.0 - cosphi**2)
+
+        d = theta - theta0
+        f = - k * d
+
+        xrasin = xra * xsinph * f
+        xrcsin = xrc * xsinph * f
+
+        fa = (ea * cosphi - ec) * xrasin
+        fc = (ec * cosphi - ea) * xrcsin
+
+        f_angles[a, :] += fa
+        f_angles[c, :] += fc
+        f_angles[b, :] += -(fa + fc)
+
+        energy -= 0.5 * f * d
+
+    return energy
+
+
+def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
     f_angles.fill(0.0)
     energy = 0.0
 
