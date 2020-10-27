@@ -278,9 +278,12 @@ def test_Hamiltonian_with_chi_gaussian_core(config_CONF, caplog):
     # assert sum(phi).csum() == pytest.approx(config.n_particles/volume_per_cell, abs=1e-14)    <<<<<---- FIXME
     hamiltonian = Hamiltonian(config)
     for t in range(config.n_types):
+        """
         phi[t] = (phi[t].r2c(out=Ellipsis)
                         .apply(hamiltonian.H, out=Ellipsis)
                         .c2r(out=Ellipsis))
+        """
+        phi[t].r2c(out=Ellipsis).apply(hamiltonian.H, out=Ellipsis).c2r(out=Ellipsis)  # noqa: E501
     # assert sum(phi).csum() == pytest.approx(config.n_particles/volume_per_cell, abs=1e-14)      <<<<<---- FIXME
 
     chi_ = [

@@ -1,7 +1,9 @@
 import pytest
 import numpy as np
 from mpi4py import MPI
-from force import compute_bond_forces, compute_angle_forces, prepare_bonds
+from force import compute_bond_forces__plain as compute_bond_forces
+from force import compute_angle_forces__plain as compute_angle_forces
+from force import prepare_bonds_old as prepare_bonds
 from input_parser import Config
 
 
@@ -84,8 +86,7 @@ def test_comp_bonds(dppc_single):
     for i, b in enumerate(bonds_2):
         f_bonds = np.zeros(shape=r.shape, dtype=np.float64)
         energy = 0.0
-        energy = compute_bond_forces(f_bonds, r, (b,), CONF['L'],
-                                     MPI.COMM_WORLD)
+        energy = compute_bond_forces(f_bonds, r, (b,), CONF['L'])
         assert energy == pytest.approx(expected_energies[i], abs=1e-13)
         assert f_bonds[b[0], :] == pytest.approx(expected_forces_i[i],
                                                  abs=1e-13)
@@ -172,8 +173,7 @@ def test_comp_angles(dppc_single):
     for i, b in enumerate(bonds_3):
         f_angles = np.zeros(shape=r.shape, dtype=np.float64)
         energy = 0.0
-        energy = compute_angle_forces(f_angles, r, (b,), CONF['L'],
-                                      MPI.COMM_WORLD)
+        energy = compute_angle_forces(f_angles, r, (b,), CONF['L'])
         assert energy == pytest.approx(expected_energies[i], abs=1e-13)
         assert f_angles[b[0], :] == pytest.approx(expected_forces_i[i],
                                                   abs=1e-13)

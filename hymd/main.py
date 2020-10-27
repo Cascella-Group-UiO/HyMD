@@ -501,8 +501,8 @@ if __name__ == '__main__':
 
     if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
         update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
-                     types, config, v_ext, v_ext_fourier,
-                     phi_fourier, compute_potential=True)
+                     types, config, v_ext, phi_fourier,
+                     v_ext_fourier, compute_potential=True)
         frame = (step + 1) // config.n_print
         field_energy, kinetic_energy = compute_field_and_kinetic_energy(
             phi, velocities, hamiltonian, positions, types, v_ext, config,
