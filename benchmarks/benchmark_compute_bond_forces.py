@@ -209,6 +209,8 @@ if __name__ == '__main__':
 
     E = compute_bond_forces__plain(f_bonds, positions, bonds_2, box_size)
 
+    print(np.mean(np.abs(f_bonds)))
+
     E = compute_bond_forces__numba(
         f_bonds, positions, box_size, bonds_2_atom1, bonds_2_atom2,
         bonds_2_equilibrium, bonds_2_stength

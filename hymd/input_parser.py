@@ -41,12 +41,12 @@ class Config:
     def __str__(self):
         bonds_str = '\tbonds:\n' + ''.join([
             (f'\t\t{k.atom_1} {k.atom_2}: ' +
-             f'{k.equilibrium}, {k.strenght}\n')
+             f'{k.equilibrium}, {k.strength}\n')
             for k in self.bonds
         ])
         angle_str = '\tangle_bonds:\n' + ''.join([
             (f'\t\t{k.atom_1} {k.atom_2} {k.atom_3}: ' +
-             f'{k.equilibrium}, {k.strenght}\n')
+             f'{k.equilibrium}, {k.strength}\n')
             for k in self.angle_bonds
         ])
         chi_str = '\tchi:\n' + ''.join([
@@ -108,7 +108,7 @@ def convert_CONF_to_config(CONF, file_path=None):
         bonds = [None] * len(CONF['bonds'])
         for i, b in enumerate(CONF['bonds']):
             bonds[i] = Bond(atom_1=b[0][0], atom_2=b[0][1],
-                            equilibrium=b[1][0], strenght=b[1][1])
+                            equilibrium=b[1][0], strength=b[1][1])
         config_dict['bonds'] = bonds
         CONF.pop('bonds')
     if 'angle_bonds' in CONF:
@@ -116,7 +116,7 @@ def convert_CONF_to_config(CONF, file_path=None):
         for i, b in enumerate(CONF['angle_bonds']):
             angle_bonds[i] = Angle(atom_1=b[0][0], atom_2=b[0][1],
                                    atom_3=b[0][2], equilibrium=b[1][0],
-                                   strenght=b[1][1])
+                                   strength=b[1][1])
         config_dict['angle_bonds'] = angle_bonds
         CONF.pop('angle_bonds')
     if 'chi' in CONF:
@@ -174,14 +174,14 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
             for i, b in enumerate(v):
                 config_dict['bonds'][i] = Bond(
                     atom_1=b[0][0], atom_2=b[0][1], equilibrium=b[1][0],
-                    strenght=b[1][1]
+                    strength=b[1][1]
                 )
         if k == 'angle_bonds':
             config_dict['angle_bonds'] = [None] * len(v)
             for i, b in enumerate(v):
                 config_dict['angle_bonds'][i] = Angle(
                     atom_1=b[0][0], atom_2=b[0][1], atom_3=b[0][2],
-                    equilibrium=b[1][0], strenght=b[1][1]
+                    equilibrium=b[1][0], strength=b[1][1]
                 )
         if k == 'chi':
             config_dict['chi'] = [None] * len(v)

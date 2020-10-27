@@ -83,10 +83,10 @@ def dppc_single():
                       b'C', b'C', b'C'], dtype='S5')
     CONF = {}
     Bond = collections.namedtuple(
-        'Bond', ['atom_1', 'atom_2', 'equilibrium', 'strenght']
+        'Bond', ['atom_1', 'atom_2', 'equilibrium', 'strength']
     )
     Angle = collections.namedtuple(
-        'Angle', ['atom_1', 'atom_2', 'atom_3', 'equilibrium', 'strenght']
+        'Angle', ['atom_1', 'atom_2', 'atom_3', 'equilibrium', 'strength']
     )
     CONF['bond_2'] = (Bond('N', 'P', 0.47, 1250.0),
                       Bond('P', 'G', 0.47, 1250.0),

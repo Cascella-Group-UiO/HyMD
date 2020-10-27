@@ -5,3 +5,4 @@ omit =
     test/*
     docs/*
     utils/*
+    hymd/__init__.py

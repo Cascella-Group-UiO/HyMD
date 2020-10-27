@@ -40,15 +40,15 @@ def fort5_to_hdf5(path, out_path=None, force=False):
     f_hd5 = h5py.File(out_path, 'w')
 
     dset_pos = f_hd5.create_dataset("coordinates", (1, n_atoms, 3),
-                                    dtype="Float32")
+                                    dtype="Float64")
     dset_vel = f_hd5.create_dataset("velocities", (1, n_atoms, 3),
-                                    dtype="Float32")
+                                    dtype="Float64")
     dset_types = f_hd5.create_dataset("types", (n_atoms,), dtype="i")
     dset_molecule_index = f_hd5.create_dataset("molecules", (n_atoms,),
                                                dtype="i")
     dset_indices = f_hd5.create_dataset("indices", (n_atoms,), dtype="i")
     dset_names = f_hd5.create_dataset("names", (n_atoms,), dtype="S5")
-    dset_bonds = f_hd5.create_dataset("bonds", (n_atoms, 2), dtype="i")
+    dset_bonds = f_hd5.create_dataset("bonds", (n_atoms, 3), dtype="i")
     f_hd5.attrs['box'] = box
     f_hd5.attrs['n_molecules'] = n_molecules
 
@@ -71,7 +71,7 @@ def fort5_to_hdf5(path, out_path=None, force=False):
             dset_indices[atom_index] = atom_index
 
             bonds = [int(s)-1 for s in line.split()[10:]]
-            dset_bonds[atom_index] = bonds[:2]
+            dset_bonds[atom_index] = bonds[:3]
 
     for i, line in enumerate(lines):
         split_line = line.split()

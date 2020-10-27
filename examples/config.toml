@@ -82,7 +82,7 @@ chi = [
 
 [bonds]
 # Two-particle bonds, ((atom name 1, atom name 2), (equilibrium length in
-# [nanometers], bond strenght in [kJ/mol])). Note the two
+# [nanometers], bond strength in [kJ/mol])). Note the two
 bonds = [
   [["N", "P"], [0.47, 1250.0]],
   [["P", "G"], [0.47, 1250.0]],
@@ -91,7 +91,7 @@ bonds = [
   [["C", "C"], [0.47, 1250.0]],
 ]
 # Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
-# (equilibrium angle in [degrees], bond strenght in [kJ/mol])).
+# (equilibrium angle in [degrees], bond strength in [kJ/mol])).
 angle_bonds = [
   [["P", "G", "G"], [120.0, 25.0]],
   [["P", "G", "C"], [180.0, 25.0]],

@@ -55,8 +55,8 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 @timing(n_times=1, hot_start=False, print_return=True)
 @numba.jit(nopython=True, fastmath=False)
 def compute_angle_forces__numba(f_angles, r, box_size, bonds_3_atom1,
-                                bonds_3_atom2, bonds_3_equilibrium,
-                                bonds_3_stength):
+                                bonds_3_atom2, bonds_3_atom3,
+                                bonds_3_equilibrium, bonds_3_stength):
     f_angles.fill(0.0)
     energy = 0.0
 
@@ -108,8 +108,8 @@ def compute_angle_forces__numba(f_angles, r, box_size, bonds_3_atom1,
 @timing(n_times=1, hot_start=False, print_return=True)
 @numba.jit(nopython=True, fastmath=True)
 def compute_angle_forces__numba_fastmath(f_angles, r, box_size, bonds_3_atom1,
-                                         bonds_3_atom2, bonds_3_equilibrium,
-                                         bonds_3_stength):
+                                         bonds_3_atom2, bonds_3_atom3,
+                                         bonds_3_equilibrium, bonds_3_stength):
     f_angles.fill(0.0)
     energy = 0.0
 
@@ -175,6 +175,7 @@ if __name__ == '__main__':
     - fastmath has no impact on numba execution time.
     - using single precision has no impact on fortran excution time.
     ============================================================================
+
     compute_angle_forces__plain (1000 times):
     00:03:23.192013
     E =          23644.298796080365719
@@ -233,12 +234,12 @@ if __name__ == '__main__':
 
     E = compute_angle_forces__numba(
         f_angles, positions, box_size, bonds_3_atom1, bonds_3_atom2,
-        bonds_3_equilibrium, bonds_3_stength
+        bonds_3_atom3, bonds_3_equilibrium, bonds_3_stength
     )
 
     E = compute_angle_forces__numba_fastmath(
         f_angles, positions, box_size, bonds_3_atom1, bonds_3_atom2,
-        bonds_3_equilibrium, bonds_3_stength
+        bonds_3_atom3, bonds_3_equilibrium, bonds_3_stength
     )
 
     f_angles_fortran = np.asfortranarray(f_angles, dtype=np.float32)
