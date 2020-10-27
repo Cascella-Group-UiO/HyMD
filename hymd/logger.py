@@ -39,6 +39,7 @@ class Logger:
         cls.level = default_level
         cls.log_file = log_file
 
+        log_to_stdout = False
         if verbose:
             log_to_stdout = True
 

@@ -234,7 +234,6 @@ def store_data(h5md, step, frame, indices, positions, velocities,
     potential_energy = bond2_energy + bond3_energy + field_energy
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0),
                                                   MPI.SUM)
-    assert len(total_momentum) == 3                                             ############################## <<<< CHECK-ME
     h5md.total_energy[frame] = kinetic_energy + potential_energy
     h5md.potential_energy[frame] = potential_energy
     h5md.kinetc_energy[frame] = kinetic_energy
@@ -256,7 +255,7 @@ def store_data(h5md, step, frame, indices, positions, velocities,
         divide_by = config.n_particles
 
     header = header_.format(*fmt_)
-    data_fmt = f'{"{:15}"}{11 * "{:15.10g}" }'
+    data_fmt = f'{"{:15}"}{11 * "{:15.8g}" }'
     data = data_fmt.format(step,
                            time_step * step,
                            temperature,
