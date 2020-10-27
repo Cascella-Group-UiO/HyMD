@@ -6,6 +6,7 @@ import pstats
 import warnings
 import h5py
 import os
+import sys
 import datetime
 import logging
 import numpy as np
@@ -111,12 +112,14 @@ def configure_runtime(comm):
             f'Attempting to parse config file {args.config} as .toml'
         )
         toml_config = read_config_toml(args.config)
-        config = parse_config_toml(toml_config, file_path=args.config,
+        config = parse_config_toml(toml_config,
+                                   file_path=os.path.abspath(args.config),
                                    comm=comm)
         Logger.rank0.log(
             logging.INFO,
             f'Successfully parsed {args.config} as .toml file'
         )
+        config.command_line_full = ' '.join(sys.argv)
         Logger.rank0.log(logging.INFO, str(config))
     except ValueError as ve:
         try:
@@ -187,7 +190,6 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
 
 
 if __name__ == '__main__':
-
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -260,9 +262,11 @@ if __name__ == '__main__':
     Logger.rank0.log(logging.INFO, f'pfft-python processor mesh: {str(pm.np)}')
 
     phi = [pm.create('real', value=0.0) for _ in range(config.n_types)]
+    phi_fourier = [pm.create('complex', value=0.0) for _ in range(config.n_types)]  # noqa: E501
     force_on_grid = [[pm.create('real', value=0.0) for d in range(3)]
                      for _ in range(config.n_types)]
-    external_potential = [
+    v_ext_fourier = [pm.create('complex', value=0.0) for _ in range(4)]
+    v_ext = [
         pm.create('real', value=0.0) for _ in range(config.n_types)
     ]
 
@@ -275,7 +279,8 @@ if __name__ == '__main__':
         pm.decompose(positions[types == t]) for t in range(config.n_types)
     ]
     update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
-                 types, config, external_potential, compute_potential=True)
+                 types, config, v_ext, phi_fourier, v_ext_fourier,
+                 compute_potential=True)
     field_forces = compute_field_force(layouts, positions, force_on_grid,
                                        types, config.n_types)
     if args.disable_field:
@@ -315,7 +320,8 @@ if __name__ == '__main__':
         step = 0
         frame = 0
         field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-            phi, velocities, hamiltonian, pm, config
+            phi, velocities, hamiltonian, positions, types, v_ext, config,
+            layouts, comm=comm
         )
         if args.disable_field:
             field_energy = 0.0
@@ -452,8 +458,8 @@ if __name__ == '__main__':
 
         compute_field_energy = np.mod(step + 1, config.n_print) == 0
         update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
-                     types, config, external_potential,
-                     compute_potential=compute_field_energy)
+                     types, config, v_ext, phi_fourier,
+                     v_ext_fourier, compute_potential=compute_field_energy)
 
         # Thermostat
         if config.target_temperature:
@@ -464,7 +470,8 @@ if __name__ == '__main__':
             if np.mod(step, config.n_print) == 0 and step != 0:
                 frame = step // config.n_print
                 field_energy, kinetic_energy = compute_field_and_kinetic_energy(  # noqa: E501
-                    phi, velocities, hamiltonian, pm, config
+                    phi, velocities, hamiltonian, positions, types, v_ext,
+                    config, layouts, comm=comm
                 )
                 temperature = (
                     (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)  # noqa: E501
@@ -494,10 +501,12 @@ if __name__ == '__main__':
 
     if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
         update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
-                     types, config, external_potential, compute_potential=True)
+                     types, config, v_ext, v_ext_fourier,
+                     phi_fourier, compute_potential=True)
         frame = (step + 1) // config.n_print
         field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-            phi, velocities, hamiltonian, pm, config
+            phi, velocities, hamiltonian, positions, types, v_ext, config,
+            layouts, comm=comm
         )
         temperature = (
             (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
