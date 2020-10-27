@@ -197,7 +197,7 @@ def store_static(h5md, rank_range, names, types, indices, config,
 def store_data(h5md, step, frame, indices, positions, velocities,
                box_size, temperature, kinetic_energy, bond2_energy,
                bond3_energy, field_energy, time_step, config,
-               comm=MPI.COMM_WORLD):
+               dump_per_particle=False, comm=MPI.COMM_WORLD):
     for dset in (h5md.positions_step,
                  h5md.velocities_step,
                  h5md.total_energy_step,
@@ -243,30 +243,29 @@ def store_data(h5md, step, frame, indices, positions, velocities,
     h5md.field_energy[frame] = field_energy
     h5md.total_momentum[frame, :] = total_momentum
     h5md.temperature[frame] = temperature
-    header = (
-        '{:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15} {:15}'  # noqa: E501
-        .format("step",
-                "time",
-                "temperature",
-                "total E",
-                "kinetic E",
-                "potential E",
-                "field E",
-                "bond E",
-                "angle E",
-                "total Px",
-                "total Py",
-                "total Pz"))
-    data_fmt = f'{"{:15}"} {11 * "{:15.10g}" }'
+
+    header_ = 12 * '{:>15}'
+    fmt_ = ["step", "time", "temperature", "total E", "kinetic E",
+            "potential E", "field E", "bond E", "angle E", "total Px",
+            "total Py", "total Pz"]
+
+    divide_by = 1.0
+    if dump_per_particle:
+        for i in range(3, 9):
+            fmt_[i] = fmt_[i][:-2] + "E/N"
+        divide_by = config.n_particles
+
+    header = header_.format(*fmt_)
+    data_fmt = f'{"{:15}"}{11 * "{:15.10g}" }'
     data = data_fmt.format(step,
                            time_step * step,
                            temperature,
-                           kinetic_energy + potential_energy,
-                           kinetic_energy,
-                           potential_energy,
-                           field_energy,
-                           bond2_energy,
-                           bond3_energy,
+                           (kinetic_energy + potential_energy) / divide_by,
+                           kinetic_energy / divide_by,
+                           potential_energy / divide_by,
+                           field_energy / divide_by,
+                           bond2_energy / divide_by,
+                           bond3_energy / divide_by,
                            total_momentum[0],
                            total_momentum[1],
                            total_momentum[2])
