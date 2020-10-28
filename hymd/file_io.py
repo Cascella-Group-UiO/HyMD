@@ -265,9 +265,9 @@ def store_data(h5md, step, frame, indices, positions, velocities,
                            field_energy / divide_by,
                            bond2_energy / divide_by,
                            bond3_energy / divide_by,
-                           total_momentum[0],
-                           total_momentum[1],
-                           total_momentum[2])
+                           total_momentum[0] / divide_by,
+                           total_momentum[1] / divide_by,
+                           total_momentum[2] / divide_by)
     Logger.rank0.log(
         logging.INFO, ('\n' + header + '\n' + data)
     )
