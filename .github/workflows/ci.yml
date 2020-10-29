@@ -31,6 +31,12 @@ jobs:
         pip install pytest pytest-cov pytest-mpi coverage
         pip install --upgrade numpy mpi4py cython
         pip install -r requirements.txt
+    - name: Compile fortran modules
+      run: |
+        cd hymd/
+        make clean
+        make
+        cd ..
     - name: Test with pytest
       run: |
         pytest -v --cov=./ --cov-report=
