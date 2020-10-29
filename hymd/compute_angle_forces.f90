@@ -21,12 +21,14 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
     real(4),                intent(out)     :: energy
 
     integer :: ind, aa, bb, cc
-    real(8) :: ra_x, ra_y, ra_z, rc_x, rc_y, rc_z
-    real(8) :: ea_x, ea_y, ea_z, ec_x, ec_y, ec_z
-    real(8) :: fa_x, fa_y, fa_z, fc_x, fc_y, fc_z
-    real(8) :: d, ff, bx, by, bz, xsinph, xra, xrc
-    real(8) :: xrasin, xrcsin
-    real(8) :: cosphi, theta
+    real(4) :: ra_x, ra_y, ra_z, rc_x, rc_y, rc_z
+    real(4) :: ea_x, ea_y, ea_z, ec_x, ec_y, ec_z
+    real(4) :: fa_x, fa_y, fa_z, fc_x, fc_y, fc_z
+    real(4) :: d, ff, bx, by, bz, xsinph, xra, xrc
+    real(4) :: xrasin, xrcsin
+    real(4) :: cosphi, cosphi2, theta
+
+    real(8) :: rBA, rBC, rBA_inv, rBC_inv, fff, rBA_dot_rBC
 
     energy = 0.0
     f = 0.0 ! Set all array elements
@@ -66,35 +68,39 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
       ec_z = rc_z * xrc
 
       cosphi = ea_x * ec_x + ea_y * ec_y + ea_z * ec_z
-      theta = acos(cosphi)
-      xsinph = 1.0d0 / sqrt(1.0d0 - cosphi * cosphi)
+      cosphi2 = cosphi * cosphi
 
-      d = theta - t0(ind)
-      ff = - k(ind) * d
+      if (cosphi2 < 1.0) then
+        theta = acos(cosphi)
+        xsinph = 1.0 / sqrt(1.0 - cosphi2)
 
-      xrasin = xra * xsinph * ff
-      xrcsin = xrc * xsinph * ff
+        d = theta - t0(ind)
+        ff = - k(ind) * d
 
-      fa_x = (ea_x * cosphi - ec_x) * xrasin
-      fa_y = (ea_y * cosphi - ec_y) * xrasin
-      fa_z = (ea_z * cosphi - ec_z) * xrasin
+        xrasin = xra * xsinph * ff
+        xrcsin = xrc * xsinph * ff
 
-      fc_x = (ec_x * cosphi - ea_x) * xrcsin
-      fc_y = (ec_y * cosphi - ea_y) * xrcsin
-      fc_z = (ec_z * cosphi - ea_z) * xrcsin
+        fa_x = (ea_x * cosphi - ec_x) * xrasin
+        fa_y = (ea_y * cosphi - ec_y) * xrasin
+        fa_z = (ea_z * cosphi - ec_z) * xrasin
 
-      f(aa, 1) = f(aa, 1) + fa_x
-      f(aa, 2) = f(aa, 2) + fa_y
-      f(aa, 3) = f(aa, 3) + fa_z
+        fc_x = (ec_x * cosphi - ea_x) * xrcsin
+        fc_y = (ec_y * cosphi - ea_y) * xrcsin
+        fc_z = (ec_z * cosphi - ea_z) * xrcsin
 
-      f(cc, 1) = f(cc, 1) + fc_x
-      f(cc, 2) = f(cc, 2) + fc_y
-      f(cc, 3) = f(cc, 3) + fc_z
+        f(aa, 1) = f(aa, 1) + fa_x
+        f(aa, 2) = f(aa, 2) + fa_y
+        f(aa, 3) = f(aa, 3) + fa_z
 
-      f(bb, 1) = f(bb, 1) - (fa_x + fc_x)
-      f(bb, 2) = f(bb, 2) - (fa_y + fc_y)
-      f(bb, 3) = f(bb, 3) - (fa_z + fc_z)
+        f(cc, 1) = f(cc, 1) + fc_x
+        f(cc, 2) = f(cc, 2) + fc_y
+        f(cc, 3) = f(cc, 3) + fc_z
 
-      energy = energy - 0.5 * ff * d
+        f(bb, 1) = f(bb, 1) - (fa_x + fc_x)
+        f(bb, 2) = f(bb, 2) - (fa_y + fc_y)
+        f(bb, 3) = f(bb, 3) - (fa_z + fc_z)
+
+        energy = energy - 0.5 * ff * d
+      end if
     end do
 end subroutine
