@@ -13,24 +13,31 @@ def velocity_rescale(velocity, config, comm):
             out : vel
             Thermostatted velocity array.
     """
-    # Initial kinetic energy
-    kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocity**2))
+    K = comm.allreduce(0.5 * config.mass * np.sum(velocity**2))
+    K_target = ((3 / 2) * (2.479 / 298.0)
+                * config.n_particles * config.target_temperature)
+    N_f = 3 * config.n_particles
+    exp1 = np.exp(-config.time_step / config.tau)
+    exp2 = np.exp(-config.time_step / (2 * config.tau))
 
-    # Berendsen-like term
-    Ek0 = (3 / 2) * (2.479 / 298.0) * config.n_particles * config.target_temperature  # noqa: E501
-    d1 = (Ek0 - kinetic_energy) * config.time_step / config.tau
+    R1, Ri2_sum = None, None
+    if comm.rank == 0:
+        R1 = np.random.normal()
 
-    # Wiener noise
-    dW = np.sqrt(config.time_step) * np.random.normal()
+        # (degrees of freedom - 1) even
+        if np.mod(N_f - 1, 2) == 0:
+            Ri2_sum = 2 * np.random.gamma((N_f - 1) / 2, scale=1.0)
 
-    # Stochastic term
-    d2 = (2 * np.sqrt(kinetic_energy * Ek0 / (3 * config.n_particles))
-          * dW / np.sqrt(config.tau))
+        # (degrees of freedom - 1) odd
+        else:
+            Ri2_sum = 2 * np.random.gamma((N_f - 2) / 2, scale=1.0) + R1**2
 
-    # Target kinetic energy
-    target_kinetic_energy = kinetic_energy + d1 + d2
+    R1 = comm.bcast(R1, root=0)
+    Ri2_sum = comm.bcast(Ri2_sum, root=0)
 
-    # Velocity scaling
-    alpha = np.sqrt(target_kinetic_energy / kinetic_energy)
+    alpha2 = (+ exp1
+              + K_target / (K * N_f) * (1 - exp1) * (R1*R1 + Ri2_sum)
+              + 2 * exp2 * R1 * np.sqrt((1 - exp1) * K_target / (K * N_f)))
+    alpha = np.sqrt(alpha2)
     velocity = velocity * alpha
     return velocity
