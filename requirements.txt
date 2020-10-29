@@ -7,3 +7,4 @@ mpsort
 pfft-python
 pmesh
 h5py
+numba
