@@ -167,7 +167,8 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         if isinstance(v, dict):
             for nested_k, nested_v in v.items():
                 config_dict[nested_k] = nested_v
-
+        else:
+            config_dict[k] = v
     for k, v in config_dict.items():
         if k == 'bonds':
             config_dict['bonds'] = [None] * len(v)
