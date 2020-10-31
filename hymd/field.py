@@ -75,11 +75,20 @@ def compute_field_and_kinetic_energy(phi, velocity, hamiltonian, positions,
     return field_energy, kinetic_energy
 
 
-def domain_decomposition(positions, velocities, forces, indices, types, pm):
-    layout = pm.decompose(positions, smoothing=0)
-    Logger.rank0.log(
-        logging.INFO,
-        "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
-        np.sum(layout.get_exchange_cost())
-    )
-    return layout.exchange(positions, velocities, forces, indices, types)
+def domain_decomposition(positions, molecules, pm, *args, verbose=0,
+                         comm=MPI.COMM_WORLD):
+    unique_molecules = np.sort(np.unique(molecules))
+    molecules_com = np.empty_like(positions)
+    for m in unique_molecules:
+        ind = molecules == m
+        r = positions[ind, :][0, :]
+        molecules_com[ind, :] = r
+    layout = pm.decompose(molecules_com, smoothing=0)
+
+    if verbose > 1:
+        Logger.rank0.log(
+            logging.INFO,
+            "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
+            np.sum(layout.get_exchange_cost())
+        )
+    return layout.exchange(positions, molecules, *args)
