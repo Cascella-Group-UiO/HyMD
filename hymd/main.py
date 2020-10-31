@@ -165,7 +165,7 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
                                        size=(n_particles_, 3))
     mean_velocity = comm.allreduce(np.mean(velocities[...], axis=0), MPI.SUM)
     mean_velocity = mean_velocity / comm.Get_size()
-    assert len(mean_velocity) == 3                                              ############################## <<<< CHECK-ME
+    assert len(mean_velocity) == 3                                              #################### <<<< CHECK-ME
     velocities[...] = velocities[...] - mean_velocity
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities**2), MPI.SUM
@@ -202,13 +202,19 @@ if __name__ == '__main__':
     driver = 'mpio' if not args.disable_mpio else None
     with h5py.File(args.input, 'r', driver=driver, comm=comm) as in_file:
         rank_range, molecules_flag = distribute_input(
-            in_file, rank, size, config.n_particles,                            ### << USE config here, update n_particles if not given
+            in_file, rank, size, config.n_particles,            ### << USE config here, update n_particles if not given
             config.max_molecule_size if config.max_molecule_size else 201,
             comm=comm
         )
         indices = in_file['indices'][rank_range]
-        positions_ = in_file['coordinates'][-1, rank_range, :]
-        velocities = in_file['velocities'][-1, rank_range, :]
+        positions = in_file['coordinates'][-1, rank_range, :]
+        positions = positions.astype(np.float32)
+        if 'velocities' in in_file:
+            velocities = in_file['velocities'][-1, rank_range, :]
+            velocities = velocities.astype(np.float32)
+        else:
+            velocities = np.zeros_like(positions, dtype=np.float32)
+
         names = in_file['names'][rank_range]
 
         types = None
@@ -219,15 +225,14 @@ if __name__ == '__main__':
             molecules = in_file['molecules'][rank_range]
             bonds = in_file['bonds'][rank_range]
 
-    positions = np.asfortranarray(positions_.astype(np.float32))
     # config.box_size = np.array(config.box_size)                                 ######## <<<<< FIX ME
     config = check_config(config, indices, names, types, comm=comm)
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
 
-    bond_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32, order='F')  # noqa: E501
-    angle_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32, order='F')  # noqa: E501
+    bond_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32)  # , order='F')  # noqa: E501
+    angle_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32)  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32)
 
     field_energy = 0.0
@@ -271,9 +276,16 @@ if __name__ == '__main__':
     ]
 
     if config.domain_decomposition:
-        positions, velocities, forces, indices, types = domain_decomposition(
-            positions, velocities, forces, indices, types, pm
-        )
+        cd = domain_decomposition(
+            positions, molecules, pm,
+            velocities, indices, bond_forces, angle_forces, field_forces,
+            names, types, bonds,
+            verbose=args.verbose, comm=comm)
+        (positions, molecules, velocities, indices, bond_forces, angle_forces,
+         field_forces, names, types, bonds) = cd
+    positions = np.asfortranarray(positions)
+    bond_forces = np.asfortranarray(bond_forces)
+    angle_forces = np.asfortranarray(angle_forces)
 
     layouts = [
         pm.decompose(positions[types == t]) for t in range(config.n_types)
@@ -284,7 +296,7 @@ if __name__ == '__main__':
     field_forces = compute_field_force(layouts, positions, force_on_grid,
                                        types, config.n_types)
     if args.disable_field:
-        field_forces.fill(0.0)                                                  ########## REMOVE
+        field_forces.fill(0.0)
     if molecules_flag:
         bonds_prep = prepare_bonds(molecules, names, bonds, indices,
                                    config)
@@ -429,10 +441,26 @@ if __name__ == '__main__':
             if args.disable_angle_bonds:
                 angle_energy = 0.0
 
-        if config.domain_decomposition:
-            positions, velocities, forces, indices, types = domain_decomposition(  # noqa: E501
-                positions, velocities, forces, indices, types, pm
-            )
+        if np.mod(step, config.domain_decomposition) == 0 and step != 0:
+            positions = np.ascontiguousarray(positions)
+            bond_forces = np.ascontiguousarray(bond_forces)
+            angle_forces = np.ascontiguousarray(angle_forces)
+            cd = domain_decomposition(
+                positions, molecules, pm,
+                velocities, indices, bond_forces, angle_forces, field_forces,
+                names, types, bonds,
+                verbose=args.verbose, comm=comm)
+            (positions, molecules, velocities, indices, bond_forces,
+             angle_forces, field_forces, names, types, bonds) = cd
+
+            positions = np.asfortranarray(positions)
+            bond_forces = np.asfortranarray(bond_forces)
+            angle_forces = np.asfortranarray(angle_forces)
+
+            layouts = [
+                pm.decompose(positions[types == t])
+                for t in range(config.n_types)
+            ]
             if molecules_flag:
                 bonds_prep = prepare_bonds(molecules, names, bonds, indices,
                                            config)
@@ -440,13 +468,7 @@ if __name__ == '__main__':
                  bonds_2_stength, bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
                  bonds_3_equilibrium, bonds_3_stength) = bonds_prep
 
-            # Particles are kept on mpi-task
-            layouts = [
-                pm.decompose(positions[types == t])
-                for t in range(config.n_types)
-            ]
         for t in range(config.n_types):
-            # Only if '--verbose 2' or higher is given as command line input
             if args.verbose > 2:
                 exchange_cost = layouts[t].get_exchange_cost()
                 Logger.all_ranks.log(
