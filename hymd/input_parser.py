@@ -260,7 +260,7 @@ def check_max_molecule_size(config, comm=MPI.COMM_WORLD):
 
 def _find_unique_names(config, names, comm=MPI.COMM_WORLD):
     unique_names = np.unique(names)
-    receive_buffer = MPI.COMM_WORLD.gather(unique_names, root=0)
+    receive_buffer = comm.gather(unique_names, root=0)
 
     gathered_unique_names = None
     if comm.Get_rank() == 0:
