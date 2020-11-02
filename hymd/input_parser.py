@@ -37,6 +37,7 @@ class Config:
     bonds: List[Bond] = field(default_factory=list)
     n_particles: int = None
     max_molecule_size: int = None
+    n_flush: int = None
 
     def __str__(self):
         bonds_str = '\tbonds:\n' + ''.join([
