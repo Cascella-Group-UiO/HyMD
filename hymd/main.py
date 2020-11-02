@@ -296,8 +296,8 @@ if __name__ == '__main__':
     update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
                  types, config, v_ext, phi_fourier, v_ext_fourier,
                  compute_potential=True)
-    field_forces = compute_field_force(layouts, positions, force_on_grid,
-                                       types, config.n_types)
+    compute_field_force(layouts, positions, force_on_grid, field_forces, types,
+                        config.n_types)
     if args.disable_field:
         field_forces.fill(0.0)
     if molecules_flag:
@@ -426,8 +426,8 @@ if __name__ == '__main__':
             )
 
         # Update slow forces
-        field_forces = compute_field_force(layouts, positions,  # noqa: E501
-                                           force_on_grid, types, config.n_types)  # noqa: E501
+        compute_field_force(layouts, positions, force_on_grid, field_forces,
+                            types, config.n_types)
         if args.disable_field:
             field_forces.fill(0.0)
 
