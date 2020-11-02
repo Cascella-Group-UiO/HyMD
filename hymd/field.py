@@ -4,16 +4,11 @@ from mpi4py import MPI
 from logger import Logger
 
 
-def compute_field_force(layouts, r, force_mesh, types, n_types, out=None):
-    if out is None:
-        out = np.zeros((len(r), 3))
-    else:
-        assert out.shape == r.shape
+def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     for t in range(n_types):
         for d in range(3):
-            out[types == t, d] = (force_mesh[t][d]
-                                  .readout(r[types == t], layout=layouts[t]))
-    return out
+            force_mesh[t][d].readout(r[types == t], layout=layouts[t],
+                                     out=force[types == t, d])
 
 
 def update_field(phi, layouts, force_mesh, hamiltonian, pm, positions, types,
