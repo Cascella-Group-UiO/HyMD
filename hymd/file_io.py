@@ -29,12 +29,15 @@ class OutDataset:
         comm.Barrier()
         self.file.close()
 
+    def flush(self):
+        self.file.flush()
+
 
 def setup_time_dependent_element(name, parent_group, n_frames, shape, dtype,
                                  units=None):
     group = parent_group.create_group(name)
-    step = group.create_dataset('step', n_frames, 'Int32')
-    time = group.create_dataset('time', n_frames, 'Int32')
+    step = group.create_dataset('step', (n_frames,), 'Int32')
+    time = group.create_dataset('time', (n_frames,), 'Int32')
     value = group.create_dataset('value', (n_frames, *shape), dtype)
     if units is not None:
         group.attrs['units'] = units

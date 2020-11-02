@@ -227,6 +227,9 @@ if __name__ == '__main__':
 
     # config.box_size = np.array(config.box_size)                                 ######## <<<<< FIX ME
     config = check_config(config, indices, names, types, comm=comm)
+    if config.n_print:
+        if config.n_flush is None:
+            config.n_flush = 10000 // config.n_print
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
@@ -349,6 +352,7 @@ if __name__ == '__main__':
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
 
+    flush_step = 0
     for step in range(config.n_steps):
         current_step_time = datetime.datetime.now()
 
@@ -505,7 +509,8 @@ if __name__ == '__main__':
                            kinetic_energy, bond_energy, angle_energy,
                            field_energy, config.time_step, config,
                            dump_per_particle=args.dump_per_particle, comm=comm)
-
+                if np.mod(step, config.n_print*config.n_flush) == 0:
+                    out_dataset.flush()
         last_step_time = current_step_time
 
     # End simulation
