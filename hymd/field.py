@@ -6,9 +6,10 @@ from logger import Logger
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     for t in range(n_types):
+        ind = types == t
         for d in range(3):
-            force_mesh[t][d].readout(r[types == t], layout=layouts[t],
-                                     out=force[types == t, d])
+            force[ind, d] = force_mesh[t][d].readout(r[ind],
+                                                     layout=layouts[t])
 
 
 def update_field(phi, layouts, force_mesh, hamiltonian, pm, positions, types,
