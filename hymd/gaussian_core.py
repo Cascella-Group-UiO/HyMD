@@ -62,20 +62,18 @@ def gaussian_core_forces(positions, force, chi, config):
     return energy
 
 
-def __setup_test_dppc_system(N_lipid, N_solvent, seed=None):
+def __setup_test_dppc_system(N_lipid, box=10.0, seed=None):
     from force import Chi
     from input_parser import (Config, _setup_type_to_name_map,
                               _find_unique_names)
 
     if seed is not None:
         np.random.seed(seed)
-    N_lipid = 52
-    N_solvent = 1400
-    N = 12 * N_lipid + N_solvent
-    positions = np.random.uniform(low=0.0, high=15.0, size=(N, 3))
+    ratio = 2.2095959596
+    N_solvent = int(round(N_lipid * 12 * ratio))
+    N = int(round(12 * N_lipid + N_solvent))
+    positions = np.random.uniform(low=0.0, high=box, size=(N, 3))
     positions = np.asfortranarray(positions).astype(np.float32)
-    positions[positions[:, 0] > 13.0, 0] -= 13.0
-    positions[positions[:, 1] > 14.0, 0] -= 14.0
     forces = np.zeros_like(positions, dtype=np.float32)
     dppc_types = np.array([0, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3], dtype=np.int32)
     dppc_names = np.array([np.string_(s) for s in ('N', 'P', 'G', 'G', 'C',
@@ -98,7 +96,7 @@ def __setup_test_dppc_system(N_lipid, N_solvent, seed=None):
     for n in ('N', 'P', 'G', 'C', 'W'):
         chi_list.append(Chi(atom_1=n, atom_2=n, interaction_energy=0.0))
 
-    config = Config(n_steps=None, time_step=None, box_size=[13, 14, 15],
+    config = Config(n_steps=None, time_step=None, box_size=[box, box, box],
                     mesh_size=[3, 3, 3], sigma=0.5, kappa=0.05, chi=chi_list,
                     n_particles=N)
     config = _setup_type_to_name_map(config, names, types)
@@ -109,78 +107,307 @@ def __setup_test_dppc_system(N_lipid, N_solvent, seed=None):
 def __force_energy_grid_size_accuracy():
     import warnings
     import pmesh.pm as pmesh
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import NullFormatter
     from file_io import distribute_input
     from field import update_field, compute_field_force
     from hamiltonian import DefaultWithChi
 
-    r, f, names, types, config = __setup_test_dppc_system(52, 1400, seed=27654)
+    r, f, names, types, config = __setup_test_dppc_system(8*66, box=10.0,
+                                                          seed=27652)
     N = config.n_particles
     chi = setup_chi_array(r, types, config)
-    gaussian_core_energy = gaussian_core_forces(r, f, chi, config)
 
-    in_file = {'positions': r, 'indices': np.arange(config.n_particles)}
-    grab, _ = distribute_input(in_file, MPI.COMM_WORLD.Get_rank(),
-                               MPI.COMM_WORLD.Get_size(), config.n_particles,
-                               max_molecule_size=15, comm=MPI.COMM_WORLD)
-    pos_ = r[grab, :]
-    typ_ = types[grab]
-    mesh = np.geomspace(3, 200, num=100, dtype=np.int32)
-    mesh = np.unique(mesh)
-
-    ind = np.random.randint(len(pos_))
     if MPI.COMM_WORLD.Get_rank() == 0:
-        print(f' mesh{106*" "}relative energy\n size     {"force":>32s} '
-              f'{"energy/N":>20s} {"relative force difference [%]":>43s} '
-              f'    {"difference [%]":>12s}\n{126*"="}')
-        print(f'     {f[ind, 0]:12.8f} {f[ind, 1]:12.8f} {f[ind, 2]:12.8f} '
-              f'{gaussian_core_energy / N:20.10f}')
-
-    for m in mesh:
-        config.mesh_size = [m, m, m]
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                action='ignore', category=np.VisibleDeprecationWarning,
-                message=r'Creating an ndarray from ragged nested sequences'
+        yticks = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        yticklabels = ['0.001', '0.01', '0.1', '1', '10', '100']
+        xticks = [0.05, 0.01, 0.1, 0.5, 1, 2, 3]
+        xticklabels = ['0.05', '0.01', '0.1', '0.5', '1', '2', '3']
+        fig1, ax1 = plt.subplots(constrained_layout=True)
+        fig2, ax2 = plt.subplots(constrained_layout=True)
+        for ax, title in zip((ax1, ax2), ('force', 'energy')):
+            ax.set_xlabel('grid length, h [nm]')
+            ax.set_ylabel('100% · |GC - PMESH| / |GC|')
+            ax.set(title=title, xscale='log', yscale='log')
+            ax.yaxis.set_minor_formatter(NullFormatter())
+            ax.xaxis.set_minor_formatter(NullFormatter())
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(yticklabels)
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(xticklabels)
+            props = dict(boxstyle='round', facecolor='gray', alpha=0.1)
+            ax.text(
+                0.05, 0.95, f'density {N/(config.box_size[0]**3):.2f}',
+                transform=ax.transAxes, verticalalignment='top', bbox=props
             )
-            pm = pmesh.ParticleMesh(config.mesh_size, BoxSize=config.box_size,
-                                    dtype='f4', comm=MPI.COMM_WORLD)
-        phi = [pm.create('real', value=0.0) for _ in range(config.n_types)]
-        phi_fourier = [pm.create('complex', value=0.0) for _ in
-                       range(config.n_types)]
-        force_on_grid = [[pm.create('real', value=0.0) for d in range(3)]
-                         for _ in range(config.n_types)]
-        v_ext_fourier = [pm.create('complex', value=0.0) for _ in range(4)]
-        v_ext = [
-            pm.create('real', value=0.0) for _ in range(config.n_types)
-        ]
-        layouts = [
-            pm.decompose(pos_[typ_ == t]) for t in range(config.n_types)
-        ]
-        hamiltonian = DefaultWithChi(config, config.unique_names,
-                                     config.type_to_name_map)
-        update_field(phi, layouts, force_on_grid, hamiltonian, pm, pos_,
-                     typ_, config, v_ext, phi_fourier, v_ext_fourier,
-                     compute_potential=False)
-        field_forces = np.zeros_like(pos_)
-        compute_field_force(layouts, pos_, force_on_grid, field_forces, typ_,
-                            config.n_types)
-        V = np.prod(config.box_size)
-        n_mesh__cells = np.prod(np.full(3, config.mesh_size))
-        volume_per_cell = V / n_mesh__cells
-        w = hamiltonian.w(phi) * volume_per_cell
-        field_energy = w.csum()
+            ax.grid()
+
+    for i, sigma in enumerate([0.25, 0.5, 0.75, 1.0]):
+        sigma_str = f'{sigma:.2f}'
+        config.sigma = sigma
+        gaussian_core_energy = gaussian_core_forces(r, f, chi, config)
+
+        in_file = {'positions': r, 'indices': np.arange(config.n_particles)}
+        grab, _ = distribute_input(
+            in_file, MPI.COMM_WORLD.Get_rank(), MPI.COMM_WORLD.Get_size(),
+            config.n_particles, max_molecule_size=15, comm=MPI.COMM_WORLD
+        )
+        pos_ = r[grab, :]
+        typ_ = types[grab]
+        mesh = np.geomspace(3, 200, num=50, dtype=np.int32)
+        mesh = np.unique(mesh)
+
+        ind = np.random.randint(len(pos_))
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            print(f' mesh{106*" "}relative energy\n size     {"force":>32s} '
+                  f'{"energy/N":>20s} {"relative force difference [%]":>43s} '
+                  f'    {"difference [%]":>12s}\n{126*"="}')
+            print(f'     {f[ind, 0]:12.8f} {f[ind, 1]:12.8f} {f[ind, 2]:12.8f}'
+                  f' {gaussian_core_energy / N:20.10f}')
+
+        energy_relative_errors = np.zeros_like(mesh, dtype=np.float64)
+        energy_absolute_errors = np.zeros_like(mesh, dtype=np.float64)
+        force_relative_errors = np.zeros(shape=(len(mesh), 3), dtype=np.float64)  # noqa: E501
+        force_absolute_errors = np.zeros(shape=(len(mesh), 3), dtype=np.float64)  # noqa: E501
+
+        for i, m in enumerate(mesh):
+            config.mesh_size = [m, m, m]
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    action='ignore', category=np.VisibleDeprecationWarning,
+                    message=r'Creating an ndarray from ragged nested sequences'
+                )
+                pm = pmesh.ParticleMesh(
+                    config.mesh_size, BoxSize=config.box_size, dtype='f4',
+                    comm=MPI.COMM_WORLD
+                )
+            phi = [pm.create('real', value=0.0) for _ in range(config.n_types)]
+            phi_fourier = [pm.create('complex', value=0.0) for _ in
+                           range(config.n_types)]
+            force_on_grid = [[pm.create('real', value=0.0) for d in range(3)]
+                             for _ in range(config.n_types)]
+            v_ext_fourier = [pm.create('complex', value=0.0) for _ in range(4)]
+            v_ext = [
+                pm.create('real', value=0.0) for _ in range(config.n_types)
+            ]
+            layouts = [
+                pm.decompose(pos_[typ_ == t]) for t in range(config.n_types)
+            ]
+            hamiltonian = DefaultWithChi(config, config.unique_names,
+                                         config.type_to_name_map)
+            update_field(phi, layouts, force_on_grid, hamiltonian, pm, pos_,
+                         typ_, config, v_ext, phi_fourier, v_ext_fourier,
+                         compute_potential=False)
+            field_forces = np.zeros_like(pos_)
+            compute_field_force(layouts, pos_, force_on_grid, field_forces,
+                                typ_, config.n_types)
+            V = np.prod(config.box_size)
+            n_mesh__cells = np.prod(np.full(3, config.mesh_size))
+            volume_per_cell = V / n_mesh__cells
+            w = hamiltonian.w(phi) * volume_per_cell
+            field_energy = w.csum()
+
+            for d in range(3):
+                f_gc = f[grab, d]
+                f_pm = field_forces[:, d]
+                safe_ind = np.invert(np.isclose(f_gc, 0.0, atol=0.01))
+                diff_f = np.abs(f_gc[safe_ind] - f_pm[safe_ind])
+                force_absolute_errors[i, d] = np.mean(diff_f)
+                force_relative_errors[i, d] = np.mean(
+                    diff_f / np.abs(f_gc[safe_ind])
+                )
+                force_absolute_errors[i, d] = MPI.COMM_WORLD.allreduce(
+                    force_absolute_errors[i, d], MPI.SUM
+                )
+                force_absolute_errors[i, d] /= MPI.COMM_WORLD.Get_size()
+                force_relative_errors[i, d] = MPI.COMM_WORLD.allreduce(
+                    force_relative_errors[i, d], MPI.SUM
+                )
+                force_relative_errors[i, d] /= MPI.COMM_WORLD.Get_size()
+
+            diff_e = np.abs(
+                gaussian_core_energy - field_energy
+            )
+            energy_relative_errors[i] = diff_e / gaussian_core_energy
+            energy_absolute_errors[i] = diff_e
+
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                ff = field_forces
+                df = np.abs(ff[ind, :] - f[ind, :]) / np.abs(f[ind, :]) * 100.0
+                de = (np.abs(gaussian_core_energy - field_energy)
+                      / np.abs(gaussian_core_energy)) * 100.0
+                print(f'{m:4} {ff[ind, 0]:12.8f} {ff[ind, 1]:12.8f} '
+                      f'{ff[ind, 2]:12.8f} {field_energy / N:20.10f}     '
+                      f'{df[0]:12.8f} {df[1]:12.8f} {df[2]:12.8f} {de:17.8f}')
 
         if MPI.COMM_WORLD.Get_rank() == 0:
-            i = field_forces[field_forces > 0.01]
+            ax1.plot(config.box_size[0] / mesh,
+                     100.0 * np.mean(force_relative_errors, axis=1), '-',
+                     label=f'force σ={sigma_str}')
+            ax2.plot(config.box_size[0] / mesh, 100.0 * energy_relative_errors,
+                     '-', label=f'energy σ={sigma_str}')
 
-            ff = field_forces
-            df = np.abs(ff[ind, :] - f[ind, :]) / np.abs(f[ind, :]) * 100.0
-            de = (np.abs(gaussian_core_energy - field_energy)
-                  / np.abs(gaussian_core_energy)) * 100.0
-            print(f'{m:4} {ff[ind, 0]:12.8f} {ff[ind, 1]:12.8f} '
-                  f'{ff[ind, 2]:12.8f} {field_energy / N:20.10f}     '
-                  f'{df[0]:12.8f} {df[1]:12.8f} {df[2]:12.8f} {de:17.8f}')
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        ax1.legend(loc='lower right')
+        ax2.legend(loc='lower right')
+        plt.show()
+
+
+def __force_energy_box_size_sigma_accuracy():
+    from math import ceil
+    import warnings
+    import pmesh.pm as pmesh
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import NullFormatter
+    from file_io import distribute_input
+    from field import update_field, compute_field_force
+    from hamiltonian import DefaultWithChi
+
+    sigma = 0.3
+
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        yticks = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+        yticklabels = ['0.001', '0.01', '0.1', '1', '10', '100']
+        xticks = [0.05, 0.01, 0.1, 0.5, 1, 2, 3]
+        xticklabels = ['0.05', '0.01', '0.1', '0.5', '1', '2', '3']
+        fig1, ax1 = plt.subplots(constrained_layout=True)
+        fig2, ax2 = plt.subplots(constrained_layout=True)
+        for ax, title in zip((ax1, ax2), ('force', 'energy')):
+            ax.set_xlabel('grid length, h [nm]')
+            ax.set_ylabel('100% · |GC - PMESH| / |GC|')
+            ax.set(title=title, xscale='log', yscale='log')
+            ax.yaxis.set_minor_formatter(NullFormatter())
+            ax.xaxis.set_minor_formatter(NullFormatter())
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(yticklabels)
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(xticklabels)
+            props = dict(boxstyle='round', facecolor='gray', alpha=0.1)
+            ax.text(
+                0.05, 0.95, f'sigma {sigma:.3f}',
+                transform=ax.transAxes, verticalalignment='top', bbox=props
+            )
+            ax.grid()
+
+    for i, box_ in enumerate(np.arange(4, 15, 2).astype(np.float64)):
+        box = box_ * sigma
+        lipid_density = 2.6779374472
+        N_lipids = int(ceil(lipid_density * box**3 / 12))
+        r, f, names, types, config = __setup_test_dppc_system(
+            N_lipids, box=box, seed=27652
+        )
+        N = config.n_particles
+        config.sigma = sigma
+        chi = setup_chi_array(r, types, config)
+        gaussian_core_energy = gaussian_core_forces(r, f, chi, config)
+
+        in_file = {'positions': r, 'indices': np.arange(config.n_particles)}
+        grab, _ = distribute_input(
+            in_file, MPI.COMM_WORLD.Get_rank(), MPI.COMM_WORLD.Get_size(),
+            config.n_particles, max_molecule_size=15, comm=MPI.COMM_WORLD
+        )
+        pos_ = r[grab, :]
+        typ_ = types[grab]
+        mesh = np.geomspace(3, int(round(box / 0.01)), num=50, dtype=np.int32)
+        # mesh = np.arange(3, 200, dtype=np.int32)
+        mesh = np.unique(mesh)
+
+        ind = np.random.randint(len(pos_))
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            print(f' mesh{106*" "}relative energy\n size     {"force":>32s} '
+                  f'{"energy/N":>20s} {"relative force difference [%]":>43s} '
+                  f'    {"difference [%]":>12s}\n{126*"="}')
+            print(f'     {f[ind, 0]:12.8f} {f[ind, 1]:12.8f} {f[ind, 2]:12.8f}'
+                  f' {gaussian_core_energy / N:20.10f}')
+
+        energy_relative_errors = np.zeros_like(mesh, dtype=np.float64)
+        energy_absolute_errors = np.zeros_like(mesh, dtype=np.float64)
+        force_relative_errors = np.zeros(shape=(len(mesh), 3), dtype=np.float64)  # noqa: E501
+        force_absolute_errors = np.zeros(shape=(len(mesh), 3), dtype=np.float64)  # noqa: E501
+
+        for i, m in enumerate(mesh):
+            config.mesh_size = [m, m, m]
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    action='ignore', category=np.VisibleDeprecationWarning,
+                    message=r'Creating an ndarray from ragged nested sequences'
+                )
+                pm = pmesh.ParticleMesh(
+                    config.mesh_size, BoxSize=config.box_size, dtype='f4',
+                    comm=MPI.COMM_WORLD
+                )
+            phi = [pm.create('real', value=0.0) for _ in range(config.n_types)]
+            phi_fourier = [pm.create('complex', value=0.0) for _ in
+                           range(config.n_types)]
+            force_on_grid = [[pm.create('real', value=0.0) for d in range(3)]
+                             for _ in range(config.n_types)]
+            v_ext_fourier = [pm.create('complex', value=0.0) for _ in range(4)]
+            v_ext = [
+                pm.create('real', value=0.0) for _ in range(config.n_types)
+            ]
+            layouts = [
+                pm.decompose(pos_[typ_ == t]) for t in range(config.n_types)
+            ]
+            hamiltonian = DefaultWithChi(config, config.unique_names,
+                                         config.type_to_name_map)
+            update_field(phi, layouts, force_on_grid, hamiltonian, pm, pos_,
+                         typ_, config, v_ext, phi_fourier, v_ext_fourier,
+                         compute_potential=False)
+            field_forces = np.zeros_like(pos_)
+            compute_field_force(layouts, pos_, force_on_grid, field_forces,
+                                typ_, config.n_types)
+            V = np.prod(config.box_size)
+            n_mesh__cells = np.prod(np.full(3, config.mesh_size))
+            volume_per_cell = V / n_mesh__cells
+            w = hamiltonian.w(phi) * volume_per_cell
+            field_energy = w.csum()
+
+            for d in range(3):
+                f_gc = f[grab, d]
+                f_pm = field_forces[:, d]
+                safe_ind = np.invert(np.isclose(f_gc, 0.0, atol=0.01))
+                diff_f = np.abs(f_gc[safe_ind] - f_pm[safe_ind])
+                force_absolute_errors[i, d] = np.mean(diff_f)
+                force_relative_errors[i, d] = np.mean(
+                    diff_f / np.abs(f_gc[safe_ind])
+                )
+                force_absolute_errors[i, d] = MPI.COMM_WORLD.allreduce(
+                    force_absolute_errors[i, d], MPI.SUM
+                )
+                force_absolute_errors[i, d] /= MPI.COMM_WORLD.Get_size()
+                force_relative_errors[i, d] = MPI.COMM_WORLD.allreduce(
+                    force_relative_errors[i, d], MPI.SUM
+                )
+                force_relative_errors[i, d] /= MPI.COMM_WORLD.Get_size()
+
+            diff_e = np.abs(
+                gaussian_core_energy - field_energy
+            )
+            energy_relative_errors[i] = diff_e / gaussian_core_energy
+            energy_absolute_errors[i] = diff_e
+
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                ff = field_forces
+                df = np.abs(ff[ind, :] - f[ind, :]) / np.abs(f[ind, :]) * 100.0
+                de = (np.abs(gaussian_core_energy - field_energy)
+                      / np.abs(gaussian_core_energy)) * 100.0
+                print(f'{m:4} {ff[ind, 0]:12.8f} {ff[ind, 1]:12.8f} '
+                      f'{ff[ind, 2]:12.8f} {field_energy / N:20.10f}     '
+                      f'{df[0]:12.8f} {df[1]:12.8f} {df[2]:12.8f} {de:17.8f}')
+
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            ax1.plot(config.box_size[0] / mesh,
+                     100.0 * np.mean(force_relative_errors, axis=1), '-',
+                     label=f'box={box_:.0f}σ')
+            ax2.plot(config.box_size[0] / mesh, 100.0 * energy_relative_errors,
+                     '-', label=f'box={box_:.0f}σ')
+
+    if MPI.COMM_WORLD.Get_rank() == 0:
+        ax1.legend(loc='lower right')
+        ax2.legend(loc='lower right')
+        plt.show()
 
 
 if __name__ == '__main__':
-    __force_energy_grid_size_accuracy()
+    # __force_energy_grid_size_accuracy()
+    __force_energy_box_size_sigma_accuracy()
