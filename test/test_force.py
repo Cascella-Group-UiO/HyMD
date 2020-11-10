@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-from mpi4py import MPI
 from force import compute_bond_forces__plain as compute_bond_forces
 from force import compute_angle_forces__plain as compute_angle_forces
 from force import prepare_bonds_old as prepare_bonds
