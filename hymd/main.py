@@ -166,10 +166,8 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
     n_particles_ = velocities.shape[0]
     velocities[...] = np.random.normal(loc=0, scale=kT_start / config.mass,
                                        size=(n_particles_, 3))
-    mean_velocity = comm.allreduce(np.mean(velocities[...], axis=0), MPI.SUM)
-    mean_velocity = mean_velocity / comm.Get_size()
-    assert len(mean_velocity) == 3                                              #################### <<<< CHECK-ME
-    velocities[...] = velocities[...] - mean_velocity
+    com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
+    velocities[...] = velocities[...] - com_velocity / config.n_particles
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities**2), MPI.SUM
     )
