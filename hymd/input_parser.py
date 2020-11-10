@@ -38,6 +38,8 @@ class Config:
     n_particles: int = None
     max_molecule_size: int = None
     n_flush: int = None
+    thermostat_work: float = 0.0
+    initial_energy: float = None
 
     def __str__(self):
         bonds_str = '\tbonds:\n' + ''.join([
