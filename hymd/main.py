@@ -301,46 +301,44 @@ if __name__ == '__main__':
     bond_forces = np.asfortranarray(bond_forces)
     angle_forces = np.asfortranarray(angle_forces)
 
-    layouts = [
-        pm.decompose(positions[types == t]) for t in range(config.n_types)
-    ]
-    update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
-                 types, config, v_ext, phi_fourier, v_ext_fourier,
-                 compute_potential=True)
-    field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-        phi, velocities, hamiltonian, positions, types, v_ext, config,
-        layouts, comm=comm
-    )
-    if args.disable_field:
-        field_energy = 0.0
+    if not args.disable_field:
+        layouts = [
+            pm.decompose(positions[types == t]) for t in range(config.n_types)
+        ]
+        update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
+                     types, config, v_ext, phi_fourier, v_ext_fourier,
+                     compute_potential=True)
+        field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+            phi, velocities, hamiltonian, positions, types, v_ext, config,
+            layouts, comm=comm
+        )
+        compute_field_force(layouts, positions, force_on_grid, field_forces,
+                            types, config.n_types)
+    else:
+        kinetic_energy = comm.allreduce(
+            0.5 * config.mass * np.sum(velocities**2)
+        )
 
-    compute_field_force(layouts, positions, force_on_grid, field_forces, types,
-                        config.n_types)
-    if args.disable_field:
-        field_forces.fill(0.0)
     if molecules_flag:
-        bonds_prep = prepare_bonds(molecules, names, bonds, indices,
-                                   config)
-        (bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium,
-         bonds_2_stength, bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
-         bonds_3_equilibrium, bonds_3_stength) = bonds_prep
-        bond_energy_ = compute_bond_forces(
-            bond_forces, positions, config.box_size, bonds_2_atom1,
-            bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
-        )
-        angle_energy_ = compute_angle_forces(
-            angle_forces, positions, config.box_size, bonds_3_atom1,
-            bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
-            bonds_3_stength
-        )
-        bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
-        angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-        if args.disable_bonds:
-            bond_energy = 0.0
-            bond_forces.fill(0.0)
-        if args.disable_angle_bonds:
-            angle_energy = 0.0
-            angle_forces.fill(0.0)
+        if not (args.disable_bonds and args.disable_angle_bonds):
+            bonds_prep = prepare_bonds(molecules, names, bonds, indices,
+                                       config)
+            (bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium,
+             bonds_2_stength, bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
+             bonds_3_equilibrium, bonds_3_stength) = bonds_prep
+        if not args.disable_bonds:
+            bond_energy_ = compute_bond_forces(
+                bond_forces, positions, config.box_size, bonds_2_atom1,
+                bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
+            )
+            bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
+        if not args.disable_angle_bonds:
+            angle_energy_ = compute_angle_forces(
+                angle_forces, positions, config.box_size, bonds_3_atom1,
+                bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
+                bonds_3_stength
+            )
+            angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
     else:
         bonds_2_atom1, bonds_2_atom2 = None, None
     config.initial_energy = (field_energy + kinetic_energy + bond_energy
@@ -353,12 +351,15 @@ if __name__ == '__main__':
     if config.n_print > 0:
         step = 0
         frame = 0
-        field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-            phi, velocities, hamiltonian, positions, types, v_ext, config,
-            layouts, comm=comm
-        )
-        if args.disable_field:
-            field_energy = 0.0
+        if not args.disable_field:
+            field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+                phi, velocities, hamiltonian, positions, types, v_ext, config,
+                layouts, comm=comm
+            )
+        else:
+            kinetic_energy = comm.allreduce(
+                0.5 * config.mass * np.sum(velocities**2)
+            )
         temperature = (
             (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
         )
@@ -426,29 +427,26 @@ if __name__ == '__main__':
 
             # Update fast forces
             if molecules_flag:
-                bond_energy_ = compute_bond_forces(
-                    bond_forces, positions, config.box_size, bonds_2_atom1,
-                    bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
-                )
-                angle_energy_ = compute_angle_forces(
-                    angle_forces, positions, config.box_size, bonds_3_atom1,
-                    bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
-                    bonds_3_stength
-                )
-            if args.disable_bonds:
-                bond_forces.fill(0.0)
-            if args.disable_angle_bonds:
-                angle_forces.fill(0.0)
+                if not args.disable_bonds:
+                    bond_energy_ = compute_bond_forces(
+                        bond_forces, positions, config.box_size, bonds_2_atom1,
+                        bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
+                    )
+                if not args.disable_field:
+                    angle_energy_ = compute_angle_forces(
+                        angle_forces, positions, config.box_size,
+                        bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
+                        bonds_3_equilibrium, bonds_3_stength
+                    )
             velocities = integrate_velocity(
                 velocities, (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner
             )
 
         # Update slow forces
-        compute_field_force(layouts, positions, force_on_grid, field_forces,
-                            types, config.n_types)
-        if args.disable_field:
-            field_forces.fill(0.0)
+        if not args.disable_field:
+            compute_field_force(layouts, positions, force_on_grid,
+                                field_forces, types, config.n_types)
 
         # Second rRESPA velocity step
         vel = integrate_velocity(velocities, field_forces / config.mass,
@@ -457,12 +455,10 @@ if __name__ == '__main__':
         # Only compute and keep the molecular bond energy from the last rRESPA
         # inner step
         if molecules_flag:
-            bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
-            angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-            if args.disable_bonds:
-                bond_energy = 0.0
-            if args.disable_angle_bonds:
-                angle_energy = 0.0
+            if not args.disable_bonds:
+                bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
+            if not args.disable_angle_bonds:
+                angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
 
         if np.mod(step, config.domain_decomposition) == 0 and step != 0:
             positions = np.ascontiguousarray(positions)
@@ -500,11 +496,11 @@ if __name__ == '__main__':
                      f'{config.type_to_name_map} to be '
                      f'exchanged = {exchange_cost[rank]}')
                 )
-
-        compute_field_energy = np.mod(step + 1, config.n_print) == 0
-        update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
-                     types, config, v_ext, phi_fourier,
-                     v_ext_fourier, compute_potential=compute_field_energy)
+        if not args.disable_field:
+            compute_field_energy = np.mod(step + 1, config.n_print) == 0
+            update_field(phi, layouts, force_on_grid, hamiltonian, pm,
+                         positions, types, config, v_ext, phi_fourier,
+                         v_ext_fourier, compute_potential=compute_field_energy)
 
         # Thermostat
         if config.target_temperature:
@@ -514,10 +510,15 @@ if __name__ == '__main__':
         if config.n_print > 0:
             if np.mod(step, config.n_print) == 0 and step != 0:
                 frame = step // config.n_print
-                field_energy, kinetic_energy = compute_field_and_kinetic_energy(  # noqa: E501
-                    phi, velocities, hamiltonian, positions, types, v_ext,
-                    config, layouts, comm=comm
-                )
+                if not args.disable_field:
+                    field_energy, kinetic_energy = compute_field_and_kinetic_energy(  # noqa: E501
+                        phi, velocities, hamiltonian, positions, types, v_ext,
+                        config, layouts, comm=comm
+                    )
+                else:
+                    kinetic_energy = comm.allreduce(
+                        0.5 * config.mass * np.sum(velocities**2)
+                    )
                 temperature = (
                     (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)  # noqa: E501
                 )
@@ -546,14 +547,19 @@ if __name__ == '__main__':
         )
 
     if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
-        update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
-                     types, config, v_ext, phi_fourier,
-                     v_ext_fourier, compute_potential=True)
+        if not args.disable_field:
+            update_field(phi, layouts, force_on_grid, hamiltonian, pm,
+                         positions, types, config, v_ext, phi_fourier,
+                         v_ext_fourier, compute_potential=True)
+            field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+                phi, velocities, hamiltonian, positions, types, v_ext, config,
+                layouts, comm=comm
+            )
+        else:
+            kinetic_energy = comm.allreduce(
+                0.5 * config.mass * np.sum(velocities**2)
+            )
         frame = (step + 1) // config.n_print
-        field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-            phi, velocities, hamiltonian, positions, types, v_ext, config,
-            layouts, comm=comm
-        )
         temperature = (
             (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
         )
