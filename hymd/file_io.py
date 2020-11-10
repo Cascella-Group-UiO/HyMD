@@ -246,23 +246,26 @@ def store_data(h5md, step, frame, indices, positions, velocities,
     h5md.total_momentum[frame, :] = total_momentum
     h5md.temperature[frame] = temperature
 
-    header_ = 12 * '{:>15}'
+    header_ = 13 * '{:>15}'
     fmt_ = ["step", "time", "temperature", "total E", "kinetic E",
             "potential E", "field E", "bond E", "angle E", "total Px",
-            "total Py", "total Pz"]
+            "total Py", "total Pz", "ΔH tilde"]
 
     divide_by = 1.0
     if dump_per_particle:
         for i in range(3, 9):
             fmt_[i] = fmt_[i][:-2] + "E/N"
+        fmt_[-1] += "/N"
         divide_by = config.n_particles
+    total_energy = kinetic_energy + potential_energy
+    H_tilde = total_energy - config.initial_energy - config.thermostat_work
 
     header = header_.format(*fmt_)
-    data_fmt = f'{"{:15}"}{11 * "{:15.8g}" }'
+    data_fmt = f'{"{:15}"}{12 * "{:15.8g}" }'
     data = data_fmt.format(step,
                            time_step * step,
                            temperature,
-                           (kinetic_energy + potential_energy) / divide_by,
+                           total_energy / divide_by,
                            kinetic_energy / divide_by,
                            potential_energy / divide_by,
                            field_energy / divide_by,
@@ -270,7 +273,8 @@ def store_data(h5md, step, frame, indices, positions, velocities,
                            bond3_energy / divide_by,
                            total_momentum[0] / divide_by,
                            total_momentum[1] / divide_by,
-                           total_momentum[2] / divide_by)
+                           total_momentum[2] / divide_by,
+                           H_tilde / divide_by)
     Logger.rank0.log(
         logging.INFO, ('\n' + header + '\n' + data)
     )
