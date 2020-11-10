@@ -51,6 +51,8 @@ def configure_runtime(comm):
     ap.add_argument("--disable-angle-bonds", default=False,
                     action='store_true',
                     help="Disable three-particle angle bond forces")
+    ap.add_argument("--double-precision", default=False, action='store_true',
+                    help="Use double precision positions/velocities")
     ap.add_argument("--dump-per-particle", default=False, action='store_true',
                     help="Log energy values per particle, not total")
     ap.add_argument("--disable-mpio", default=False, action='store_true',
@@ -191,10 +193,6 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
 
 
 if __name__ == '__main__':
-    dtype = np.float64
-    if dtype == np.float64:
-        from force import compute_bond_forces__fortran__double as compute_bond_forces  # noqa: E501, F811
-        from force import compute_angle_forces__fortran__double as compute_angle_forces  # noqa: E501, F811
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -203,6 +201,14 @@ if __name__ == '__main__':
         start_time = datetime.datetime.now()
 
     args, config = configure_runtime(comm)
+
+    if args.double_precision:
+        dtype = np.float64
+        if dtype == np.float64:
+            from force import compute_bond_forces__fortran__double as compute_bond_forces  # noqa: E501, F811
+            from force import compute_angle_forces__fortran__double as compute_angle_forces  # noqa: E501, F811
+    else:
+        dtype = np.float32
 
     driver = 'mpio' if not args.disable_mpio else None
     with h5py.File(args.input, 'r', driver=driver, comm=comm) as in_file:
