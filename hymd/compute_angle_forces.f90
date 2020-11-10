@@ -28,8 +28,6 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
     real(4) :: xrasin, xrcsin
     real(4) :: cosphi, cosphi2, theta
 
-    real(8) :: rBA, rBC, rBA_inv, rBC_inv, fff, rBA_dot_rBC
-
     energy = 0.0
     f = 0.0 ! Set all array elements
 
