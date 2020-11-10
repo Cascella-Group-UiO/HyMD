@@ -4,6 +4,8 @@ import networkx as nx
 from dataclasses import dataclass
 from compute_bond_forces import cbf as compute_bond_forces__fortran  # noqa: F401, E501
 from compute_angle_forces import caf as compute_angle_forces__fortran  # noqa: F401, E501
+from compute_bond_forces__double import cbf as compute_bond_forces__fortran__double  # noqa: F401, E501
+from compute_angle_forces__double import caf as compute_angle_forces__fortran__double  # noqa: F401, E501
 
 
 @dataclass

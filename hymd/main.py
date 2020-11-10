@@ -48,7 +48,8 @@ def configure_runtime(comm):
                     help="Disable field forces")
     ap.add_argument("--disable-bonds", default=False, action='store_true',
                     help="Disable two-particle bond forces")
-    ap.add_argument("--disable-angle-bonds", default=False, action='store_true',
+    ap.add_argument("--disable-angle-bonds", default=False,
+                    action='store_true',
                     help="Disable three-particle angle bond forces")
     ap.add_argument("--dump-per-particle", default=False, action='store_true',
                     help="Log energy values per particle, not total")
@@ -190,6 +191,10 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
 
 
 if __name__ == '__main__':
+    dtype = np.float64
+    if dtype == np.float64:
+        from force import compute_bond_forces__fortran__double as compute_bond_forces  # noqa: E501, F811
+        from force import compute_angle_forces__fortran__double as compute_angle_forces  # noqa: E501, F811
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -208,12 +213,12 @@ if __name__ == '__main__':
         )
         indices = in_file['indices'][rank_range]
         positions = in_file['coordinates'][-1, rank_range, :]
-        positions = positions.astype(np.float32)
+        positions = positions.astype(dtype)
         if 'velocities' in in_file:
             velocities = in_file['velocities'][-1, rank_range, :]
-            velocities = velocities.astype(np.float32)
+            velocities = velocities.astype(dtype)
         else:
-            velocities = np.zeros_like(positions, dtype=np.float32)
+            velocities = np.zeros_like(positions, dtype=dtype)
 
         names = in_file['names'][rank_range]
 
@@ -234,9 +239,9 @@ if __name__ == '__main__':
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
 
-    bond_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32)  # , order='F')  # noqa: E501
-    angle_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32)  # , order='F')  # noqa: E501
-    field_forces = np.zeros(shape=(len(positions), 3), dtype=np.float32)
+    bond_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)  # , order='F')  # noqa: E501
+    angle_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)  # , order='F')  # noqa: E501
+    field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
 
     field_energy = 0.0
     bond_energy = 0.0
@@ -296,6 +301,13 @@ if __name__ == '__main__':
     update_field(phi, layouts, force_on_grid, hamiltonian, pm, positions,
                  types, config, v_ext, phi_fourier, v_ext_fourier,
                  compute_potential=True)
+    field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+        phi, velocities, hamiltonian, positions, types, v_ext, config,
+        layouts, comm=comm
+    )
+    if args.disable_field:
+        field_energy = 0.0
+
     compute_field_force(layouts, positions, force_on_grid, field_forces, types,
                         config.n_types)
     if args.disable_field:
@@ -325,7 +337,8 @@ if __name__ == '__main__':
             angle_forces.fill(0.0)
     else:
         bonds_2_atom1, bonds_2_atom2 = None, None
-
+    config.initial_energy = (field_energy + kinetic_energy + bond_energy
+                             + angle_energy)
     out_dataset = OutDataset(args.destdir, config,
                              disable_mpio=args.disable_mpio)
     store_static(out_dataset, rank_range, names, types, indices, config,
