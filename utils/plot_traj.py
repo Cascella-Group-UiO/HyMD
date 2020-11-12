@@ -21,6 +21,8 @@ def parse_args():
                         help='H5MD file')
     parser.add_argument('--per-particle', default=False, action='store_true',
                         help='Divide properties by number of particles')
+    parser.add_argument('--abs', default=False, action='store_true',
+                        help='Plot the absolute values')
     parser.add_argument('--subtract-mean', default=False, action='store_true',
                         help=('Subtract the mean, plotting deviations from '
                               'the average'))
@@ -96,8 +98,9 @@ def extract_property(h5md_file, property, args):
     plot_kwargs = {'label': keyword_to_group_name[property]}
     xlabel = 'time [ps]'
     ylabel = 'energy [kJ/mol]'
+    n_particles = len(particles_group['position/value'][0, :, 0])
+
     if args.per_particle:
-        n_particles = len(particles_group['position/value'][0, :, 0])
         values /= float(n_particles)
         if args.subtract_mean:
             ylabel = 'energy deviations per particle [kJ/mol]'
@@ -105,19 +108,23 @@ def extract_property(h5md_file, property, args):
             ylabel = 'energy per particle [kJ/mol]'
     if args.subtract_mean:
         values -= np.mean(values)
+        ylabel = 'abs ' + ylabel
+    if args.abs:
+        values = np.abs(values)
     print_statistics(name, times, property_group['value'][:], n_particles)
     return times, values, name, plot_kwargs, xlabel, ylabel
 
 
 class Property:
     def __init__(self, name, times, values, plot_args, per_particle=False,
-                 subtract_mean=False):
+                 subtract_mean=False, abs=False):
         self.name = name
         self.times = times
         self.values = values
         self.plot_args = plot_args
         self.per_particle = per_particle
         self.subtract_mean = subtract_mean
+        self.abs = abs
 
 
 if __name__ == '__main__':
@@ -135,7 +142,8 @@ if __name__ == '__main__':
                                                                 args)
         properties.append(Property(n, t, v, plot_kwargs,
                                    per_particle=args.per_particle,
-                                   subtract_mean=args.subtract_mean))
+                                   subtract_mean=args.subtract_mean,
+                                   abs=args.abs))
     close_h5md_file(h5md_file)
 
     fig, ax = plt.subplots()
