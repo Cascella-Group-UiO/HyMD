@@ -17,7 +17,7 @@ mass = 72.0
 max_molecule_size = 15
 
 [simulation]
-# Number of total time steps in the simulation in [picoseconds].
+# Number of total time steps in the simulation.
 n_steps = 5000
 # Frequency of trajectory/energy file output in time steps.
 n_print = 100
