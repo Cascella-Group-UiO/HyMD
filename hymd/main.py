@@ -430,7 +430,7 @@ if __name__ == '__main__':
                         bond_forces, positions, config.box_size, bonds_2_atom1,
                         bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
                     )
-                if not args.disable_field:
+                if not args.disable_angle_bonds:
                     angle_energy_ = compute_angle_forces(
                         angle_forces, positions, config.box_size,
                         bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
