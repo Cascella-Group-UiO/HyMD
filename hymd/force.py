@@ -94,8 +94,8 @@ def prepare_bonds(molecules, names, bonds, indices, config):
                                          config)
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
-    bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float32)
-    bonds_2_stength = np.empty(len(bonds_2), dtype=np.float32)
+    bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
+    bonds_2_stength = np.empty(len(bonds_2), dtype=np.float64)
     for i, b in enumerate(bonds_2):
         bonds_2_atom1[i] = b[0]
         bonds_2_atom2[i] = b[1]
@@ -104,8 +104,8 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
-    bonds_3_equilibrium = np.empty(len(bonds_3), dtype=np.float32)
-    bonds_3_stength = np.empty(len(bonds_3), dtype=np.float32)
+    bonds_3_equilibrium = np.empty(len(bonds_3), dtype=np.float64)
+    bonds_3_stength = np.empty(len(bonds_3), dtype=np.float64)
     for i, b in enumerate(bonds_3):
         bonds_3_atom1[i] = b[0]
         bonds_3_atom2[i] = b[1]
