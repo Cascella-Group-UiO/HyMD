@@ -1,5 +1,5 @@
 EXT_SUFFIX := $(shell python3-config --extension-suffix)
-F90FLAGS = "-Ofast -pedantic"
+F90FLAGS = "-Ofast -pedantic -ffree-line-length-0"
 FC := f2py3 --verbose --f90flags=${F90FLAGS}
 SINGLE_TO_DOUBLE := "s/real(4)/real(8)/g"
 

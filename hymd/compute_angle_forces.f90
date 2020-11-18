@@ -1,4 +1,3 @@
-
 subroutine caf(f, r, box, a, b, c, t0, k, energy)
 ! ==============================================================================
 ! compute_angle_forces() speedup attempt.
@@ -12,28 +11,27 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
 
     real(4), dimension(:,:), intent(in out) :: f
     real(4), dimension(:,:), intent(in)     :: r
-    real(4), dimension(:),   intent(in)     :: box
+    real(8), dimension(:),   intent(in)     :: box
     integer, dimension(:),   intent(in)     :: a
     integer, dimension(:),   intent(in)     :: b
     integer, dimension(:),   intent(in)     :: c
-    real(4), dimension(:),   intent(in)     :: t0
-    real(4), dimension(:),   intent(in)     :: k
-    real(4),                intent(out)     :: energy
+    real(8), dimension(:),   intent(in)     :: t0
+    real(8), dimension(:),   intent(in)     :: k
+    real(8),                intent(out)     :: energy
 
     integer :: ind, aa, bb, cc
-    real(4) :: ra_x, ra_y, ra_z, rc_x, rc_y, rc_z
-    real(4) :: ea_x, ea_y, ea_z, ec_x, ec_y, ec_z
-    real(4) :: fa_x, fa_y, fa_z, fc_x, fc_y, fc_z
-    real(4) :: d, ff, bx, by, bz, xsinph, xra, xrc
-    real(4) :: xrasin, xrcsin
-    real(4) :: cosphi, cosphi2, theta
+    real(8) :: ra_x, ra_y, ra_z, rc_x, rc_y, rc_z
+    real(8) :: ea_x, ea_y, ea_z, ec_x, ec_y, ec_z
+    real(8) :: fa_x, fa_y, fa_z, fc_x, fc_y, fc_z
+    real(8) :: d, ff, bx, by, bz, xsinph, xra, xrc
+    real(8) :: xrasin, xrcsin
+    real(8) :: cosphi, cosphi2, theta
 
     energy = 0.0
-    f = 0.0 ! Set all array elements
 
-    bx = 1.0 / box(1)
-    by = 1.0 / box(2)
-    bz = 1.0 / box(3)
+    bx = 1.0d0 / box(1)
+    by = 1.0d0 / box(2)
+    bz = 1.0d0 / box(3)
 
     do ind = 1, size(a)
       aa = a(ind) + 1
@@ -54,8 +52,8 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
       rc_y = rc_y - box(2) * nint(rc_y * by)
       rc_z = rc_z - box(3) * nint(rc_z * bz)
 
-      xra = 1.0 / sqrt(ra_x * ra_x + ra_y * ra_y + ra_z * ra_z)
-      xrc = 1.0 / sqrt(rc_x * rc_x + rc_y * rc_y + rc_z * rc_z)
+      xra = 1.0d0 / sqrt(ra_x * ra_x + ra_y * ra_y + ra_z * ra_z)
+      xrc = 1.0d0 / sqrt(rc_x * rc_x + rc_y * rc_y + rc_z * rc_z)
 
       ea_x = ra_x * xra
       ea_y = ra_y * xra
@@ -70,7 +68,8 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
 
       if (cosphi2 < 1.0) then
         theta = acos(cosphi)
-        xsinph = 1.0 / sqrt(1.0 - cosphi2)
+
+        xsinph = 1.0d0 / sqrt(1.0d0 - cosphi2)
 
         d = theta - t0(ind)
         ff = - k(ind) * d
@@ -98,7 +97,7 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
         f(bb, 2) = f(bb, 2) - (fa_y + fc_y)
         f(bb, 3) = f(bb, 3) - (fa_z + fc_z)
 
-        energy = energy - 0.5 * ff * d
+        energy = energy - 0.5d0 * ff * d
       end if
     end do
 end subroutine
