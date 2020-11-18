@@ -242,6 +242,7 @@ if __name__ == '__main__':
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
+    positions = np.mod(positions, config.box_size[None, :])
 
     bond_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)  # , order='F')  # noqa: E501
     angle_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)  # , order='F')  # noqa: E501
@@ -296,6 +297,7 @@ if __name__ == '__main__':
         (positions, molecules, velocities, indices, bond_forces, angle_forces,
          field_forces, names, types, bonds) = cd
     positions = np.asfortranarray(positions)
+    velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
     angle_forces = np.asfortranarray(angle_forces)
 
@@ -325,12 +327,14 @@ if __name__ == '__main__':
              bonds_2_stength, bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
              bonds_3_equilibrium, bonds_3_stength) = bonds_prep
         if not args.disable_bonds:
+            bond_forces.fill(0.0)
             bond_energy_ = compute_bond_forces(
                 bond_forces, positions, config.box_size, bonds_2_atom1,
                 bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
             )
             bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
         if not args.disable_angle_bonds:
+            angle_forces.fill(0.0)
             angle_energy_ = compute_angle_forces(
                 angle_forces, positions, config.box_size, bonds_3_atom1,
                 bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
