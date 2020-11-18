@@ -57,16 +57,6 @@ def compute_field_and_kinetic_energy(phi, velocity, hamiltonian, positions,
 
     w = hamiltonian.w(phi) * volume_per_cell
     field_energy = w.csum()
-
-    """
-    v = 0.0
-    for t in range(config.n_types):
-        v += comm.allreduce(
-            np.sum(v_ext[t].readout(positions[types == t], layout=layouts[t]))
-        )
-        v += v_ext[t].csum() * volume_per_cell
-    field_energy = 0.5 * v
-    """
     kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocity**2))
     return field_energy, kinetic_energy
 
