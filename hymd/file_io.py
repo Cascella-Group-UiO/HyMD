@@ -249,7 +249,10 @@ def store_data(h5md, step, frame, indices, positions, velocities,
     header_ = 13 * '{:>15}'
     fmt_ = ["step", "time", "temperature", "total E", "kinetic E",
             "potential E", "field E", "bond E", "angle E", "total Px",
-            "total Py", "total Pz", "ΔH tilde"]
+            "total Py", "total Pz",
+            "ΔH tilde" if config.target_temperature else "ΔE"]
+    if config.initial_energy is None:
+        fmt_[-1] = ""
 
     divide_by = 1.0
     if dump_per_particle:
@@ -258,7 +261,15 @@ def store_data(h5md, step, frame, indices, positions, velocities,
         fmt_[-1] += "/N"
         divide_by = config.n_particles
     total_energy = kinetic_energy + potential_energy
-    H_tilde = total_energy - config.initial_energy - config.thermostat_work
+    if config.initial_energy is not None:
+        if config.target_temperature:
+            H_tilde = (total_energy
+                       - config.initial_energy
+                       - config.thermostat_work)
+        else:
+            H_tilde = total_energy - config.initial_energy
+    else:
+        H_tilde = 0.0
 
     header = header_.format(*fmt_)
     data_fmt = f'{"{:15}"}{12 * "{:15.8g}" }'
@@ -274,7 +285,7 @@ def store_data(h5md, step, frame, indices, positions, velocities,
                            total_momentum[0] / divide_by,
                            total_momentum[1] / divide_by,
                            total_momentum[2] / divide_by,
-                           H_tilde / divide_by)
+                           H_tilde / divide_by)  # noqa: E501
     Logger.rank0.log(
         logging.INFO, ('\n' + header + '\n' + data)
     )
