@@ -420,6 +420,7 @@ def check_box_size(config, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
                 raise ValueError(err_str)
+    config.box_size = np.array(config.box_size, dtype=np.float64)
     return config
 
 
