@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y \
     libhdf5-openmpi-dev=1.10.4+repack-11ubuntu1 \
     pkg-config=0.29.1-0ubuntu4 \
     curl=7.68.0-1ubuntu2.2 \
-    python3.8=3.8.2-1ubuntu1.2 \
-    python3-pip=20.0.2-5ubuntu1
+    python3.8 \
+    python3-pip
 
 RUN pip3 install --upgrade pip && \
     pip3 install --no-cache-dir cython==0.29.21 && \
@@ -21,9 +21,11 @@ RUN pip3 install --upgrade pip && \
     pip3 install --no-cache-dir networkx==2.5 && \
     pip3 install --no-cache-dir sympy==1.6.2 && \
     pip3 install --no-cache-dir pytest==6.0.1 && \
+    pip3 install --no-cache-dir pytest-mpi==0.4 && \
     pip3 install --no-cache-dir mpsort==0.1.17 && \
     pip3 install --no-cache-dir pfft-python==0.1.21 && \
-    pip3 install --no-cache-dir pmesh==0.1.56
+    pip3 install --no-cache-dir pmesh==0.1.56 && \
+    pip3 install --no-cache-dir numba==0.51.2
 
 COPY . /app
 WORKDIR /app
