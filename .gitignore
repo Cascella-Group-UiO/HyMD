@@ -11,3 +11,5 @@ hPF/__pycache__
 test/__pycache__
 coverage.xml
 .DS_Store
+__pycache__
+RUN

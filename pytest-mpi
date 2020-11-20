@@ -1,0 +1,84 @@
+#!/bin/bash
+
+NPROCS=5
+VERBOSE=0
+CAPTURE=0
+SUMMARY=0
+EXITFIRST=0
+UNMUTE=-1
+ORDEROUTPUT=0
+HELP=0
+
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -n|--nprocs) NPROCS="$2"; shift ;;
+    -u|--unmute) UNMUTE="$2"; shift ;;
+    -v|--verbose) VERBOSE=1 ;;
+    -s|--capture=no) CAPTURE=1 ;;
+    -x|--exitfirst) EXITFIRST=1 ;;
+    -ns|--no-summary) SUMMARY=1 ;;
+    -oo|--order-output) ORDEROUTPUT=1 ;;
+    -h|--help) HELP=1 ;;
+    *) echo "Unknown parameter passed: $1"; exit 1 ;;
+  esac
+  shift
+done
+
+if [ "${HELP}" -eq 1 ]
+then
+  echo "usage: pytest-mpi [options]"
+  echo ""
+  echo "positional arguments:"
+  echo "    none"
+  echo ""
+  echo "general options:"
+  echo "    -h --help                       Show help commands."
+  echo "    -n --nprocs <nprocs>            Specify the number of MPI processes."
+  echo "    -v --verbose                    Pass --verbose to pytest."
+  echo "    -s --capture=no                 Pass --capture=no to pytest."
+  echo "    -x --exitfirst                  Pass --exitfirst to pytest."
+  echo "    -ns --no-summary                Pass --no-summary to pytest."
+  echo "    -oo --order-output              Dump output from ranks in order."
+  echo "    -u --unmute                     Unmute (show output from) only a specfic MPI rank."
+else
+  # Note: fails if (for some reason) `utils/mute_all_ranks_except.sh` is not
+  # marked as executable `chmod +x utils/mute_all_ranks_except.sh`
+  PYTEST_ARGS=""
+  if [ "${VERBOSE}" -eq 1 ]; then
+    PYTEST_ARGS="${PYTEST_ARGS} --verbose"
+  fi
+
+  if [ "${CAPTURE}" -eq 1 ]; then
+    PYTEST_ARGS="${PYTEST_ARGS} --capture=no"
+  fi
+
+  if [ "${SUMMARY}" -eq 1 ]; then
+    PYTEST_ARGS="${PYTEST_ARGS} --no-summary"
+  fi
+
+  if [ "${EXITFIRST}" -eq 1 ]; then
+    PYTEST_ARGS="${PYTEST_ARGS} --exitfirst"
+  fi
+
+  if [ "${ORDEROUTPUT}" -eq 1 ]; then
+    for ((RANK=0; RANK<${NPROCS}; RANK++)); do
+      set -x
+      mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh ${RANK} pytest ${PYTEST_ARGS} --only-mpi > outtest.${RANK}
+      { set +x; } 2>/dev/null # Dont output "set +x"
+    done
+    set +x
+    for ((RANK=0; RANK<${NPROCS}; RANK++)); do
+      RANKFILE="outtest.${RANK}"
+      echo ""
+      echo "################################################################################"
+      echo "################################### RANK ${RANK} #####################################"
+      echo "################################################################################"
+      cat ${RANKFILE}
+      rm ${RANKFILE}
+    done
+  elif [ "${UNMUTE}" -eq -1 ]; then
+    mpirun -n ${NPROCS} pytest ${PYTEST_ARGS} --only-mpi
+  else
+    mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh ${UNMUTE} pytest ${PYTEST_ARGS} --only-mpi
+  fi
+fi

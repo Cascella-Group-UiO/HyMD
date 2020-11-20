@@ -1,0 +1,8 @@
+[run]
+omit =
+    setup.py
+    conf.py
+    test/*
+    docs/*
+    utils/*
+    hymd/__init__.py
