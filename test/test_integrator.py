@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from hPF.integrator import integrate_velocity, integrate_position
+from integrator import integrate_velocity, integrate_position
 
 
 def test_integrator_velocity_zero_force(three_atoms):
@@ -271,7 +271,6 @@ def test_integrator_respa_constant_force(three_atoms):
                 velocities = integrate_velocity(velocities, acceleration_short,
                                                 dt)
                 positions = integrate_position(positions, velocities, dt)
-                print("respa, step, s, positions", respa, step, s, positions)
 
                 # Calculate forces_short here
                 velocities = integrate_velocity(velocities, acceleration_short,

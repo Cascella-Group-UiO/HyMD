@@ -5,7 +5,7 @@ Np     = 10000      # Number of particles
 #tau    = 0.7       # ps⁻1
 dt = 0.0005
 NSTEPS = 100
-#T0      = 300         # K 
+#T0      = 300         # K
 Nv = 100
 sigma = 0.5
 nprint = 10  # Printing frequency
@@ -19,7 +19,7 @@ types=1
 ntypes=1
 rho0 = Np/(L[0]*L[1]*L[2])
 dV=L[0]*L[1]*L[2]/Nv
-NAMES=np.array(np.string_(a) for a in ["A","B"])
+NAMES=np.array([np.string_(a) for a in ["A","B"]])
 domain_decomp=True
 #uniform_start=True
 #T_start=300
@@ -32,9 +32,9 @@ def w(phi):
 
 
 V_EXT = [sympy.lambdify([phi], sympy.diff(w(phi),'phi%d'%(i))) for i in range(types)]
-w     = sympy.lambdify([phi], w(phi)) 
+w     = sympy.lambdify([phi], w(phi))
 
- 
+
 # Filter
 
 #H(k,v) = v * exp(-0.5*sigma**2*k.normp(p=2))
@@ -42,7 +42,7 @@ w     = sympy.lambdify([phi], w(phi))
 k=sympy.var('k:%d'%(3))
 
 def H1(k):
-    return sympy.functions.elementary.exponential.exp(-0.5*sigma**2*(k0**2+k1**2+k2**2)) 
+    return sympy.functions.elementary.exponential.exp(-0.5*sigma**2*(k0**2+k1**2+k2**2))
 
 kdHdk = [k0*sympy.diff(H1(k),'k0'),k1*sympy.diff(H1(k),'k1'),k2*sympy.diff(H1(k),'k2')]
 
@@ -59,11 +59,3 @@ def H(k, v):
 # def H(k,v):
 
 #     return v * numpy.exp(-0.5*sigma**2*k.normp(p=2))
-
- 
-
-
-
-
-
-

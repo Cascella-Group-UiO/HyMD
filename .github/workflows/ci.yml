@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: [ master, MPI ]
+    branches: [ master, parser ]
   pull_request:
-    branches: [ master, MPI ]
+    branches: [ master, parser ]
 
 jobs:
   build:
@@ -28,9 +28,22 @@ jobs:
         sudo apt-get install libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
         python -m pip install --upgrade pip
         pip install wheel
+        pip install pytest pytest-cov pytest-mpi coverage
         pip install --upgrade numpy mpi4py cython
-        pip install git+https://github.com/rainwoodman/pmesh
         pip install -r requirements.txt
+    - name: Compile fortran modules
+      run: |
+        cd hymd/
+        make clean
+        make
+        cd ..
     - name: Test with pytest
       run: |
-        pytest -v
+        pytest -v --cov=./ --cov-report=
+        #### NPROCS=6
+        #### chmod +x pytest-mpi
+        #### ./pytest-mpi --nprocs ${NPROCS} --order-output --verbose
+        #### mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh 0 pytest -v --only-mpi --cov=./ --cov-append --cov-report=
+    - name: Coverage report
+      run: |
+        coverage report
