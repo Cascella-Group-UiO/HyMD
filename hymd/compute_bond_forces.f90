@@ -24,12 +24,12 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
     real(4) :: df
     real(4) :: bx, by, bz
 
-    energy = 0.0
-    f = 0.0 ! Set all array elements
+    energy = 0.0d00
+    f = 0.0d00 ! Set all array elements
 
-    bx = 1.0 / box(1)
-    by = 1.0 / box(2)
-    bz = 1.0 / box(3)
+    bx = 1.0d00 / box(1)
+    by = 1.0d00 / box(2)
+    bz = 1.0d00 / box(3)
 
     do ind = 1, size(i)
       ii = i(ind) + 1
@@ -56,6 +56,6 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
       f(ii, 3) = f(ii, 3) - df * rij_z / rij
       f(jj, 3) = f(jj, 3) + df * rij_z / rij
 
-      energy = energy + 0.5 * k(ind) * (rij - r0(ind))**2
+      energy = energy + 0.5d00 * k(ind) * (rij - r0(ind))**2
     end do
 end subroutine
