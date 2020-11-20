@@ -234,7 +234,6 @@ if __name__ == '__main__':
             molecules = in_file['molecules'][rank_range]
             bonds = in_file['bonds'][rank_range]
 
-    # config.box_size = np.array(config.box_size)                                 ######## <<<<< FIX ME
     config = check_config(config, indices, names, types, comm=comm)
     if config.n_print:
         if config.n_flush is None:
@@ -327,14 +326,12 @@ if __name__ == '__main__':
              bonds_2_stength, bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
              bonds_3_equilibrium, bonds_3_stength) = bonds_prep
         if not args.disable_bonds:
-            bond_forces.fill(0.0)
             bond_energy_ = compute_bond_forces(
                 bond_forces, positions, config.box_size, bonds_2_atom1,
                 bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength
             )
             bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
         if not args.disable_angle_bonds:
-            angle_forces.fill(0.0)
             angle_energy_ = compute_angle_forces(
                 angle_forces, positions, config.box_size, bonds_3_atom1,
                 bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
@@ -375,6 +372,10 @@ if __name__ == '__main__':
         last_step_time = datetime.datetime.now()
 
     flush_step = 0
+    # ======================================================================= #
+    # =================  |\/| |¯¯\     |    |¯¯| |¯¯| |¯¯)  ================= #
+    # =================  |  | |__/     |___ |__| |__| |¯¯   ================= #
+    # ======================================================================= #
     for step in range(config.n_steps):
         current_step_time = datetime.datetime.now()
 
@@ -415,13 +416,13 @@ if __name__ == '__main__':
         velocities = integrate_velocity(velocities, field_forces / config.mass,
                                         config.time_step)
 
+
         # Inner rRESPA steps
         for inner in range(config.respa_inner):
             velocities = integrate_velocity(
                 velocities, (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner
             )
-
             positions = integrate_position(
                 positions, velocities, config.time_step / config.respa_inner
             )
@@ -451,8 +452,8 @@ if __name__ == '__main__':
                                 field_forces, types, config.n_types)
 
         # Second rRESPA velocity step
-        vel = integrate_velocity(velocities, field_forces / config.mass,
-                                 config.time_step)
+        velocities = integrate_velocity(velocities, field_forces / config.mass,
+                                        config.time_step)
 
         # Only compute and keep the molecular bond energy from the last rRESPA
         # inner step

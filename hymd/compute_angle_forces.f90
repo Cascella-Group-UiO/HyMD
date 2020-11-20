@@ -27,7 +27,8 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
     real(8) :: xrasin, xrcsin
     real(8) :: cosphi, cosphi2, theta
 
-    energy = 0.0
+    energy = 0.0d00
+    f = 0.0d00
 
     bx = 1.0d0 / box(1)
     by = 1.0d0 / box(2)
