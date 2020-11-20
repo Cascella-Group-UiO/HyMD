@@ -10,10 +10,10 @@ Run a simple example simulation with
 ```
 
 #### Run using Docker
-Pull a pre-build docker image with everything setup by `docker pull mortele/hpf:1.0` and then run in a container by
+Pull a pre-build docker image with everything setup by `docker pull mortele/hpf:1.1` and then run in a container by
 ```bash
 > git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
-> docker run -it --mount src=hPF-MD/,target=/app/hPF,type=bind mortele/hpf:1.0
+> docker run -it --mount src=$(pwd)/hPF-MD/,target=/app/hPF,type=bind mortele/hpf:1.1
 ```
 ```C
 root@d6abeeee1a2d:/app# python3 utils/make_input.py examples/CONF.py
@@ -27,7 +27,7 @@ If you need to build the image yourself, you can do so by
 ```bash
 > git clone git@github.com:sigbjobo/hPF_MD_PMESH_MPI.git hPF-MD
 > cd hPF-MD/.docker/hpf/
-> docker build --tag hpf:1.0
+> docker build --tag hpf:1.1 .
 ```
 
 ### Build
