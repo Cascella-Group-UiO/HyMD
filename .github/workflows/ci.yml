@@ -39,8 +39,11 @@ jobs:
         cd ..
     - name: Test with pytest
       run: |
+        NPROCS=6
         pytest -v --cov=./ --cov-report=
-        mpirun -n 2 utils/mute_all_ranks_except.sh 0 pytest -v --only-mpi --cov=./ --cov-append --cov-report=
+        mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh 0 pytest -v --only-mpi --cov=./ --cov-append --cov-report=
+        chmod +x pytest-mpi
+        ./pytest-mpi --nprocs ${NPROCS} --order-output --verbose
     - name: Coverage report
       run: |
         coverage report
