@@ -40,6 +40,7 @@ class Config:
     n_flush: int = None
     thermostat_work: float = 0.0
     initial_energy: float = None
+    cancel_com_momentum: bool = False
 
     def __str__(self):
         bonds_str = '\tbonds:\n' + ''.join([

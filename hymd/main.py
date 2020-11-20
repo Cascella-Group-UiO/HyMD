@@ -161,6 +161,12 @@ def configure_runtime(comm):
     return args, config
 
 
+def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
+    com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
+    velocities[...] = velocities[...] - com_velocity / config.n_particles
+    return velocities
+
+
 def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
     kT_start = (2.479 / 298.0) * config.start_temperature
     n_particles_ = velocities.shape[0]
@@ -241,6 +247,9 @@ if __name__ == '__main__':
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
+    elif config.cancel_com_momentum:
+        velocities = cancel_com_momentum(velocities, config, comm=comm)
+
     positions = np.mod(positions, config.box_size[None, :])
 
     bond_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)  # , order='F')  # noqa: E501
