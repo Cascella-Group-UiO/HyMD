@@ -291,7 +291,7 @@ if __name__ == "__main__":
         types = None
         bonds = None
         molecules = []
-        #molecules = None
+        # molecules = None
         if "types" in in_file:
             types = in_file["types"][rank_range]
         if molecules_flag:
