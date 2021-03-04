@@ -3,9 +3,15 @@ import numpy as np
 import networkx as nx
 from dataclasses import dataclass
 from compute_bond_forces import cbf as compute_bond_forces__fortran  # noqa: F401, E501
-from compute_angle_forces import caf as compute_angle_forces__fortran  # noqa: F401, E501
-from compute_bond_forces__double import cbf as compute_bond_forces__fortran__double  # noqa: F401, E501
-from compute_angle_forces__double import caf as compute_angle_forces__fortran__double  # noqa: F401, E501
+from compute_angle_forces import (
+    caf as compute_angle_forces__fortran,
+)  # noqa: F401, E501
+from compute_bond_forces__double import (
+    cbf as compute_bond_forces__fortran__double,
+)  # noqa: F401, E501
+from compute_angle_forces__double import (
+    caf as compute_angle_forces__fortran__double,
+)  # noqa: F401, E501
 
 
 @dataclass
@@ -38,9 +44,11 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
             if molecules[local_index] != mol:
                 continue
 
-            bond_graph.add_node(global_index,
-                                name=names[local_index].decode('UTF-8'),
-                                local_index=local_index)
+            bond_graph.add_node(
+                global_index,
+                name=names[local_index].decode("UTF-8"),
+                local_index=local_index,
+            )
             for bond in [b for b in bonds[local_index] if b != -1]:
                 bond_graph.add_edge(global_index, bond)
 
@@ -50,48 +58,53 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
             connected = c[1]
             for j, path in connected.items():
                 if len(path) == 2 and path[-1] > path[0]:
-                    name_i = bond_graph.nodes()[i]['name']
-                    name_j = bond_graph.nodes()[j]['name']
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
 
                     for b in config.bonds:
-                        match_forward = (name_i == b.atom_1 and
-                                         name_j == b.atom_2)
-                        match_backward = (name_j == b.atom_2 and
-                                          name_i == b.atom_1)
+                        match_forward = name_i == b.atom_1 and name_j == b.atom_2
+                        match_backward = name_j == b.atom_2 and name_i == b.atom_1
                         if match_forward or match_backward:
-                            bonds_2.append([
-                                bond_graph.nodes()[i]['local_index'],
-                                bond_graph.nodes()[j]['local_index'],
-                                b.equilibrium,
-                                b.strength
-                            ])
+                            bonds_2.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    b.equilibrium,
+                                    b.strength,
+                                ]
+                            )
 
                 if len(path) == 3 and path[-1] > path[0]:
-                    name_i = bond_graph.nodes()[i]['name']
-                    name_mid = bond_graph.nodes()[path[1]]['name']
-                    name_j = bond_graph.nodes()[j]['name']
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_mid = bond_graph.nodes()[path[1]]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
 
                     for a in config.angle_bonds:
-                        match_forward = (name_i == a.atom_1 and
-                                         name_mid == a.atom_2 and
-                                         name_j == a.atom_3)
-                        match_backward = (name_i == a.atom_3 and
-                                          name_mid == a.atom_2 and
-                                          name_j == a.atom_1)
+                        match_forward = (
+                            name_i == a.atom_1
+                            and name_mid == a.atom_2
+                            and name_j == a.atom_3
+                        )
+                        match_backward = (
+                            name_i == a.atom_3
+                            and name_mid == a.atom_2
+                            and name_j == a.atom_1
+                        )
                         if match_forward or match_backward:
-                            bonds_3.append([
-                                bond_graph.nodes()[i]['local_index'],
-                                bond_graph.nodes()[path[1]]['local_index'],
-                                bond_graph.nodes()[j]['local_index'],
-                                np.radians(a.equilibrium),
-                                a.strength
-                            ])
+                            bonds_3.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[path[1]]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    np.radians(a.equilibrium),
+                                    a.strength,
+                                ]
+                            )
     return bonds_2, bonds_3
 
 
 def prepare_bonds(molecules, names, bonds, indices, config):
-    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices,
-                                         config)
+    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices, config)
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
     bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
@@ -113,16 +126,28 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
     return (
-        bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength,
-        bonds_3_atom1, bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
-        bonds_3_stength
+        bonds_2_atom1,
+        bonds_2_atom2,
+        bonds_2_equilibrium,
+        bonds_2_stength,
+        bonds_3_atom1,
+        bonds_3_atom2,
+        bonds_3_atom3,
+        bonds_3_equilibrium,
+        bonds_3_stength,
     )
 
 
 @numba.jit(nopython=True, fastmath=True)
-def compute_bond_forces__numba(f_bonds, r, box_size, bonds_2_atom1,
-                               bonds_2_atom2, bonds_2_equilibrium,
-                               bonds_2_stength):
+def compute_bond_forces__numba(
+    f_bonds,
+    r,
+    box_size,
+    bonds_2_atom1,
+    bonds_2_atom2,
+    bonds_2_equilibrium,
+    bonds_2_stength,
+):
     f_bonds.fill(0.0)
     energy = 0.0
 
@@ -147,7 +172,7 @@ def compute_bond_forces__numba(f_bonds, r, box_size, bonds_2_atom1,
         f_bonds[i, :] -= f_bond_vector
         f_bonds[j, :] += f_bond_vector
 
-        energy += 0.5 * k * (dr - r0)**2
+        energy += 0.5 * k * (dr - r0) ** 2
     return energy
 
 
@@ -169,14 +194,21 @@ def compute_bond_forces__plain(f_bonds, r, bonds_2, box_size):
         f_bonds[i, :] -= f_bond_vector
         f_bonds[j, :] += f_bond_vector
 
-        energy += 0.5 * k * (dr - r0)**2
+        energy += 0.5 * k * (dr - r0) ** 2
     return energy
 
 
 @numba.jit(nopython=True, fastmath=True)
-def compute_angle_forces__numba(f_angles, r, box_size, bonds_3_atom1,
-                                bonds_3_atom2, bonds_3_atom3,
-                                bonds_3_equilibrium, bonds_3_stength):
+def compute_angle_forces__numba(
+    f_angles,
+    r,
+    box_size,
+    bonds_3_atom1,
+    bonds_3_atom2,
+    bonds_3_atom3,
+    bonds_3_equilibrium,
+    bonds_3_stength,
+):
     f_angles.fill(0.0)
     energy = 0.0
 
@@ -205,10 +237,10 @@ def compute_angle_forces__numba(f_angles, r, box_size, bonds_3_atom1,
 
         cosphi = np.dot(ea, ec)
         theta = np.arccos(cosphi)
-        xsinph = 1.0 / np.sqrt(1.0 - cosphi**2)
+        xsinph = 1.0 / np.sqrt(1.0 - cosphi ** 2)
 
         d = theta - theta0
-        f = - k * d
+        f = -k * d
 
         xrasin = xra * xsinph * f
         xrcsin = xrc * xsinph * f
@@ -244,10 +276,10 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
         cosphi = np.dot(ea, ec)
         theta = np.arccos(cosphi)
-        xsinph = 1.0 / np.sqrt(1.0 - cosphi**2)
+        xsinph = 1.0 / np.sqrt(1.0 - cosphi ** 2)
 
         d = theta - theta0
-        f = - k * d
+        f = -k * d
 
         xrasin = xra * xsinph * f
         xrcsin = xrc * xsinph * f
