@@ -51,7 +51,8 @@ class Logger:
 
         cls.rank0.addFilter(MPIFilterRoot())
         cls.all_ranks.addFilter(MPIFilterAll())
-
+        
+        # Why don't add an else at the end instead of this?
         if (not log_file) and (not log_to_stdout):
             return
         if log_file:

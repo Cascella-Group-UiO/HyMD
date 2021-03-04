@@ -2,7 +2,15 @@ Hamiltonian and alias-free hPF-MD &middot; [![License: GPL v3](https://img.shiel
 ---------
 A simple python implementation of hybrid particle-field molecular dynamics (hPF-MD) which allows conservation of energy and reduces aliasing by refinement of the grid.
 
-Run a simple example simulation with
+Compile FORTRAN modules:
+```bash
+> cd hymd/
+> make clean
+> make
+> cd ..
+```
+
+Run a simple example simulation with (not working right now)
 ```bash
 > mkdir RUN/
 > python3 utils/make_input.py examples/CONF.py && mv input.hdf5 RUN/

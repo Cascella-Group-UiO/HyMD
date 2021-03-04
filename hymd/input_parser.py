@@ -16,7 +16,7 @@ class Config:
     n_steps: int
     time_step: float
     box_size: Union[List[float], np.ndarray]
-    mesh_size: Union[Union[List[int], np.ndarray], int]
+    mesh_size: Union[Union[List[int], np.ndarray] , int]
     sigma: float
     kappa: float
 
@@ -92,7 +92,11 @@ def convert_CONF_to_config(CONF, file_path=None):
         config_dict[config_name] = (
             CONF[CONF_name] if CONF_name in CONF else default
         )
-        CONF.pop(CONF_name)
+
+        # Warning: all the keywords have to be specified in the CONF.py for this to work
+        # CONF.pop(CONF_name)
+        if CONF_name in CONF:
+            CONF.pop(CONF_name)
 
     if file_path is not None:
         config_dict['file_name'] = file_path
@@ -141,6 +145,9 @@ def convert_CONF_to_config(CONF, file_path=None):
                         f'{file_path if file_path else "config file"}'
                         f' ignored when converting to Config object.')
             Logger.rank0.log(logging.WARNING, warn_str)
+
+            # warn only if string in CONF?
+            # warnings.warn(warn_str in CONF)
             warnings.warn(warn_str)
     return Config(**config_dict)
 
