@@ -333,7 +333,7 @@ if __name__ == "__main__":
         )
         # The first argument of ParticleMesh has to be a tuple
         pm = pmesh.ParticleMesh(
-            (config.mesh_size,) * 3, BoxSize=config.box_size, dtype="f4", comm=comm
+            config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
         )
 
     if config.hamiltonian.lower() == "defaultnochi":

@@ -88,9 +88,9 @@ def compute_field_and_kinetic_energy(
 def domain_decomposition(
     positions, molecules, pm, *args, verbose=0, comm=MPI.COMM_WORLD
 ):
-    if not molecules:
-        layout = pm.decompose(positions, smoothing=0)
-        return layout.exchange(positions, molecules, *args)
+    # if not molecules:
+    #    layout = pm.decompose(positions, smoothing=0)
+    #    return layout.exchange(positions, molecules, *args)
 
     unique_molecules = np.sort(np.unique(molecules))
     molecules_com = np.empty_like(positions)
