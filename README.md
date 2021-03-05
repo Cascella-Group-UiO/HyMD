@@ -14,4 +14,5 @@ Run a simple example simulation with
 ```
 
 Notes:
--Changed numpy data types (Float32, Int32 -> float32, int32) to run in local computer
+- Changed numpy data types (Float32, Int32 -> float32, int32) to run in local computer
+- TODO: Fix for running monoatomic (or non molecular) systems
