@@ -16,7 +16,7 @@ Run a simple example simulation with (not working right now)
 ```bash
 > mkdir RUN/
 > python3 utils/make_input.py examples/CONF.py && mv input.hdf5 RUN/
-> mpirun -n 6 python3 hPF/main.py examples/CONF.py RUN/input.hdf5 --destdir=RUN
+> mpirun -n 6 python3 hymd/main.py examples/CONF.py RUN/input.hdf5 --destdir=RUN
 ```
 
 #### Run using Docker
