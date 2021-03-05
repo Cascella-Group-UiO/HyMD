@@ -17,7 +17,7 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
     integer, dimension(:),   intent(in)     :: j
     real(4), dimension(:),   intent(in)     :: r0
     real(4), dimension(:),   intent(in)     :: k
-    real(4),                intent(out)     :: energy
+    real(4),                 intent(out)    :: energy
 
     integer :: ind, ii, jj
     real(4) :: rij, rij_x, rij_y, rij_z
