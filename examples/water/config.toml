@@ -36,7 +36,7 @@ integrator = "velocity-verlet"
 # reduce the amount of neccessary communication between ranks in the pmesh
 # procedures. Ommit or set to 'false' or '0' to not perform any domain
 # decomposition.
-domain_decomposition = false
+domain_decomposition = 1000
 # Starting temperature to generate before simulation begins in [kelvin]. Ommit
 # or set to 'false' to not change the temperature before starting.
 start_temperature = 300
