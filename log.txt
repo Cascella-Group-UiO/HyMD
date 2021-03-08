@@ -1,0 +1,121 @@
+2021-03-08 10:59:54,185 INFO     [main.py:160] <configure_runtime> {rank 0/4} Attempting to parse config file config.toml as .toml
+2021-03-08 10:59:54,189 INFO     [main.py:167] <configure_runtime> {rank 0/4} Successfully parsed config.toml as .toml file
+2021-03-08 10:59:54,189 INFO     [main.py:171] <configure_runtime> {rank 0/4} 
+
+	Config: /Users/samiransen23/HyMD-2021/config.toml
+	--------------------------------------------------
+	n_steps: 25000
+	time_step: 0.3
+	box_size: [13.0, 13.0, 14.0]
+	mesh_size: [24, 24, 24]
+	sigma: 0.5
+	kappa: 0.05
+	n_print: 5000
+	tau: 0.1
+	start_temperature: 323
+	target_temperature: 323
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 1000
+	integrator: respa
+	respa_inner: 10
+	file_name: /Users/samiransen23/HyMD-2021/config.toml
+	name: DPPC bilayer with ML interaction parameters
+	tags: ['bilayer', 'solvent', 'DPPC']
+	n_particles: 20336
+	max_molecule_size: 15
+	n_flush: 5000
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	command_line_full: hymd/main.py config.toml dppc.h5 --verbose --logfile log.txt
+	bonds:
+		N P: 0.47, 1250.0
+		P G: 0.47, 1250.0
+		G G: 0.37, 1250.0
+		G C: 0.47, 1250.0
+		C C: 0.47, 1250.0
+	angle_bonds:
+		P G G: 120.0, 25.0
+		P G C: 180.0, 25.0
+		G C C: 180.0, 25.0
+		C C C: 180.0, 25.0
+	chi:
+		C W: 42.24
+		C G: 10.47
+		N W: -3.77
+		G W: 4.53
+		N P: -9.34
+		G P: 8.04
+		G N: 1.97
+		C P: 14.72
+		P W: -1.51
+		C N: 13.56
+
+2021-03-08 10:59:54,312 INFO     [main.py:237] <generate_initial_velocities> {rank 0/4} Initialized 20336 velocities, target kinetic energy: 81963.32673825503, actual kinetic energy generated: 81963.32299804688
+2021-03-08 10:59:54,476 INFO     [main.py:354] <main> {rank 0/4} pfft-python processor mesh: (2, 2)
+2021-03-08 11:00:03,484 INFO     [file_io.py:374] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+              0              0            323      136977.58      81963.327      55014.255      23599.805      7770.1514      23644.299    -0.01071167 -0.00020599365  -0.0018539429              0
+2021-03-08 11:00:47,634 INFO     [main.py:160] <configure_runtime> {rank 0/4} Attempting to parse config file config.toml as .toml
+2021-03-08 11:00:47,637 INFO     [main.py:167] <configure_runtime> {rank 0/4} Successfully parsed config.toml as .toml file
+2021-03-08 11:00:47,637 INFO     [main.py:171] <configure_runtime> {rank 0/4} 
+
+	Config: /Users/samiransen23/HyMD-2021/config.toml
+	--------------------------------------------------
+	n_steps: 25000
+	time_step: 0.3
+	box_size: [13.0, 13.0, 14.0]
+	mesh_size: [24, 24, 24]
+	sigma: 0.5
+	kappa: 0.05
+	n_print: 5000
+	tau: 0.1
+	start_temperature: 323
+	target_temperature: 323
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 1000
+	integrator: respa
+	respa_inner: 10
+	file_name: /Users/samiransen23/HyMD-2021/config.toml
+	name: DPPC bilayer with ML interaction parameters
+	tags: ['bilayer', 'solvent', 'DPPC']
+	n_particles: 20336
+	max_molecule_size: 15
+	n_flush: 5000
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	command_line_full: hymd/main.py config.toml dppc.h5 --verbose --logfile log.txt
+	bonds:
+		N P: 0.47, 1250.0
+		P G: 0.47, 1250.0
+		G G: 0.37, 1250.0
+		G C: 0.47, 1250.0
+		C C: 0.47, 1250.0
+	angle_bonds:
+		P G G: 120.0, 25.0
+		P G C: 180.0, 25.0
+		G C C: 180.0, 25.0
+		C C C: 180.0, 25.0
+	chi:
+		C W: 42.24
+		C G: 10.47
+		N W: -3.77
+		G W: 4.53
+		N P: -9.34
+		G P: 8.04
+		G N: 1.97
+		C P: 14.72
+		P W: -1.51
+		C N: 13.56
+
+2021-03-08 11:00:47,763 INFO     [main.py:237] <generate_initial_velocities> {rank 0/4} Initialized 20336 velocities, target kinetic energy: 81963.32673825503, actual kinetic energy generated: 81963.333984375
+2021-03-08 11:00:47,924 INFO     [main.py:354] <main> {rank 0/4} pfft-python processor mesh: (2, 2)
+2021-03-08 11:00:57,343 INFO     [file_io.py:374] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+              0              0      323.00002      136977.59      81963.332      55014.255      23599.805      7770.1514      23644.299  -0.0038452148   0.0056648254   0.0060424805              0
+2021-03-08 11:04:11,065 INFO     [file_io.py:374] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+           5000           1500       323.0814       209822.9      81983.982      127838.91      116234.84      5132.7045      6471.3743     -505.41925      271.00757     -139.86771      1016541.4
