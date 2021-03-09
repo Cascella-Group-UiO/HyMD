@@ -1,4 +1,4 @@
-Hamiltonian and alias-free hPF-MD testing and development
+## Hamiltonian and alias-free hPF-MD testing and development
 ---------
 Compile FORTRAN modules:
 ```bash
@@ -13,7 +13,7 @@ Run a simple example simulation with
 > mpirun -n 4 python3 hymd/main.py config.toml dppc.h5 --verbose --logfile log.txt
 ```
 
-##Installation on Mac OSX  
+## Installation on Mac OSX  
 ```bash
 for python3.8
     conda create -n py38 python=3.8
@@ -36,7 +36,8 @@ for python3.8
    conda install -c conda-forge "h5py>=2.9=mpi*"
    pip install h5glance
 ```
-
+## Other README.md 's in this repository
+How to build a binary system -- [examples/binary/README.md](https://github.com/Cascella-Group-UiO/HyMD-2021/tree/pressure/examples/binary)
 
 Notes:
 - Changed numpy data types (Float32, Int32 -> float32, int32) to run in local computer
