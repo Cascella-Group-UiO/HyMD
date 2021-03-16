@@ -13,3 +13,7 @@ coverage.xml
 .DS_Store
 __pycache__
 RUN
+hymd/*.so
+log.txt 
+sim.h5
+job.sh
