@@ -493,7 +493,7 @@ if __name__ == "__main__":
         config,
         bonds_2_atom1,
         bonds_2_atom2,
-        velocity_out=args.velocity_out,
+        velocity_out=args.velocity_output,
         force_out=args.force_output,
         comm=comm,
     )
