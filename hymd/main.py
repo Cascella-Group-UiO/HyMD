@@ -478,7 +478,7 @@ if __name__ == "__main__":
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
     out_dataset = OutDataset(args.destdir, config,
-                             double_out=args.double_out,
+                             double_out=args.double_output,
                              disable_mpio=args.disable_mpio)
     store_static(
         out_dataset,
