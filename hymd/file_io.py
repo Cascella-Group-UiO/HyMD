@@ -8,9 +8,14 @@ from logger import Logger
 
 
 class OutDataset:
-    def __init__(self, dest_directory, config, disable_mpio=False, comm=MPI.COMM_WORLD):
+    def __init__(self, dest_directory, config, out_double=False,
+                 disable_mpio=False, comm=MPI.COMM_WORLD):
         self.disable_mpio = disable_mpio
         self.config = config
+        if out_double:
+            self.float_dtype = "float64"
+        else:
+            self.float_dtype = "float32"
 
         if disable_mpio:
             self.file = h5py.File(
@@ -55,6 +60,8 @@ def store_static(
     bonds_2_atom2,
     comm=MPI.COMM_WORLD,
 ):
+    dtype = h5md.float_dtype
+
     h5md_group = h5md.file.create_group("/h5md")
     h5md.h5md_group = h5md_group
     h5md.observables = h5md.file.create_group("/observables")
@@ -95,14 +102,14 @@ def store_static(
 
     h5md.particles_group = h5md.file.create_group("/particles")
     h5md.all_particles = h5md.particles_group.create_group("all")
-    mass = h5md.all_particles.create_dataset("mass", (config.n_particles,), "float32")
+    mass = h5md.all_particles.create_dataset("mass", (config.n_particles,), dtype)
     mass[:].fill(config.mass)
     box = h5md.all_particles.create_group("box")
     box.attrs["dimension"] = 3
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    h5md.edges = box.create_dataset("edges", (3,), "float32")
+    h5md.edges = box.create_dataset("edges", (3,), dtype)
     h5md.edges[:] = np.array(config.box_size)
 
     n_frames = config.n_steps // config.n_print
@@ -127,7 +134,7 @@ def store_static(
         h5md.all_particles,
         n_frames,
         (config.n_particles, 3),
-        "float32",
+        dtype,
         units="nanometers",
     )
     (
@@ -140,7 +147,7 @@ def store_static(
         h5md.all_particles,
         n_frames,
         (config.n_particles, 3),
-        "float32",
+        dtype,
         units="nanometers/picosecond",
     )
     (
@@ -149,7 +156,7 @@ def store_static(
         h5md.total_energy_time,
         h5md.total_energy,
     ) = setup_time_dependent_element(
-        "total_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "total_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -157,7 +164,7 @@ def store_static(
         h5md.kinetc_energy_time,
         h5md.kinetc_energy,
     ) = setup_time_dependent_element(
-        "kinetic_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "kinetic_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -165,7 +172,7 @@ def store_static(
         h5md.potential_energy_time,
         h5md.potential_energy,
     ) = setup_time_dependent_element(  # noqa: E501
-        "potential_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "potential_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -173,7 +180,7 @@ def store_static(
         h5md.bond_energy_time,
         h5md.bond_energy,
     ) = setup_time_dependent_element(
-        "bond_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "bond_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -181,7 +188,7 @@ def store_static(
         h5md.angle_energy_time,
         h5md.angle_energy,
     ) = setup_time_dependent_element(
-        "angle_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -189,7 +196,7 @@ def store_static(
         h5md.field_energy_time,
         h5md.field_energy,
     ) = setup_time_dependent_element(
-        "field_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -201,7 +208,7 @@ def store_static(
         h5md.observables,
         n_frames,
         (3,),
-        "float32",
+        dtype,
         units="nanometers g/picosecond mol",
     )
     (
@@ -210,7 +217,7 @@ def store_static(
         h5md.temperature_time,
         h5md.temperature,
     ) = setup_time_dependent_element(
-        "temperature", h5md.observables, n_frames, (3,), "float32", units="Kelvin"
+        "temperature", h5md.observables, n_frames, (3,), dtype, units="Kelvin"
     )
 
     ind_sort = np.argsort(indices)
