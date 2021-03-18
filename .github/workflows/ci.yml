@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [ main, hotfix_10 ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
