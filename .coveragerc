@@ -3,6 +3,8 @@ omit =
     setup.py
     conf.py
     test/*
+    benchmarks/*
+    examples/*
     docs/*
     utils/*
     hymd/__init__.py
