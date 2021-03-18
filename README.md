@@ -1,4 +1,4 @@
-HyMD testing and development &middot; [![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/sigbjobo/hPF_MD_PMESH_MPI/workflows/build/badge.svg)
+HyMD testing and development &middot; [![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/Cascella-Group-UiO/HyMD-2021/workflows/build/badge.svg)
 ---------
 Compile FORTRAN modules:
 ```bash
