@@ -8,11 +8,11 @@ from logger import Logger
 
 
 class OutDataset:
-    def __init__(self, dest_directory, config, out_double=False,
+    def __init__(self, dest_directory, config, double_out=False,
                  disable_mpio=False, comm=MPI.COMM_WORLD):
         self.disable_mpio = disable_mpio
         self.config = config
-        if out_double:
+        if double_out:
             self.float_dtype = "float64"
         else:
             self.float_dtype = "float32"
