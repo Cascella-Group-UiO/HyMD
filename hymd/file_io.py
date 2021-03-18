@@ -53,6 +53,8 @@ def store_static(
     config,
     bonds_2_atom1,
     bonds_2_atom2,
+    velocity_out=False,
+    force_out=False,
     comm=MPI.COMM_WORLD,
 ):
     h5md_group = h5md.file.create_group("/h5md")
@@ -130,19 +132,34 @@ def store_static(
         "float32",
         units="nanometers",
     )
-    (
-        _,
-        h5md.velocities_step,
-        h5md.velocities_time,
-        h5md.velocities,
-    ) = setup_time_dependent_element(
-        "velocity",
-        h5md.all_particles,
-        n_frames,
-        (config.n_particles, 3),
-        "float32",
-        units="nanometers/picosecond",
-    )
+    if velocity_out:
+        (
+            _,
+            h5md.velocities_step,
+            h5md.velocities_time,
+            h5md.velocities,
+        ) = setup_time_dependent_element(
+            "velocity",
+            h5md.all_particles,
+            n_frames,
+            (config.n_particles, 3),
+            "float32",
+            units="nanometers/picosecond",
+        )
+    if force_out:
+        (
+            _,
+            h5md.forces_step,
+            h5md.forces_time,
+            h5md.forces
+        ) = setup_time_dependent_element(
+            'force',
+            h5md.all_particles,
+            n_frames,
+            (config.n_particles, 3),
+            "float32",
+            units='kJ/mol nanometer'
+        )
     (
         _,
         h5md.total_energy_step,
@@ -261,6 +278,7 @@ def store_data(
     indices,
     positions,
     velocities,
+    forces,
     box_size,
     temperature,
     kinetic_energy,
