@@ -1,4 +1,4 @@
-Hamiltonian and alias-free hPF-MD testing and development
+HyMD testing and development &middot; [![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/sigbjobo/hPF_MD_PMESH_MPI/workflows/build/badge.svg)
 ---------
 Compile FORTRAN modules:
 ```bash
