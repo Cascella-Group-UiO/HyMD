@@ -37,7 +37,7 @@ def setup_time_dependent_element(
 ):
     group = parent_group.create_group(name)
     step = group.create_dataset("step", (n_frames,), "int32")
-    time = group.create_dataset("time", (n_frames,), "int32")
+    time = group.create_dataset("time", (n_frames,), "float32")
     value = group.create_dataset("value", (n_frames, *shape), dtype)
     if units is not None:
         group.attrs["units"] = units
