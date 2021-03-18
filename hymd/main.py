@@ -95,6 +95,18 @@ def configure_runtime(comm):
         help="Log energy values per particle, not total",
     )
     ap.add_argument(
+        "--force-output",
+        default=False,
+        action="store_true",
+        help="Dump forces to h5md output",
+    )
+    ap.add_argument(
+        "--velocity-output",
+        default=False,
+        action="store_true",
+        help="Dump velocities to h5md output",
+    )
+    ap.add_argument(
         "--disable-mpio",
         default=False,
         action="store_true",
@@ -481,6 +493,8 @@ if __name__ == "__main__":
         config,
         bonds_2_atom1,
         bonds_2_atom2,
+        velocity_out=args.velocity_out,
+        force_out=args.force_output,
         comm=comm,
     )
 
@@ -509,6 +523,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
+            field_forces + bond_forces + angle_forces,
             config.box_size,
             temperature,
             kinetic_energy,
@@ -754,6 +769,7 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
+                    field_forces + bond_forces + angle_forces,
                     config.box_size,
                     temperature,
                     kinetic_energy,
@@ -824,6 +840,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
+            field_forces + bond_forces + angle_forces,
             config.box_size,
             temperature,
             kinetic_energy,
