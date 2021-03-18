@@ -89,6 +89,12 @@ def configure_runtime(comm):
         help="Use double precision positions/velocities",
     )
     ap.add_argument(
+        "--double-output",
+        default=False,
+        action="store_true",
+        help="Use double precision in output h5md",
+    )
+    ap.add_argument(
         "--dump-per-particle",
         default=False,
         action="store_true",
@@ -471,7 +477,9 @@ if __name__ == "__main__":
         bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
-    out_dataset = OutDataset(args.destdir, config, disable_mpio=args.disable_mpio)
+    out_dataset = OutDataset(args.destdir, config,
+                             out_double=args.out_double,
+                             disable_mpio=args.disable_mpio)
     store_static(
         out_dataset,
         rank_range,
