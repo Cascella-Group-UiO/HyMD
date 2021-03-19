@@ -218,7 +218,7 @@ def store_static(
         h5md.thermostat_work_time,
         h5md.thermostat_work,
     ) = setup_time_dependent_element(
-        "thermostat_work", h5md.observables, n_frames, (3,), "float32", units="kJ/mol"
+        "thermostat_work", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
     )
 
     ind_sort = np.argsort(indices)
