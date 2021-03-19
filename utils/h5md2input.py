@@ -41,7 +41,10 @@ def h5md_to_input(h5md_file, old_input, frame, out_path=None, overwrite=False):
         )
 
     new_positions = new_values['particles/all/position/value'][frame, :, :]
-    new_velocities = new_values['particles/all/velocity/value'][frame, :, :]
+    f_out['coordinates'][:, :] = new_positions
+    if 'particles/all/velocity' in new_values:
+        new_velocities = new_values['particles/all/velocity/value'][frame, :, :]
+        f_out['velocities'][:, :] = new_velocities
 
     f_out['coordinates'][:, :] = new_positions
     f_out['velocities'][:, :] = new_velocities
