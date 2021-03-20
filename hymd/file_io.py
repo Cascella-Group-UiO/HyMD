@@ -398,7 +398,8 @@ def distribute_input(
     # and iterate until we find a molecule break.
     #
     # Implicitly assuming no molecule is bigger than
-    # min(201, n_particles // n_MPI_ranks) atoms.
+    # min(max_molecule_size, n_particles // n_MPI_ranks) atoms.
+    max_molecule_size += 2
     grab_extra = max_molecule_size if np_per_MPI > max_molecule_size else np_per_MPI
     if rank == 0:
         mpi_range_start = 0
@@ -424,7 +425,7 @@ def distribute_input(
             p_mpi_range[1] = n_particles
         else:
             p_mpi_range[1] = indices[
-                molecule_end_indices[molecule_end_indices > np_per_MPI][0] + 1
+                molecule_end_indices[molecule_end_indices >= np_per_MPI][0] + 1
             ]
     elif rank == size - 1:
         p_mpi_range[0] = indices[molecule_end_indices[molecule_end_indices > 0][0]] + 1
