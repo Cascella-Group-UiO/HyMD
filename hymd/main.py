@@ -366,7 +366,6 @@ if __name__ == "__main__":
     if config.domain_decomposition:
         cd = domain_decomposition(
             positions,
-            molecules,
             pm,
             velocities,
             indices,
@@ -375,22 +374,35 @@ if __name__ == "__main__":
             field_forces,
             names,
             types,
-            bonds,
+            molecules=molecules if molecules_flag else None,
+            bonds=bonds if molecules_flag else None,
             verbose=args.verbose,
             comm=comm,
         )
-        (
-            positions,
-            molecules,
-            velocities,
-            indices,
-            bond_forces,
-            angle_forces,
-            field_forces,
-            names,
-            types,
-            bonds,
-        ) = cd
+        if molecules_flag:
+            (
+                positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                field_forces,
+                names,
+                types,
+                bonds,
+                molecules,
+            ) = cd
+        else:
+            (
+                positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                field_forces,
+                names,
+                types,
+            ) = cd
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
@@ -636,33 +648,46 @@ if __name__ == "__main__":
             positions = np.ascontiguousarray(positions)
             bond_forces = np.ascontiguousarray(bond_forces)
             angle_forces = np.ascontiguousarray(angle_forces)
-            cd = domain_decomposition(
-                positions,
-                molecules,
-                pm,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                names,
-                types,
-                bonds,
-                verbose=args.verbose,
-                comm=comm,
-            )
-            (
-                positions,
-                molecules,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                names,
-                types,
-                bonds,
-            ) = cd
+            if config.domain_decomposition:
+                cd = domain_decomposition(
+                    positions,
+                    pm,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    names,
+                    types,
+                    molecules=molecules if molecules_flag else None,
+                    bonds=bonds if molecules_flag else None,
+                    verbose=args.verbose,
+                    comm=comm,
+                )
+                if molecules_flag:
+                    (
+                        positions,
+                        velocities,
+                        indices,
+                        bond_forces,
+                        angle_forces,
+                        field_forces,
+                        names,
+                        types,
+                        bonds,
+                        molecules,
+                    ) = cd
+                else:
+                    (
+                        positions,
+                        velocities,
+                        indices,
+                        bond_forces,
+                        angle_forces,
+                        field_forces,
+                        names,
+                        types,
+                    ) = cd
 
             positions = np.asfortranarray(positions)
             bond_forces = np.asfortranarray(bond_forces)
