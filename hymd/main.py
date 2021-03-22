@@ -364,7 +364,7 @@ if __name__ == "__main__":
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
     if config.domain_decomposition:
-        cd = domain_decomposition(
+        dd = domain_decomposition(
             positions,
             pm,
             velocities,
@@ -391,7 +391,7 @@ if __name__ == "__main__":
                 types,
                 bonds,
                 molecules,
-            ) = cd
+            ) = dd
         else:
             (
                 positions,
@@ -402,7 +402,7 @@ if __name__ == "__main__":
                 field_forces,
                 names,
                 types,
-            ) = cd
+            ) = dd
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
@@ -649,7 +649,7 @@ if __name__ == "__main__":
             bond_forces = np.ascontiguousarray(bond_forces)
             angle_forces = np.ascontiguousarray(angle_forces)
             if config.domain_decomposition:
-                cd = domain_decomposition(
+                dd = domain_decomposition(
                     positions,
                     pm,
                     velocities,
@@ -676,7 +676,7 @@ if __name__ == "__main__":
                         types,
                         bonds,
                         molecules,
-                    ) = cd
+                    ) = dd
                 else:
                     (
                         positions,
@@ -687,7 +687,7 @@ if __name__ == "__main__":
                         field_forces,
                         names,
                         types,
-                    ) = cd
+                    ) = dd
 
             positions = np.asfortranarray(positions)
             bond_forces = np.asfortranarray(bond_forces)
