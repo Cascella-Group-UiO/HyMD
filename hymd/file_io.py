@@ -238,7 +238,7 @@ def store_static(
     total_bonds = comm.allreduce(len(bonds_2_atom1), MPI.SUM)
     n_bonds_local = len(bonds_2_atom1)
 
-    receive_buffer = MPI.COMM_WORLD.gather(n_bonds_local, root=0)
+    receive_buffer = comm.gather(n_bonds_local, root=0)
     n_bonds_global = None
     if comm.Get_rank() == 0:
         n_bonds_global = receive_buffer
