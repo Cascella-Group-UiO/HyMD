@@ -478,8 +478,9 @@ if __name__ == "__main__":
                 bonds_3_stength,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+        else:
+            bonds_2_atom1, bonds_2_atom2 = [], []
     else:
-        # bonds_2_atom1, bonds_2_atom2 = None, None
         bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
