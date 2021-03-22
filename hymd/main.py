@@ -632,7 +632,7 @@ if __name__ == "__main__":
             if not args.disable_angle_bonds:
                 angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
 
-        if step != 0:
+        if step != 0 and config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
