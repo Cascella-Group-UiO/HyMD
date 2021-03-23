@@ -1,3 +1,2 @@
 [build-system]
-requires = ["setuptools", "wheel", "numpy", "cython", "mpi4py", "pmesh",
-            "mpsort", "pfft-python"]
+requires = ["setuptools", "wheel", "numpy", "cython", "mpi4py"]
