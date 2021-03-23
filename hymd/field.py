@@ -79,7 +79,7 @@ def compute_field_and_kinetic_energy(
     volume_per_cell = V / n_mesh__cells
 
     w = hamiltonian.w(phi) * volume_per_cell
-    field_energy = w.csum()
+    field_energy = w.csum() #w to W
     kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocity ** 2))
     return field_energy, kinetic_energy
 

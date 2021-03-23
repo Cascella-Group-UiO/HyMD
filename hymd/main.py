@@ -34,7 +34,7 @@ from input_parser import (
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
 from thermostat import velocity_rescale
-
+from pressure import comp_pressure
 
 def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     days = timedelta.days
@@ -290,8 +290,8 @@ if __name__ == "__main__":
 
         types = None
         bonds = None
-        molecules = []
-        # molecules = None
+        #molecules = []
+        molecules = None
         if "types" in in_file:
             types = in_file["types"][rank_range]
         if molecules_flag:
@@ -354,6 +354,7 @@ if __name__ == "__main__":
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+    print('np.shape(phi[0]:',np.shape(phi[0]))
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
@@ -362,6 +363,11 @@ if __name__ == "__main__":
     ]
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+
+    phi_fft = [pm.create("complex", value=0.0) for _ in range(4)]
+    phi_laplacian = [
+        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+    ]
 
     if config.domain_decomposition:
         cd = domain_decomposition(
@@ -423,6 +429,7 @@ if __name__ == "__main__":
             layouts,
             comm=comm,
         )
+        print("field_energy:",field_energy)
         compute_field_force(
             layouts, positions, force_on_grid, field_forces, types, config.n_types
         )
@@ -520,6 +527,17 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
+
+    #pressure
+    pressure = comp_pressure(
+            phi,
+            hamiltonian,
+            config,
+            phi_fft,
+            phi_laplacian,
+        )
+    print('pressure:',pressure)
+
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -636,6 +654,7 @@ if __name__ == "__main__":
             positions = np.ascontiguousarray(positions)
             bond_forces = np.ascontiguousarray(bond_forces)
             angle_forces = np.ascontiguousarray(angle_forces)
+            #tuple unpacking notation
             cd = domain_decomposition(
                 positions,
                 molecules,
@@ -747,6 +766,15 @@ if __name__ == "__main__":
                 )
                 if args.disable_field:
                     field_energy = 0.0
+                if config.pressure:
+                    pressure = comp_pressure(
+                            phi,
+                            hamiltonian,
+                            config,
+                            phi_fft,
+                            phi_laplacian,
+                    )
+
                 store_data(
                     out_dataset,
                     step,

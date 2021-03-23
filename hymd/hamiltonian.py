@@ -55,8 +55,13 @@ class DefaultNoChi(Hamiltonian):
         self.setup()
 
     def setup(self):
-        def w(phi, kappa=self.config.kappa, rho0=self.config.rho0):
-            return 0.5 / (kappa * rho0) * (sum(phi) - rho0) ** 2
+        def w(
+                phi,
+                kappa=self.config.kappa,
+                rho0=self.config.rho0,
+                a=self.config.a
+        ):
+            return 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
 
         self.v_ext = [
             sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
@@ -82,11 +87,11 @@ class DefaultWithChi(Hamiltonian):
             phi,
             kappa=self.config.kappa,
             rho0=self.config.rho0,
+            a=self.config.a,
             chi=self.config.chi,
             type_to_name_map=self.type_to_name_map,
             chi_type_dictionary=self.chi_type_dictionary,
         ):
-
             interaction = 0
             for i in range(self.config.n_types):
                 for j in range(i + 1, self.config.n_types):
@@ -96,8 +101,34 @@ class DefaultWithChi(Hamiltonian):
                     c = chi_type_dictionary[tuple(names)]
 
                     interaction += c * phi[i] * phi[j] / rho0
-            incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - rho0) ** 2
+            incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
             return incompressibility + interaction
+
+        def V_bar(
+                phi,
+                k,
+                kappa=self.config.kappa,
+                rho0=self.config.rho0,
+                a=self.config.a,
+                chi=self.config.chi,
+                type_to_name_map=self.type_to_name_map,
+                chi_type_dictionary=self.chi_type_dictionary,
+        ):
+            V_incompressibility = 1/(kappa*rho0)*(sum(phi) - a)
+
+            V_interaction = 0
+            nk = type_to_name_map[k]
+            for i in range(self.config.n_types):
+                ni = type_to_name_map[i]
+                names = sorted([nk, ni])
+                c = chi_type_dictionary[tuple(names)] if ni!=nk else 0
+                V_interaction += c * phi[k] / rho0
+            return V_interaction + V_incompressibility
+
+        self.V_bar = [
+            sympy.lambdify([self.phi], V_bar(self.phi, k))
+            for k in range(len(self.config.unique_names))
+        ]
 
         self.v_ext = [
             sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))

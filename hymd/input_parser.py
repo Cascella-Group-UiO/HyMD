@@ -19,6 +19,9 @@ class Config:
     mesh_size: Union[Union[List[int], np.ndarray], int]
     sigma: float
     kappa: float
+    rho_0: float
+    a: float
+    pressure: bool
 
     n_print: int = None
     tau: float = None
@@ -250,7 +253,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     if file_path is not None:
         config_dict["file_name"] = file_path
 
-    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa"):
+    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure"):
         if n not in config_dict:
             err_str = (
                 f"No {n} specified in config file {file_path}. Unable to start"
