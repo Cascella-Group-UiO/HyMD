@@ -780,6 +780,8 @@ if __name__ == "__main__":
                     field_energy,
                     config.time_step,
                     config,
+                    velocity_out=args.velocity_output,
+                    force_out=args.force_output,
                     dump_per_particle=args.dump_per_particle,
                     comm=comm,
                 )
@@ -851,6 +853,8 @@ if __name__ == "__main__":
             field_energy,
             config.time_step,
             config,
+            velocity_out=args.velocity_output,
+            force_out=args.force_output,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
