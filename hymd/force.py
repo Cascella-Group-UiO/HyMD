@@ -27,6 +27,18 @@ class Angle(Bond):
     atom_3: str
 
 
+# 1- Sinmple fourier function potential
+# 2- Combined bending-torsional potential
+@dataclass
+class Dihedral:
+    atom_1: str
+    atom_2: str
+    atom_3: str
+    atom_4: str
+    cn: list
+    dn: list
+
+
 @dataclass
 class Chi:
     atom_1: str
@@ -37,6 +49,7 @@ class Chi:
 def prepare_bonds_old(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
+    bonds_4 = []
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
         bond_graph = nx.Graph()
@@ -100,11 +113,44 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     a.strength,
                                 ]
                             )
-    return bonds_2, bonds_3
+                if len(path) == 3 and path[-1] > path[0]:
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_mid_1 = bond_graph.nodes()[path[1]]["name"]
+                    name_mid_2 = bond_graph.nodes()[path[2]]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
+
+                    for a in config.dihedrals:
+                        match_forward = (
+                            name_i == a.atom_1
+                            and name_mid_1 == a.atom_2
+                            and name_mid_2 == a.atom_3
+                            and name_j == a.atom_4
+                        )
+                        match_backward = (
+                            name_i == a.atom_4
+                            and name_mid_1 == a.atom_3
+                            and name_mid_2 == a.atom_2
+                            and name_j == a.atom_1
+                        )
+                        if match_forward or match_backward:
+                            bonds_4.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[path[1]]["local_index"],
+                                    bond_graph.nodes()[path[2]]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    a.cn,
+                                    a.dn,
+                                ]
+                            )
+
+    return bonds_2, bonds_3, bonds_4
 
 
 def prepare_bonds(molecules, names, bonds, indices, config):
-    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices, config)
+    bonds_2, bonds_3, bonds_4 = prepare_bonds_old(
+        molecules, names, bonds, indices, config
+    )
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
     bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
@@ -125,6 +171,18 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
+    bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_cn = np.empty(len(bonds_4), dtype=np.float64)
+    bonds_4_dn = np.empty(len(bonds_4), dtype=np.float64)
+    for i, b in enumerate(bonds_4):
+        bonds_4_atom1[i] = b[0]
+        bonds_4_atom2[i] = b[1]
+        bonds_4_atom3[i] = b[2]
+        bonds_4_cn[i] = b[3]
+        bonds_4_dn[i] = b[4]
+
     return (
         bonds_2_atom1,
         bonds_2_atom2,
@@ -135,6 +193,11 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3,
         bonds_3_equilibrium,
         bonds_3_stength,
+        bonds_4_atom1,
+        bonds_4_atom2,
+        bonds_4_atom3,
+        bonds_4_cn,
+        bonds_4_dn,
     )
 
 
