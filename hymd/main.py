@@ -382,9 +382,8 @@ if __name__ == "__main__":
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
     if config.domain_decomposition:
-        cd = domain_decomposition(
+        dd = domain_decomposition(
             positions,
-            molecules,
             pm,
             velocities,
             indices,
@@ -393,22 +392,35 @@ if __name__ == "__main__":
             field_forces,
             names,
             types,
-            bonds,
+            molecules=molecules if molecules_flag else None,
+            bonds=bonds if molecules_flag else None,
             verbose=args.verbose,
             comm=comm,
         )
-        (
-            positions,
-            molecules,
-            velocities,
-            indices,
-            bond_forces,
-            angle_forces,
-            field_forces,
-            names,
-            types,
-            bonds,
-        ) = cd
+        if molecules_flag:
+            (
+                positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                field_forces,
+                names,
+                types,
+                bonds,
+                molecules,
+            ) = dd
+        else:
+            (
+                positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                field_forces,
+                names,
+                types,
+            ) = dd
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
@@ -485,8 +497,10 @@ if __name__ == "__main__":
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
         else:
-            # bonds_2_atom1, bonds_2_atom2 = None, None
+
             bonds_2_atom1, bonds_2_atom2 = [], []
+    else:
+        bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
     out_dataset = OutDataset(args.destdir, config,
@@ -678,7 +692,8 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-                cd = domain_decomposition(
+                
+                dd = domain_decomposition(
                     positions,
                     molecules,
                     pm,
@@ -689,22 +704,35 @@ if __name__ == "__main__":
                     field_forces,
                     names,
                     types,
-                    bonds,
+                    molecules=molecules if molecules_flag else None,
+                    bonds=bonds if molecules_flag else None,
                     verbose=args.verbose,
                     comm=comm,
                 )
-                (
-                    positions,
-                    molecules,
-                    velocities,
-                    indices,
-                    bond_forces,
-                    angle_forces,
-                    field_forces,
-                    names,
-                    types,
-                    bonds,
-                ) = cd
+                if molecules_flag:
+                    (
+                        positions,
+                        velocities,
+                        indices,
+                        bond_forces,
+                        angle_forces,
+                        field_forces,
+                        names,
+                        types,
+                        bonds,
+                        molecules,
+                    ) = dd
+                else:
+                    (
+                        positions,
+                        velocities,
+                        indices,
+                        bond_forces,
+                        angle_forces,
+                        field_forces,
+                        names,
+                        types,
+                    ) = dd
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
@@ -713,6 +741,7 @@ if __name__ == "__main__":
                 layouts = [
                     pm.decompose(positions[types == t]) for t in range(config.n_types)
                 ]
+
                 if molecules_flag:
                     bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
                     (
