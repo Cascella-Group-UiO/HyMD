@@ -640,6 +640,22 @@ if __name__ == "__main__":
 
         # Update slow forces
         if not args.disable_field:
+            update_field(
+                phi,
+                layouts,
+                force_on_grid,
+                hamiltonian,
+                pm,
+                positions,
+                types,
+                config,
+                v_ext,
+                phi_fourier,
+                v_ext_fourier,
+            )
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -722,22 +738,6 @@ if __name__ == "__main__":
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
-        if not args.disable_field:
-            compute_field_energy = np.mod(step + 1, config.n_print) == 0
-            update_field(
-                phi,
-                layouts,
-                force_on_grid,
-                hamiltonian,
-                pm,
-                positions,
-                types,
-                config,
-                v_ext,
-                phi_fourier,
-                v_ext_fourier,
-                compute_potential=compute_field_energy,
-            )
 
         # Thermostat
         if config.target_temperature:
