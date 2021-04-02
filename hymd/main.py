@@ -89,10 +89,28 @@ def configure_runtime(comm):
         help="Use double precision positions/velocities",
     )
     ap.add_argument(
+        "--double-output",
+        default=False,
+        action="store_true",
+        help="Use double precision in output h5md",
+    )
+    ap.add_argument(
         "--dump-per-particle",
         default=False,
         action="store_true",
         help="Log energy values per particle, not total",
+    )
+    ap.add_argument(
+        "--force-output",
+        default=False,
+        action="store_true",
+        help="Dump forces to h5md output",
+    )
+    ap.add_argument(
+        "--velocity-output",
+        default=False,
+        action="store_true",
+        help="Dump velocities to h5md output",
     )
     ap.add_argument(
         "--disable-mpio",
@@ -364,9 +382,8 @@ if __name__ == "__main__":
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
     if config.domain_decomposition:
-        cd = domain_decomposition(
+        dd = domain_decomposition(
             positions,
-            molecules,
             pm,
             velocities,
             indices,
@@ -375,22 +392,35 @@ if __name__ == "__main__":
             field_forces,
             names,
             types,
-            bonds,
+            molecules=molecules if molecules_flag else None,
+            bonds=bonds if molecules_flag else None,
             verbose=args.verbose,
             comm=comm,
         )
-        (
-            positions,
-            molecules,
-            velocities,
-            indices,
-            bond_forces,
-            angle_forces,
-            field_forces,
-            names,
-            types,
-            bonds,
-        ) = cd
+        if molecules_flag:
+            (
+                positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                field_forces,
+                names,
+                types,
+                bonds,
+                molecules,
+            ) = dd
+        else:
+            (
+                positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                field_forces,
+                names,
+                types,
+            ) = dd
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
@@ -466,12 +496,16 @@ if __name__ == "__main__":
                 bonds_3_stength,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+        else:
+
+            bonds_2_atom1, bonds_2_atom2 = [], []
     else:
-        # bonds_2_atom1, bonds_2_atom2 = None, None
         bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
-    out_dataset = OutDataset(args.destdir, config, disable_mpio=args.disable_mpio)
+    out_dataset = OutDataset(args.destdir, config,
+                             double_out=args.double_output,
+                             disable_mpio=args.disable_mpio)
     store_static(
         out_dataset,
         rank_range,
@@ -481,6 +515,8 @@ if __name__ == "__main__":
         config,
         bonds_2_atom1,
         bonds_2_atom2,
+        velocity_out=args.velocity_output,
+        force_out=args.force_output,
         comm=comm,
     )
 
@@ -509,6 +545,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
+            field_forces + bond_forces + angle_forces,
             config.box_size,
             temperature,
             kinetic_energy,
@@ -517,6 +554,8 @@ if __name__ == "__main__":
             field_energy,
             config.time_step,
             config,
+            velocity_out=args.velocity_output,
+            force_out=args.force_output,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
@@ -615,6 +654,22 @@ if __name__ == "__main__":
 
         # Update slow forces
         if not args.disable_field:
+            update_field(
+                phi,
+                layouts,
+                force_on_grid,
+                hamiltonian,
+                pm,
+                positions,
+                types,
+                config,
+                v_ext,
+                phi_fourier,
+                v_ext_fourier,
+            )
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -632,58 +687,74 @@ if __name__ == "__main__":
             if not args.disable_angle_bonds:
                 angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
 
-        if np.mod(step, config.domain_decomposition) == 0 and step != 0:
-            positions = np.ascontiguousarray(positions)
-            bond_forces = np.ascontiguousarray(bond_forces)
-            angle_forces = np.ascontiguousarray(angle_forces)
-            cd = domain_decomposition(
-                positions,
-                molecules,
-                pm,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                names,
-                types,
-                bonds,
-                verbose=args.verbose,
-                comm=comm,
-            )
-            (
-                positions,
-                molecules,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                names,
-                types,
-                bonds,
-            ) = cd
+        if step != 0 and config.domain_decomposition:
+            if np.mod(step, config.domain_decomposition) == 0:
+                positions = np.ascontiguousarray(positions)
+                bond_forces = np.ascontiguousarray(bond_forces)
+                angle_forces = np.ascontiguousarray(angle_forces)
+                
+                dd = domain_decomposition(
+                    positions,
+                    molecules,
+                    pm,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    names,
+                    types,
+                    molecules=molecules if molecules_flag else None,
+                    bonds=bonds if molecules_flag else None,
+                    verbose=args.verbose,
+                    comm=comm,
+                )
+                if molecules_flag:
+                    (
+                        positions,
+                        velocities,
+                        indices,
+                        bond_forces,
+                        angle_forces,
+                        field_forces,
+                        names,
+                        types,
+                        bonds,
+                        molecules,
+                    ) = dd
+                else:
+                    (
+                        positions,
+                        velocities,
+                        indices,
+                        bond_forces,
+                        angle_forces,
+                        field_forces,
+                        names,
+                        types,
+                    ) = dd
 
-            positions = np.asfortranarray(positions)
-            bond_forces = np.asfortranarray(bond_forces)
-            angle_forces = np.asfortranarray(angle_forces)
+                positions = np.asfortranarray(positions)
+                bond_forces = np.asfortranarray(bond_forces)
+                angle_forces = np.asfortranarray(angle_forces)
 
-            layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)
-            ]
-            if molecules_flag:
-                bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
-                (
-                    bonds_2_atom1,
-                    bonds_2_atom2,
-                    bonds_2_equilibrium,
-                    bonds_2_stength,
-                    bonds_3_atom1,
-                    bonds_3_atom2,
-                    bonds_3_atom3,
-                    bonds_3_equilibrium,
-                    bonds_3_stength,
-                ) = bonds_prep
+                layouts = [
+                    pm.decompose(positions[types == t]) for t in range(config.n_types)
+                ]
+
+                if molecules_flag:
+                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+                    (
+                        bonds_2_atom1,
+                        bonds_2_atom2,
+                        bonds_2_equilibrium,
+                        bonds_2_stength,
+                        bonds_3_atom1,
+                        bonds_3_atom2,
+                        bonds_3_atom3,
+                        bonds_3_equilibrium,
+                        bonds_3_stength,
+                    ) = bonds_prep
 
         for t in range(config.n_types):
             if args.verbose > 2:
@@ -696,22 +767,6 @@ if __name__ == "__main__":
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
-        if not args.disable_field:
-            compute_field_energy = np.mod(step + 1, config.n_print) == 0
-            update_field(
-                phi,
-                layouts,
-                force_on_grid,
-                hamiltonian,
-                pm,
-                positions,
-                types,
-                config,
-                v_ext,
-                phi_fourier,
-                v_ext_fourier,
-                compute_potential=compute_field_energy,
-            )
 
         # Thermostat
         if config.target_temperature:
@@ -754,6 +809,7 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
+                    field_forces + bond_forces + angle_forces,
                     config.box_size,
                     temperature,
                     kinetic_energy,
@@ -762,6 +818,8 @@ if __name__ == "__main__":
                     field_energy,
                     config.time_step,
                     config,
+                    velocity_out=args.velocity_output,
+                    force_out=args.force_output,
                     dump_per_particle=args.dump_per_particle,
                     comm=comm,
                 )
@@ -824,6 +882,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
+            field_forces + bond_forces + angle_forces,
             config.box_size,
             temperature,
             kinetic_energy,
@@ -832,6 +891,8 @@ if __name__ == "__main__":
             field_energy,
             config.time_step,
             config,
+            velocity_out=args.velocity_output,
+            force_out=args.force_output,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
