@@ -640,58 +640,59 @@ if __name__ == "__main__":
             if not args.disable_angle_bonds:
                 angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
 
-        if np.mod(step, config.domain_decomposition) == 0 and step != 0:
-            positions = np.ascontiguousarray(positions)
-            bond_forces = np.ascontiguousarray(bond_forces)
-            angle_forces = np.ascontiguousarray(angle_forces)
-            cd = domain_decomposition(
-                positions,
-                molecules,
-                pm,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                names,
-                types,
-                bonds,
-                verbose=args.verbose,
-                comm=comm,
-            )
-            (
-                positions,
-                molecules,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                names,
-                types,
-                bonds,
-            ) = cd
-
-            positions = np.asfortranarray(positions)
-            bond_forces = np.asfortranarray(bond_forces)
-            angle_forces = np.asfortranarray(angle_forces)
-
-            layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)
-            ]
-            if molecules_flag:
-                bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+        if step != 0 and config.domain_decomposition:
+            if np.mod(step, config.domain_decomposition) == 0:
+                positions = np.ascontiguousarray(positions)
+                bond_forces = np.ascontiguousarray(bond_forces)
+                angle_forces = np.ascontiguousarray(angle_forces)
+                cd = domain_decomposition(
+                    positions,
+                    molecules,
+                    pm,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    names,
+                    types,
+                    bonds,
+                    verbose=args.verbose,
+                    comm=comm,
+                )
                 (
-                    bonds_2_atom1,
-                    bonds_2_atom2,
-                    bonds_2_equilibrium,
-                    bonds_2_stength,
-                    bonds_3_atom1,
-                    bonds_3_atom2,
-                    bonds_3_atom3,
-                    bonds_3_equilibrium,
-                    bonds_3_stength,
-                ) = bonds_prep
+                    positions,
+                    molecules,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    names,
+                    types,
+                    bonds,
+                ) = cd
+
+                positions = np.asfortranarray(positions)
+                bond_forces = np.asfortranarray(bond_forces)
+                angle_forces = np.asfortranarray(angle_forces)
+
+                layouts = [
+                    pm.decompose(positions[types == t]) for t in range(config.n_types)
+                ]
+                if molecules_flag:
+                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+                    (
+                        bonds_2_atom1,
+                        bonds_2_atom2,
+                        bonds_2_equilibrium,
+                        bonds_2_stength,
+                        bonds_3_atom1,
+                        bonds_3_atom2,
+                        bonds_3_atom3,
+                        bonds_3_equilibrium,
+                        bonds_3_stength,
+                    ) = bonds_prep
 
         for t in range(config.n_types):
             if args.verbose > 2:
