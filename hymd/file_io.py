@@ -58,6 +58,8 @@ def store_static(
     config,
     bonds_2_atom1,
     bonds_2_atom2,
+    velocity_out=False,
+    force_out=False,
     comm=MPI.COMM_WORLD,
 ):
     dtype = h5md.float_dtype
@@ -137,19 +139,34 @@ def store_static(
         dtype,
         units="nanometers",
     )
-    (
-        _,
-        h5md.velocities_step,
-        h5md.velocities_time,
-        h5md.velocities,
-    ) = setup_time_dependent_element(
-        "velocity",
-        h5md.all_particles,
-        n_frames,
-        (config.n_particles, 3),
-        dtype,
-        units="nanometers/picosecond",
-    )
+    if velocity_out:
+        (
+            _,
+            h5md.velocities_step,
+            h5md.velocities_time,
+            h5md.velocities,
+        ) = setup_time_dependent_element(
+            "velocity",
+            h5md.all_particles,
+            n_frames,
+            (config.n_particles, 3),
+            dtype,
+            units="nanometers/picosecond",
+        )
+    if force_out:
+        (
+            _,
+            h5md.forces_step,
+            h5md.forces_time,
+            h5md.forces
+        ) = setup_time_dependent_element(
+            'force',
+            h5md.all_particles,
+            n_frames,
+            (config.n_particles, 3),
+            dtype,
+            units='kJ/mol nanometer'
+        )
     (
         _,
         h5md.total_energy_step,
@@ -276,6 +293,7 @@ def store_data(
     indices,
     positions,
     velocities,
+    forces,
     box_size,
     temperature,
     kinetic_energy,
@@ -284,12 +302,13 @@ def store_data(
     field_energy,
     time_step,
     config,
+    velocity_out=False,
+    force_out=False,
     dump_per_particle=False,
     comm=MPI.COMM_WORLD,
 ):
     for dset in (
         h5md.positions_step,
-        h5md.velocities_step,
         h5md.total_energy_step,
         h5md.potential_energy,
         h5md.kinetc_energy_step,
@@ -304,7 +323,6 @@ def store_data(
 
     for dset in (
         h5md.positions_time,
-        h5md.velocities_time,
         h5md.total_energy_time,
         h5md.potential_energy_time,
         h5md.kinetc_energy_time,
@@ -317,6 +335,13 @@ def store_data(
     ):
         dset[frame] = step * time_step
 
+    if velocity_out:
+        h5md.velocities_step[frame] = step
+        h5md.velocities_time[frame] = step * time_step
+    if force_out:
+        h5md.forces_step[frame] = step
+        h5md.forces_time[frame] = step * time_step
+
     # Time dependent box, fix this later.
     # h5md.box_step[frame] = step
     # h5md.box_time[frame] = step * time_step
@@ -324,7 +349,11 @@ def store_data(
 
     ind_sort = np.argsort(indices)
     h5md.positions[frame, indices[ind_sort]] = positions[ind_sort]
-    h5md.velocities[frame, indices[ind_sort]] = velocities[ind_sort]
+
+    if velocity_out:
+        h5md.velocities[frame, indices[ind_sort]] = velocities[ind_sort]
+    if force_out:
+        h5md.forces[frame, indices[ind_sort]] = forces[ind_sort]
 
     potential_energy = bond2_energy + bond3_energy + field_energy
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0), MPI.SUM)
