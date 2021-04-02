@@ -615,7 +615,6 @@ if __name__ == "__main__":
 
         # Update slow forces
         if not args.disable_field:
-            compute_field_energy = np.mod(step + 1, config.n_print) == 0
             update_field(
                 phi,
                 layouts,
