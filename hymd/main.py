@@ -692,7 +692,7 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-                
+
                 dd = domain_decomposition(
                     positions,
                     pm,
@@ -762,7 +762,7 @@ if __name__ == "__main__":
                     logging.INFO,
                     (
                         f"(GHOSTS: Total number of particles of type "
-                        f"{config.type_to_name_map} to be "
+                        f"{config.type_to_name_map[t]} to be "
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
