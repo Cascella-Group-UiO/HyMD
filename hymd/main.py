@@ -44,7 +44,7 @@ def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     ret_str = ""
     if days != 0:
         ret_str += f"{days} days "
-        ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
+    ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
     return ret_str
 
 
@@ -692,7 +692,7 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-                
+
                 dd = domain_decomposition(
                     positions,
                     pm,
