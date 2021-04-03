@@ -695,7 +695,6 @@ if __name__ == "__main__":
                 
                 dd = domain_decomposition(
                     positions,
-                    molecules,
                     pm,
                     velocities,
                     indices,
