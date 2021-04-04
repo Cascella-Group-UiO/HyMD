@@ -162,6 +162,11 @@ def config_toml(mpi_file_name):
     start_temperature = false
     target_temperature = 323
     tau = 0.7
+    thermostat_coupling_groups = [
+        ["N", "P"],
+        ["G", "C"],
+        ["W"],
+    ]
 
     [field]
     mesh_size = 40

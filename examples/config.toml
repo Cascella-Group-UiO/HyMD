@@ -49,6 +49,11 @@ start_temperature = false
 target_temperature = 323
 # Thermostat collision frequency in [1/picoseconds].
 tau = 0.7
+# Couple groups of particles species to individual different thermostats.
+thermostat_coupling_groups = [
+  ["N", "P", "G", "C"],
+  ["W"],
+]
 # The energy functional W[phi] to use. Options:
 #    "SquaredPhi":      φ² / 2κφ₀,
 #    "DefaultNoChi":   (φ - φ₀)² / 2κφ₀
@@ -73,7 +78,7 @@ kappa = 0.05
 sigma = 0.5
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
-# 
+#
 # Could be worth using dataframes?
 chi = [
   [["C", "W"], [42.24]],
