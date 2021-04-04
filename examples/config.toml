@@ -51,6 +51,11 @@ start_temperature = false
 target_temperature = 323
 # Thermostat collision frequency in [1/picoseconds].
 tau = 0.7
+# Couple groups of particles species to individual different thermostats.
+thermostat_coupling_groups = [
+  ["N", "P", "G", "C"],
+  ["W"],
+]
 # The energy functional W[phi] to use. Options:
 #    "SquaredPhi":      φ² / 2κφ₀,
 #    "DefaultNoChi":   (φ - φ₀)² / 2κφ₀
