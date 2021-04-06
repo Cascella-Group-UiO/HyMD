@@ -19,6 +19,8 @@ def velocity_rescale(velocity, names, config, comm, R1=None, Ri2_sum=None):
         exp2 = np.exp(-config.time_step / (2 * config.tau))
 
         if R1 is None and Ri2_sum is None:
+            R1_ = None
+            Ri2_sum = None
             if comm.rank == 0:
                 R1_ = np.random.normal()
 
