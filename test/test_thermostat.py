@@ -113,40 +113,7 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
         ["C"],
         ["D"],
     ]
-
-    """
-    def TK(vel, nam, typ=None, m=72.0):
-        if typ is not None:
-            ind = np.where(nam == np.string_(typ))
-        else:
-            ind = np.nonzero(nam)
-        n = len(ind[0])
-        k = 0.5 * m * np.sum(vel[ind, :]**2)
-        t = (2.0 / 3.0) * k / ((2.479 / 298.0) * n)
-
-        n_global = comm.allreduce(n, MPI.SUM)
-        k_global = comm.allreduce(k, MPI.SUM)
-        t_global = (2.0 / 3.0) * k_global / ((2.479 / 298.0) * n_global)
-
-        return comm.Get_rank(), n, float(k), float(t), n_global, float(k_global), float(t_global)
-    """
-    
     velocities__ = velocities_.copy()
-
-    """
-    print(f"{'/'*80}")
-    print(f"{' '*30}BEFORE\n{'rank':<5} {'type':<5} {'n':<3} {'kin e':<10} {'temp':<10} {'N':<5} {'kin E':<10} {'T':10}")
-    print(f"{'-'*80}")
-    for s in ("A", "B", "C", "D"):
-        r, n, k, t, N, K, T = TK(velocities__, names_, typ=s)
-        print(f"{r:<5} {s:<5} {n:<3} {k:<10.5f} {t:<10.5f} {N:<5} {K:<10.5f} {T:<10.5f}")
-
-    r, n, k, t, N, K, T = TK(velocities__, names_, typ=None)
-    s = "ALL"
-    print(f"{r:<5} {s:<5} {n:<3} {k:<10.5f} {t:<10.5f} {N:<5} {K:<10.5f} {T:<10.5f}")
-    print(f"{'/'*80}")
-    print()
-    """
 
     R1 = [
         0.10845486735451927,
@@ -162,20 +129,6 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
     ]
     velocities__ = velocity_rescale(velocities__, names_, config, comm,
                                     R1=R1, Ri2_sum=Ri2_sum)
-    """
-    print(f"{'X'*80}")
-    print(f"{' '*30}AFTER\n{'rank':<5} {'type':<5} {'n':<3} {'kin e':<10} {'temp':<10} {'N':<5} {'kin E':<10} {'T':10}")
-    print(f"{'-'*80}")
-    for s in ("A", "B", "C", "D"):
-        r, n, k, t, N, K, T = TK(velocities__, names_, typ=s)
-        print(f"{r:<5} {s:<5} {n:<3} {k:<10.5f} {t:<10.5f} {N:<5} {K:<10.5f} {T:<10.5f}")
-
-    r, n, k, t, N, K, T = TK(velocities__, names_, typ=None)
-    s = "ALL"
-    print(f"{r:<5} {s:<5} {n:<3} {k:<10.5f} {t:<10.5f} {N:<5} {K:<10.5f} {T:<10.5f}")
-    print(f"{'X'*80}")
-    """
-
     for t in ("A", "B", "C", "D"):
         n_particles_ = comm.allreduce(len(np.where(names_ == np.string_(t))[0]),
                                       MPI.SUM)
