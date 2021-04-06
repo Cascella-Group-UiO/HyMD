@@ -20,7 +20,7 @@ def velocity_rescale(velocity, names, config, comm, R1=None, Ri2_sum=None):
 
         if R1 is None and Ri2_sum is None:
             R1_ = None
-            Ri2_sum = None
+            Ri2_sum_ = None
             if comm.rank == 0:
                 R1_ = np.random.normal()
 
