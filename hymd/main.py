@@ -692,7 +692,7 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-                
+
                 dd = domain_decomposition(
                     positions,
                     pm,
@@ -769,7 +769,7 @@ if __name__ == "__main__":
 
         # Thermostat
         if config.target_temperature:
-            velocities = velocity_rescale(velocities, config, comm)
+            velocities = velocity_rescale(velocities, names, config, comm)
 
         # Print trajectory
         if config.n_print > 0:
