@@ -354,6 +354,7 @@ if __name__ == "__main__":
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+    phi_new = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     print('np.shape(phi[0]:',np.shape(phi[0]))
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
@@ -366,6 +367,9 @@ if __name__ == "__main__":
 
     phi_fft = [pm.create("complex", value=0.0) for _ in range(4)]
     phi_laplacian = [
+        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+    ]
+    phi_gradient = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
 
@@ -479,6 +483,7 @@ if __name__ == "__main__":
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
     out_dataset = OutDataset(args.destdir, config, disable_mpio=args.disable_mpio)
+    print('out_dataset:',out_dataset.__getattribute__)
     store_static(
         out_dataset,
         rank_range,
@@ -529,14 +534,16 @@ if __name__ == "__main__":
         )
 
     #pressure
-    pressure = comp_pressure(
-            phi,
-            hamiltonian,
-            config,
-            phi_fft,
-            phi_laplacian,
-        )
-    print('pressure:',pressure)
+    if(config.pressure):
+        pressure = comp_pressure(
+                phi,
+                hamiltonian,
+                config,
+                phi_fft,
+                phi_laplacian,
+                phi_new
+            )
+        print('pressure:',pressure)
 
     if rank == 0:
         loop_start_time = datetime.datetime.now()
@@ -633,6 +640,22 @@ if __name__ == "__main__":
 
         # Update slow forces
         if not args.disable_field:
+            #should compute_field_energy be here?
+            compute_field_energy = np.mod(step + 1, config.n_print) == 0
+            update_field(
+                phi,
+                layouts,
+                force_on_grid,
+                hamiltonian,
+                pm,
+                positions,
+                types,
+                config,
+                v_ext,
+                phi_fourier,
+                v_ext_fourier,
+                compute_potential=compute_field_energy,
+            )
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -773,6 +796,7 @@ if __name__ == "__main__":
                             config,
                             phi_fft,
                             phi_laplacian,
+                            phi_new
                     )
 
                 store_data(
