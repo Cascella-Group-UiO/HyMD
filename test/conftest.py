@@ -395,7 +395,7 @@ def molecules_with_solvent():
         [27, 29, -1],
         [28, -1, -1],
     ], dtype=int)
-    types_ = np.array([
+    names_ = np.array([
         "A",
         "A",
         "B",
@@ -451,5 +451,7 @@ def molecules_with_solvent():
     molecules = np.concatenate(
         (molecules_[ind], np.arange(9, 9+15)), axis=0
     )
-    types = np.concatenate((types_, np.repeat(np.array(["D"], dtype='S5'), 15)))
-    return np.arange(0, r.shape[0]), r, molecules, velocities, bonds, types
+    names = np.concatenate((names_, np.repeat(np.array(["D"], dtype='S5'), 15)))
+    names_to_types = {"A": 0, "B": 1, "C": 2, "D": 3}
+    types = np.array([names_to_types[n.decode('UTF-8')] for n in names], dtype=int)
+    return np.arange(0, r.shape[0]), r, molecules, velocities, bonds, names, types
