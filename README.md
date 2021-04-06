@@ -36,6 +36,21 @@ for python3.8
    conda install -c conda-forge "h5py>=2.9=mpi*"
    pip install h5glance
 ```
+
+## Running HyMD on a Cluster
+The following is the way that worked for me on Saga:
+```bash
+module restore
+module load h5py/2.10.0-foss-2020a-Python-3.8.2
+module load pfft-python/0.1.21-foss-2020a-Python-3.8.2
+git clone https://github.com/Cascella-Group-UiO/HyMD-2021.git hymdruns
+cd hymdruns/hymd
+make
+cd *folder where you have 1) job script (eg: job_binary.sh), 2) input (eg: binaryAB.h5, configAB.toml)*
+sbatch job_binary.sh
+```
+
+
 ## Other README.md 's in this repository
 How to build a binary system -- [examples/binary/README.md](https://github.com/Cascella-Group-UiO/HyMD-2021/tree/pressure/examples/binary)
 

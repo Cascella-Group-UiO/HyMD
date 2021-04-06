@@ -277,6 +277,7 @@ if __name__ == "__main__":
             config.max_molecule_size if config.max_molecule_size else 201,
             comm=comm,
         )
+        print('molecules_flag:',molecules_flag)
         indices = in_file["indices"][rank_range]
         positions = in_file["coordinates"][-1, rank_range, :]
         positions = positions.astype(dtype)
