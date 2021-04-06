@@ -84,26 +84,31 @@ def compute_field_and_kinetic_energy(
     return field_energy, kinetic_energy
 
 
-# This function does not take mono-atomic particles?
 def domain_decomposition(
-    positions, molecules, pm, *args, verbose=0, comm=MPI.COMM_WORLD
+    positions,
+    pm,
+    *args,
+    molecules=None,
+    bonds=None,
+    verbose=0,
+    comm=MPI.COMM_WORLD
 ):
-    # if not molecules:
-    #    layout = pm.decompose(positions, smoothing=0)
-    #    return layout.exchange(positions, molecules, *args)
-
-    unique_molecules = np.sort(np.unique(molecules))
-    molecules_com = np.empty_like(positions)
-    for m in unique_molecules:
-        ind = molecules == m
-        r = positions[ind, :][0, :]
-        molecules_com[ind, :] = r
-    layout = pm.decompose(molecules_com, smoothing=0)
-
+    if molecules is not None:
+        assert bonds is not None, "bonds must be provided when molecules are present"
+        unique_molecules = np.sort(np.unique(molecules))
+        molecules_com = np.empty_like(positions)
+        for m in unique_molecules:
+            ind = molecules == m
+            r = positions[ind, :][0, :]
+            molecules_com[ind, :] = r
+        layout = pm.decompose(molecules_com, smoothing=0)
+        args = (*args, bonds, molecules)
+    else:
+        layout = pm.decompose(positions, smoothing=0)
     if verbose > 1:
         Logger.rank0.log(
             logging.INFO,
             "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
             np.sum(layout.get_exchange_cost()),
         )
-    return layout.exchange(positions, molecules, *args)
+    return layout.exchange(positions, *args)
