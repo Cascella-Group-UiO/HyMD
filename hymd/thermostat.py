@@ -30,7 +30,7 @@ def velocity_rescale(velocity, names, config, comm, R1=None, Ri2_sum=None):
 
                 # (degrees of freedom - 1) odd
                 else:
-                    Ri2_sum_ = 2 * np.random.gamma((N_f - 2) / 2, scale=1.0) + R1**2
+                    Ri2_sum_ = 2 * np.random.gamma((N_f - 2) / 2, scale=1.0) + R1_**2
             R1_ = comm.bcast(R1_, root=0)
             Ri2_sum_ = comm.bcast(Ri2_sum_, root=0)
 
