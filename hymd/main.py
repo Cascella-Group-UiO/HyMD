@@ -285,6 +285,8 @@ if __name__ == "__main__":
     else:
         dtype = np.float32
 
+    
+    ###### Access the information in h5md file (e.g. .h5)
     driver = "mpio" if not args.disable_mpio else None
     with h5py.File(args.input, "r", driver=driver, comm=comm) as in_file:
         rank_range, molecules_flag = distribute_input(
@@ -315,6 +317,8 @@ if __name__ == "__main__":
         if molecules_flag:
             molecules = in_file["molecules"][rank_range]
             bonds = in_file["bonds"][rank_range]
+        
+
 
     config = check_config(config, indices, names, types, comm=comm)
     if config.n_print:
@@ -381,25 +385,28 @@ if __name__ == "__main__":
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
+    
+    ############### 
+    ############### add charge relatd terms 
+    ############### 
+    _SPACE_DIM = 3 ## dimension; demo; TBR
+    charges_flag = 1 ## demo; TBR
+    if charges_flag:
+        phi_q = pm.create("real", value=0.0) 
+        phi_q_fourier = pm.create("complex", value=0.0)     
+        elec_field_fourier= [self.pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
+        elec_field = [self.pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
+        elec_potential_field = self.pm.create("complex", value=0.0) # for energy calculation 
+        field_q_forces = np.zeros(shape=(len(positions), 3), dtype=dtype) # q force 
+        
+    
+    
     if config.domain_decomposition:
-        dd = domain_decomposition(
-            positions,
-            pm,
-            velocities,
-            indices,
-            bond_forces,
-            angle_forces,
-            field_forces,
-            names,
-            types,
-            molecules=molecules if molecules_flag else None,
-            bonds=bonds if molecules_flag else None,
-            verbose=args.verbose,
-            comm=comm,
-        )
-        if molecules_flag:
-            (
+
+        if not charges_flag: 
+            dd = domain_decomposition(
                 positions,
+                pm,
                 velocities,
                 indices,
                 bond_forces,
@@ -407,20 +414,83 @@ if __name__ == "__main__":
                 field_forces,
                 names,
                 types,
-                bonds,
-                molecules,
-            ) = dd
+                molecules=molecules if molecules_flag else None,
+                bonds=bonds if molecules_flag else None,
+                verbose=args.verbose,
+                comm=comm,
+            )
+            if molecules_flag:
+                (
+                    positions,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    names,
+                    types,
+                    bonds,
+                    molecules,
+                ) = dd
+            else:
+                (
+                    positions,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    names,
+                    types,
+                ) = dd
         else:
-            (
+            dd = domain_decomposition(
                 positions,
+                pm,
                 velocities,
                 indices,
                 bond_forces,
                 angle_forces,
                 field_forces,
+                charges,  ## <------
+                field_q_forces, ## <-----
                 names,
                 types,
-            ) = dd
+                molecules=molecules if molecules_flag else None,
+                bonds=bonds if molecules_flag else None,
+                verbose=args.verbose,
+                comm=comm,
+            )
+            if molecules_flag:
+                (
+                    positions,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    charges,  ## <------
+                    field_q_forces, ## <-----
+                    names,
+                    types,
+                    bonds,
+                    molecules,
+                ) = dd
+            else:
+                (
+                    positions,
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    field_forces,
+                    charges,  ## <------
+                    field_q_forces, ## <-----
+                    names,
+                    types,
+                ) = dd
+
+        
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
