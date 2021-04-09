@@ -550,7 +550,7 @@ if __name__ == "__main__":
 
     #pressure
     if(config.pressure):
-        pressure = comp_pressure(
+        executed = comp_pressure(
                 phi,
                 hamiltonian,
                 config,
@@ -558,7 +558,7 @@ if __name__ == "__main__":
                 phi_laplacian,
                 phi_new
             )
-        print('pressure:',pressure)
+        print('Executed pressure:', executed)
 
     if rank == 0:
         loop_start_time = datetime.datetime.now()
@@ -816,7 +816,7 @@ if __name__ == "__main__":
                 if args.disable_field:
                     field_energy = 0.0
                 if config.pressure:
-                    pressure = comp_pressure(
+                    executed = comp_pressure(
                             phi,
                             hamiltonian,
                             config,
@@ -824,6 +824,7 @@ if __name__ == "__main__":
                             phi_laplacian,
                             phi_new
                     )
+                    print("Executed pressure:",executed)
 
                 store_data(
                     out_dataset,
@@ -913,4 +914,14 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
+        #pressure
+        if(config.pressure):
+            pressure = comp_pressure(
+                    phi,
+                    hamiltonian,
+                    config,
+                    phi_fft,
+                    phi_laplacian,
+                    phi_new
+                )
     out_dataset.close_file()

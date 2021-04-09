@@ -6,7 +6,7 @@ import sympy
 import matplotlib.pyplot as plt
 
 def plot(
-        function, phi, hamiltonian, config, phi_gradient, phi_laplacian, title
+        function, phi, hamiltonian, config, phi_laplacian, V_bar_tuple, title
 ):
     if(title == 'numerical'):
         lapfactor = config.mesh_size[0]
@@ -14,6 +14,8 @@ def plot(
         lapfactor = 1
     axis = 0
     Y = []
+    V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
+
     #PLOTS
     grid1d = np.array(np.arange(0,config.mesh_size[0],1))
     if(function == 'phi'):
@@ -46,22 +48,32 @@ def plot(
         plt.show()
 
     if(function == 'V_bar'):
-        V_bar = [
-          hamiltonian.V_bar[k](phi) for k in range(config.n_types)
-        ]
+        Y_int = [] ; Y_inc = []
         Y.clear()
+        V_interaction = [_[0] for _ in V_bar_tuple]
+        V_incompressibility = [_[1] for _ in V_bar_tuple]
         for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
+            # Total V_bar for type = 0 and direction = z
             y = V_bar[0][i][j]
+            y_int = V_interaction[0][i][j]
+            y_inc = V_incompressibility[0][i][j]
             Y.append(y)
+            Y_int.append(y_int)
+            Y_inc.append(y_inc)
         y = np.average(np.asarray(Y), axis=0)
+        y_int = np.average(np.asarray(Y_int), axis=0)
+        y_inc = np.average(np.asarray(Y_inc), axis=0)
+        plt.plot(grid1d, y_int, label='V_interaction[0]')
+        plt.title(title); plt.legend()
+        plt.show()
+        plt.plot(grid1d, y_inc, label='V_incompressibility[0]')
+        plt.title(title); plt.legend()
+        plt.show()
         plt.plot(grid1d, y, label='V_bar[0]')
         plt.title(title); plt.legend()
         plt.show()
 
     if(function == 'V_bar*lap'):
-        V_bar = [
-          hamiltonian.V_bar[k](phi) for k in range(config.n_types)
-        ]
         Y.clear()
         for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
             y = V_bar[0][i][j] * phi_laplacian[0][2][i][j]
@@ -160,18 +172,14 @@ def comp_pressure(
 
     #Term 1
     p0 = -1/V * w.csum()
-    print('p0:',p0)
+    #print('p0:',p0)
   
     #Term 2
-    V_bar = [
+    V_bar_tuple = [
         hamiltonian.V_bar[k](phi) for k in range(config.n_types)
     ]
+    V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
 
-    #plot(
-    #    'V_bar',phi, hamiltonian, config, phi_gradient, phi_laplacian, 'pmesh'
-    #)
-
-    #print('V_bar:',np.asarray(V_bar).shape)
     p1 = [
         1/V #* hamiltonian.V_bar[i](phi)
         * V_bar[i]
@@ -180,7 +188,7 @@ def comp_pressure(
     p1 = np.sum([
         p1[i].csum() for i in range(config.n_types)
     ])
-    print('p1:',p1)
+    #print('p1:',p1)
     
     #numericallap(phi, hamiltonian, config, V_bar, volume_per_cell)
 
@@ -225,50 +233,23 @@ def comp_pressure(
     p2x = np.cumsum(p2x)
     p2y = np.cumsum(p2y)
     p2z = np.cumsum(p2z)
-    print('p2x:',p2x[-1])
-    print('p2y:',p2y[-1])
-    print('p2z:',p2z[-1])
+    #print('p2x:',p2x[-1])
+    #print('p2y:',p2y[-1])
+    #print('p2z:',p2z[-1])
+    #print('P_total_x:',p0+p1+p2x[-1])
+    #print('P_total_y:',p0+p1+p2y[-1])
+    #print('P_total_z:',p0+p1+p2z[-1])
 
     #PLOTS
-    #plot(
-    #    'phi',phi, hamiltonian, config, phi_gradient, phi_laplacian, 'pmesh'
-    #) 
-    #plot(
-    #      'V_bar*lap',phi, hamiltonian, config, phi_gradient, phi_laplacian, 'pmesh'
-    #  )
+    if(config.plot):
+        plot(
+                'phi',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh'
+        ) 
+        plot(
+              'V_bar*lap',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh'
+          )
+        plot(
+            'V_bar',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh'
+        )
 
-#    #TESTING
-#    # phi_t_fft ========= phi_fourier[0] (after applying r2c)
-#    phi_t_fft = np.fft.fftn(phi[0][:], norm='forward')
-#    print("\n*****************")
-#    print('np.sum(phi_t_fft)',np.sum(phi_t_fft))
-#    print("*****************\n")
-#
-#    # k        ========= k[0] 
-#    freq = np.fft.fftfreq(config.mesh_size[0], d=1)
-#    k    = 2*np.pi * freq
-#    
-#    # laplaced_x_fft === phi_fourier[0] (after applying laplacian_transfer)
-#    laplaced_x_fft = -1 * k**2 * phi_t_fft 
-#    laplaced_y_fft = -1 * k**2 * phi_t_fft 
-#    laplaced_z_fft = -1 * k**2 * phi_t_fft 
-#
-#    # laplaced_wf_x ==== phi_lap
-#    laplaced_wf_x = np.fft.ifftn(laplaced_x_fft).real
-#    laplaced_wf_y = np.fft.ifftn(laplaced_y_fft).real
-#    laplaced_wf_z = np.fft.ifftn(laplaced_z_fft).real
-#
-#    # ptest2x   ======== p2x
-#    ptest2x = config.sigma**2 * V_bar[0] * laplaced_wf_x
-#    ptest2x = [el*volume_per_cell/V for el in ptest2x]
-#    ptest2x = np.sum(ptest2x)
-#    print('ptest2x:',ptest2x)
-#    ptest2y = config.sigma**2 * V_bar[0] * laplaced_wf_y
-#    ptest2y = [el*volume_per_cell/V for el in ptest2y]
-#    ptest2x = np.sum(ptest2y)
-#    print('ptest2y:',ptest2x)
-#    ptest2z = config.sigma**2 * V_bar[0] * laplaced_wf_z
-#    ptest2z = [el*volume_per_cell/V for el in ptest2z]
-#    ptest2z = np.sum(ptest2z)
-#    print('ptest2z:',ptest2z)
     return 1.0
