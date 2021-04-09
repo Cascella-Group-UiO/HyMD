@@ -1,0 +1,75 @@
+2021-04-09 11:35:40,254 INFO     [main.py:178] <configure_runtime> {rank 0/4} Attempting to parse config file config.toml as .toml
+2021-04-09 11:35:40,257 INFO     [main.py:185] <configure_runtime> {rank 0/4} Successfully parsed config.toml as .toml file
+2021-04-09 11:35:40,257 INFO     [main.py:189] <configure_runtime> {rank 0/4} 
+
+	Config: /Users/lixinmeng/Desktop/working/md-scf/HyMD-2021/test-xinmeng-electrostatic/config.toml
+	--------------------------------------------------
+	n_steps: 25000
+	time_step: 0.3
+	box_size: [13.0, 13.0, 14.0]
+	mesh_size: [24, 24, 24]
+	sigma: 0.5
+	kappa: 0.05
+	n_print: 5000
+	tau: 0.1
+	start_temperature: 323
+	target_temperature: 323
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 1000
+	integrator: respa
+	respa_inner: 10
+	file_name: /Users/lixinmeng/Desktop/working/md-scf/HyMD-2021/test-xinmeng-electrostatic/config.toml
+	name: DPPC bilayer with ML interaction parameters
+	tags: ['bilayer', 'solvent', 'DPPC']
+	n_particles: 20336
+	max_molecule_size: 15
+	n_flush: 5000
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	command_line_full: ../hymd/main.py config.toml dppc.h5 --verbose --logfile log.txt
+	bonds:
+		N P: 0.47, 1250.0
+		P G: 0.47, 1250.0
+		G G: 0.37, 1250.0
+		G C: 0.47, 1250.0
+		C C: 0.47, 1250.0
+	angle_bonds:
+		P G G: 120.0, 25.0
+		P G C: 180.0, 25.0
+		G C C: 180.0, 25.0
+		C C C: 180.0, 25.0
+	chi:
+		C W: 42.24
+		C G: 10.47
+		N W: -3.77
+		G W: 4.53
+		N P: -9.34
+		G P: 8.04
+		G N: 1.97
+		C P: 14.72
+		P W: -1.51
+		C N: 13.56
+
+2021-04-09 11:35:40,377 INFO     [main.py:255] <generate_initial_velocities> {rank 0/4} Initialized 20336 velocities, target kinetic energy: 81963.32673825503, actual kinetic energy generated: 81963.3251953125
+2021-04-09 11:35:40,529 INFO     [main.py:372] <main> {rank 0/4} pfft-python processor mesh: (2, 2)
+2021-04-09 11:35:45,234 INFO     [file_io.py:421] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+              0              0      322.99997      136977.57      81963.319      55014.255      23599.805      7770.1514      23644.299  -0.0024719238   -0.002746582   -0.007484436              0
+2021-04-09 11:38:20,823 INFO     [file_io.py:421] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+           5000           1500      323.75931      117509.62      82156.006      35353.613      16625.359      8566.2114      10162.042      1069.6464      1042.0381     -129.38663       7227.724
+2021-04-09 11:40:54,441 INFO     [file_io.py:421] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+          10000           3000      323.58908      116350.49       82112.81      34237.676      16579.945      8090.4358      9567.2953      2121.9746      2082.6216     -167.35776      14530.795
+2021-04-09 11:43:28,940 INFO     [file_io.py:421] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+          15000           4500      325.23442      116564.11      82530.325      34033.785      16536.354      8071.9219      9425.5091      3133.1655      3062.3796     -95.798584      21747.468
+2021-04-09 11:46:11,751 INFO     [file_io.py:421] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+          20000           6000      324.49832      116392.83      82343.536      34049.295      16219.781      8081.7275      9747.7865      4084.9788      4026.1411     -135.70999       29341.22
+2021-04-09 11:48:41,397 INFO     [main.py:835] <main> {rank 0/4} Elapsed time:    Setup time:    MD loop time: 
+2021-04-09 11:48:42,608 INFO     [file_io.py:421] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E         bond E        angle E       total Px       total Py       total Pz       ΔH tilde
+          24999         7499.7      321.29051         116073      81529.532      34543.468      16648.965      8255.4412      9639.0617      4985.7451      4917.0903     -46.209457      36937.526
