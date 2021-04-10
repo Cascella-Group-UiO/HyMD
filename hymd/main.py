@@ -405,9 +405,7 @@ if __name__ == "__main__":
         field_q_forces = np.zeros(shape=(len(positions), 3), dtype=dtype) # q force 
         
     
-    ############### way 3, prepare for the DD 
-    ##Affiliated_DD_Args_in_Len = 9 ## can also use the append without defining the length ?
-    ##args_in = [None for _ in range(Affiliated_DD_Args_in_Len)]
+    ############### way 4, prepare for the DD 
     args_in = [
          velocities,
          indices,
