@@ -392,15 +392,16 @@ if __name__ == "__main__":
     _SPACE_DIM = 3 ## dimension; demo; TBR
     charges_flag = False #1 ## demo; TBR
     ###demo charges 
-    #charges_flag = 1 ## demo; TBR
-    #charges = 
-
+    charges_flag = 1 ## demo; TBR
+    charges = np.zeros(
+        shape=len(positions) , dtype=dtype
+    )  
     if charges_flag:
         phi_q = pm.create("real", value=0.0) 
         phi_q_fourier = pm.create("complex", value=0.0)     
-        elec_field_fourier= [self.pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
-        elec_field = [self.pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
-        elec_potential_field = self.pm.create("complex", value=0.0) # for energy calculation 
+        elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
+        elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
+        elec_potential_field = pm.create("complex", value=0.0) # for energy calculation 
         field_q_forces = np.zeros(shape=(len(positions), 3), dtype=dtype) # q force 
         
     
