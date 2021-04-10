@@ -390,7 +390,11 @@ if __name__ == "__main__":
     ############### add charge relatd terms 
     ############### 
     _SPACE_DIM = 3 ## dimension; demo; TBR
-    charges_flag = 1 ## demo; TBR
+    charges_flag = False #1 ## demo; TBR
+    ###demo charges 
+    #charges_flag = 1 ## demo; TBR
+    #charges = 
+
     if charges_flag:
         phi_q = pm.create("real", value=0.0) 
         phi_q_fourier = pm.create("complex", value=0.0)     
@@ -401,9 +405,9 @@ if __name__ == "__main__":
         
     
     ############### way 3, prepare for the DD 
-    Affiliated_DD_Args_in_Len = 9 ## can also use the append without defining the length ?
-    args_in = [None for _ in range(Affiliated_DD_Args_Len)]
-    args_in[:7] = [
+    ##Affiliated_DD_Args_in_Len = 9 ## can also use the append without defining the length ?
+    ##args_in = [None for _ in range(Affiliated_DD_Args_in_Len)]
+    args_in = [
          velocities,
          indices,
          bond_forces,
@@ -412,19 +416,33 @@ if __name__ == "__main__":
          names, 
          types
     ]
-    if charges_flag: ## add charge related 
-        args_in[7] = charges 
-        args_in[8] = field_q_forces  
+    args_recv = [
+         'positions',
+         'velocities',
+         'indices',
+         'bond_forces',
+         'angle_forces',
+         'field_forces',
+         'names', 
+         'types'
+    ]
 
-    ## args_recv for the (..) = dd
-    args_recv = args_in.copy()
-    args_recv.insert(0, positions)
+    if charges_flag: ## add charge related 
+        args_in.append(charges) 
+        args_in.append(field_q_forces)
+        args_recv.append('charges')
+        args_recv.append('field_q_forces')
+
     if molecules_flag:
-        args_recv.append(bonds)
-        args_recv.append(molecules)
+        args_recv.append('bonds')
+        args_recv.append('molecules')
+    
     ## convert to tuple
     args_in = tuple(args_in)
-    args_recv= tuple(args_recv)
+    
+    ## cmd string to excecut the (...) = dd 
+    _str_receive_dd =  ','.join(args_recv)
+    _cmd_receive_dd = f"({_str_receive_dd }) = dd"
     
     ############### DD 
     if config.domain_decomposition:
@@ -437,9 +455,8 @@ if __name__ == "__main__":
             verbose=args.verbose,
             comm=comm,
         )
-        args_recv = dd
-        
-       
+        exec(_cmd_receive_dd ) ## args_recv = dd WRONG 
+
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
