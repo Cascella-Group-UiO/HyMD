@@ -400,97 +400,46 @@ if __name__ == "__main__":
         field_q_forces = np.zeros(shape=(len(positions), 3), dtype=dtype) # q force 
         
     
+    ############### way 3, prepare for the DD 
+    Affiliated_DD_Args_in_Len = 9 ## can also use the append without defining the length ?
+    args_in = [None for _ in range(Affiliated_DD_Args_Len)]
+    args_in[:7] = [
+         velocities,
+         indices,
+         bond_forces,
+         angle_forces,
+         field_forces,
+         names, 
+         types
+    ]
+    if charges_flag: ## add charge related 
+        args_in[7] = charges 
+        args_in[8] = field_q_forces  
+
+    ## args_recv for the (..) = dd
+    args_recv = args_in.copy()
+    args_recv.insert(0, positions)
+    if molecules_flag:
+        args_recv.append(bonds)
+        args_recv.append(molecules)
+    ## convert to tuple
+    args_in = tuple(args_in)
+    args_recv= tuple(args_recv)
     
+    ############### DD 
     if config.domain_decomposition:
-
-        if not charges_flag: 
-            dd = domain_decomposition(
-                positions,
-                pm,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                names,
-                types,
-                molecules=molecules if molecules_flag else None,
-                bonds=bonds if molecules_flag else None,
-                verbose=args.verbose,
-                comm=comm,
-            )
-            if molecules_flag:
-                (
-                    positions,
-                    velocities,
-                    indices,
-                    bond_forces,
-                    angle_forces,
-                    field_forces,
-                    names,
-                    types,
-                    bonds,
-                    molecules,
-                ) = dd
-            else:
-                (
-                    positions,
-                    velocities,
-                    indices,
-                    bond_forces,
-                    angle_forces,
-                    field_forces,
-                    names,
-                    types,
-                ) = dd
-        else:
-            dd = domain_decomposition(
-                positions,
-                pm,
-                velocities,
-                indices,
-                bond_forces,
-                angle_forces,
-                field_forces,
-                charges,  ## <------
-                field_q_forces, ## <-----
-                names,
-                types,
-                molecules=molecules if molecules_flag else None,
-                bonds=bonds if molecules_flag else None,
-                verbose=args.verbose,
-                comm=comm,
-            )
-            if molecules_flag:
-                (
-                    positions,
-                    velocities,
-                    indices,
-                    bond_forces,
-                    angle_forces,
-                    field_forces,
-                    charges,  ## <------
-                    field_q_forces, ## <-----
-                    names,
-                    types,
-                    bonds,
-                    molecules,
-                ) = dd
-            else:
-                (
-                    positions,
-                    velocities,
-                    indices,
-                    bond_forces,
-                    angle_forces,
-                    field_forces,
-                    charges,  ## <------
-                    field_q_forces, ## <-----
-                    names,
-                    types,
-                ) = dd
-
+        dd = domain_decomposition(
+            positions,
+            pm,
+            *args_in,
+            molecules=molecules if molecules_flag else None,
+            bonds=bonds if molecules_flag else None,
+            verbose=args.verbose,
+            comm=comm,
+        )
+        args_recv = dd
         
+       
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
