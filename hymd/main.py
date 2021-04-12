@@ -20,6 +20,7 @@ from field import (
     update_field,
     compute_field_and_kinetic_energy,
     domain_decomposition,
+    update_field_force_energy_q, #elec related
 )
 from file_io import distribute_input, OutDataset, store_static, store_data
 from force import compute_bond_forces__fortran as compute_bond_forces
@@ -339,7 +340,7 @@ if __name__ == "__main__":
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
-
+    
     field_energy = 0.0
     bond_energy = 0.0
     angle_energy = 0.0
@@ -400,14 +401,31 @@ if __name__ == "__main__":
     #)  ## demo; TBR
     charges = np.ones(
         shape=len(positions) , dtype=dtype
-    )  ## demo; TBR
+    )/10.0 ## demo; TBR
+
+    #charges = np.ones(len(positions))
+    ##--> ceneter sphere r=1 is negative; others random
+    #for i in np.arange(len(positions)):
+    #    if i % 2 == 1:
+    #        charges[i] = -1
+    #print('total charge',  np.sum(charges))
+    
     if charges_flag:
         phi_q = pm.create("real", value=0.0) 
         phi_q_fourier = pm.create("complex", value=0.0)     
         elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
         elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
-        elec_potential_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
-        elec_forces = np.zeros(shape=(len(positions), 3), dtype=dtype) # q force 
+        elec_energy_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
+        elec_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
+        #### ^-------- in the old/own protocol, e.g. test-pure-sphere-new.py, 
+        #### ##elec_forces = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] 
+        #### forces = test.compute_electric_force_on_particle_onestep()
+        #### print(forces.shape) ## --> (3, 10000) # got 10000 particles, 
+        #### later the forces have to be transposed to integrate velocities 
+        #### HERE if defined as N,3; then not need to transpose 
+        #### also in the calcution from field; need to give 
+        #### elec_forces[:,_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
+        
         
     
     ############### way 4, prepare for the DD 
@@ -433,9 +451,9 @@ if __name__ == "__main__":
 
     if charges_flag: ## add charge related 
         args_in.append(charges) 
-        args_in.append(field_q_forces)
+        args_in.append(elec_forces)
         args_recv.append('charges')
-        args_recv.append('field_q_forces')
+        args_recv.append('elec_forces')
 
     if molecules_flag:
         args_recv.append('bonds')
@@ -460,7 +478,7 @@ if __name__ == "__main__":
             comm=comm,
         )
         exec(_cmd_receive_dd ) ## args_recv = dd WRONG 
-        
+    
     #########
     #print(len(positions), type(positions))
     #print(positions.shape)
@@ -468,11 +486,16 @@ if __name__ == "__main__":
     #### Here the types==t should be a index list 
     # positions[types == t]) for t in range(config.n_types)
     #########
+    #print('here', charges.shape, type(charges))
+    #print('here', positions.shape, type(positions))
     
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
     angle_forces = np.asfortranarray(angle_forces)
+    #charges = np.asfortranarray(charges)
+    #print('here', charges.shape, type(charges))
+    #print('here', positions.shape, type(positions))
     
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
@@ -507,7 +530,7 @@ if __name__ == "__main__":
     else:
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
  
-    
+     
     ## Add Simple Poisson Equation Electrostatic: compute field/force/energy together 
     field_q_energy = 0.0 
     if charges_flag:
@@ -527,12 +550,11 @@ if __name__ == "__main__":
             positions,  
             config,
             compute_energy=True,
+            comm=comm
         )
+        #print(field_q_energy, elec_forces[0])
 
-        
-"""
-
-
+"""    
     if molecules_flag:
         if not (args.disable_bonds and args.disable_angle_bonds):
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
@@ -577,6 +599,7 @@ if __name__ == "__main__":
         bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
+
     out_dataset = OutDataset(args.destdir, config,
                              double_out=args.double_output,
                              disable_mpio=args.disable_mpio)
