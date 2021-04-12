@@ -507,31 +507,28 @@ if __name__ == "__main__":
     else:
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
  
-    ## add charge type interaction 
+    
+    ## Add Simple Poisson Equation Electrostatic: compute field/force/energy together 
+    field_q_energy = 0.0 
     if charges_flag:
         layout_q = pm.decompose( positions ) 
         ## ^---- possible to filter out the particles without charge via e.g. positions[charges != 0] following positions[types == t])
-        update_field_q(
+        field_q_energy = update_field_force_energy_q(
             charges,# charge
             phi_q,  # chage density
             phi_q_fourier,   
             elec_field_fourier, #for force calculation 
             elec_field,     
             elec_forces,    
-            elec_potential_field, # for energy calculation 
+            elec_energy_field, # for energy calculation 
+            field_q_energy,
             layout_q, #### general terms  
             pm,
             positions,  
             config,
-            compute_potential=True
-        ) ## follow update_field(); add funciton in the field.py (or a separate file)
-        
-        
-        
+            compute_energy=True,
+        )
 
-
-        #field_q_energy = compute_field_q_energy(...) #field_energ = compute_field_energy
-        #compute_field_q_force(...) #compute_field_force
         
 """
 

@@ -10,20 +10,20 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
         for d in range(3):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
 
-
-def update_field_q(
+def update_field_force_energy_q(
     charges,# charge
     phi_q,  # chage density
     phi_q_fourier,   
     elec_field_fourier, #for force calculation 
     elec_field,     
     elec_forces,    
-    elec_potential_field, # for energy calculation 
+    elec_energy_field, # for energy calculation 
+    field_q_energy, # electric energy
     layout_q, #### general terms  
     pm,
     positions,  
     config,
-    compute_potential=False
+    compute_energy=False
     ):
     """
     - added for the simple piosson equation eletrostatics (follow PIC)
@@ -69,17 +69,21 @@ def update_field_q(
         phi_q_fourier.apply(poisson_transfer_function, out = elec_field_fourier[_d])
         elec_field_fourier[_d].c2r(out=elec_field[_d])
 
-    ## calculate elelctric forces on particles 
+    ## calculate electric forces on particles  
     ## old protocol in compute_electric_force_on_particle_onestep
     for _d in np.arange(_SPACE_DIM):
         elec_forces[_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
     
-    ## calcuate electric potential for energy 
+    ## calculate electric energy in Fourier space
     ## old protocol in poisson_solver [ if calc_energy: ] block
-    if compute_potential:
+    if compute_energy:
         def transfer_energy(k,v):  ### potential field is electric field / (-ik)  --> potential field * q --> 
             return 4.0 * np.pi * COULK_GMX * np.abs(v)**2  / k.normp(p=2,zeromode=1) ## zeromode = 1 needed here?
-        phi_q_fourier.apply(transfer_energy,  kind='wavenumber', out=elec_potential_field)
+        phi_q_fourier.apply(transfer_energy,  kind='wavenumber', out=elec_energy_field)
+
+        field_q_energy = 0.5 * comm.allreduce(elec_energy_field )
+
+    return field_q_energy
 
 
 def update_field(
@@ -132,6 +136,17 @@ def update_field(
 
         if compute_potential:
             v_ext_fourier[3].c2r(out=v_ext[t])
+
+
+def compute_q_energy(   
+    elec_potential_field, # for energy calculation 
+    comm=MPI.COMM_WORLD,
+):
+    
+    ##field_q_energy = 0.5 * np.sum( energy_filed.value ) 
+    field_q_energy = 0.5 * comm.allreduce(elec_potential_field )
+
+    return field_q_energy
 
 
 def compute_field_and_kinetic_energy(
