@@ -23,7 +23,8 @@ def update_field_force_energy_q(
     pm,
     positions,  
     config,
-    compute_energy=False
+    compute_energy=False,
+    comm=MPI.COMM_WORLD,
     ):
     """
     - added for the simple piosson equation eletrostatics (follow PIC)
@@ -45,7 +46,6 @@ def update_field_force_energy_q(
     ## paint  ## pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
     ## old protocol in gen_qe_hpf_use_self
     pm.paint(positions, layout=layout_q, mass=charges, out=phi_q) ## 
-    
     ## scale and fft  
     ## old protocol in gen_qe_hpf_use_self
     phi_q /= volume_per_cell 
@@ -72,7 +72,8 @@ def update_field_force_energy_q(
     ## calculate electric forces on particles  
     ## old protocol in compute_electric_force_on_particle_onestep
     for _d in np.arange(_SPACE_DIM):
-        elec_forces[_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
+        elec_forces[:,_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
+        ###^------ here the use the column, as the elec_forces are defined as (N,3) dimension
     
     ## calculate electric energy in Fourier space
     ## old protocol in poisson_solver [ if calc_energy: ] block
@@ -80,11 +81,11 @@ def update_field_force_energy_q(
         def transfer_energy(k,v):  ### potential field is electric field / (-ik)  --> potential field * q --> 
             return 4.0 * np.pi * COULK_GMX * np.abs(v)**2  / k.normp(p=2,zeromode=1) ## zeromode = 1 needed here?
         phi_q_fourier.apply(transfer_energy,  kind='wavenumber', out=elec_energy_field)
+        
+        field_q_energy = 0.5 * comm.allreduce(np.sum(elec_energy_field.value))
 
-        field_q_energy = 0.5 * comm.allreduce(elec_energy_field )
-
-    return field_q_energy
-
+    return field_q_energy.real
+    
 
 def update_field(
     phi,
@@ -138,15 +139,15 @@ def update_field(
             v_ext_fourier[3].c2r(out=v_ext[t])
 
 
-def compute_q_energy(   
-    elec_potential_field, # for energy calculation 
-    comm=MPI.COMM_WORLD,
-):
-    
-    ##field_q_energy = 0.5 * np.sum( energy_filed.value ) 
-    field_q_energy = 0.5 * comm.allreduce(elec_potential_field )
-
-    return field_q_energy
+#def compute_q_energy(   
+#    elec_potential_field, # for energy calculation 
+#    comm=MPI.COMM_WORLD,
+#):
+#    
+#    ##field_q_energy = 0.5 * np.sum( energy_filed.value ) 
+#    field_q_energy = 0.5 * comm.allreduce(elec_potential_field )
+#
+#    return field_q_energy
 
 
 def compute_field_and_kinetic_energy(
