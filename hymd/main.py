@@ -376,6 +376,8 @@ if __name__ == "__main__":
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+
+
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
@@ -393,16 +395,19 @@ if __name__ == "__main__":
     charges_flag = False #1 ## demo; TBR
     ###demo charges 
     charges_flag = 1 ## demo; TBR
-    charges = np.zeros(
+    #charges = np.zeros(
+    #    shape=len(positions) , dtype=dtype
+    #)  ## demo; TBR
+    charges = np.ones(
         shape=len(positions) , dtype=dtype
-    )  
+    )  ## demo; TBR
     if charges_flag:
         phi_q = pm.create("real", value=0.0) 
         phi_q_fourier = pm.create("complex", value=0.0)     
         elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
         elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
-        elec_potential_field = pm.create("complex", value=0.0) # for energy calculation 
-        field_q_forces = np.zeros(shape=(len(positions), 3), dtype=dtype) # q force 
+        elec_potential_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
+        elec_forces = np.zeros(shape=(len(positions), 3), dtype=dtype) # q force 
         
     
     ############### way 4, prepare for the DD 
@@ -455,12 +460,20 @@ if __name__ == "__main__":
             comm=comm,
         )
         exec(_cmd_receive_dd ) ## args_recv = dd WRONG 
-
+        
+    #########
+    #print(len(positions), type(positions))
+    #print(positions.shape)
+    #print(positions[:,0])
+    #### Here the types==t should be a index list 
+    # positions[types == t]) for t in range(config.n_types)
+    #########
+    
     positions = np.asfortranarray(positions)
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
     angle_forces = np.asfortranarray(angle_forces)
-
+    
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
         update_field(
@@ -493,6 +506,35 @@ if __name__ == "__main__":
         )
     else:
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
+ 
+    ## add charge type interaction 
+    if charges_flag:
+        layout_q = pm.decompose( positions ) 
+        ## ^---- possible to filter out the particles without charge via e.g. positions[charges != 0] following positions[types == t])
+        update_field_q(
+            charges,# charge
+            phi_q,  # chage density
+            phi_q_fourier,   
+            elec_field_fourier, #for force calculation 
+            elec_field,     
+            elec_forces,    
+            elec_potential_field, # for energy calculation 
+            layout_q, #### general terms  
+            pm,
+            positions,  
+            config,
+            compute_potential=True
+        ) ## follow update_field(); add funciton in the field.py (or a separate file)
+        
+        
+        
+
+
+        #field_q_energy = compute_field_q_energy(...) #field_energ = compute_field_energy
+        #compute_field_q_force(...) #compute_field_force
+        
+"""
+
 
     if molecules_flag:
         if not (args.disable_bonds and args.disable_angle_bonds):
@@ -931,3 +973,4 @@ if __name__ == "__main__":
             comm=comm,
         )
     out_dataset.close_file()
+"""
