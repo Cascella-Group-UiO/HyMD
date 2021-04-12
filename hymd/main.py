@@ -422,9 +422,9 @@ if __name__ == "__main__":
         #### forces = test.compute_electric_force_on_particle_onestep()
         #### print(forces.shape) ## --> (3, 10000) # got 10000 particles, 
         #### later the forces have to be transposed to integrate velocities 
-        #### HERE if defined as N,3; then not need to transpose 
-        #### also in the calcution from field; need to give 
-        #### elec_forces[:,_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
+        ##^----- HERE forces defined as N,3; then not need to transpose like in my old protocol
+        ##^----- elec_forces[:,_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
+        ##                     ^----------- NEED to give column index
         
         
     
@@ -552,7 +552,7 @@ if __name__ == "__main__":
             compute_energy=True,
             comm=comm
         )
-        #print(field_q_energy, elec_forces[0])
+        print(field_q_energy, elec_forces[0])
 
 """    
     if molecules_flag:
