@@ -21,7 +21,10 @@ from field import (
     compute_field_and_kinetic_energy,
     domain_decomposition,
     update_field_force_energy_q, #elec related
+    update_field_force_q,
+    compute_field_energy_q
 )
+
 from file_io import distribute_input, OutDataset, store_static, store_data
 from force import compute_bond_forces__fortran as compute_bond_forces
 from force import compute_angle_forces__fortran as compute_angle_forces
@@ -345,6 +348,7 @@ if __name__ == "__main__":
     bond_energy = 0.0
     angle_energy = 0.0
     kinetic_energy = 0.0
+    field_q_energy = 0.0 ## q related 
 
     # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
     # ragged nested sequences until it is fixed in pmesh
@@ -532,29 +536,52 @@ if __name__ == "__main__":
  
      
     ## Add Simple Poisson Equation Electrostatic: compute field/force/energy together 
-    field_q_energy = 0.0 
+    ##field_q_energy = 0.0 
     if charges_flag:
         layout_q = pm.decompose( positions ) 
         ## ^---- possible to filter out the particles without charge via e.g. positions[charges != 0] following positions[types == t])
-        field_q_energy = update_field_force_energy_q(
+        ### one step
+        ###field_q_energy = update_field_force_energy_q(
+        ###    charges,# charge
+        ###    phi_q,  # chage density
+        ###    phi_q_fourier,   
+        ###    elec_field_fourier, #for force calculation 
+        ###    elec_field,     
+        ###    elec_forces,    
+        ###    elec_energy_field, # for energy calculation 
+        ###    field_q_energy,
+        ###    layout_q, #### general terms  
+        ###    pm,
+        ###    positions,  
+        ###    config,
+        ###    compute_energy=True,
+        ###    comm=comm
+        ###)
+        ####print(field_q_energy, elec_forces[0])
+        
+        ### split 
+        update_field_force_q(
             charges,# charge
             phi_q,  # chage density
             phi_q_fourier,   
             elec_field_fourier, #for force calculation 
             elec_field,     
-            elec_forces,    
-            elec_energy_field, # for energy calculation 
-            field_q_energy,
+            elec_forces, 
             layout_q, #### general terms  
             pm,
             positions,  
-            config,
-            compute_energy=True,
+            config
+        )
+        
+        field_q_energy=compute_field_energy_q(
+            phi_q_fourier,
+            elec_energy_field, #for energy calculation
+            field_q_energy,
             comm=comm
         )
         print(field_q_energy, elec_forces[0])
 
-"""    
+
     if molecules_flag:
         if not (args.disable_bonds and args.disable_angle_bonds):
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
@@ -615,7 +642,8 @@ if __name__ == "__main__":
         velocity_out=args.velocity_output,
         force_out=args.force_output,
         comm=comm,
-    )
+    ) ## xinmeng <--- is elec_forces needed here? 
+    
 
     if config.n_print > 0:
         step = 0
@@ -632,6 +660,15 @@ if __name__ == "__main__":
                 layouts,
                 comm=comm,
             )
+            ## add charge related 
+            ## field_q_energy = 0.0 
+            if charges_flag:
+                field_q_energy=compute_field_energy_q(
+                    phi_q_fourier,
+                    elec_energy_field, #for energy calculation
+                    field_q_energy,
+                    comm=comm
+                )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
@@ -642,13 +679,14 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            field_forces + bond_forces + angle_forces,
+            field_forces + bond_forces + angle_forces + elec_forces, ## <------
             config.box_size,
             temperature,
             kinetic_energy,
             bond_energy,
             angle_energy,
             field_energy,
+            field_q_energy, ##<----------
             config.time_step,
             config,
             velocity_out=args.velocity_output,
@@ -656,6 +694,7 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
+    """
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -992,5 +1031,5 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
+    """
     out_dataset.close_file()
-"""

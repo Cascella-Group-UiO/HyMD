@@ -217,6 +217,14 @@ def store_static(
     )
     (
         _,
+        h5md.field_q_energy_step,
+        h5md.field_q_energy_time,
+        h5md.field_q_energy,
+    ) = setup_time_dependent_element(
+        "field_q_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+    ) # <-------- xinmeng 
+    (
+        _,
         h5md.total_momentum_step,
         h5md.total_momentum_time,
         h5md.total_momentum,
@@ -300,6 +308,7 @@ def store_data(
     bond2_energy,
     bond3_energy,
     field_energy,
+    field_q_energy, ##<----- xinmeng add
     time_step,
     config,
     velocity_out=False,
@@ -315,6 +324,7 @@ def store_data(
         h5md.bond_energy_step,
         h5md.angle_energy_step,
         h5md.field_energy_step,
+        h5md.field_q_energy_step, ##<----- xinmeng add
         h5md.total_momentum_step,
         h5md.temperature_step,
         h5md.thermostat_work_step,
@@ -329,6 +339,7 @@ def store_data(
         h5md.bond_energy_time,
         h5md.angle_energy_time,
         h5md.field_energy_time,
+        h5md.field_q_energy_time, ##<----- xinmeng add
         h5md.total_momentum_time,
         h5md.temperature_time,
         h5md.thermostat_work_time,
@@ -355,7 +366,7 @@ def store_data(
     if force_out:
         h5md.forces[frame, indices[ind_sort]] = forces[ind_sort]
 
-    potential_energy = bond2_energy + bond3_energy + field_energy
+    potential_energy = bond2_energy + bond3_energy + field_energy + field_q_energy #<-------- xinmeng
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0), MPI.SUM)
     h5md.total_energy[frame] = kinetic_energy + potential_energy
     h5md.potential_energy[frame] = potential_energy
@@ -363,6 +374,7 @@ def store_data(
     h5md.bond_energy[frame] = bond2_energy
     h5md.angle_energy[frame] = bond3_energy
     h5md.field_energy[frame] = field_energy
+    h5md.field_q_energy[frame] = field_q_energy  #<-------- xinmeng
     h5md.total_momentum[frame, :] = total_momentum
     h5md.temperature[frame] = temperature
     h5md.thermostat_work[frame] = config.thermostat_work
@@ -376,6 +388,7 @@ def store_data(
         "kinetic E",
         "potential E",
         "field E",
+        "field q E", #<-------- xinmeng 
         "bond E",
         "angle E",
         "total Px",
@@ -411,6 +424,7 @@ def store_data(
         kinetic_energy / divide_by,
         potential_energy / divide_by,
         field_energy / divide_by,
+        field_q_energy / divide_by, #<-------- 
         bond2_energy / divide_by,
         bond3_energy / divide_by,
         total_momentum[0] / divide_by,
