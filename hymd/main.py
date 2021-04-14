@@ -44,7 +44,7 @@ def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     ret_str = ""
     if days != 0:
         ret_str += f"{days} days "
-        ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
+    ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
     return ret_str
 
 
@@ -592,7 +592,8 @@ if __name__ == "__main__":
                 seconds_elapsed = tot_t.days * seconds_per_day
                 seconds_elapsed += tot_t.seconds
                 seconds_elapsed += 1e-6 * tot_t.microseconds
-                hours_elapsed = seconds_elapsed / 60
+                minutes_elapsed = seconds_elapsed / 60
+                hours_elapsed = minutes_elapsed / 60
                 days_elapsed = hours_elapsed / 24
 
                 ns_per_day = ns_sim / days_elapsed
@@ -692,7 +693,7 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-                
+
                 dd = domain_decomposition(
                     positions,
                     pm,
@@ -762,7 +763,7 @@ if __name__ == "__main__":
                     logging.INFO,
                     (
                         f"(GHOSTS: Total number of particles of type "
-                        f"{config.type_to_name_map} to be "
+                        f"{config.type_to_name_map[t]} to be "
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
