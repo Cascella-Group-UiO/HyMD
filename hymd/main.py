@@ -399,13 +399,13 @@ if __name__ == "__main__":
     _SPACE_DIM = 3 ## dimension; demo; TBR
     charges_flag = False #1 ## demo; TBR
     ###demo charges 
-    charges_flag = 1 ## demo; TBR
+    #charges_flag = 1 ## demo; TBR
     #charges = np.zeros(
     #    shape=len(positions) , dtype=dtype
     #)  ## demo; TBR
-    charges = np.ones(
-        shape=len(positions) , dtype=dtype
-    )/10.0 ## demo; TBR
+    #charges = np.ones(
+    #    shape=len(positions) , dtype=dtype
+    #)/10.0 ## demo; TBR
 
     #charges = np.ones(len(positions))
     ##--> ceneter sphere r=1 is negative; others random
@@ -420,15 +420,15 @@ if __name__ == "__main__":
         elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
         elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
         elec_energy_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
-        elec_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
-        #### ^-------- in the old/own protocol, e.g. test-pure-sphere-new.py, 
-        #### ##elec_forces = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] 
-        #### forces = test.compute_electric_force_on_particle_onestep()
-        #### print(forces.shape) ## --> (3, 10000) # got 10000 particles, 
-        #### later the forces have to be transposed to integrate velocities 
-        ##^----- HERE forces defined as N,3; then not need to transpose like in my old protocol
-        ##^----- elec_forces[:,_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
-        ##                     ^----------- NEED to give column index
+    elec_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
+    #### ^-------- in the old/own protocol, e.g. test-pure-sphere-new.py, 
+    #### ##elec_forces = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] 
+    #### forces = test.compute_electric_force_on_particle_onestep()
+    #### print(forces.shape) ## --> (3, 10000) # got 10000 particles, 
+    #### later the forces have to be transposed to integrate velocities 
+    ##^----- HERE forces defined as N,3; then not need to transpose like in my old protocol
+    ##^----- elec_forces[:,_d] = charges * (elec_field[_d].readout(positions, layout=layout_q))
+    ##                     ^----------- NEED to give column index
         
         
     
@@ -470,6 +470,11 @@ if __name__ == "__main__":
     _str_receive_dd =  ','.join(args_recv)
     _cmd_receive_dd = f"({_str_receive_dd }) = dd"
     
+
+    #print('field_forces.shape', field_forces.shape)
+    #print('bond_forces.shape',  bond_forces.shape) 
+    #print('elec_forces.shape',  elec_forces.shape) 
+
     ############### DD 
     if config.domain_decomposition:
         dd = domain_decomposition(
@@ -482,6 +487,27 @@ if __name__ == "__main__":
             comm=comm,
         )
         exec(_cmd_receive_dd ) ## args_recv = dd WRONG 
+    
+    print('field_forces.shape', field_forces.shape)
+    print('bond_forces.shape',  bond_forces.shape) 
+    print('elec_forces.shape',  elec_forces.shape) 
+
+
+
+    ### https://pythonprogramming.net/mpi-broadcast-tutorial-mpi4py/
+    ### testing of incides
+    rank_indices = indices
+    receive_buffer = comm.gather(rank_indices, root=0)
+    gathered_rank_indices = None
+    if comm.Get_rank() == 0:
+        print('here----- to check')
+        gathered_rank_indices = np.concatenate(receive_buffer)
+    concatenated_indices = comm.bcast(gathered_rank_indices, root=0)
+    sorted_concatenated_indices = np.sort(concatenated_indices)
+    np.testing.assert_array_equal(sorted_concatenated_indices, np.arange( config.n_particles, dtype=int  ))
+    
+    ##print(np.allclose(np.diff(concatenated_indices), np.ones(len(concatenated_indices)-1)))
+
     
     #########
     #print(len(positions), type(positions))
@@ -541,45 +567,45 @@ if __name__ == "__main__":
         layout_q = pm.decompose( positions ) 
         ## ^---- possible to filter out the particles without charge via e.g. positions[charges != 0] following positions[types == t])
         ### one step
-        ###field_q_energy = update_field_force_energy_q(
-        ###    charges,# charge
-        ###    phi_q,  # chage density
-        ###    phi_q_fourier,   
-        ###    elec_field_fourier, #for force calculation 
-        ###    elec_field,     
-        ###    elec_forces,    
-        ###    elec_energy_field, # for energy calculation 
-        ###    field_q_energy,
-        ###    layout_q, #### general terms  
-        ###    pm,
-        ###    positions,  
-        ###    config,
-        ###    compute_energy=True,
-        ###    comm=comm
-        ###)
-        ####print(field_q_energy, elec_forces[0])
-        
-        ### split 
-        update_field_force_q(
+        field_q_energy = update_field_force_energy_q(
             charges,# charge
             phi_q,  # chage density
             phi_q_fourier,   
             elec_field_fourier, #for force calculation 
             elec_field,     
-            elec_forces, 
+            elec_forces,    
+            elec_energy_field, # for energy calculation 
+            field_q_energy,
             layout_q, #### general terms  
             pm,
             positions,  
-            config
-        )
-        
-        field_q_energy=compute_field_energy_q(
-            phi_q_fourier,
-            elec_energy_field, #for energy calculation
-            field_q_energy,
+            config,
+            compute_energy=True,
             comm=comm
         )
-        print(field_q_energy, elec_forces[0])
+        #print(field_q_energy, elec_forces[0])
+        
+        #### split 
+        #update_field_force_q(
+        #    charges,# charge
+        #    phi_q,  # chage density
+        #    phi_q_fourier,   
+        #    elec_field_fourier, #for force calculation 
+        #    elec_field,     
+        #    elec_forces, 
+        #    layout_q, #### general terms  
+        #    pm,
+        #    positions,  
+        #    config
+        #)
+        #
+        #field_q_energy=compute_field_energy_q(
+        #    phi_q_fourier,
+        #    elec_energy_field, #for energy calculation
+        #    field_q_energy,
+        #    comm=comm
+        #)
+        #print(field_q_energy, elec_forces[0])
 
 
     if molecules_flag:
@@ -642,7 +668,7 @@ if __name__ == "__main__":
         velocity_out=args.velocity_output,
         force_out=args.force_output,
         comm=comm,
-    ) ## xinmeng <--- is elec_forces needed here? 
+    )  
     
 
     if config.n_print > 0:
@@ -660,18 +686,21 @@ if __name__ == "__main__":
                 layouts,
                 comm=comm,
             )
-            ## add charge related 
-            ## field_q_energy = 0.0 
-            if charges_flag:
-                field_q_energy=compute_field_energy_q(
-                    phi_q_fourier,
-                    elec_energy_field, #for energy calculation
-                    field_q_energy,
-                    comm=comm
-                )
+            ### add charge related 
+            ### field_q_energy = 0.0 
+            #if charges_flag:
+            #    field_q_energy=compute_field_energy_q(
+            #        phi_q_fourier,
+            #        elec_energy_field, #for energy calculation
+            #        field_q_energy,
+            #        comm=comm
+            #    )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        #print('field_forces.shape', field_forces.shape)
+        #print('bond_forces.shape',  bond_forces.shape) 
+        #print('elec_forces.shape',  elec_forces.shape) 
         store_data(
             out_dataset,
             step,
@@ -694,11 +723,13 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
-    """
+    
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
-
+    
+     
+    """
     flush_step = 0
     # ======================================================================= #
     # =================  |\/| |¯¯\     |    |¯¯| |¯¯| |¯¯)  ================= #
@@ -741,12 +772,12 @@ if __name__ == "__main__":
                     f"{steps_per_s:.3f} steps/s"
                 )
                 Logger.rank0.log(logging.INFO, info_str)
-
+        
         # Initial rRESPA velocity step
         velocities = integrate_velocity(
-            velocities, field_forces / config.mass, config.time_step
+            velocities, (field_forces + elec_forces) / config.mass, config.time_step
         )
-
+        
         # Inner rRESPA steps
         for inner in range(config.respa_inner):
             velocities = integrate_velocity(
@@ -758,7 +789,7 @@ if __name__ == "__main__":
                 positions, velocities, config.time_step / config.respa_inner
             )
             positions = np.mod(positions, config.box_size[None, :])
-
+    
             # Update fast forces
             if molecules_flag:
                 if not args.disable_bonds:
@@ -771,6 +802,8 @@ if __name__ == "__main__":
                         bonds_2_equilibrium,
                         bonds_2_stength,
                     )
+    """
+    """
                 if not args.disable_angle_bonds:
                     angle_energy_ = compute_angle_forces(
                         angle_forces,
@@ -787,7 +820,7 @@ if __name__ == "__main__":
                 (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner,
             )
-
+    
         # Update slow forces
         if not args.disable_field:
             update_field(
@@ -810,11 +843,39 @@ if __name__ == "__main__":
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
 
+            ## add q related 
+            if charges_flag:
+                layout_q = pm.decompose( positions ) 
+                ### split 
+                update_field_force_q(
+                    charges,# charge
+                    phi_q,  # chage density
+                    phi_q_fourier,   
+                    elec_field_fourier, #for force calculation 
+                    elec_field,     
+                    elec_forces, 
+                    layout_q, #### general terms  
+                    pm,
+                    positions,  
+                    config
+                )
+                
+                field_q_energy=compute_field_energy_q(
+                    phi_q_fourier,
+                    elec_energy_field, #for energy calculation
+                    field_q_energy,
+                    comm=comm
+                )
+                #print(field_q_energy, elec_forces[0])
+
+    
         # Second rRESPA velocity step
         velocities = integrate_velocity(
-            velocities, field_forces / config.mass, config.time_step
+            velocities, (field_forces + elec_forces) / config.mass, config.time_step
         )
-
+        print(type(field_forces),type(field_forces))
+        #print(field)
+    
         # Only compute and keep the molecular bond energy from the last rRESPA
         # inner step
         if molecules_flag:
@@ -828,51 +889,24 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-                
+
+    
                 dd = domain_decomposition(
                     positions,
                     pm,
-                    velocities,
-                    indices,
-                    bond_forces,
-                    angle_forces,
-                    field_forces,
-                    names,
-                    types,
+                    *args_in,
                     molecules=molecules if molecules_flag else None,
                     bonds=bonds if molecules_flag else None,
                     verbose=args.verbose,
                     comm=comm,
                 )
-                if molecules_flag:
-                    (
-                        positions,
-                        velocities,
-                        indices,
-                        bond_forces,
-                        angle_forces,
-                        field_forces,
-                        names,
-                        types,
-                        bonds,
-                        molecules,
-                    ) = dd
-                else:
-                    (
-                        positions,
-                        velocities,
-                        indices,
-                        bond_forces,
-                        angle_forces,
-                        field_forces,
-                        names,
-                        types,
-                    ) = dd
+                exec(_cmd_receive_dd )  
 
+    
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
                 angle_forces = np.asfortranarray(angle_forces)
-
+    
                 layouts = [
                     pm.decompose(positions[types == t]) for t in range(config.n_types)
                 ]
@@ -926,6 +960,14 @@ if __name__ == "__main__":
                         layouts,
                         comm=comm,
                     )
+
+                    if charges_flag:
+                        field_q_energy=compute_field_energy_q(
+                            phi_q_fourier,
+                            elec_energy_field, #for energy calculation
+                            field_q_energy,
+                            comm=comm
+                        )
                 else:
                     kinetic_energy = comm.allreduce(
                         0.5 * config.mass * np.sum(velocities ** 2)
@@ -944,13 +986,14 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
-                    field_forces + bond_forces + angle_forces,
+                    field_forces + bond_forces + angle_forces + elec_forces, #<--------
                     config.box_size,
                     temperature,
                     kinetic_energy,
                     bond_energy,
                     angle_energy,
                     field_energy,
+                    field_q_energy, #<---------
                     config.time_step,
                     config,
                     velocity_out=args.velocity_output,
@@ -1004,6 +1047,32 @@ if __name__ == "__main__":
                 layouts,
                 comm=comm,
             )
+            
+            ## add q related 
+            if charges_flag:
+                layout_q = pm.decompose( positions ) 
+                ### split 
+                update_field_force_q(
+                    charges,# charge
+                    phi_q,  # chage density
+                    phi_q_fourier,   
+                    elec_field_fourier, #for force calculation 
+                    elec_field,     
+                    elec_forces, 
+                    layout_q, #### general terms  
+                    pm,
+                    positions,  
+                    config
+                )
+                
+                field_q_energy=compute_field_energy_q(
+                    phi_q_fourier,
+                    elec_energy_field, #for energy calculation
+                    field_q_energy,
+                    comm=comm
+                )
+                #print(field_q_energy, elec_forces[0])
+
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         frame = (step + 1) // config.n_print
@@ -1017,13 +1086,14 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            field_forces + bond_forces + angle_forces,
+            field_forces + bond_forces + angle_forces+ elec_forces, #<-----------
             config.box_size,
             temperature,
             kinetic_energy,
             bond_energy,
             angle_energy,
             field_energy,
+            field_q_energy, #<-----------
             config.time_step,
             config,
             velocity_out=args.velocity_output,

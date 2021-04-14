@@ -11,7 +11,6 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
 
 
-
 def compute_field_energy_q(   
     phi_q_fourier,
     elec_energy_field, #for energy calculation
@@ -28,7 +27,6 @@ def compute_field_energy_q(
     field_q_energy = 0.5 * comm.allreduce(np.sum(elec_energy_field.value))
 
     return field_q_energy.real
-
 
 
 def update_field_force_q(
