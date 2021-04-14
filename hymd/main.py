@@ -763,7 +763,7 @@ if __name__ == "__main__":
                     logging.INFO,
                     (
                         f"(GHOSTS: Total number of particles of type "
-                        f"{config.type_to_name_map} to be "
+                        f"{config.type_to_name_map[t]} to be "
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
