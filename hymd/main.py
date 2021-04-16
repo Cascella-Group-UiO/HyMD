@@ -277,7 +277,6 @@ if __name__ == "__main__":
             config.max_molecule_size if config.max_molecule_size else 201,
             comm=comm,
         )
-        print('molecules_flag:',molecules_flag)
         indices = in_file["indices"][rank_range]
         positions = in_file["coordinates"][-1, rank_range, :]
         positions = positions.astype(dtype)
@@ -356,7 +355,6 @@ if __name__ == "__main__":
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     phi_new = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-    print('np.shape(phi[0]:',np.shape(phi[0]))
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
@@ -446,7 +444,6 @@ if __name__ == "__main__":
             layouts,
             comm=comm,
         )
-        print("field_energy:",field_energy)
         compute_field_force(
             layouts, positions, force_on_grid, field_forces, types, config.n_types
         )
@@ -498,7 +495,6 @@ if __name__ == "__main__":
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
     out_dataset = OutDataset(args.destdir, config, disable_mpio=args.disable_mpio)
-    print('out_dataset:',out_dataset.__getattribute__)
     store_static(
         out_dataset,
         rank_range,
@@ -529,6 +525,18 @@ if __name__ == "__main__":
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        if config.pressure:
+            pressure = comp_pressure(
+                    phi,
+                    hamiltonian,
+                    velocities,
+                    config,
+                    phi_fft,
+                    phi_laplacian,
+                    phi_new
+            )
+        else:
+            pressure = 0.0 #0.0 indicates not calculated. To be changed.
         store_data(
             out_dataset,
             step,
@@ -538,6 +546,7 @@ if __name__ == "__main__":
             velocities,
             config.box_size,
             temperature,
+            pressure,
             kinetic_energy,
             bond_energy,
             angle_energy,
@@ -547,18 +556,6 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
-
-    #pressure
-    if(config.pressure):
-        executed = comp_pressure(
-                phi,
-                hamiltonian,
-                config,
-                phi_fft,
-                phi_laplacian,
-                phi_new
-            )
-        print('Executed pressure:', executed)
 
     if rank == 0:
         loop_start_time = datetime.datetime.now()
@@ -816,15 +813,17 @@ if __name__ == "__main__":
                 if args.disable_field:
                     field_energy = 0.0
                 if config.pressure:
-                    executed = comp_pressure(
+                    pressure = comp_pressure(
                             phi,
                             hamiltonian,
+                            velocities,
                             config,
                             phi_fft,
                             phi_laplacian,
                             phi_new
                     )
-                    print("Executed pressure:",executed)
+                else:
+                    pressure = 0.0 #0.0 indicates not calculated. To be changed.
 
                 store_data(
                     out_dataset,
@@ -835,6 +834,7 @@ if __name__ == "__main__":
                     velocities,
                     config.box_size,
                     temperature,
+                    pressure,
                     kinetic_energy,
                     bond_energy,
                     angle_energy,
@@ -896,6 +896,18 @@ if __name__ == "__main__":
         temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
         if args.disable_field:
             field_energy = 0.0
+        if config.pressure:
+            pressure = comp_pressure(
+                    phi,
+                    hamiltonian,
+                    velocities,
+                    config,
+                    phi_fft,
+                    phi_laplacian,
+                    phi_new
+            )
+        else:
+            pressure = 0.0 #0.0 indicates not calculated. To be changed.
         store_data(
             out_dataset,
             step,
@@ -905,6 +917,7 @@ if __name__ == "__main__":
             velocities,
             config.box_size,
             temperature,
+            pressure,
             kinetic_energy,
             bond_energy,
             angle_energy,
@@ -915,13 +928,13 @@ if __name__ == "__main__":
             comm=comm,
         )
         #pressure
-        if(config.pressure):
-            pressure = comp_pressure(
-                    phi,
-                    hamiltonian,
-                    config,
-                    phi_fft,
-                    phi_laplacian,
-                    phi_new
-                )
+        #if(config.pressure):
+        #    pressure = comp_pressure(
+        #            phi,
+        #            hamiltonian,
+        #            config,
+        #            phi_fft,
+        #            phi_laplacian,
+        #            phi_new
+        #        )
     out_dataset.close_file()

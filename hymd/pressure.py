@@ -6,7 +6,7 @@ import sympy
 import matplotlib.pyplot as plt
 
 def plot(
-        function, phi, hamiltonian, config, phi_laplacian, V_bar_tuple, title
+        function, phi, hamiltonian, config, phi_laplacian, V_bar_tuple, title, *args
 ):
     if(title == 'numerical'):
         lapfactor = config.mesh_size[0]
@@ -15,10 +15,12 @@ def plot(
     axis = 0
     Y = []
     V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
+    V = np.prod(config.box_size)
 
     #PLOTS
     grid1d = np.array(np.arange(0,config.mesh_size[0],1))
     if(function == 'phi'):
+        #phi plots
         phimod = 1/(config.kappa * config.rho_0)*sum(phi)
         Y.clear()
         grid1d = np.array(np.arange(0,config.mesh_size[0],1))
@@ -26,28 +28,61 @@ def plot(
             y = phimod[i][j]
             Y.append(y)
         y = np.average(np.asarray(Y), axis=0)
-        plt.plot(grid1d, y, label='1/(config.kappa * config.rho_0)*(phi[0]+phi[1])')
+        plt.plot(grid1d, y, label='k*(phi[0]+phi[1]) in z')
         plt.title(title); plt.legend()
+
+        if(args):
+            if('y' in args):
+                Y.clear()
+                phimod_tr = np.transpose(phimod, axes=[0,2,1])
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
+                    y = phimod_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='k*(phi1+phi2) in y')
+                plt.title(title); plt.legend()
+            if('x' in args):
+                Y.clear()
+                phimod_tr = np.transpose(phimod, axes=[1,2,0])
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
+                    y = phimod_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='k*(phi1+phi2) in x')
+                plt.title(title); plt.legend()
         plt.show()
 
-        #Y.clear()
-        #for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
-        #    y = phi_gradient[0][2][i][j]/config.mesh_size[0]§
-        #    Y.append(y)
-        #    plt.plot(grid1d, y, label='grad[0]')
-        #y = np.average(np.asarray(Y), axis=0)
-        #plt.plot(grid1d, y, label='grad[0]')
-
+        #phi_laplacian plots
         Y.clear()
         for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
             y = phi_laplacian[0][2][i][j] * lapfactor
             Y.append(y)
         y = np.average(np.asarray(Y), axis=0)
-        plt.plot(grid1d, y, label='lap[0]')
+        plt.plot(grid1d, y, label='lap[0] in z')
         plt.title(title); plt.legend()
+        if(args):
+            if('y' in args):
+                Y.clear()
+                phi_laplacian_tr = np.transpose(phi_laplacian[0][1], axes=[0,2,1])
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(config.mesh_size[0]*6/10),round(9/10*config.mesh_size[0]))]:
+                    y = phi_laplacian_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='lap[0] in y lower half')
+                plt.title(title); plt.legend()
+            if('x' in args):
+                Y.clear()
+                phi_laplacian_tr = np.transpose(phi_laplacian[0][0], axes=[1,2,0])
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(config.mesh_size[0]*6/10),round(9/10*config.mesh_size[0]))]:
+                    y = phi_laplacian_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='lap[0] in x lower half')
+                plt.title(title); plt.legend()
         plt.show()
 
-    if(function == 'V_bar'):
+    if(function == 'V_bar' or function == 'V_bar*lap'):
+        #V_bar plots
         Y_int = [] ; Y_inc = []
         Y.clear()
         V_interaction = [_[0] for _ in V_bar_tuple]
@@ -55,32 +90,89 @@ def plot(
         for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
             # Total V_bar for type = 0 and direction = z
             y = V_bar[0][i][j]
-            y_int = V_interaction[0][i][j]
+            #y_int = V_interaction[0][i][j]
             y_inc = V_incompressibility[0][i][j]
             Y.append(y)
-            Y_int.append(y_int)
+            #Y_int.append(y_int)
             Y_inc.append(y_inc)
         y = np.average(np.asarray(Y), axis=0)
-        y_int = np.average(np.asarray(Y_int), axis=0)
+        #y_int = np.average(np.asarray(Y_int), axis=0)
         y_inc = np.average(np.asarray(Y_inc), axis=0)
-        plt.plot(grid1d, y_int, label='V_interaction[0]')
+        #plt.plot(grid1d, y_int, label='V_interaction[0]')
         plt.title(title); plt.legend()
-        plt.show()
         plt.plot(grid1d, y_inc, label='V_incompressibility[0]')
         plt.title(title); plt.legend()
         plt.show()
-        plt.plot(grid1d, y, label='V_bar[0]')
+        plt.plot(grid1d, y, label='V_bar[0] in z')
         plt.title(title); plt.legend()
+
+        if(args):
+            if('y' in args):
+                Y.clear()
+                V_bar_tr = np.transpose(V_bar[0], axes=[0,2,1])
+                #for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(config.mesh_size[0]/10),round(4/10*config.mesh_size[0]))]:
+                    y = V_bar_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='V_bar[0] in y lower half')
+                plt.title(title); plt.legend()
+
+                Y.clear()
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(6/10*config.mesh_size[0]),round(9/10*config.mesh_size[0]))]:
+                    y = V_bar_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='V_bar[0] in y higher half')
+                plt.title(title); plt.legend()
+            if('x' in args):
+                Y.clear()
+                V_bar_tr = np.transpose(V_bar[0], axes=[1,2,0])
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(config.mesh_size[0]/10),round(4/10*config.mesh_size[0]))]:
+                    y = V_bar_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='V_bar[0] in x lower half')
+                plt.title(title); plt.legend()
+
+                Y.clear()
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(6/10*config.mesh_size[0]),round(9/10*config.mesh_size[0]))]:
+                    y = V_bar_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='V_bar[0] in x higher half')
+                plt.title(title); plt.legend()
         plt.show()
 
-    if(function == 'V_bar*lap'):
+        #V_bar * lap plots
         Y.clear()
         for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(config.mesh_size[0])]:
             y = V_bar[0][i][j] * phi_laplacian[0][2][i][j]
             Y.append(y)
         y = np.average(np.asarray(Y), axis=0)
-        plt.plot(grid1d, y, label='V_bar[0]*lap[0]')
+        plt.plot(grid1d, y, label='V_bar[0]*lap[0] in z direction')
         plt.title(title); plt.legend()
+        if(args):
+            if('y' in args):
+                Y.clear()
+                V_bar_tr = np.transpose(V_bar[0], axes=[0,2,1])
+                phi_laplacian_tr = np.transpose(phi_laplacian[0][1], axes=[0,2,1])
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(config.mesh_size[0]/10),round(4/10*config.mesh_size[0]))]:
+                    y = V_bar_tr[i][j] * phi_laplacian_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='V_bar[0]*lap[0] in y lower half')
+                plt.title(title); plt.legend()
+            if('x' in args):
+                Y.clear()
+                V_bar_tr = np.transpose(V_bar[0], axes=[1,2,0])
+                phi_laplacian_tr = np.transpose(phi_laplacian[0][1], axes=[1,2,0])
+                for (i,j) in [(i,j) for i in range(config.mesh_size[0]) for j in range(round(config.mesh_size[0]/10),round(4/10*config.mesh_size[0]))]:
+                    y = V_bar_tr[i][j] * phi_laplacian_tr[i][j]
+                    Y.append(y)
+                y = np.average(np.asarray(Y), axis=0)
+                plt.plot(grid1d, y, label='V_bar[0]*lap[0] in x lower half')
+                plt.title(title); plt.legend(loc='lower right')
         plt.show()
 
 
@@ -160,18 +252,27 @@ def numericallap(phi, hamiltonian, config, V_bar, volume_per_cell
 def comp_pressure(
         phi,
         hamiltonian,
+        velocities,
         config,
         phi_fourier,
         phi_laplacian,
         phi_new
 ):
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
     V = np.prod(config.box_size)
     n_mesh__cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh__cells
     w = hamiltonian.w(phi) * volume_per_cell
 
+    #Kinetic term
+    kinetic_energy = 0.5 * config.mass * np.sum(velocities ** 2)
+    p_kin = 2/(3*V)*kinetic_energy
+
     #Term 1
-    p0 = -1/V * w.csum()
+    p0 = -1/V * np.sum(w)
     #print('p0:',p0)
   
     #Term 2
@@ -181,13 +282,11 @@ def comp_pressure(
     V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
 
     p1 = [
-        1/V #* hamiltonian.V_bar[i](phi)
+        1/V
         * V_bar[i]
         * phi[i] * volume_per_cell for i in range(config.n_types)
     ]
-    p1 = np.sum([
-        p1[i].csum() for i in range(config.n_types)
-    ])
+    p1 = np.sum(p1)
     #print('p1:',p1)
     
     #numericallap(phi, hamiltonian, config, V_bar, volume_per_cell)
@@ -230,26 +329,32 @@ def comp_pressure(
     p2z = [
         1/V * config.sigma**2 * V_bar[i] * phi_laplacian[i][2] * volume_per_cell for i in range(config.n_types)
     ]
-    p2x = np.cumsum(p2x)
-    p2y = np.cumsum(p2y)
-    p2z = np.cumsum(p2z)
+
+    p2x = np.sum(p2x)
+    p2y = np.sum(p2y)
+    p2z = np.sum(p2z)
     #print('p2x:',p2x[-1])
     #print('p2y:',p2y[-1])
     #print('p2z:',p2z[-1])
     #print('P_total_x:',p0+p1+p2x[-1])
     #print('P_total_y:',p0+p1+p2y[-1])
     #print('P_total_z:',p0+p1+p2z[-1])
-
+    
     #PLOTS
     if(config.plot):
         plot(
-                'phi',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh'
+                'phi',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh',
+                'x','y'
         ) 
         plot(
-              'V_bar*lap',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh'
-          )
-        plot(
-            'V_bar',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh'
+              'V_bar*lap',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh',
+              'x','y'
         )
+        #plot(
+        #    'V_bar',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh',
+        #    'x','y'
+        #)
 
-    return 1.0
+    return_value = [p_kin,p0,p1,p2x,p2y,p2z,(p_kin+p0+p1+p2x),(p_kin+p0+p1+p2y),(p_kin+p0+p1+p2z)]
+    return_value = [comm.allreduce(_) for _ in return_value]
+    return return_value

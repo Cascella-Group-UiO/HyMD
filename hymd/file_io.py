@@ -212,6 +212,14 @@ def store_static(
     ) = setup_time_dependent_element(
         "temperature", h5md.observables, n_frames, (3,), "float32", units="Kelvin"
     )
+    (
+        _,
+        h5md.pressure_step,
+        h5md.pressure_time,
+        h5md.pressure,
+    ) = setup_time_dependent_element(
+        "pressure", h5md.observables, n_frames, (9,), "float32", units="Bar"
+    )
 
     ind_sort = np.argsort(indices)
     for i in ind_sort:
@@ -263,6 +271,7 @@ def store_data(
     velocities,
     box_size,
     temperature,
+    pressure,
     kinetic_energy,
     bond2_energy,
     bond3_energy,
@@ -283,6 +292,7 @@ def store_data(
         h5md.field_energy_step,
         h5md.total_momentum_step,
         h5md.temperature_step,
+        h5md.pressure_step
     ):
         dset[frame] = step
 
@@ -297,6 +307,7 @@ def store_data(
         h5md.field_energy_time,
         h5md.total_momentum_time,
         h5md.temperature_time,
+        h5md.pressure_time
     ):
         dset[frame] = step * time_step
 
@@ -319,6 +330,7 @@ def store_data(
     h5md.field_energy[frame] = field_energy
     h5md.total_momentum[frame, :] = total_momentum
     h5md.temperature[frame] = temperature
+    h5md.pressure[frame] = pressure
 
     header_ = 13 * "{:>15}"
     fmt_ = [
