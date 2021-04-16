@@ -413,14 +413,17 @@ if __name__ == "__main__":
     #)  ## demo; TBR
     charges = np.ones(
         shape=len(positions) , dtype=dtype
-    )/10.0 ## demo; TBR
+    )#/10.0 ## demo; TBR
     
     #charges = np.ones(len(positions))
     ##--> ceneter sphere r=1 is negative; others random
-    #for i in np.arange(len(positions)):
-    #    if i % 2 == 1:
-    #        charges[i] = -1
+    for i in np.arange(len(positions)):
+        if types[i] == 4 :#i % 2 == 1:
+            charges[i] = -1
+    charges = charges * 0.01 #charges*0.0
     #print('total charge',  np.sum(charges))
+    #print(types)
+    #print(names)
     
     if charges_flag:
         phi_q = pm.create("real", value=0.0) 
@@ -465,13 +468,11 @@ if __name__ == "__main__":
          'names', 
          'types'
     ]
-
     if charges_flag: ## add charge related 
         args_in.append(charges) 
         args_in.append(elec_forces)
         args_recv.append('charges')
         args_recv.append('elec_forces')
-
     if molecules_flag:
         args_recv.append('bonds')
         args_recv.append('molecules')
@@ -509,15 +510,15 @@ if __name__ == "__main__":
 
     ### https://pythonprogramming.net/mpi-broadcast-tutorial-mpi4py/
     ### testing of incides
-    rank_indices = indices
-    receive_buffer = comm.gather(rank_indices, root=0)
-    gathered_rank_indices = None
-    if comm.Get_rank() == 0:
-        print('here----- to check')
-        gathered_rank_indices = np.concatenate(receive_buffer)
-    concatenated_indices = comm.bcast(gathered_rank_indices, root=0)
-    sorted_concatenated_indices = np.sort(concatenated_indices)
-    np.testing.assert_array_equal(sorted_concatenated_indices, np.arange( config.n_particles, dtype=int  ))
+    #rank_indices = indices
+    #receive_buffer = comm.gather(rank_indices, root=0)
+    #gathered_rank_indices = None
+    #if comm.Get_rank() == 0:
+    #    print('here----- to check')
+    #    gathered_rank_indices = np.concatenate(receive_buffer)
+    #concatenated_indices = comm.bcast(gathered_rank_indices, root=0)
+    #sorted_concatenated_indices = np.sort(concatenated_indices)
+    #np.testing.assert_array_equal(sorted_concatenated_indices, np.arange( config.n_particles, dtype=int  ))
     
     ##print(np.allclose(np.diff(concatenated_indices), np.ones(len(concatenated_indices)-1)))
 
@@ -750,6 +751,8 @@ if __name__ == "__main__":
     # =================  |  | |__/     |___ |__| |__| |¯¯   ================= #
     # ======================================================================= #
     for step in range(config.n_steps):
+        if comm.Get_rank() == 0:
+            print('--------------- step ---------------', step)
         current_step_time = datetime.datetime.now()
 
         if step == 0 and args.verbose > 1:
@@ -906,7 +909,21 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-
+                
+                
+                ##################### 
+                args_in = [
+                     velocities,
+                     indices,
+                     bond_forces,
+                     angle_forces,
+                     field_forces,
+                     names, 
+                     types
+                ]
+                if charges_flag: ## add charge related 
+                    args_in.append(charges) 
+                    args_in.append(elec_forces)
                 dd = domain_decomposition(
                     positions,
                     pm,
@@ -916,11 +933,29 @@ if __name__ == "__main__":
                     verbose=args.verbose,
                     comm=comm,
                 )
-                print('HERE ---- ') 
-
-    """
                 exec(_cmd_receive_dd )
-                 
+                ##############################
+                ########################### call explicitly 
+                #dd = domain_decomposition(
+                #    positions,
+                #    pm,
+                #    velocities,
+                #    indices,
+                #    bond_forces,
+                #    angle_forces,
+                #    field_forces,
+                #    names,
+                #    types,
+                #    charges,
+                #    elec_forces,
+                #    molecules=molecules if molecules_flag else None,
+                #    bonds=bonds if molecules_flag else None,
+                #    verbose=args.verbose,
+                #    comm=comm,
+                #)
+                #exec(_cmd_receive_dd)
+                
+                
 
         
                 positions = np.asfortranarray(positions)
@@ -944,7 +979,7 @@ if __name__ == "__main__":
                         bonds_3_equilibrium,
                         bonds_3_stength,
                     ) = bonds_prep
-        
+       
         for t in range(config.n_types):
             if args.verbose > 2:
                 exchange_cost = layouts[t].get_exchange_cost()
@@ -1121,5 +1156,4 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
-    """
     out_dataset.close_file()
