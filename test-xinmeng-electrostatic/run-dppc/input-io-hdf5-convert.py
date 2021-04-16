@@ -50,16 +50,17 @@ charges = np.ones(
         shape=len(coord_array)  
 ) 
 
-if not hf.get('charges'):
-    hf.create_dataset('charges', data=charges, dtype='float32')
-    print(df.keys) 
+if not hf.get('charge'):
+    hf.create_dataset('charge', data=charges, dtype='float32')
+    print(hf.keys()) 
 hf.close()
 
 hf = h5py.File(in_h5, 'r')
-charges = hf.get('charges')[:]
+charges = hf.get('charge')[:]
 print(charges)
 print(type(charges))
 
+### https://nongnu.org/h5md/proposals/0102_particles_charge.html
 
 
 
