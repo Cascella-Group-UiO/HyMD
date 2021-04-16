@@ -39,7 +39,6 @@ hf = h5py.File(in_h5, 'a')
 coord_array = np.array(hf.get('coordinates'))[0]
 print( coord_array.shape )
 
-
 name_array = np.array(hf.get('names'))
 print( name_array)
 print( name_array.shape )
@@ -56,27 +55,17 @@ if not hf.get('charges'):
     print(df.keys) 
 hf.close()
 
-
-
 hf = h5py.File(in_h5, 'r')
 charges = hf.get('charges')[:]
 print(charges)
 print(type(charges))
+
+
+
+
+
+
 ## 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Create a storage file where data is to be stored
 ##df = HDFStore(in_h5)
 ##hdf.put('d2', DataFrame(np.random.randn(7,4)))
