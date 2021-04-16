@@ -614,6 +614,7 @@ if __name__ == "__main__":
         )
         
         field_q_energy=compute_field_energy_q(
+            config,
             phi_q_fourier,
             elec_energy_field, #for energy calculation
             field_q_energy,
@@ -621,7 +622,7 @@ if __name__ == "__main__":
         )
         #print(field_q_energy, elec_forces[0])
 
-
+    
     if molecules_flag:
         if not (args.disable_bonds and args.disable_angle_bonds):
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
@@ -751,8 +752,8 @@ if __name__ == "__main__":
     # =================  |  | |__/     |___ |__| |__| |¯¯   ================= #
     # ======================================================================= #
     for step in range(config.n_steps):
-        if comm.Get_rank() == 0:
-            print('--------------- step ---------------', step)
+        #if comm.Get_rank() == 0:
+            #print('--------------- step ---------------', step)
         current_step_time = datetime.datetime.now()
 
         if step == 0 and args.verbose > 1:
@@ -876,6 +877,7 @@ if __name__ == "__main__":
                 )
                 
                 field_q_energy=compute_field_energy_q(
+                    config,
                     phi_q_fourier,
                     elec_energy_field, #for energy calculation
                     field_q_energy,
@@ -1018,6 +1020,7 @@ if __name__ == "__main__":
 
                     if charges_flag:
                         field_q_energy=compute_field_energy_q(
+                            config,
                             phi_q_fourier,
                             elec_energy_field, #for energy calculation
                             field_q_energy,
@@ -1121,6 +1124,7 @@ if __name__ == "__main__":
                 )
                 
                 field_q_energy=compute_field_energy_q(
+                    config,
                     phi_q_fourier,
                     elec_energy_field, #for energy calculation
                     field_q_energy,
