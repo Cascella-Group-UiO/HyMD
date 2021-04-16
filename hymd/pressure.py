@@ -286,8 +286,8 @@ def comp_pressure(
         * V_bar[i]
         * phi[i] * volume_per_cell for i in range(config.n_types)
     ]
+    p1 = [np.sum(p1[i].value) for i in range(config.n_types)]
     p1 = np.sum(p1)
-    #print('p1:',p1)
     
     #numericallap(phi, hamiltonian, config, V_bar, volume_per_cell)
 
@@ -330,12 +330,15 @@ def comp_pressure(
         1/V * config.sigma**2 * V_bar[i] * phi_laplacian[i][2] * volume_per_cell for i in range(config.n_types)
     ]
 
+    p2x = [np.sum(p2x[i].value) for i in range(config.n_types)]
+    p2y = [np.sum(p2y[i].value) for i in range(config.n_types)]
+    p2z = [np.sum(p2z[i].value) for i in range(config.n_types)]
     p2x = np.sum(p2x)
     p2y = np.sum(p2y)
     p2z = np.sum(p2z)
-    #print('p2x:',p2x[-1])
-    #print('p2y:',p2y[-1])
-    #print('p2z:',p2z[-1])
+    #print('p2x:',p2x)
+    #print('p2y:',p2y)
+    #print('p2z:',p2z)
     #print('P_total_x:',p0+p1+p2x[-1])
     #print('P_total_y:',p0+p1+p2y[-1])
     #print('P_total_z:',p0+p1+p2z[-1])
