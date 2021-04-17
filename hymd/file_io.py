@@ -117,6 +117,8 @@ def store_static(
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
         n_frames += 1
+    if np.mod(config.n_steps, config.n_print) == 1:
+        n_frames += 1
 
     # Time dependent box, fix this later.
     # h5md.box_step = h5md.edges.create_dataset('step', (n_frames,), 'i')
