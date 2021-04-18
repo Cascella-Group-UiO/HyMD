@@ -586,7 +586,7 @@ if __name__ == "__main__":
                 step_t = current_step_time - last_step_time
                 tot_t = current_step_time - loop_start_time
                 avg_t = (current_step_time - loop_start_time) / (step + 1)
-                ns_sim = (step + 1) * config.time_step / 1000
+                ns_sim = (step + 1) * config.time_step * config.respa_inner / 1000  # noqa: E501
 
                 seconds_per_day = 24 * 60 * 60
                 seconds_elapsed = tot_t.days * seconds_per_day
@@ -607,9 +607,10 @@ if __name__ == "__main__":
                 )
                 Logger.rank0.log(logging.INFO, info_str)
 
-        # Initial rRESPA velocity step
+        # Initial outer rRESPA velocity step
         velocities = integrate_velocity(
-            velocities, field_forces / config.mass, config.time_step
+            velocities, field_forces / config.mass,
+            config.time_step * config.respa_inner
         )
 
         # Inner rRESPA steps
@@ -617,11 +618,9 @@ if __name__ == "__main__":
             velocities = integrate_velocity(
                 velocities,
                 (bond_forces + angle_forces) / config.mass,
-                config.time_step / config.respa_inner,
+                config.time_step,
             )
-            positions = integrate_position(
-                positions, velocities, config.time_step / config.respa_inner
-            )
+            positions = integrate_position(positions, velocities, config.time_step)  # noqa: E501
             positions = np.mod(positions, config.box_size[None, :])
 
             # Update fast forces
@@ -650,7 +649,7 @@ if __name__ == "__main__":
             velocities = integrate_velocity(
                 velocities,
                 (bond_forces + angle_forces) / config.mass,
-                config.time_step / config.respa_inner,
+                config.time_step,
             )
 
         # Update slow forces
@@ -677,7 +676,9 @@ if __name__ == "__main__":
 
         # Second rRESPA velocity step
         velocities = integrate_velocity(
-            velocities, field_forces / config.mass, config.time_step
+            velocities,
+            field_forces / config.mass,
+            config.time_step * config.respa_inner
         )
 
         # Only compute and keep the molecular bond energy from the last rRESPA
