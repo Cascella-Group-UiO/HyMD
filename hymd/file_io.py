@@ -335,18 +335,18 @@ def store_data(
         h5md.temperature_time,
         h5md.thermostat_work_time,
     ):
-        dset[frame] = step * time_step
+        dset[frame] = step * time_step * config.respa_inner
 
     if velocity_out:
         h5md.velocities_step[frame] = step
-        h5md.velocities_time[frame] = step * time_step
+        h5md.velocities_time[frame] = step * time_step * config.respa_inner
     if force_out:
         h5md.forces_step[frame] = step
-        h5md.forces_time[frame] = step * time_step
+        h5md.forces_time[frame] = step * time_step * config.respa_inner
 
     # Time dependent box, fix this later.
     # h5md.box_step[frame] = step
-    # h5md.box_time[frame] = step * time_step
+    # h5md.box_time[frame] = step * time_step * config.respa_inner
     # h5md.box_value[frame, ...] = np.array(box_size)
 
     ind_sort = np.argsort(indices)
@@ -407,7 +407,7 @@ def store_data(
     data_fmt = f'{"{:15}"}{12 * "{:15.8g}" }'
     data = data_fmt.format(
         step,
-        time_step * step,
+        time_step * config.respa_inner * step,
         temperature,
         total_energy / divide_by,
         kinetic_energy / divide_by,

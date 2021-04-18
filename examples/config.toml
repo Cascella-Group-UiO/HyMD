@@ -24,7 +24,9 @@ n_print = 100
 # Frequency of requesting that the HDF5 library flush the file output buffers
 # to disk after in number of n_print timesteps.
 n_flush = 1000
-# Time step used in the simulation in [picoseconds].
+# Time step used in the simulation in [picoseconds]. If the "respa" integrator
+# is used, this is the *inner* time step, with the outer time step (on which
+# the field is integrated) is respa_inner * time_step.
 time_step = 0.03
 # Simulation box size in [nanometers].
 box_size = [10.0, 10.0, 10.0]
@@ -73,7 +75,7 @@ kappa = 0.05
 sigma = 0.5
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
-# 
+#
 # Could be worth using dataframes?
 chi = [
   [["C", "W"], [42.24]],
