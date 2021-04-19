@@ -74,7 +74,7 @@ hf = h5py.File(in_h5, 'r')
 charges_read = hf.get('charge')[:]
 print(charges_read)
 print( np.around(charges_read - charges, 3) ) 
-##print(type(charges))
+print(hf["charge"])
 
 
 

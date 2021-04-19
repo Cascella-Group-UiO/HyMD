@@ -329,9 +329,14 @@ if __name__ == "__main__":
         if molecules_flag:
             molecules = in_file["molecules"][rank_range]
             bonds = in_file["bonds"][rank_range]
-        
+        ## charges xinmeng 
+        if "charge" in in_file: 
+            charges = in_file["charge"][rank_range]
+            #print('charges --- ', len(charges)) 
+            #print(charges)
+    
 
-
+    
     config = check_config(config, indices, names, types, comm=comm)
     if config.n_print:
         if config.n_flush is None:
@@ -406,24 +411,27 @@ if __name__ == "__main__":
     ############### 
     _SPACE_DIM = 3 ## dimension; demo; TBR
     #charges_flag = False #1 ## demo; TBR
-    ###demo charges 
+    ####demo charges 
     charges_flag = True ## demo; TBR
-    #charges = np.zeros(
+    ##charges = np.zeros(
+    ##    shape=len(positions) , dtype=dtype
+    ##)  ## demo; TBR
+    #charges = np.ones(
     #    shape=len(positions) , dtype=dtype
-    #)  ## demo; TBR
-    charges = np.ones(
-        shape=len(positions) , dtype=dtype
-    )#/10.0 ## demo; TBR
-    
-    #charges = np.ones(len(positions))
-    ##--> ceneter sphere r=1 is negative; others random
-    for i in np.arange(len(positions)):
-        if types[i] == 4 :#i % 2 == 1:
-            charges[i] = -1
-    charges = charges * 0.01 #charges*0.0
-    #print('total charge',  np.sum(charges))
-    #print(types)
-    #print(names)
+    #)#/10.0 ## demo; TBR
+    #
+    ##charges = np.ones(len(positions))
+    ###--> ceneter sphere r=1 is negative; others random
+    #for i in np.arange(len(positions)):
+    #    if types[i] == 4 :#i % 2 == 1:
+    #        charges[i] = -1
+    #charges = charges * 0.01 #charges*0.0
+    ##print('total charge',  np.sum(charges))
+    ##print(types)
+    ##print(names)
+
+    #print('charges --- ')
+    #print(charges)
     
     if charges_flag:
         phi_q = pm.create("real", value=0.0) 
