@@ -25,7 +25,7 @@ from field import (
     compute_field_energy_q
 )
 
-from file_io import distribute_input, OutDataset, store_static, store_data
+from file_io import distribute_input, OutDataset, store_static, store_data, store_static_old
 from force import compute_bond_forces__fortran as compute_bond_forces
 from force import compute_angle_forces__fortran as compute_angle_forces
 from force import prepare_bonds
@@ -333,8 +333,8 @@ if __name__ == "__main__":
         if "charge" in in_file: 
             charges = in_file["charge"][rank_range]
             #print('charges --- ', len(charges)) 
-            #print(charges)
-    
+            #print(type(charges), charges.shape)
+            
 
     
     config = check_config(config, indices, names, types, comm=comm)
@@ -432,7 +432,7 @@ if __name__ == "__main__":
 
     #print('charges --- ')
     #print(charges)
-    
+
     if charges_flag:
         phi_q = pm.create("real", value=0.0) 
         phi_q_fourier = pm.create("complex", value=0.0)     
@@ -679,12 +679,16 @@ if __name__ == "__main__":
     out_dataset = OutDataset(args.destdir, config,
                              double_out=args.double_output,
                              disable_mpio=args.disable_mpio)
+    #print('here')
+    #print(type(indices), indices.shape)
+    #print(type(names), names.shape)
     store_static(
         out_dataset,
         rank_range,
         names,
         types,
         indices,
+        charges, #<---------- simple add charges 
         config,
         bonds_2_atom1,
         bonds_2_atom2,
@@ -692,8 +696,21 @@ if __name__ == "__main__":
         force_out=args.force_output,
         comm=comm,
     )  
-    
+    #store_static_old(
+    #    out_dataset,
+    #    rank_range,
+    #    names,
+    #    types,
+    #    indices,
+    #    config,
+    #    bonds_2_atom1,
+    #    bonds_2_atom2,
+    #    velocity_out=args.velocity_output,
+    #    force_out=args.force_output,
+    #    comm=comm,
+    #)  
 
+    
     if config.n_print > 0:
         step = 0
         frame = 0
@@ -1168,4 +1185,5 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
+
     out_dataset.close_file()
