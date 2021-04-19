@@ -61,6 +61,7 @@ particle_type_charge_dict = {
 ##) 
 #print(np.array(names))
 charges = np.vectorize(particle_type_charge_dict.get)(np.array(names)) ## option1 
+#charges = np.arange(len(names))
 ##charges = [particle_type_charge_dict.get(i) for i in names] ## option2 
 print(charges)
 

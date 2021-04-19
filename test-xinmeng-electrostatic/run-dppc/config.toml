@@ -18,7 +18,7 @@ max_molecule_size = 15
 
 [simulation]
 # Number of total time steps in the simulation in [picoseconds].
-n_steps = 1000 #25000
+n_steps = 200 #25000
 # Frequency of trajectory/energy file output in time steps.
 n_print = 10 #100 ##5000
 # Frequency of requesting that the HDF5 library flush the file output buffers
