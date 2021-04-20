@@ -35,6 +35,8 @@ from integrator import integrate_velocity, integrate_position
 from logger import Logger
 from thermostat import velocity_rescale
 from pressure import comp_pressure
+from barostat import isotropic, semiisotropic
+
 
 def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     days = timedelta.days
@@ -668,6 +670,9 @@ if __name__ == "__main__":
                 v_ext_fourier,
                 compute_potential=compute_field_energy,
             )
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -781,6 +786,34 @@ if __name__ == "__main__":
         # Thermostat
         if config.target_temperature:
             velocities = velocity_rescale(velocities, config, comm)
+
+        # Berendsen Barostat
+        if config.barostat:
+            if config.barostat.lower() == 'isotropic':
+                positions = isotropic(
+                     phi,
+                     hamiltonian,
+                     positions,
+                     velocities,
+                     config,
+                     phi_fft,
+                     phi_laplacian,
+                     phi_new,
+                     comm
+                )
+
+            elif config.barostat.lower() == 'semiisotropic':
+                positions = semiisotropic(
+                     phi,
+                     hamiltonian,
+                     positions,
+                     velocities,
+                     config,
+                     phi_fft,
+                     phi_laplacian,
+                     phi_new,
+                     comm
+                )
 
         # Print trajectory
         if config.n_print > 0:
@@ -927,14 +960,4 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
-        #pressure
-        #if(config.pressure):
-        #    pressure = comp_pressure(
-        #            phi,
-        #            hamiltonian,
-        #            config,
-        #            phi_fft,
-        #            phi_laplacian,
-        #            phi_new
-        #        )
     out_dataset.close_file()

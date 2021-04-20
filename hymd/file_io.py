@@ -102,14 +102,14 @@ def store_static(
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    h5md.edges = box.create_dataset("edges", (3,), "float32")
-    h5md.edges[:] = np.array(config.box_size)
+    #h5md.edges = box.create_dataset("edges", (3,), "float32")
+    #h5md.edges[:] = np.array(config.box_size)
 
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
         n_frames += 1
 
-    # Time dependent box, fix this later.
+    # Time dependent box: changes inside edges only.
     # h5md.box_step = h5md.edges.create_dataset('step', (n_frames,), 'i')
     # h5md.box_time = h5md.edges.create_dataset('time', (n_frames,), 'float32')
     # h5md.box_value = h5md.edges.create_dataset('value', (n_frames, 3), 'float32')  # noqa: E501
@@ -220,6 +220,14 @@ def store_static(
     ) = setup_time_dependent_element(
         "pressure", h5md.observables, n_frames, (9,), "float32", units="Bar"
     )
+    (
+        _,
+        h5md.box_step,
+        h5md.box_time,
+        h5md.box,
+    ) = setup_time_dependent_element(
+        "edges", box, n_frames, (3,), "float32", units="nm"
+    )
 
     ind_sort = np.argsort(indices)
     for i in ind_sort:
@@ -292,7 +300,8 @@ def store_data(
         h5md.field_energy_step,
         h5md.total_momentum_step,
         h5md.temperature_step,
-        h5md.pressure_step
+        h5md.pressure_step,
+        h5md.box_step
     ):
         dset[frame] = step
 
@@ -307,7 +316,8 @@ def store_data(
         h5md.field_energy_time,
         h5md.total_momentum_time,
         h5md.temperature_time,
-        h5md.pressure_time
+        h5md.pressure_time,
+        h5md.box_time
     ):
         dset[frame] = step * time_step
 
@@ -331,6 +341,7 @@ def store_data(
     h5md.total_momentum[frame, :] = total_momentum
     h5md.temperature[frame] = temperature
     h5md.pressure[frame] = pressure
+    h5md.box[frame] = np.array(config.box_size)
 
     header_ = 13 * "{:>15}"
     fmt_ = [

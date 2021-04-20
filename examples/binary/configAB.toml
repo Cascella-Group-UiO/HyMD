@@ -8,8 +8,8 @@ mass = 18.0
 max_molecule_size = 1 
 
 [simulation]
-n_steps = 2 
-n_print = 1
+n_steps = 300 
+n_print = 10
 n_flush = 1000
 time_step = 0.03
 box_size = [10.6, 10.6, 10.6]
@@ -17,11 +17,16 @@ integrator = "respa"
 respa_inner = 10
 domain_decomposition = 25
 start_temperature = 300
+cancel_com_momentum = true
 target_temperature = 300
 tau = 0.7
+tau_p = 0.1 #ps #usual order ~1
 hamiltonian = 'DefaultWithChi'
 pressure = true
 plot = false
+barostat = 'semiisotropic'
+target_pressure = 1 #bar
+
 
 [field]
 mesh_size = [24, 24, 24]
