@@ -693,7 +693,6 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                         "found in the system."
                     )
                     raise ValueError(err_str) from e
-        print(unique_names, found)
         if any([True if f > 1 else False for f in found]):
             for i, f in enumerate(found):
                 if f > 1:
