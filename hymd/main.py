@@ -33,7 +33,7 @@ from input_parser import (
 )
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
-from thermostat import velocity_rescale
+from thermostat import csvr_thermostat
 
 
 def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
@@ -771,7 +771,7 @@ if __name__ == "__main__":
 
         # Thermostat
         if config.target_temperature:
-            velocities = velocity_rescale(velocities, config, comm)
+            velocities = csvr_thermostat(velocities, names, config, comm=comm)
 
         # Print trajectory
         if config.n_print > 0:
