@@ -296,7 +296,7 @@ def molecules_with_solvent():
         [7.04678315, 7.49039307, 0.53845823],
         [7.50298867, 9.11984417, 8.06488954],
         [1.97941691, 0.91173916, 1.74975040]
-    ], dtype=np.float32)
+    ], dtype=np.float64)
     velocities = np.array([
         [-0.10199334, -0.16015491,  0.17291981],
         [-0.22461995, -0.32678230,  0.18282229],
@@ -343,7 +343,7 @@ def molecules_with_solvent():
         [0.009165020, -0.00660060, -0.25626487],
         [0.319125740,  0.05427998, -0.05150238],
         [-0.21597044, -0.02045452,  0.31782916]
-    ], dtype=np.float32)
+    ], dtype=np.float64)
     # Used to generate plausible molecules from random positions.
     # kmean = KMeans(n_clusters=8)
     # kmean.fit(r)
@@ -443,7 +443,7 @@ def molecules_with_solvent():
         [5.72275525, 6.30133732, 1.94503790],
         [5.70752801, 7.77619645, 2.50716313],
         [3.77070584, 7.78962099, 2.55348930]
-    ], dtype=np.float32)
+    ], dtype=np.float64)
     bonds_solvent = np.repeat(np.array([[-1, -1, -1]]), 15, axis=0)
     bonds = np.concatenate((bonds_, bonds_solvent))
     ind = np.argsort(molecules_)
@@ -451,7 +451,11 @@ def molecules_with_solvent():
     molecules = np.concatenate(
         (molecules_[ind], np.arange(9, 9+15)), axis=0
     )
-    names = np.concatenate((names_, np.repeat(np.array(["D"], dtype='S5'), 15)))
+    names = np.concatenate(
+        (names_, np.repeat(np.array(["D"], dtype='S5'), 15))
+    )
     names_to_types = {"A": 0, "B": 1, "C": 2, "D": 3}
-    types = np.array([names_to_types[n.decode('UTF-8')] for n in names], dtype=int)
-    return np.arange(0, r.shape[0]), r, molecules, velocities, bonds, names, types
+    types = np.array([names_to_types[n.decode('UTF-8')] for n in names],
+                     dtype=int)
+    return (np.arange(0, r.shape[0]), r, molecules, velocities, bonds, names,
+            types)
