@@ -15,16 +15,20 @@ ERR_LOG="srun-${SLURM_JOB_ID}.err"
 LOG_FILE="log.txt"
 export OMP_NUM_THREADS=1
 export SCRATCH="/cluster/work/users/samiransen23/${SLURM_JOB_ID}"
+export HYMD_PATH=${PWD}
+
 mkdir ${SCRATCH}
 cd ${SCRATCH}
-cp ${SLURM_SUBMIT_DIR}/configAB.toml $SCRATCH/config.toml
-cp ${SLURM_SUBMIT_DIR}/ABinZmed.h5 $SCRATCH/input.h5
+cp $1 ${SCRATCH}/config.toml
+cp $2 ${SCRATCH}/input.h5
 mkdir hymd/
-cp /cluster/home/samiransen23/hymdruns/hymd/* hymd/
+cp ${HYMD_PATH}/hymd/* hymd/
 
 date
+#Do not change the actual run statement for clarity
 srun -K --error=${ERR_LOG} -n ${SLURM_NTASKS} --mpi=pmi2  python3 hymd/main.py config.toml input.h5 --logfile=${LOG_FILE}  --seed 1 --verbose 2
 
-mkdir ${SLURM_SUBMIT_DIR}/out
-cp -r ${SCRATCH}/* ${SLURM_SUBMIT_DIR}/out/
+mkdir ${SLURM_SUBMIT_DIR}/out_${SLURM_JOB_ID}
+cp -r ${SCRATCH}/* ${SLURM_SUBMIT_DIR}/out_${SLURM_JOB_ID}
+cp ${SCRATCH}/{config.toml,input.h5} ${SLURM_SUBMIT_DIR}/out_${SLURM_JOB_ID}/. 
 
