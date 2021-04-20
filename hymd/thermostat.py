@@ -27,7 +27,7 @@ def _random_gaussian() -> float:
     float
         A random number drawn from N(0, 1).
     """
-    return np.random.normal(size=1)
+    return np.random.normal()
 
 
 def _random_chi_squared(M: int) -> float:
@@ -66,7 +66,7 @@ def _random_chi_squared(M: int) -> float:
 
     J. H. Ahrens and U. Dieter, Computing 12 (1974), 223-246.
     """
-    return np.random.chisquare(M, size=1)
+    return np.random.chisquare(M)
 
 
 def csvr_thermostat(
