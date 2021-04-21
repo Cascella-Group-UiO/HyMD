@@ -74,6 +74,7 @@ def csvr_thermostat(
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     random_gaussian: Callable[[], float] = _random_gaussian,
     random_chi_squared: Callable[[int, float], float] = _random_chi_squared,
+    remove_center_of_mass_momentum: bool = True,
 ) -> np.ndarray:
     """Canonical sampling through velocity rescaling thermostat
 
@@ -104,10 +105,12 @@ def csvr_thermostat(
         Configuration dataclass containing simulation metadata and parameters.
     comm : MPI.Intracomm, optional
         MPI communicator to use for rank commuication.
-    random_gaussian : callable
+    random_gaussian : callable, optional
         Function for generating standard normally distributed numbers.
-    random_chi_squared : callable
+    random_chi_squared : callable, optional
         Function for generating χ²-distributed numbers
+    remove_center_of_mass_momentum : bool, optional
+        If True, the center of mass of each coupling group is removed before
 
     Returns
     -------
@@ -134,10 +137,13 @@ def csvr_thermostat(
         group_n_particles = comm.allreduce(len(ind[0]), MPI.SUM)
 
         # Clean velocities of center of mass momentum
-        com_velocity = comm.allreduce(np.sum(velocity[ind], axis=0), MPI.SUM)
-        velocity_clean = velocity[ind] - com_velocity / group_n_particles
-
-        K = comm.allreduce(0.5 * config.mass * np.sum(velocity_clean[...]**2))
+        if remove_center_of_mass_momentum:
+            com_velocity = comm.allreduce(np.sum(velocity[ind], axis=0))
+            velocity_clean = velocity[ind] - com_velocity / group_n_particles
+            K = comm.allreduce(0.5 * config.mass
+                               * np.sum(velocity_clean[...]**2))
+        else:
+            K = comm.allreduce(0.5 * config.mass * np.sum(velocity[...]**2))
         K_target = ((3 / 2) * (2.479 / 298.0) * group_n_particles
                     * config.target_temperature)
         N_f = 3 * group_n_particles
@@ -152,17 +158,20 @@ def csvr_thermostat(
         R = comm.bcast(R, root=0)
         SNf = comm.bcast(SNf, root=0)
 
-        dK = 0.0
-        if group_n_particles > 0:
-            alpha2 = (
-                c + (1 - c) * (SNf + R**2) * K_target / (N_f * K)
-                + 2 * R * np.sqrt(c * (1 - c) * K_target / (N_f * K))
-            )
-            dK = K * (alpha2 - 1)
-            alpha = np.sqrt(alpha2)
-            velocity_clean *= alpha
-        config.thermostat_work += dK
+        alpha2 = (
+            c + (1 - c) * (SNf + R**2) * K_target / (N_f * K)
+            + 2 * R * np.sqrt(c * (1 - c) * K_target / (N_f * K))
+        )
+        dK = K * (alpha2 - 1)
+        alpha = np.sqrt(alpha2)
 
-        # Assign velocities and reapply the previously removed center of mass
-        # momentum removed
-        velocity[ind] = velocity_clean + com_velocity / group_n_particles
+        if remove_center_of_mass_momentum:
+            # Assign velocities and reapply the previously removed center
+            # of mass momentum removed
+            velocity_clean *= alpha
+            velocity[ind] = (
+                velocity_clean + com_velocity / group_n_particles
+            )
+        else:
+            velocity *= alpha
+        config.thermostat_work += dK
