@@ -108,7 +108,7 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
     # thermostat to control the exact numbers generated for testing.
     random_chi_squared = RandomMock([125.4595634810623])
     random_gaussian = RandomMock([0.5579657512081987])
-    velocities_copy = csvr_thermostat(
+    csvr_thermostat(
         velocities_copy, names, config, comm=comm,
         random_gaussian=random_gaussian, random_chi_squared=random_chi_squared,
     )
@@ -128,7 +128,7 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
                                      2.024725328228174, 36.50208472031436])
     random_gaussian = RandomMock([-1.752320325907187, 1.099694957420625,
                                   0.6113448515745533, -0.7183266831611322])
-    velocities_copy = csvr_thermostat(
+    csvr_thermostat(
         velocities_copy, names, config, comm=comm,
         random_gaussian=random_gaussian, random_chi_squared=random_chi_squared,
     )
@@ -154,7 +154,7 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
     velocities_copy = velocities.copy()
     random_chi_squared = RandomMock([97.07130218590895, 33.06359496718739])
     random_gaussian = RandomMock([0.1661408606772054, -0.06216797747541603])
-    velocities_copy = csvr_thermostat(
+    csvr_thermostat(
         velocities_copy, names, config, comm=comm,
         random_gaussian=random_gaussian, random_chi_squared=random_chi_squared,
     )
