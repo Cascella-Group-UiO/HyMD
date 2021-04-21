@@ -44,8 +44,8 @@ def _random_chi_squared(M: int) -> float:
     Returns
     -------
     float
-        The sum of `degrees_of_freedom` squared normally distributed values
-        centered at zero with unit standard deviation.
+        The sum of `M` squared normally distributed values centered at zero
+        with unit standard deviation.
 
     Notes
     -----
@@ -85,6 +85,15 @@ def csvr_thermostat(
     is performed with the same stochasticity for all particles in the full
     system.
 
+    The velocities are cleaned of center of mass momentum before the thermostat
+    is applied, and the center of mass momentum is subsequently reapplied. This
+    is performed for each thermostat coupling group, i.e. the center of mass
+    momenta of each *group* is separately removed and reapplied after
+    thermostatting.
+
+    The implementation here is based on the derivation presented in the 2008
+    Comput. Phys. Commun paper, not in the original 2007 J. Chem. Phys. paper.
+
     Parameters
     ----------
     velocity : (N, D) np.ndarray
@@ -114,6 +123,7 @@ def csvr_thermostat(
     References
     ----------
     G. Bussi, D. Donadio, and M. Parrinello, J. Chem. Phys. 126, 014101 (2007).
+    G. Bussi and M. Parrinello, Comput. Phys. Commun. 179, 26-29, (2008).
     """
     if not any(config.thermostat_coupling_groups):
         config.thermostat_coupling_groups = [config.unique_names.copy()]
@@ -122,26 +132,37 @@ def csvr_thermostat(
             np.logical_or.reduce(list(names == np.string_(t) for t in group))
         )
         group_n_particles = comm.allreduce(len(ind[0]), MPI.SUM)
-        K = comm.allreduce(0.5 * config.mass * np.sum(velocity[ind, :]**2))
+
+        # Clean velocities of center of mass momentum
+        com_velocity = comm.allreduce(np.sum(velocity[ind], axis=0), MPI.SUM)
+        velocity_clean = velocity[ind] - com_velocity / group_n_particles
+
+        K = comm.allreduce(0.5 * config.mass * np.sum(velocity_clean[...]**2))
         K_target = ((3 / 2) * (2.479 / 298.0) * group_n_particles
                     * config.target_temperature)
         N_f = 3 * group_n_particles
-        e = np.exp(-config.time_step / config.tau)
+        c = np.exp(-(config.time_step * config.respa_inner) / config.tau)
 
-        R1 = Ri2_sum = None
+        # Draw random numbers and broadcast them so they are identical across
+        # MPI ranks
+        R = SNf = None
         if comm.Get_rank() == 0:
-            R1 = random_gaussian()
-            Ri2_sum = random_chi_squared(N_f - 1)
-        R1 = comm.bcast(R1, root=0)
-        Ri2_sum = comm.bcast(Ri2_sum, root=0)
+            R = random_gaussian()
+            SNf = random_chi_squared(N_f - 1)
+        R = comm.bcast(R, root=0)
+        SNf = comm.bcast(SNf, root=0)
 
         dK = 0.0
         if group_n_particles > 0:
-            dK = (
-                (1 - e) * (K_target * (R1**2 + Ri2_sum) / N_f - K)
-                + 2 * R1 * np.sqrt(K * K_target / N_f * (1 - e) * e)
+            alpha2 = (
+                c + (1 - c) * (SNf + R**2) * K_target / (N_f * K)
+                + 2 * R * np.sqrt(c * (1 - c) * K_target / (N_f * K))
             )
-            alpha = np.sqrt((K + dK) / K)
-            velocity[ind, :] = velocity[ind, ...] * alpha
+            dK = K * (alpha2 - 1)
+            alpha = np.sqrt(alpha2)
+            velocity_clean *= alpha
         config.thermostat_work += dK
-    return velocity
+
+        # Assign velocities and reapply the previously removed center of mass
+        # momentum removed
+        velocity[ind] = velocity_clean + com_velocity / group_n_particles

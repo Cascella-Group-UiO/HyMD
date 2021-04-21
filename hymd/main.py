@@ -654,6 +654,9 @@ if __name__ == "__main__":
 
         # Update slow forces
         if not args.disable_field:
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
             update_field(
                 phi,
                 layouts,
@@ -667,9 +670,6 @@ if __name__ == "__main__":
                 phi_fourier,
                 v_ext_fourier,
             )
-            layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)
-            ]
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -771,7 +771,7 @@ if __name__ == "__main__":
 
         # Thermostat
         if config.target_temperature:
-            velocities = csvr_thermostat(velocities, names, config, comm=comm)
+            csvr_thermostat(velocities, names, config, comm=comm)
 
         # Print trajectory
         if config.n_print > 0:
