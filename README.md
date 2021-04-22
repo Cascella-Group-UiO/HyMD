@@ -41,7 +41,7 @@ The following is a typical way to run a job script on SAGA:
 > module load h5py/2.10.0-foss-2020a-Python-3.8.2
 > module load pfft-python/0.1.21-foss-2020a-Python-3.8.2
 > git clone https://github.com/Cascella-Group-UiO/HyMD-2021.git
-> export HYMD_PATH ="/cluster/projects/nn4654k/samiran/HyMD-2021"
+> export HYMD_PATH="/cluster/projects/nn4654k/samiran/HyMD-2021"
 > cd HyMD-2021/hymd
 > make
 > cd ..
