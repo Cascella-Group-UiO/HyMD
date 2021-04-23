@@ -141,8 +141,9 @@ def csvr_thermostat(
                                * np.sum(velocity_clean[...]**2))
         else:
             K = comm.allreduce(0.5 * config.mass * np.sum(velocity[...]**2))
-        K_target = ((3 / 2) * (2.479 / 298.0) * group_n_particles
-                    * config.target_temperature)
+        K_target = (
+            1.5 * config.R * group_n_particles * config.target_temperature
+        )
         N_f = 3 * group_n_particles
         c = np.exp(-(config.time_step * config.respa_inner) / config.tau)
 
