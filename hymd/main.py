@@ -770,6 +770,8 @@ if __name__ == "__main__":
 
         # Thermostat
         if config.target_temperature:
+        # Add loop if multiple groups are defined 
+        # velocity_rescale(velocities_grp_i, config_T_i, config_tau_i)
             velocities = velocity_rescale(velocities, config, comm)
 
         # Print trajectory
