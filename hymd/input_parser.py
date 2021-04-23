@@ -6,13 +6,15 @@ import warnings
 import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List, Union, ClassVar
 from force import Bond, Angle, Chi
 from logger import Logger
 
 
 @dataclass
 class Config:
+    R: ClassVar[float] = 0.00831446261815324  # kJ/mol K, gas constant
+
     n_steps: int
     time_step: float
     box_size: Union[List[float], np.ndarray]
