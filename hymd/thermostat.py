@@ -81,16 +81,16 @@ def csvr_thermostat(
     Implements the CSVR thermostat. Rescales the system kinetic energy by a
     stochastically chosen factor to keep the temperature constant. Requires
     communcation of the kinetic energies calculated locally for each MPI rank.
-    The random numbers sampled through _random_gaussian and random_chi_squared
-    and broadcast from the root rank to the other ranks to ensure the scaling
-    is performed with the same stochasticity for all particles in the full
-    system.
+    The random numbers sampled through `random_gaussian` and
+    `random_chi_squared` and broadcast from the root rank to the other ranks to
+    ensure the scaling is performed with the same stochasticity for all
+    particles in the full system.
 
-    The velocities are cleaned of center of mass momentum before the thermostat
-    is applied, and the center of mass momentum is subsequently reapplied. This
-    is performed for each thermostat coupling group, i.e. the center of mass
-    momenta of each *group* is separately removed and reapplied after
-    thermostatting.
+    If `remove_center_of_mass_momentum` is True, the velocities are cleaned of
+    center of mass momentum before the thermostat is applied, and the center of
+    mass momentum is subsequently reapplied. This is performed for each
+    thermostat coupling group, i.e. the center of mass momenta of each *group*
+    is separately removed and reapplied after thermostatting.
 
     The implementation here is based on the derivation presented in the 2008
     Comput. Phys. Commun paper, not in the original 2007 J. Chem. Phys. paper.
@@ -104,19 +104,16 @@ def csvr_thermostat(
     config : Config
         Configuration dataclass containing simulation metadata and parameters.
     comm : MPI.Intracomm, optional
-        MPI communicator to use for rank commuication.
+        MPI communicator to use for rank commuication. Defaults to
+        MPI.COMM_WORLD.
     random_gaussian : callable, optional
         Function for generating standard normally distributed numbers.
     random_chi_squared : callable, optional
         Function for generating χ²-distributed numbers
     remove_center_of_mass_momentum : bool, optional
         If True, the center of mass of each coupling group is removed before
-
-    Returns
-    -------
-    velocity : (N, D) np.ndarray
-        Array containing the rescaled velocities of N particles in D
-        dimensions.
+        the thermostat is applied. The center of mass momenta are added back
+        after the kinetic energy rescaling is complete.
 
     See Also
     --------
