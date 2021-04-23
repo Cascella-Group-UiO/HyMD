@@ -792,7 +792,7 @@ if __name__ == "__main__":
                         0.5 * config.mass * np.sum(velocities ** 2)
                     )
                 temperature = (
-                    1.5 * kinetic_energy / (config.R * config.n_particles)
+                    (2 / 3) * kinetic_energy / (config.R * config.n_particles)
                 )
                 if args.disable_field:
                     field_energy = 0.0
