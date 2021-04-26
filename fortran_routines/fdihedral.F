@@ -71,6 +71,9 @@ C        PBC
          vb2zm = -vb2z
 C        Doesn't make much sense to take the reverse of both vb1 and vb2
 C        (vb2m)
+c        Or better, it does but then vb2 isn't needed
+c        i.e. just define vb2 = ib - ic
+c        Also this way, trans = 0, cis = 180
 
 C        Cross product components
 C        vb1 x vb2m
@@ -102,27 +105,30 @@ C        Inverses to normalize dot products
          rabinv = sqrt(ra2inv*rb2inv)
 
 C        Dot product
+C        c = cos(phi), s = sin(phi)
          c = (ax*bx + ay*by + az*bz)*rabinv
          s = rg*rabinv*(ax*vb3x + ay*vb3y + az*vb3z)
 
-
+C        Why is this necessary? Floating point imprecision?
          if (c > 1.d0)  c =  1.d0
          if (c < -1.d0) c = -1.d0
 
 
          
-        
+C        coefficients and phases for the dihedral potential 
          K_i   = (/rb0(i),rb1(i),rb2(i),rb3(i),rb4(i),rb5(i),rb6(i)
      $        ,rb7(i)/)
          d_phi = (/rbb1(i),rbb2(i),rbb3(i),
      $        rbb4(i),rbb5(i),rbb6(i),rbb7(i),rbb8(i)/)
          theta = atan2(s, c)
+C        p = propensity, df = force = - d(p)/d(phi)
          p  = 0d0
          df = 0d0
          do jj = 0, 7
-            p  = p + K_i(jj+1)*(1d0 + cos(jj*theta - d_phi(jj+1)))
+            p  = p + K_i(jj+1)*(1d0 + cos(jj*theta - d_phi(jj+1))
             df = df - K_i(jj+1)*jj*sin(jj*theta - d_phi(jj+1))
          enddo
+C        just add instead of subtracting?
          df=-df
 
          fg = vb1x*vb2xm + vb1y*vb2ym + vb1z*vb2zm
