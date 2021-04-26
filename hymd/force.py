@@ -28,7 +28,8 @@ class Angle(Bond):
 
 
 # 1- Sinmple fourier function potential
-# 2- Combined bending-torsional potential
+# 2- Harmonic potential for impropers
+# 3- Combined bending-torsional potential
 @dataclass
 class Dihedral:
     atom_1: str
@@ -53,6 +54,8 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
         bond_graph = nx.Graph()
+
+        # Won't this be super slow for big systems?
         for local_index, global_index in enumerate(indices):
             if molecules[local_index] != mol:
                 continue
@@ -113,7 +116,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     a.strength,
                                 ]
                             )
-                if len(path) == 3 and path[-1] > path[0]:
+                if len(path) == 4 and path[-1] > path[0]:
                     name_i = bond_graph.nodes()[i]["name"]
                     name_mid_1 = bond_graph.nodes()[path[1]]["name"]
                     name_mid_2 = bond_graph.nodes()[path[2]]["name"]
@@ -151,6 +154,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_2, bonds_3, bonds_4 = prepare_bonds_old(
         molecules, names, bonds, indices, config
     )
+    # Bonds
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
     bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
@@ -160,6 +164,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_2_atom2[i] = b[1]
         bonds_2_equilibrium[i] = b[2]
         bonds_2_stength[i] = b[3]
+    # Angles
     bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
@@ -171,17 +176,20 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
+    # Dihedrals
     bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
     bonds_4_cn = np.empty(len(bonds_4), dtype=np.float64)
     bonds_4_dn = np.empty(len(bonds_4), dtype=np.float64)
     for i, b in enumerate(bonds_4):
         bonds_4_atom1[i] = b[0]
         bonds_4_atom2[i] = b[1]
         bonds_4_atom3[i] = b[2]
-        bonds_4_cn[i] = b[3]
-        bonds_4_dn[i] = b[4]
+        bonds_4_atom4[i] = b[3]
+        bonds_4_cn[i] = b[4]
+        bonds_4_dn[i] = b[5]
 
     return (
         bonds_2_atom1,
@@ -196,6 +204,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_4_atom1,
         bonds_4_atom2,
         bonds_4_atom3,
+        bonds_4_atom4,
         bonds_4_cn,
         bonds_4_dn,
     )
@@ -355,5 +364,55 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
         f_angles[b, :] += -(fa + fc)
 
         energy -= 0.5 * f * d
+
+    return energy
+
+
+def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
+    f_dihedrals.fill(0.0)
+    energy = 0.0
+
+    for p1, p2, p3, p4, c, d in bonds_4:
+        b0 = r[p1, :] - r[p2, :]
+        b1 = r[p2, :] - r[p3, :]
+        b2 = r[p4, :] - r[p3, :]
+
+        for dim in range(3):
+            b0 -= box_size[dim] * np.around(b0[dim] / box_size[dim])
+            b1 -= box_size[dim] * np.around(b1[dim] / box_size[dim])
+            b2 -= box_size[dim] * np.around(b2[dim] / box_size[dim])
+
+        bn = np.linalg.norm(b1)
+        bv = b1 / bn
+
+        v = b0 - np.dot(b0, bv) * bv
+        w = b2 - np.dot(b2, bv) * bv
+
+        x = np.dot(v, w)
+        y = np.dot(np.cross(bv, v), w)
+        phi = np.arctan2(y, x)
+
+        a = np.cross(b0, b1)
+        b = np.cross(b2, b1)
+
+        a2 = np.dot(a, a)
+        b2 = np.dot(b, b)
+
+        fg = np.dot(b0, b1)
+        hg = np.dot(b2, b1)
+        s = a * fg / (a2 * bn) - b * hg / (b2 * bn)
+
+        df = 0
+        for i in range(len(c)):
+            energy += c[i] * (1 + np.cos(i * phi + d[i]))
+            df += i * c[i] * np.sin(i * phi + d[i])
+
+        F1 = df * -bn * a / a2
+        F4 = df * bn * b / b2
+
+        f_dihedrals[p1, :] += F1
+        f_dihedrals[p2, :] += df * s - F1
+        f_dihedrals[p3, :] += -(df * s + F4)
+        f_dihedrals[p4, :] += F4
 
     return energy
