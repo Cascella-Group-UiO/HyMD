@@ -361,7 +361,8 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
         f_angles[a, :] += fa
         f_angles[c, :] += fc
-        f_angles[b, :] += -(fa + fc)
+        f_angles[b, :] -= fa + fc
+        # f_angles[b, :] += -(fa + fc)
 
         energy -= 0.5 * f * d
 
@@ -372,47 +373,55 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
     f_dihedrals.fill(0.0)
     energy = 0.0
 
-    for p1, p2, p3, p4, c, d in bonds_4:
-        b0 = r[p1, :] - r[p2, :]
-        b1 = r[p2, :] - r[p3, :]
-        b2 = r[p4, :] - r[p3, :]
+    for a, b, c, d, cm, dm in bonds_4:
+        f = r[a, :] - r[b, :]
+        g = r[b, :] - r[c, :]
+        h = r[d, :] - r[c, :]
 
         for dim in range(3):
-            b0 -= box_size[dim] * np.around(b0[dim] / box_size[dim])
-            b1 -= box_size[dim] * np.around(b1[dim] / box_size[dim])
-            b2 -= box_size[dim] * np.around(b2[dim] / box_size[dim])
+            f -= box_size[dim] * np.around(f[dim] / box_size[dim])
+            g -= box_size[dim] * np.around(g[dim] / box_size[dim])
+            h -= box_size[dim] * np.around(h[dim] / box_size[dim])
 
-        bn = np.linalg.norm(b1)
-        bv = b1 / bn
+        gn = np.linalg.norm(g)
+        gv = g / gn
 
-        v = b0 - np.dot(b0, bv) * bv
-        w = b2 - np.dot(b2, bv) * bv
+        v = f - np.dot(f, gv) * gv
+        w = h - np.dot(h, gv) * gv
 
-        x = np.dot(v, w)
-        y = np.dot(np.cross(bv, v), w)
-        phi = np.arctan2(y, x)
+        cos_phi = np.dot(v, w)
+        sin_phi = np.dot(np.cross(gv, v), w)
+        phi = np.arctan2(sin_phi, cos_phi)
 
-        a = np.cross(b0, b1)
-        b = np.cross(b2, b1)
+        # Let's reuse the same variables we don't needa anymore after
+        # getting the angle (don't think this is good practice though)
+        v = np.cross(f, g)
+        w = np.cross(h, g)
 
-        a2 = np.dot(a, a)
-        b2 = np.dot(b, b)
+        vv = np.dot(a, a)
+        ww = np.dot(b, b)
 
-        fg = np.dot(b0, b1)
-        hg = np.dot(b2, b1)
-        s = a * fg / (a2 * bn) - b * hg / (b2 * bn)
+        fg = np.dot(f, g)
+        hg = np.dot(h, g)
+        s = a * fg / (vv * gn) - w * hg / (ww * gn)
 
         df = 0
-        for i in range(len(c)):
-            energy += c[i] * (1 + np.cos(i * phi + d[i]))
-            df += i * c[i] * np.sin(i * phi + d[i])
+        # Use 8 terms => len(cn) == len(dn) == 8
+        for m in range(8):
+            energy += cm[m] * (1 + np.cos(m * phi + dm[m]))
+            df += m * cm[m] * np.sin(m * phi + dm[m])
 
-        F1 = df * -bn * a / a2
-        F4 = df * bn * b / b2
+        # force_on_a = -df * gn * v / v2
+        # f_dihedrals[a, :] += force_on_a
+        # f_dihedrals[b, :] += df * s - force_on_a
+        # f_dihedrals[c, :] += -(df * s + force_on_d)
 
-        f_dihedrals[p1, :] += F1
-        f_dihedrals[p2, :] += df * s - F1
-        f_dihedrals[p3, :] += -(df * s + F4)
-        f_dihedrals[p4, :] += F4
+        force_on_a = df * gn * v / vv
+        force_on_d = df * gn * w / ww
+
+        f_dihedrals[a, :] -= force_on_a
+        f_dihedrals[b, :] += df * s + force_on_a
+        f_dihedrals[c, :] -= df * s + force_on_d
+        f_dihedrals[d, :] += force_on_d
 
     return energy
