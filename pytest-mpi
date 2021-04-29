@@ -61,21 +61,16 @@ else
   fi
 
   if [ "${ORDEROUTPUT}" -eq 1 ]; then
+    mpirun -n ${NPROCS} --output-filename outtest pytest ${PYTEST_ARGS} --only-mpi >/dev/null
     for ((RANK=0; RANK<${NPROCS}; RANK++)); do
-      set -x
-      mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh ${RANK} pytest ${PYTEST_ARGS} --only-mpi > outtest.${RANK}
-      { set +x; } 2>/dev/null # Dont output "set +x"
-    done
-    set +x
-    for ((RANK=0; RANK<${NPROCS}; RANK++)); do
-      RANKFILE="outtest.${RANK}"
+      RANKFILE="outtest/1/rank.${RANK}/stdout"
       echo ""
       echo "################################################################################"
-      echo "################################### RANK ${RANK} #####################################"
+      echo "################################# RANK ${RANK} / ${NPROCS} ###################################"
       echo "################################################################################"
       cat ${RANKFILE}
-      rm ${RANKFILE}
     done
+    rm -r outtest
   elif [ "${UNMUTE}" -eq -1 ]; then
     mpirun -n ${NPROCS} pytest ${PYTEST_ARGS} --only-mpi
   else

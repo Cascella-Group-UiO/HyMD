@@ -6,13 +6,15 @@ import warnings
 import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List, Union, ClassVar
 from force import Bond, Angle, Chi
 from logger import Logger
 
 
 @dataclass
 class Config:
+    R: ClassVar[float] = 0.00831446261815324  # kJ/mol K, gas constant
+
     n_steps: int
     time_step: float
     box_size: Union[List[float], np.ndarray]
@@ -39,6 +41,7 @@ class Config:
     max_molecule_size: int = None
     n_flush: int = None
     thermostat_work: float = 0.0
+    thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: bool = False
 
@@ -64,12 +67,21 @@ class Config:
                 for k in self.chi
             ]
         )
+        thermostat_coupling_groups_str = ""
+        if any(self.thermostat_coupling_groups):
+            thermostat_coupling_groups_str = "\tthermostat_coupling_groups:\n" + "".join(
+                [
+                    "\t\t" + ", ".join(
+                        [f"{n}" for n in ng]
+                    ) + "\n" for ng in self.thermostat_coupling_groups
+                ]
+            )
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            if k not in ("bonds", "angle_bonds", "chi"):
+            if k not in ("bonds", "angle_bonds", "chi", "thermostat_coupling_groups"):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += bonds_str + angle_str + chi_str
+        ret_str += bonds_str + angle_str + chi_str + thermostat_coupling_groups_str
         return ret_str
 
 
@@ -667,6 +679,45 @@ def check_name(config, comm=MPI.COMM_WORLD):
     return config
 
 
+def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
+    if any(config.thermostat_coupling_groups):
+        found = [0 for _ in config.unique_names]
+        unique_names = [n for n in config.unique_names]
+        for i, group in enumerate(config.thermostat_coupling_groups):
+            for species in group:
+                try:
+                    ind = unique_names.index(species)
+                    found[ind] += 1
+                except ValueError as e:
+                    err_str = (
+                        f"Particle species {species} specified in thermostat "
+                        f"coupling group {i}, but no {species} particles were "
+                        "found in the system."
+                    )
+                    raise ValueError(err_str) from e
+        if any([True if f > 1 else False for f in found]):
+            for i, f in enumerate(found):
+                if f > 1:
+                    species = unique_names[i]
+                    err_str = (
+                        f"Particle species {species} specified in multiple "
+                        "thermostat coupling groups; "
+                        f"{config.thermostat_coupling_groups}."
+                    )
+                    raise ValueError(err_str)
+        if not all([True if f == 1 else False for f in found]):
+            for i, f in enumerate(found):
+                if f != 1:
+                    species = unique_names[i]
+                    err_str = (
+                        f"Particle species {species} not specified in any "
+                        f"thermostat coupling group, but {species} particles "
+                        "were found in the system"
+                    )
+                    raise ValueError(err_str)
+    return config
+
+
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config.box_size = np.array(config.box_size)  ######## <<<<< FIX ME
     config = _find_unique_names(config, names, comm=comm)
@@ -685,4 +736,5 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_angles(config, names, comm=comm)
     config = check_bonds(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
+    config = check_thermostat_coupling_groups(config, comm=comm)
     return config
