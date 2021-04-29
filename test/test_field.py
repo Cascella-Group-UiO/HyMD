@@ -12,10 +12,10 @@ from field import domain_decomposition
 @pytest.mark.mpi()
 def test_domain_decomposition(molecules_with_solvent, caplog):
     caplog.set_level(logging.INFO)
-    indices, positions, molecules, velocities = molecules_with_solvent
+    indices, positions, molecules, velocities, bonds, names, types = molecules_with_solvent
     box_size = np.array([10, 10, 10], dtype=np.float64)
     config = Config(n_steps=0, time_step=0.03, box_size=box_size,
-                    mesh_size=[60, 60, 60], sigma=0.5, kappa=0.05,
+                    mesh_size=[5, 5, 5], sigma=0.5, kappa=0.05,
                     n_particles=len(indices))
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -37,10 +37,23 @@ def test_domain_decomposition(molecules_with_solvent, caplog):
     molecules_ = molecules[rank_range]
     indices_ = indices[rank_range]
     velocities_ = velocities[rank_range]
+    bonds_ = bonds[rank_range]
+    types_ = types[rank_range]
+    names_ = names[rank_range]
 
-    positions_, molecules_, indices_, velocities_ = domain_decomposition(
-        positions_, molecules_, pm, indices_, velocities_, verbose=2, comm=comm
+    dd = domain_decomposition(
+        positions_,
+        pm,
+        indices_,
+        velocities_,
+        names_,
+        types_,
+        molecules=molecules_,
+        bonds=bonds_,
+        verbose=2,
+        comm=comm
     )
+    positions_, indices_, velocities_, names_, types_, bonds_, molecules_ = dd
     if rank == 0:
         assert 'DOMAIN_DECOMP' in caplog.text
 
