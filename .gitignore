@@ -16,3 +16,4 @@ RUN/
 *.so
 test-xinmeng-electrostatic/*
 !test-xinmeng-electrostatic/run-dppc/
+!test-xinmeng-electrostatic/run-sds/
