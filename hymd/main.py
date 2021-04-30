@@ -24,6 +24,7 @@ from field import (
 from file_io import distribute_input, OutDataset, store_static, store_data
 from force import compute_bond_forces__fortran as compute_bond_forces
 from force import compute_angle_forces__fortran as compute_angle_forces
+from force import compute_dihedral_forces__fortran as compute_dihedral_forces
 from force import prepare_bonds
 from input_parser import (
     read_config_toml,
@@ -81,6 +82,12 @@ def configure_runtime(comm):
         default=False,
         action="store_true",
         help="Disable three-particle angle bond forces",
+    )
+    ap.add_argument(
+        "--disable-dihedrals",
+        default=False,
+        action="store_true",
+        help="Disable four-particle dihedral forces",
     )
     ap.add_argument(
         "--double-precision",
@@ -282,6 +289,9 @@ if __name__ == "__main__":
             from force import (
                 compute_angle_forces__fortran__double as compute_angle_forces,
             )  # noqa: E501, F811
+            from force import (
+                compute_dihedral_forces__fortran__double as compute_dihedral_forces,
+            )  # noqa: E501, F811
     else:
         dtype = np.float32
 
@@ -334,11 +344,15 @@ if __name__ == "__main__":
     angle_forces = np.zeros(
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
+    dihedral_forces = np.zeros(
+        shape=(len(positions), 3), dtype=dtype
+    )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
 
     field_energy = 0.0
     bond_energy = 0.0
     angle_energy = 0.0
+    dihedral_energy = 0.0
     kinetic_energy = 0.0
 
     # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
@@ -389,6 +403,7 @@ if __name__ == "__main__":
             indices,
             bond_forces,
             angle_forces,
+            dihedral_forces,
             field_forces,
             names,
             types,
@@ -404,6 +419,7 @@ if __name__ == "__main__":
                 indices,
                 bond_forces,
                 angle_forces,
+                dihedral_forces,
                 field_forces,
                 names,
                 types,
@@ -425,6 +441,7 @@ if __name__ == "__main__":
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
     angle_forces = np.asfortranarray(angle_forces)
+    dihedral_forces = np.asfortranarray(dihedral_forces)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
@@ -460,7 +477,8 @@ if __name__ == "__main__":
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
 
     if molecules_flag:
-        if not (args.disable_bonds and args.disable_angle_bonds):
+        # Not sure about this
+        if not (args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals):
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
             (
                 bonds_2_atom1,
@@ -472,6 +490,12 @@ if __name__ == "__main__":
                 bonds_3_atom3,
                 bonds_3_equilibrium,
                 bonds_3_stength,
+                bonds_4_atom1,
+                bonds_4_atom2,
+                bonds_4_atom3,
+                bonds_4_atom4,
+                bonds_4_cm,
+                bonds_4_dm,
             ) = bonds_prep
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
@@ -496,13 +520,27 @@ if __name__ == "__main__":
                 bonds_3_stength,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+        if not args.disable_dihedrals:
+            dihedral_energy_ = compute_dihedral_forces(
+                dihedral_forces,
+                positions,
+                config.box_size,
+                bonds_4_atom1,
+                bonds_4_atom2,
+                bonds_4_atom3,
+                bonds_4_atom4,
+                bonds_4_cm,
+                bonds_4_dm,
+            )
+            dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
         else:
-
+            # What about bonds_3 and bonds_4?
             bonds_2_atom1, bonds_2_atom2 = [], []
     else:
+        # What about bonds_3 and bonds_4?
         bonds_2_atom1, bonds_2_atom2 = [], []
 
-    config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
+    config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy + dihedral_energy
     out_dataset = OutDataset(args.destdir, config,
                              double_out=args.double_output,
                              disable_mpio=args.disable_mpio)
@@ -545,12 +583,13 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            field_forces + bond_forces + angle_forces,
+            field_forces + bond_forces + angle_forces + dihedral_forces,
             config.box_size,
             temperature,
             kinetic_energy,
             bond_energy,
             angle_energy,
+            dihedral_energy,
             field_energy,
             config.time_step,
             config,
@@ -647,9 +686,21 @@ if __name__ == "__main__":
                         bonds_3_equilibrium,
                         bonds_3_stength,
                     )
+                if not args.disable_dihedrals:
+                    dihedral_energy_ = compute_dihedral_forces(
+                        dihedral_forces,
+                        positions,
+                        config.box_size,
+                        bonds_4_atom1,
+                        bonds_4_atom2,
+                        bonds_4_atom3,
+                        bonds_4_atom4,
+                        bonds_4_cm,
+                        bonds_4_dm,
+                    )
             velocities = integrate_velocity(
                 velocities,
-                (bond_forces + angle_forces) / config.mass,
+                (bond_forces + angle_forces + dihedral_forces) / config.mass,
                 config.time_step / config.respa_inner,
             )
 
@@ -687,12 +738,15 @@ if __name__ == "__main__":
                 bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
             if not args.disable_angle_bonds:
                 angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+            if not args.disable_dihedrals:
+                dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
         if step != 0 and config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
+                dihedral_forces = np.ascontiguousarray(dihedral_forces)
 
                 dd = domain_decomposition(
                     positions,
@@ -701,6 +755,7 @@ if __name__ == "__main__":
                     indices,
                     bond_forces,
                     angle_forces,
+                    dihedral_forces,
                     field_forces,
                     names,
                     types,
@@ -716,6 +771,7 @@ if __name__ == "__main__":
                         indices,
                         bond_forces,
                         angle_forces,
+                        dihedral_forces,
                         field_forces,
                         names,
                         types,
@@ -729,6 +785,7 @@ if __name__ == "__main__":
                         indices,
                         bond_forces,
                         angle_forces,
+                        dihedral_forces,
                         field_forces,
                         names,
                         types,
@@ -737,6 +794,7 @@ if __name__ == "__main__":
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
                 angle_forces = np.asfortranarray(angle_forces)
+                dihedral_forces = np.asfortranarray(dihedral_forces)
 
                 layouts = [
                     pm.decompose(positions[types == t]) for t in range(config.n_types)
@@ -754,6 +812,12 @@ if __name__ == "__main__":
                         bonds_3_atom3,
                         bonds_3_equilibrium,
                         bonds_3_stength,
+                        bonds_4_atom1,
+                        bonds_4_atom2,
+                        bonds_4_atom3,
+                        bonds_4_atom4,
+                        bonds_4_cm,
+                        bonds_4_dm,
                     ) = bonds_prep
 
         for t in range(config.n_types):
@@ -811,12 +875,13 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
-                    field_forces + bond_forces + angle_forces,
+                    field_forces + bond_forces + angle_forces + dihedral_forces,
                     config.box_size,
                     temperature,
                     kinetic_energy,
                     bond_energy,
                     angle_energy,
+                    dihedral_energy,
                     field_energy,
                     config.time_step,
                     config,
@@ -884,12 +949,13 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            field_forces + bond_forces + angle_forces,
+            field_forces + bond_forces + angle_forces + dihedral_forces,
             config.box_size,
             temperature,
             kinetic_energy,
             bond_energy,
             angle_energy,
+            dihedral_forces,
             field_energy,
             config.time_step,
             config,
