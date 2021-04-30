@@ -6,12 +6,18 @@ from compute_bond_forces import cbf as compute_bond_forces__fortran  # noqa: F40
 from compute_angle_forces import (
     caf as compute_angle_forces__fortran,
 )  # noqa: F401, E501
+from compute_dihedral_forces import (
+    cdf as compute_dihedral_forces__fortran,
+)  # noqa: F401, E501
 from compute_bond_forces__double import (
     cbf as compute_bond_forces__fortran__double,
 )  # noqa: F401, E501
 from compute_angle_forces__double import (
     caf as compute_angle_forces__fortran__double,
 )  # noqa: F401, E501
+from compute_dihedral_forces__double import (
+    cdf as compute_dihedral_forces__fortran__double,
+)
 
 
 @dataclass
@@ -27,9 +33,9 @@ class Angle(Bond):
     atom_3: str
 
 
-# 1- Sinmple fourier function potential
+# 1- Fourier series
 # 2- Harmonic potential for impropers
-# 3- Combined bending-torsional potential
+# 3- Combined bending-torsional potential?
 @dataclass
 class Dihedral:
     atom_1: str
@@ -386,20 +392,18 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         gn = np.linalg.norm(g)
         gv = g / gn
 
-        v = f - np.dot(f, gv) * gv
-        w = h - np.dot(h, gv) * gv
+        prj1 = f - np.dot(f, gv) * gv
+        prj2 = h - np.dot(h, gv) * gv
 
-        cos_phi = np.dot(v, w)
-        sin_phi = np.dot(np.cross(gv, v), w)
+        cos_phi = np.dot(prj1, prj2)
+        sin_phi = np.dot(np.cross(gv, prj1), prj2)
         phi = np.arctan2(sin_phi, cos_phi)
 
-        # Let's reuse the same variables we don't needa anymore after
-        # getting the angle (don't think this is good practice though)
         v = np.cross(f, g)
         w = np.cross(h, g)
 
-        vv = np.dot(a, a)
-        ww = np.dot(b, b)
+        vv = np.dot(v, v)
+        ww = np.dot(w, w)
 
         fg = np.dot(f, g)
         hg = np.dot(h, g)
@@ -410,11 +414,6 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         for m in range(8):
             energy += cm[m] * (1 + np.cos(m * phi + dm[m]))
             df += m * cm[m] * np.sin(m * phi + dm[m])
-
-        # force_on_a = -df * gn * v / v2
-        # f_dihedrals[a, :] += force_on_a
-        # f_dihedrals[b, :] += df * s - force_on_a
-        # f_dihedrals[c, :] += -(df * s + force_on_d)
 
         force_on_a = df * gn * v / vv
         force_on_d = df * gn * w / ww
