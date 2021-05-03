@@ -256,7 +256,11 @@ def comp_pressure(
         config,
         phi_fourier,
         phi_laplacian,
-        phi_new
+        phi_new,
+        args,
+        bond_forces,
+        angle_forces,
+        positions
 ):
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -273,7 +277,6 @@ def comp_pressure(
 
     #Term 1
     p0 = -1/V * np.sum(w)
-    #print('p0:',p0)
   
     #Term 2
     V_bar_tuple = [
@@ -293,13 +296,8 @@ def comp_pressure(
 
     #Term 3
     for t in range(config.n_types):
-#        print('np.sum(phi[t]):', np.sum(phi[t][:]))
         phi[t].r2c(out=phi_fourier[0])
-#        print("\n*****************")
-#        print('np.sum(phi_fourier[0]):', np.sum(phi_fourier[0]))
-#        print("*****************\n")
         phi_fourier[0].c2r(out = phi_new[t])
-#        print('np.sum(phi_new[t])',np.sum(phi_new[t]))
         np.copyto(
             phi_fourier[1].value, phi_fourier[0].value, casting="no", where=True
         )
@@ -336,13 +334,60 @@ def comp_pressure(
     p2x = np.sum(p2x)
     p2y = np.sum(p2y)
     p2z = np.sum(p2z)
-    #print('p2x:',p2x)
-    #print('p2y:',p2y)
-    #print('p2z:',p2z)
-    #print('P_total_x:',p0+p1+p2x[-1])
-    #print('P_total_y:',p0+p1+p2y[-1])
-    #print('P_total_z:',p0+p1+p2z[-1])
+
+    #Bonded force term: linking 2 particles
+    forces = {
+            'x': bond_forces[:,0],
+            'y': bond_forces[:,1],
+            'z': bond_forces[:,2]
+             }
+
+    p_bond = {
+            'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
+            'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
+            'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
+              }
+
+    #Angle force term: linking 3 particles
+    forces = {
+            'x': angle_forces[:,0],
+            'y': angle_forces[:,1],
+            'z': angle_forces[:,2]
+             }
+
+    p_angle = {
+            'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
+            'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
+            'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
+               }
+
+    #Dihedral angle force term: linking 4 atoms
+    p_dihedral = {
+              'x': 0.0,                                              
+              'y': 0.0,
+              'z': 0.0
+                  } 
     
+    #Add formal parameter dihedral_forces as: comp_pressure(..., dihedral_forces)
+    #Define dictionary:
+    #forces = {                                                                                                         
+    #          'x': dihedral_forces[:,0],                                                                                    
+    #          'y': dihedral_forces[:,1],                                                                                    
+    #          'z': dihedral_forces[:,2]                                                                                     
+    #           }                                                                                                         
+    # Compute the pressure due to dihedrals as:                                                                                                                     
+    #p_dihedral = {
+    #          'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),                                              
+    #          'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),                                              
+    #          'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)                                               
+    #              } 
+
+
+    #print('forces[\'x\'][0:3]:',forces['x'][0:3])
+    #print('positions[0:3]:',positions[0:3])
+    #print('rx[0:3]:',rx[0:3])
+    #print('Fxx:',Fxx[0:3])
+
     #PLOTS
     if(config.plot):
         plot(
@@ -358,6 +403,22 @@ def comp_pressure(
         #    'x','y'
         #)
 
-    return_value = [p_kin,p0,p1,p2x,p2y,p2z,(p_kin+p0+p1+p2x),(p_kin+p0+p1+p2y),(p_kin+p0+p1+p2z)]
+    #Total pressure in x, y, z
+    p_tot = {
+        'x': p_kin + p0 + p1 + p2x + p_bond['x'] + p_angle['x'] + p_dihedral['x'],
+        'y': p_kin + p0 + p1 + p2y + p_bond['y'] + p_angle['y'] + p_dihedral['y'],
+        'z': p_kin + p0 + p1 + p2z + p_bond['z'] + p_angle['z'] + p_dihedral['z']
+            }
+
+
+    return_value = [
+                p_kin,p0,p1,
+                p2x,p2y,p2z,
+                p_bond['x'], p_bond['y'], p_bond['z'],
+                p_angle['x'], p_angle['y'], p_angle['z'],
+                p_dihedral['x'], p_dihedral['y'], p_dihedral['z'],
+                p_tot['x'], p_tot['y'], p_tot['z']
+    ]
+
     return_value = [comm.allreduce(_) for _ in return_value]
     return return_value

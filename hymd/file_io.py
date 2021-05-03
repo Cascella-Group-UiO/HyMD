@@ -39,6 +39,7 @@ def setup_time_dependent_element(
     step = group.create_dataset("step", (n_frames,), "int32")
     time = group.create_dataset("time", (n_frames,), "int32")
     value = group.create_dataset("value", (n_frames, *shape), dtype)
+
     if units is not None:
         group.attrs["units"] = units
     return group, step, time, value
@@ -218,7 +219,7 @@ def store_static(
         h5md.pressure_time,
         h5md.pressure,
     ) = setup_time_dependent_element(
-        "pressure", h5md.observables, n_frames, (9,), "float32", units="Bar"
+        "pressure", h5md.observables, n_frames, (18,), "float32", units="Bar"
     )
     (
         _,
@@ -320,11 +321,6 @@ def store_data(
         h5md.box_time
     ):
         dset[frame] = step * time_step
-
-    # Time dependent box, fix this later.
-    # h5md.box_step[frame] = step
-    # h5md.box_time[frame] = step * time_step
-    # h5md.box_value[frame, ...] = np.array(box_size)
 
     ind_sort = np.argsort(indices)
     h5md.positions[frame, indices[ind_sort]] = positions[ind_sort]

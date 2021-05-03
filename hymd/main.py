@@ -535,7 +535,11 @@ if __name__ == "__main__":
                     config,
                     phi_fft,
                     phi_laplacian,
-                    phi_new
+                    phi_new,
+                    args,
+                    bond_forces,
+                    angle_forces,
+                    positions
             )
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.
@@ -799,7 +803,10 @@ if __name__ == "__main__":
                      phi_fft,
                      phi_laplacian,
                      phi_new,
-                     comm
+                     comm,
+                     bond_forces,
+                     angle_forces,
+                     args
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
@@ -812,7 +819,10 @@ if __name__ == "__main__":
                      phi_fft,
                      phi_laplacian,
                      phi_new,
-                     comm
+                     comm,
+                     bond_forces,
+                     angle_forces,
+                     args
                 )
 
         # Print trajectory
@@ -853,7 +863,11 @@ if __name__ == "__main__":
                             config,
                             phi_fft,
                             phi_laplacian,
-                            phi_new
+                            phi_new,
+                            args,
+                            bond_forces,
+                            angle_forces,
+                            positions
                     )
                 else:
                     pressure = 0.0 #0.0 indicates not calculated. To be changed.
@@ -937,7 +951,11 @@ if __name__ == "__main__":
                     config,
                     phi_fft,
                     phi_laplacian,
-                    phi_new
+                    phi_new,
+                    args,
+                    bond_forces,
+                    angle_forces,
+                    positions
             )
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.

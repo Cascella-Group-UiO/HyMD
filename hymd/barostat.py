@@ -43,7 +43,10 @@ def isotropic(
         phi_fft,
         phi_laplacian,
         phi_new,
-        comm
+        comm,
+        bond_forces,
+        angle_forces,
+        args
     ):
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
 
@@ -55,7 +58,11 @@ def isotropic(
             config,
             phi_fft,
             phi_laplacian,
-            phi_new
+            phi_new,
+            args,
+            bond_forces,
+            angle_forces,
+            positions
     )
 
     #Total pressure across all ranks
@@ -86,7 +93,10 @@ def semiisotropic(
         phi_fft,
         phi_laplacian,
         phi_new,
-        comm
+        comm,
+        bond_forces,
+        angle_forces,
+        args
     ):
 
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
@@ -99,7 +109,11 @@ def semiisotropic(
             config,
             phi_fft,
             phi_laplacian,
-            phi_new
+            phi_new,
+            args,
+            bond_forces,
+            angle_forces,
+            positions
     )
 
     #Total pressure across all ranks

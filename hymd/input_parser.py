@@ -98,6 +98,7 @@ def convert_CONF_to_config(CONF, file_path=None):
         ("T0", "target_temperature", False),
         ("kappa", "kappa", 0.05),
         ("tau", "tau", 0.7),
+        ("tau_p", "tau_p", 1),
     ]
     config_dict = {}
     for x in vars_names_defaults:
