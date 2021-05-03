@@ -334,6 +334,9 @@ if __name__ == "__main__":
             charges = in_file["charge"][rank_range]
             #print('charges --- ', len(charges)) 
             #print(type(charges), charges.shape)
+            charges_flag = True
+        else:
+            charges_flag = False
             
 
     
@@ -412,7 +415,7 @@ if __name__ == "__main__":
     _SPACE_DIM = 3 ## dimension; demo; TBR
     #charges_flag = False #1 ## demo; TBR
     ####demo charges 
-    charges_flag = True ## demo; TBR
+    #charges_flag = True ## demo; TBR
     ##charges = np.zeros(
     ##    shape=len(positions) , dtype=dtype
     ##)  ## demo; TBR
@@ -433,8 +436,8 @@ if __name__ == "__main__":
     #print('charges --- ')
     #print(charges)
 
-    if charges_flag:
-        phi_q = pm.create("real", value=0.0) 
+    if charges_flag and config.coulombtype == 'PIC_Spectral':
+        phi_q = pm.create("real", value=0.0)
         phi_q_fourier = pm.create("complex", value=0.0)     
         elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
         elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation 
@@ -585,7 +588,7 @@ if __name__ == "__main__":
      
     ## Add Simple Poisson Equation Electrostatic: compute field/force/energy together 
     ##field_q_energy = 0.0 
-    if charges_flag:
+    if charges_flag and config.coulombtype == 'PIC_Spectral':
         layout_q = pm.decompose( positions ) 
         ## ^---- possible to filter out the particles without charge via e.g. positions[charges != 0] following positions[types == t])
         ### one step
