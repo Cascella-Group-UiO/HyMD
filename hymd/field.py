@@ -37,7 +37,7 @@ def compute_field_energy_q(
     comm=MPI.COMM_WORLD,
 ):
     
-    COULK_GMX = 138.935458 
+    COULK_GMX = 138.935458 / config.dielectric_const
 
     def transfer_energy(k,v):  ### potential field is electric field / (-ik)  --> potential field * q --> 
         return 4.0 * np.pi * COULK_GMX * np.abs(v)**2  / k.normp(p=2,zeromode=1) ## zeromode = 1 needed here?
@@ -98,7 +98,9 @@ def update_field_force_q(
     ## electric field via solving poisson equation 
     ## old protol in poisson_solver 
     _SPACE_DIM = 3     
-    COULK_GMX = 138.935458 
+    
+    COULK_GMX = 138.935458 / config.dielectric_const
+    
     for _d in np.arange(_SPACE_DIM):    
         def poisson_transfer_function(k, v, d=_d):
             return - 1j * k[_d] * 4.0 * np.pi * COULK_GMX * v / k.normp(p=2,zeromode=1)
@@ -166,7 +168,9 @@ def update_field_force_energy_q(
     ## electric field via solving poisson equation 
     ## old protol in poisson_solver 
     _SPACE_DIM = 3     
-    COULK_GMX = 138.935458 
+    
+    COULK_GMX = 138.935458 / config.dielectric_const
+
     for _d in np.arange(_SPACE_DIM):    
         def poisson_transfer_function(k, v, d=_d):
             return - 1j * k[_d] * 4.0 * np.pi * COULK_GMX * v / k.normp(p=2,zeromode=1)

@@ -15,5 +15,5 @@ __pycache__
 RUN/
 *.so
 test-xinmeng-electrostatic/*
-!test-xinmeng-electrostatic/run-dppc/
-!test-xinmeng-electrostatic/run-sds/
+#!test-xinmeng-electrostatic/run-dppc/
+#!test-xinmeng-electrostatic/run-sds/
