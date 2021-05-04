@@ -54,8 +54,8 @@ tau = 0.1
 hamiltonian = 'DefaultWithChi'
 
 # Electrostatics
-coulombtype = 'PIC_Spectral'
-dielectric_const = 80.0 
+##coulombtype = 'PIC_Spectral'
+##dielectric_const = 800.0 
 
 
 [field]

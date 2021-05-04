@@ -25,7 +25,7 @@ from field import (
     compute_field_energy_q
 )
 
-from file_io import distribute_input, OutDataset, store_static, store_data, store_static_old
+from file_io import distribute_input, OutDataset, store_static, store_data, store_static_with_charge
 from force import compute_bond_forces__fortran as compute_bond_forces
 from force import compute_angle_forces__fortran as compute_angle_forces
 from force import prepare_bonds
@@ -685,33 +685,35 @@ if __name__ == "__main__":
     #print('here')
     #print(type(indices), indices.shape)
     #print(type(names), names.shape)
-    store_static(
-        out_dataset,
-        rank_range,
-        names,
-        types,
-        indices,
-        charges, #<---------- simple add charges 
-        config,
-        bonds_2_atom1,
-        bonds_2_atom2,
-        velocity_out=args.velocity_output,
-        force_out=args.force_output,
-        comm=comm,
-    )  
-    #store_static_old(
-    #    out_dataset,
-    #    rank_range,
-    #    names,
-    #    types,
-    #    indices,
-    #    config,
-    #    bonds_2_atom1,
-    #    bonds_2_atom2,
-    #    velocity_out=args.velocity_output,
-    #    force_out=args.force_output,
-    #    comm=comm,
-    #)  
+    if charges_flag and config.coulombtype == 'PIC_Spectral':
+        store_static_with_charge(
+            out_dataset,
+            rank_range,
+            names,
+            types,
+            indices,
+            charges, #<---------- simple add charges 
+            config,
+            bonds_2_atom1,
+            bonds_2_atom2,
+            velocity_out=args.velocity_output,
+            force_out=args.force_output,
+            comm=comm,
+        )  
+    else: 
+        store_static(
+            out_dataset,
+            rank_range,
+            names,
+            types,
+            indices,
+            config,
+            bonds_2_atom1,
+            bonds_2_atom2,
+            velocity_out=args.velocity_output,
+            force_out=args.force_output,
+            comm=comm,
+        )
 
     
     if config.n_print > 0:
@@ -751,14 +753,14 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            field_forces + bond_forces + angle_forces + elec_forces, ## <------ judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #
+            judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces) , #field_forces + bond_forces + angle_forces + elec_forces, ## <------ judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #
             config.box_size,
             temperature,
             kinetic_energy,
             bond_energy,
             angle_energy,
             field_energy,
-            field_q_energy, ##<----------
+            field_q_energy, ##<---------- 
             config.time_step,
             config,
             velocity_out=args.velocity_output,
@@ -766,7 +768,7 @@ if __name__ == "__main__":
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
-    
+        
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -820,9 +822,14 @@ if __name__ == "__main__":
                 Logger.rank0.log(logging.INFO, info_str)
         
         # Initial rRESPA velocity step
-        velocities = integrate_velocity(
-            velocities, (field_forces + elec_forces) / config.mass, config.time_step
-        )
+        if charges_flag and config.coulombtype == 'PIC_Spectral':
+            velocities = integrate_velocity(
+                velocities, (field_forces + elec_forces) / config.mass, config.time_step
+            )
+        else:
+            velocities = integrate_velocity(
+                velocities, field_forces / config.mass, config.time_step
+            )
         
         # Inner rRESPA steps
         for inner in range(config.respa_inner):
@@ -914,9 +921,14 @@ if __name__ == "__main__":
                 #print(field_q_energy, elec_forces[0])
         
         # Second rRESPA velocity step
-        velocities = integrate_velocity(
-            velocities, (field_forces + elec_forces) / config.mass, config.time_step
-        )
+        if charges_flag and config.coulombtype == 'PIC_Spectral':
+            velocities = integrate_velocity(
+                velocities, (field_forces + elec_forces) / config.mass, config.time_step
+            )
+        else:
+            velocities = integrate_velocity(
+                velocities, field_forces / config.mass, config.time_step
+            )
         ### <-------- TBF
         #print(type(field_forces),type(field_forces))
         #print(field)
@@ -1072,7 +1084,7 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
-                    field_forces + bond_forces + angle_forces + elec_forces, 
+                    judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #field_forces + bond_forces + angle_forces + elec_forces, 
                     config.box_size,
                     temperature,
                     kinetic_energy,
@@ -1173,7 +1185,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            field_forces + bond_forces + angle_forces + elec_forces, #<-----------
+            judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #field_forces + bond_forces + angle_forces + elec_forces, #<-----------
             config.box_size,
             temperature,
             kinetic_energy,
