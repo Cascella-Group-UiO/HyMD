@@ -389,25 +389,19 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
             g -= box_size[dim] * np.around(g[dim] / box_size[dim])
             h -= box_size[dim] * np.around(h[dim] / box_size[dim])
 
-        gn = np.linalg.norm(g)
-        gv = g / gn
-
-        prj1 = f - np.dot(f, gv) * gv
-        prj2 = h - np.dot(h, gv) * gv
-
-        cos_phi = np.dot(prj1, prj2)
-        sin_phi = np.dot(np.cross(gv, prj1), prj2)
-        phi = np.arctan2(sin_phi, cos_phi)
-
         v = np.cross(f, g)
         w = np.cross(h, g)
-
         vv = np.dot(v, v)
         ww = np.dot(w, w)
+        gn = np.linalg.norm(g)
+
+        cosphi = np.dot(v, w)
+        sinphi = np.dot(np.cross(v, w), g) / gn
+        phi = np.arctan2(sinphi, cosphi)
 
         fg = np.dot(f, g)
         hg = np.dot(h, g)
-        s = a * fg / (vv * gn) - w * hg / (ww * gn)
+        sc = v * fg / (vv * gn) - w * hg / (ww * gn)
 
         df = 0
         # Use 8 terms => len(cn) == len(dn) == 8
@@ -419,8 +413,8 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         force_on_d = df * gn * w / ww
 
         f_dihedrals[a, :] -= force_on_a
-        f_dihedrals[b, :] += df * s + force_on_a
-        f_dihedrals[c, :] -= df * s + force_on_d
+        f_dihedrals[b, :] += df * sc + force_on_a
+        f_dihedrals[c, :] -= df * sc + force_on_d
         f_dihedrals[d, :] += force_on_d
 
     return energy
