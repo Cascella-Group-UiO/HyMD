@@ -1,0 +1,69 @@
+2021-05-04 16:08:03,518 INFO     [main.py:182] <configure_runtime> {rank 0/4} Attempting to parse config file config-nocharge.toml as .toml
+2021-05-04 16:08:27,665 INFO     [main.py:182] <configure_runtime> {rank 0/4} Attempting to parse config file config-nocharge.toml as .toml
+2021-05-04 16:08:56,495 INFO     [main.py:182] <configure_runtime> {rank 0/4} Attempting to parse config file config-nocharge.toml as .toml
+2021-05-04 16:08:56,498 INFO     [main.py:189] <configure_runtime> {rank 0/4} Successfully parsed config-nocharge.toml as .toml file
+2021-05-04 16:08:56,498 INFO     [main.py:193] <configure_runtime> {rank 0/4} 
+
+	Config: /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml
+	--------------------------------------------------
+	n_steps: 500
+	time_step: 0.3
+	box_size: [13.0, 13.0, 14.0]
+	mesh_size: [24, 24, 24]
+	sigma: 0.5
+	kappa: 0.05
+	n_print: 20
+	tau: 0.1
+	start_temperature: 323
+	target_temperature: 323
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 10
+	integrator: respa
+	respa_inner: 10
+	file_name: /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml
+	name: DPPC bilayer with ML interaction parameters
+	tags: ['bilayer', 'solvent', 'DPPC']
+	n_particles: 20336
+	max_molecule_size: 15
+	n_flush: 50
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	coulombtype: None
+	dielectric_const: None
+	command_line_full: ../../hymd/main.py config-nocharge.toml dppc.h5 --verbose --velocity-output --logfile log-nocharge.txt
+	bonds:
+		N P: 0.47, 1250.0
+		P G: 0.47, 1250.0
+		G G: 0.37, 1250.0
+		G C: 0.47, 1250.0
+		C C: 0.47, 1250.0
+	angle_bonds:
+		P G G: 120.0, 25.0
+		P G C: 180.0, 25.0
+		G C C: 180.0, 25.0
+		C C C: 180.0, 25.0
+	chi:
+		C W: 42.24
+		C G: 10.47
+		N W: -3.77
+		G W: 4.53
+		N P: -9.34
+		G P: 8.04
+		G N: 1.97
+		C P: 14.72
+		P W: -1.51
+		C N: 13.56
+
+2021-05-04 16:08:56,609 INFO     [main.py:259] <generate_initial_velocities> {rank 0/4} Initialized 20336 velocities, target kinetic energy: 81963.32673825503, actual kinetic energy generated: 81963.32739257812
+2021-05-04 16:08:56,763 INFO     [main.py:397] <main> {rank 0/4} pfft-python processor mesh: (2, 2)
+2021-05-04 16:09:02,715 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+              0              0      323.00001      136977.58       81963.33      55014.255      23599.805              0      7770.1514      23644.299  -0.0054244995  -0.0050811768  -0.0035705566
+2021-05-04 16:09:10,789 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             20              6      322.46865      120814.11      81828.494      38985.614      16911.543              0      9937.1082      12136.963      7.4602661      6.1650467      8.4423065
+2021-05-04 16:09:18,660 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             40             12      324.63345      120264.79      82377.824      37886.964      16093.036              0      9453.4761      12340.452      13.281784      12.117508      3.1543121
