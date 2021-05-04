@@ -9,7 +9,8 @@ from input_parser import (Config, read_config_toml, parse_config_toml,
                           check_n_particles, check_max_molecule_size,
                           check_bonds, check_angles, check_chi,
                           check_box_size, check_integrator,
-                          convert_CONF_to_config)
+                          convert_CONF_to_config,
+                          check_thermostat_coupling_groups)
 
 
 def test_input_parser_read_config_toml(config_toml):
@@ -22,6 +23,7 @@ def test_input_parser_file(config_toml):
     _, config_toml_str = config_toml
     config = parse_config_toml(config_toml_str)
     assert isinstance(config, Config)
+    assert isinstance(str(config), str)
 
 
 @pytest.mark.mpi()
@@ -404,3 +406,105 @@ def test_input_parser_check_domain_decomposition():                             
 @pytest.mark.mpi()
 def test_input_parser_check_name():                                             ##### <<<< FIX ME
     ...
+
+
+def test_input_parser_thermostat_coupling_groups(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    nn = (("N", "P"), ("G", "C"), ("W"))
+    for i in range(3):
+        for n in nn[i]:
+            assert n in config.thermostat_coupling_groups[i]
+
+    thermostat_coupling_groups_toml_str = (
+        _remove_from_config(
+            config_toml_str,
+            '["N", "P"],'
+        )
+    )
+    thermostat_coupling_groups_toml_str = (
+        _remove_from_config(
+            thermostat_coupling_groups_toml_str,
+            '["G", "C"],'
+        )
+    )
+    thermostat_coupling_groups_toml_str = (
+        _remove_from_config(
+            thermostat_coupling_groups_toml_str,
+            '["W"],'
+        )
+    )
+    thermostat_coupling_groups_toml_str = _add_to_config(
+        thermostat_coupling_groups_toml_str,
+        '        ["N", "P", "G", "C"],',
+        'thermostat_coupling_groups'
+    )
+    thermostat_coupling_groups_toml_str = _add_to_config(
+        thermostat_coupling_groups_toml_str,
+        '        ["W"],',
+        'thermostat_coupling_groups'
+    )
+    config = parse_config_toml(thermostat_coupling_groups_toml_str)
+    nn = (("N", "P", "G", "C"), ("W"))
+    for i in range(2):
+        for n in nn[i]:
+            assert n in config.thermostat_coupling_groups[i]
+
+    thermostat_coupling_groups_toml_str = (
+        _remove_from_config(
+            thermostat_coupling_groups_toml_str,
+            '["N", "P", "G", "C"],'
+        )
+    )
+    thermostat_coupling_groups_toml_str = _add_to_config(
+        thermostat_coupling_groups_toml_str,
+        '        ["N", "P", "G"],',
+        'thermostat_coupling_groups'
+    )
+
+    config = parse_config_toml(thermostat_coupling_groups_toml_str)
+    config.unique_names = sorted(["N", "P", "G", "C", "W"])
+    with pytest.raises(ValueError) as recorded_error:
+        _ = check_thermostat_coupling_groups(config)
+        log = caplog.text
+        assert all([(s in log) for s in ('species C', 'not specified')])
+
+    message = str(recorded_error.value)
+    print(message)
+    assert all([(s in message) for s in ('species C', 'not specified')])
+    caplog.clear()
+
+    thermostat_coupling_groups_toml_str = (
+        _remove_from_config(
+            thermostat_coupling_groups_toml_str,
+            '["N", "P", "G"],'
+        )
+    )
+    thermostat_coupling_groups_toml_str = (
+        _remove_from_config(
+            thermostat_coupling_groups_toml_str,
+            '["W"],'
+        )
+    )
+    thermostat_coupling_groups_toml_str = _add_to_config(
+        thermostat_coupling_groups_toml_str,
+        '        ["N", "P", "G", "C"],',
+        'thermostat_coupling_groups'
+    )
+    thermostat_coupling_groups_toml_str = _add_to_config(
+        thermostat_coupling_groups_toml_str,
+        '        ["W", "P"],',
+        'thermostat_coupling_groups'
+    )
+    config = parse_config_toml(thermostat_coupling_groups_toml_str)
+    config.unique_names = sorted(["N", "P", "G", "C", "W"])
+    with pytest.raises(ValueError) as recorded_error:
+        _ = check_thermostat_coupling_groups(config)
+        log = caplog.text
+        assert all([(s in log) for s in ('species P', 'specified', 'multiple')])
+
+    message = str(recorded_error.value)
+    print(message)
+    assert all([(s in message) for s in ('species P', 'specified', 'multiple')])
+    caplog.clear()

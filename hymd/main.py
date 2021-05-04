@@ -34,7 +34,7 @@ from input_parser import (
 )
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
-from thermostat import velocity_rescale
+from thermostat import csvr_thermostat
 
 
 def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
@@ -238,7 +238,7 @@ def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
 
 
 def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
-    kT_start = (2.479 / 298.0) * config.start_temperature
+    kT_start = config.R * config.start_temperature
     n_particles_ = velocities.shape[0]
     velocities[...] = np.random.normal(
         loc=0, scale=kT_start / config.mass, size=(n_particles_, 3)
@@ -249,12 +249,9 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
     )
     start_kinetic_energy_target = (
-        (3 / 2)
-        * (2.479 / 298.0)
-        * config.n_particles
-        * config.start_temperature  # noqa: E501
+        1.5 * config.R * config.n_particles * config.start_temperature
     )
-    factor = np.sqrt((3 / 2) * config.n_particles * kT_start / kinetic_energy)
+    factor = np.sqrt(1.5 * config.n_particles * kT_start / kinetic_energy)
     velocities[...] = velocities[...] * factor
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
@@ -575,7 +572,7 @@ if __name__ == "__main__":
             )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
-        temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         store_data(
             out_dataset,
             step,
@@ -706,6 +703,9 @@ if __name__ == "__main__":
 
         # Update slow forces
         if not args.disable_field:
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
             update_field(
                 phi,
                 layouts,
@@ -719,9 +719,6 @@ if __name__ == "__main__":
                 phi_fourier,
                 v_ext_fourier,
             )
-            layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)
-            ]
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -834,9 +831,9 @@ if __name__ == "__main__":
 
         # Thermostat
         if config.target_temperature:
-        # Add loop if multiple groups are defined 
-        # velocity_rescale(velocities_grp_i, config_T_i, config_tau_i)
-            velocities = velocity_rescale(velocities, config, comm)
+        # Add loop if multiple groups/temperatures are defined 
+        # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
+            csvr_thermostat(velocities, names, config, comm=comm)
 
         # Print trajectory
         if config.n_print > 0:
@@ -862,9 +859,7 @@ if __name__ == "__main__":
                         0.5 * config.mass * np.sum(velocities ** 2)
                     )
                 temperature = (
-                    (2 / 3)
-                    * kinetic_energy
-                    / ((2.479 / 298.0) * config.n_particles)  # noqa: E501
+                    (2 / 3) * kinetic_energy / (config.R * config.n_particles)
                 )
                 if args.disable_field:
                     field_energy = 0.0
@@ -939,7 +934,7 @@ if __name__ == "__main__":
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         frame = (step + 1) // config.n_print
-        temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         if args.disable_field:
             field_energy = 0.0
         store_data(
