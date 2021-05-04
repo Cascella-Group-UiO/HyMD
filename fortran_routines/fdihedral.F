@@ -36,14 +36,15 @@ C     Subroutine for calculating forces due to protein backbone
          id = lltor(i)
 
 C        Define vectors between particles
+         ! a - b
          vb1x =  -(x(ib) - x(ia))
          vb1y =  -(y(ib) - y(ia))
          vb1z =  -(z(ib) - z(ia))
-
+         ! c - b
          vb2x =  x(ic) - x(ib)
          vb2y =  y(ic) - y(ib)
          vb2z =  z(ic) - z(ib)
-         
+         ! d - c
          vb3x =  x(id) - x(ic)
          vb3y =  y(id) - y(ic)
          vb3z =  z(id) - z(ic)
@@ -65,7 +66,8 @@ C        PBC
          vb1z = vb1z - zbox * anint (zboxi * vb1z)
          vb2z = vb2z - zbox * anint (zboxi * vb2z)
          vb3z = vb3z - zbox * anint (zboxi * vb3z)
-
+         
+         ! b - c
          vb2xm = -vb2x
          vb2ym = -vb2y
          vb2zm = -vb2z
@@ -86,7 +88,7 @@ C        vb3 x vb2m
          by = vb3z*vb2xm - vb3x*vb2zm
          bz = vb3x*vb2ym - vb3y*vb2xm
 
-C        Norms
+C        Square norms
          rasq = ax*ax + ay*ay + az*az
          rbsq = bx*bx + by*by + bz*bz
 
