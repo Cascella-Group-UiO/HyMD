@@ -41,6 +41,21 @@ class SquaredPhi(Hamiltonian):
         def w(phi, kappa=self.config.kappa, rho0=self.config.rho0):
             return 0.5 / (kappa * rho0) * (sum(phi)) ** 2
 
+        def V_bar(
+                phi,
+                k,
+                kappa=self.config.kappa,
+                rho0=self.config.rho0,
+        ):
+            V_incompressibility = 1/(kappa*rho0)*sum(phi)
+            V_interaction = 0
+            return (V_interaction,V_incompressibility)
+
+        self.V_bar = [
+            sympy.lambdify([self.phi], V_bar(self.phi, k))
+            for k in range(len(self.config.unique_names))
+        ]
+
         self.v_ext = [
             sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
             for i in range(len(self.config.unique_names))
@@ -63,6 +78,21 @@ class DefaultNoChi(Hamiltonian):
         ):
             return 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
 
+        def V_bar(
+                phi,
+                k,
+                kappa=self.config.kappa,
+                rho0=self.config.rho0,
+                a=self.config.a,
+        ):
+            V_incompressibility = 1/(kappa*rho0)*(sum(phi) - a)
+            V_interaction = 0
+            return (V_interaction,V_incompressibility)
+
+        self.V_bar = [
+            sympy.lambdify([self.phi], V_bar(self.phi, k))
+            for k in range(len(self.config.unique_names))
+        ]
         self.v_ext = [
             sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
             for i in range(len(self.config.unique_names))
