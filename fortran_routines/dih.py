@@ -2,6 +2,68 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 ##
+def dihedral_sig(p0, p1, p2, p3):
+    # b1 == v2m
+
+    b0 = p0 - p1
+    b1 = p1 - p2
+    b2 = p3 - p2
+
+    b0xb1 = np.cross(b0, b1)
+    b1xb2 = np.cross(b2, b1)
+
+    b0xb1_x_b1xb2 = np.cross(b0xb1, b1xb2)
+
+    x = np.dot(b0xb1, b1xb2)
+    y = np.dot(b0xb1_x_b1xb2, b1) / np.linalg.norm(b1)
+
+    # fig = plt.figure(facecolor="white", figsize=(10, 10))
+    # ax = plt.axes(projection="3d")
+
+    # for i in (a, b, c, d):
+    #    ax.scatter(i[0], i[1], i[2], s=100)
+    # ax.quiver(*b, *b0, arrow_length_ratio=0.05)
+    # ax.quiver(*c, *b1, arrow_length_ratio=0.05)
+    # ax.quiver(*c, *b2, arrow_length_ratio=0.05)
+
+    # ax.quiver(*b, *b0xb1, arrow_length_ratio=0.05, color="r")
+    # ax.quiver(*b, *b1xb2, arrow_length_ratio=0.05, color="g")
+
+    return np.degrees(np.arctan2(y, x))
+
+
+def dihedral_norm(p0, p1, p2, p3):
+    # b1 == v2m
+
+    b0 = p0 - p1
+    b1 = p1 - p2
+    b2 = p3 - p2
+
+    b0xb1 = np.cross(b0, b1)
+    b1xb2 = np.cross(b2, b1)
+
+    b0xb1 /= np.linalg.norm(b0xb1)
+    b1xb2 /= np.linalg.norm(b1xb2)
+
+    b0xb1_x_b1xb2 = np.cross(b0xb1, b1xb2)
+
+    x = np.dot(b0xb1, b1xb2)
+    y = np.dot(b0xb1_x_b1xb2, b1) / np.linalg.norm(b1)
+    fig = plt.figure(facecolor="white", figsize=(10, 10))
+    ax = plt.axes(projection="3d")
+
+    for i in (a, b, c, d):
+        ax.scatter(i[0], i[1], i[2], s=100)
+    ax.quiver(*b, *b0, arrow_length_ratio=0.05)
+    ax.quiver(*c, *b1, arrow_length_ratio=0.05)
+    ax.quiver(*c, *b2, arrow_length_ratio=0.05)
+
+    ax.quiver(*b, *b0xb1, arrow_length_ratio=0.05, color="r")
+    ax.quiver(*b, *b1xb2, arrow_length_ratio=0.05, color="g")
+
+    return np.degrees(np.arctan2(y, x))
+
+
 def new_dihedral(p1, p2, p3, p4):
     # Angle calculation, taken from:
     # https://stackoverflow.com/a/34245697
@@ -18,7 +80,7 @@ def new_dihedral(p1, p2, p3, p4):
 
     x = np.dot(v, w)  # cos(phi)
     y = np.dot(np.cross(bv, v), w)  # sin(phi)
-    return np.arctan2(y, x)
+    return np.degrees(np.arctan2(y, x))
 
 
 def dV_dphi(p1, p2, p3, p4, ci, di, phi):
@@ -92,10 +154,10 @@ def plot_dih(a, b, c, d):
 a = np.array([-1, 0, 0], dtype=np.float64)
 b = np.array([0, 1, 0], dtype=np.float64)
 c = np.array([2, 1, 0], dtype=np.float64)
-d = np.array([3, 2, 0], dtype=np.float64)
-# print(np.degrees(get_dihedral(a, b, c, d)))
-# print(np.degrees(new_dihedral(a, b, c, d)))
-# plot_dih(a, b, c, d)
+d = np.array([2.5, 1, 0.5], dtype=np.float64)
+print(dihedral_sig(a, b, c, d))
+print(dihedral_norm(a, b, c, d))
+print(new_dihedral(a, b, c, d))
 ##
 a = np.array([10, 10, 10], dtype=np.float64)
 print(np.dot(a, a))
