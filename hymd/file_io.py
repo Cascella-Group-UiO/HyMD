@@ -49,7 +49,7 @@ def setup_time_dependent_element(
     return group, step, time, value
 
 
-def store_static_old(
+def store_static(
     h5md,
     rank_range,
     names,
@@ -294,7 +294,9 @@ def store_static_old(
         bonds_from[rank_bond_start + i] = indices[a]
         bonds_to[rank_bond_start + i] = indices[b]
 
-def store_static(
+
+
+def store_static_with_charge(
     h5md,
     rank_range,
     names,
