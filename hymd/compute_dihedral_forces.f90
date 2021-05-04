@@ -21,10 +21,8 @@ subroutine cdf(f, r, box, a, b, c, d, cm, dm, energy)
   real(8), intent(out) :: energy
    
   integer :: ind, aa, bb, cc, dd, i
-  real(8), dimension(3) :: f, g, h, gv, prj1, prj2, y
-  real(8), dimension(3) :: v, w, force_a, force_d
-  real(8) :: gnorm, vv, ww, fg, hg, sc, df
-  real(8) :: cosphi, sinphi, phi
+  real(8), dimension(3) :: f, g, h, v, w, sc, force_on_a, force_on_d
+  real(8) :: gnorm, vv, ww, fg, hg, df, cosphi, sinphi, phi
 
   energy = 0.d0
   force = 0.d0
@@ -45,31 +43,24 @@ subroutine cdf(f, r, box, a, b, c, d, cm, dm, energy)
       h(i) = h(i) - box(i) * nint(h(i) / box(i))
     end do
   
+    v = cross(f, g)
+    w = cross(h, g)
+    vv = dot_product(v, v)
+    ww = dot_product(w, w)
     gnorm = sqrt(dot_product(g, g))
-    gv = g / gn
-
-    prj1 = f - dot_product(f, gv) * gv
-    prj2 = h - dot_product(h, gv) * gv
-    y = cross(gv, prj1)
     
-    cosphi = dot_product(prj1, prj2)
-    sinphi = dot_product(y, prj2)
+    cosphi = dot_product(v, w)
+    sinphi = dot_product(cross(v, w), g) / gnorm
     phi = atan2(sinphi, cosphi) 
 
     ! Add check if cosphi > 1 or cosphi < -1?
     ! if (cosphi > 1) cosphi = 1.d0
     ! if (cosphi < -1) cosphi = -1.d0
     
-    v = cross(f, g)
-    w = cross(h, g)
-    
-    vv = dot_product(v, v)
-    ww = dot_product(w, w)
-    
     fg = dot_product(f, g)
     hg = dot_product(h, g)
     
-    sc = a * fg / (vv * gn) - w * hg / (ww * gn)
+    sc = v * fg / (vv * gn) - w * hg / (ww * gn)
     df = 0.d0
 
     do i = 0, 7
@@ -77,12 +68,12 @@ subroutine cdf(f, r, box, a, b, c, d, cm, dm, energy)
       df = df + m * cm(i + 1) * sin(i * phi + dm(i + 1))
     end do
  
-    force_a = df * gnorm * v / vv
-    force_d = df * gnorm * w / ww
+    force_on_a = df * gnorm * v / vv
+    force_on_d = df * gnorm * w / ww
 
     force(aa, :) = force(aa, :) - force_on_a
-    force(bb, :) = force(bb, :) + df * s + force_on_a
-    force(cc, :) = force(cc, :) - df * s - force_on_d
+    force(bb, :) = force(bb, :) + df * sc + force_on_a
+    force(cc, :) = force(cc, :) - df * sc - force_on_d
     force(dd, :) = force(dd, :) + force_on_d
   end do
 
