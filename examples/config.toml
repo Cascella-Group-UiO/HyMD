@@ -82,8 +82,6 @@ kappa = 0.05
 sigma = 0.5
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
-#
-# Could be worth using dataframes?
 chi = [
   [["C", "W"], [42.24]],
   [["G", "C"], [10.47]],

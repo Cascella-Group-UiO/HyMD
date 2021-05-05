@@ -81,10 +81,10 @@ def csvr_thermostat(
     Implements the CSVR thermostat. Rescales the system kinetic energy by a
     stochastically chosen factor to keep the temperature constant. Requires
     communcation of the kinetic energies calculated locally for each MPI rank.
-    The random numbers sampled through _random_gaussian and random_chi_squared
-    and broadcast from the root rank to the other ranks to ensure the scaling
-    is performed with the same stochasticity for all particles in the full
-    system.
+    The random numbers sampled through `random_gaussian` and
+    `random_chi_squared` are broadcast from the root rank to the other ranks to
+    ensure the scaling is performed with the same stochasticity for all
+    particles in the full system.
 
     The velocities are cleaned of center of mass momentum before the thermostat
     is applied, and the center of mass momentum is subsequently reapplied. This
@@ -104,19 +104,16 @@ def csvr_thermostat(
     config : Config
         Configuration dataclass containing simulation metadata and parameters.
     comm : MPI.Intracomm, optional
-        MPI communicator to use for rank commuication.
+        MPI communicator to use for rank commuication. Defaults to
+        MPI.COMM_WORLD.
     random_gaussian : callable, optional
         Function for generating standard normally distributed numbers.
     random_chi_squared : callable, optional
         Function for generating χ²-distributed numbers
     remove_center_of_mass_momentum : bool, optional
         If True, the center of mass of each coupling group is removed before
-
-    Returns
-    -------
-    velocity : (N, D) np.ndarray
-        Array containing the rescaled velocities of N particles in D
-        dimensions.
+        the thermostat is applied. The center of mass momenta are added back
+        after the kinetic energy rescaling is complete.
 
     See Also
     --------
@@ -137,15 +134,16 @@ def csvr_thermostat(
         group_n_particles = comm.allreduce(len(ind[0]), MPI.SUM)
 
         # Clean velocities of center of mass momentum
-        if remove_center_of_mass_momentum:
+        if remove_center_of_mass_momentum and group_n_particles > 1:
             com_velocity = comm.allreduce(np.sum(velocity[ind], axis=0))
             velocity_clean = velocity[ind] - com_velocity / group_n_particles
             K = comm.allreduce(0.5 * config.mass
                                * np.sum(velocity_clean[...]**2))
         else:
             K = comm.allreduce(0.5 * config.mass * np.sum(velocity[...]**2))
-        K_target = ((3 / 2) * (2.479 / 298.0) * group_n_particles
-                    * config.target_temperature)
+        K_target = (
+            1.5 * config.R * group_n_particles * config.target_temperature
+        )
         N_f = 3 * group_n_particles
         c = np.exp(-(config.time_step * config.respa_inner) / config.tau)
 
@@ -165,7 +163,7 @@ def csvr_thermostat(
         dK = K * (alpha2 - 1)
         alpha = np.sqrt(alpha2)
 
-        if remove_center_of_mass_momentum:
+        if remove_center_of_mass_momentum and group_n_particles > 1:
             # Assign velocities and reapply the previously removed center
             # of mass momentum removed
             velocity_clean *= alpha
