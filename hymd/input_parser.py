@@ -677,6 +677,24 @@ def check_name(config, comm=MPI.COMM_WORLD):
             config.name = "sim" + current_time
     return config
 
+def check_barostat(config, comm=MPI.COMM_WORLD):
+    if config.barostat is None and (config.tau_p is not None or config.target_pressure is not None):
+        err_str = "barostat not specified but config.tau_p "\
+                  "or config.target_pressure specified, cannot start simulation {config.barostat}"
+        Logger.rank0.log(logging.ERROR, err_str)
+        if comm.Get_rank() == 0:
+            raise TypeError(err_str)
+    return config
+
+
+def check_tau_p(config, comm=MPI.COMM_WORLD):
+    if config.tau_p is None:
+       warn_str = "target_pressure specified but no tau_p, defaulting to 1.0"
+       config.tau_p = 1.0
+       Logger.rank0.log(logging.WARNING, warn_str)
+       if comm.Get_rank() == 0:
+           warnings.warn(warn_str)
+    return config
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config.box_size = np.array(config.box_size)  ######## <<<<< FIX ME
@@ -696,4 +714,6 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_angles(config, names, comm=comm)
     config = check_bonds(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
+    config = check_barostat(config, comm=comm)
+    #config = check_tau_p(config, comm=comm)
     return config

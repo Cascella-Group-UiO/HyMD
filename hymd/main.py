@@ -373,6 +373,7 @@ if __name__ == "__main__":
     phi_gradient = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
+    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian, phi_gradient]
 
     if config.domain_decomposition:
         dd = domain_decomposition(
@@ -824,6 +825,30 @@ if __name__ == "__main__":
                      angle_forces,
                      args
                 )
+                #pmesh repair attempt 2
+                # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
+                # ragged nested sequences until it is fixed in pmesh
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        action="ignore",
+                        category=np.VisibleDeprecationWarning,
+                        message=r"Creating an ndarray from ragged nested sequences",
+                    )
+                    # The first argument of ParticleMesh has to be a tuple
+                    pm = pmesh.ParticleMesh(
+                        config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
+                    )
+                for _ in field_list:
+                    for field in _:
+                        if(type(field) == type([])):
+                            for f in field:
+                                f._base = phi[0]._base
+                                f.pm = pm
+                                f.BoxSize = pm.BoxSize
+                        else:
+                            field._base = phi[0]._base
+                            field.pm = pm
+                            field.BoxSize = pm.BoxSize
 
         # Print trajectory
         if config.n_print > 0:

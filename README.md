@@ -35,6 +35,8 @@ For python3.8
 ```
 
 ## Running HyMD on a Cluster
+```bash
+
 The following is a typical way to run a job script on SAGA:
 ```bash
 > module restore
@@ -50,6 +52,17 @@ job_binary.sh  job.sh  job_test.sh  job_water.sh
 sbatch job_scripts/job_binary.sh $HYMD_PATH/examples/binary/configAB.toml $HYMD_PATH/examples/binary/binary_eq.h5
 ```
 `HYMD_PATH`is just a variable to make the `sbatch` line cleaner, nothing else.  
+
+##### Common problems:
+If some packages cannot be found, check if all packages in `requirements.txt` are installed on user.
+Check after loading the above modules only. Example:
+```bash
+> python -c "import pmesh"
+ImportError: No module named utils
+> pip install pmesh --user
+```
+
+
 ### OUTPUT  
 A folder called `out_XXXXXXX` is created in the slurm submit dir (in this case, at the location of `HyMD-2021`), where `XXXXXXX` is the job ID.
 ```bash
