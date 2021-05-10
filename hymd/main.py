@@ -842,11 +842,9 @@ if __name__ == "__main__":
                     for field in _:
                         if(type(field) == type([])):
                             for f in field:
-                                f._base = phi[0]._base
                                 f.pm = pm
                                 f.BoxSize = pm.BoxSize
                         else:
-                            field._base = phi[0]._base
                             field.pm = pm
                             field.BoxSize = pm.BoxSize
 
