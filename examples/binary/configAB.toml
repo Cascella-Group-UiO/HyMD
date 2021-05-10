@@ -1,5 +1,5 @@
 [meta]
-name = "Biphasic system"
+#name = "Biphasic system"
 tags = ["biphase", "AB", "monoatomic"]
 
 [particles]
@@ -8,10 +8,10 @@ mass = 18.0
 max_molecule_size = 1 
 
 [simulation]
-n_steps = 300 
-n_print = 10
-n_flush = 1000
-time_step = 0.03
+n_steps = 2 
+n_print = 1
+n_flush = 1
+time_step = 0.3
 box_size = [10.6, 10.6, 10.6]
 integrator = "respa"
 respa_inner = 10

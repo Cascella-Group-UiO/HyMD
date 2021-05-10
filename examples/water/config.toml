@@ -8,7 +8,7 @@ mass = 18.0
 max_molecule_size = 1
 
 [simulation]
-n_steps = 1
+n_steps = 600
 n_print = 1
 n_flush = 1000
 time_step = 0.3
@@ -20,12 +20,12 @@ domain_decomposition = 100
 start_temperature = 300
 cancel_com_momentum = true
 target_temperature = 300
-tau = 0.1
+tau = 0.01
 tau_p = 0.1 #ps #usual order ~1
 hamiltonian = 'DefaultWithChi'
 pressure = true 
 plot = false
-barostat = 'semiisotropic'
+barostat = 'isotropic'
 target_pressure = 1 #bar
 
 
