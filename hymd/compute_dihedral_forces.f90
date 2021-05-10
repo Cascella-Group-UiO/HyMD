@@ -1,27 +1,42 @@
-subroutine cdf(f, r, box, a, b, c, d, cm, dm, energy)
-! ==============================================================================
-! compute_dihedral_forces() speedup attempt.
-!
-! Compile:
-!   f2py3 --f90flags="-Ofast" -c compute_dihedral_forces.f90 -m compute_dihedral_forces
-! Import:
-!   from compute_dihedral_forces import cdf as compute_dihedral_forces__fortran
-! ==============================================================================
+module vector_product
+  implicit none
+  contains
+    function cross(vector1, vector2) result(vector3)
+      real(8), dimension(3), intent(in) :: vector1, vector2
+      real(8), dimension(3) :: vector3 
+      
+      vector3(1) = vector1(2) * vector2(3) - vector1(3) * vector2(2)
+      vector3(2) = vector1(3) * vector2(1) - vector1(1) * vector2(3)
+      vector3(3) = vector1(1) * vector2(2) - vector1(2) * vector2(1)
+    end function
+end module vector_product
+
+subroutine cdf(force, r, box, a, b, c, d, cm, dm, energy)
+  ! ==============================================================================
+  ! compute_dihedral_forces() speedup attempt.
+  !
+  ! Compile:
+  !   f2py3 --f90flags="-Ofast" -c compute_dihedral_forces.f90 -m compute_dihedral_forces
+  ! Import:
+  !   from compute_dihedral_forces import cdf as compute_dihedral_forces__fortran
+  ! ==============================================================================
+  use vector_product
   implicit none
 
-  real(4), dimension(:,3), intent(in out) :: force
-  real(4), dimension(:,3), intent(in) :: r
-  real(8), dimension(3), intent(in) :: box
+  real(4), dimension(:,:), intent(in out) :: force
+  real(4), dimension(:,:), intent(in) :: r
+  real(8), dimension(:), intent(in) :: box
   integer, dimension(:), intent(in) :: a
   integer, dimension(:), intent(in) :: b
   integer, dimension(:), intent(in) :: c
   integer, dimension(:), intent(in) :: d
-  real(8), dimension(:,8), intent(in) :: cm
-  real(8), dimension(:,8), intent(in) :: dm
+  real(8), dimension(:,:), intent(in) :: cm
+  real(8), dimension(:,:), intent(in) :: dm
   real(8), intent(out) :: energy
    
   integer :: ind, aa, bb, cc, dd, i
   real(8), dimension(3) :: f, g, h, v, w, sc, force_on_a, force_on_d
+  real(8), dimension(8) :: coeff, phase
   real(8) :: gnorm, vv, ww, fg, hg, df, cosphi, sinphi, phi
 
   energy = 0.d0
@@ -32,7 +47,7 @@ subroutine cdf(f, r, box, a, b, c, d, cm, dm, energy)
     bb = b(ind) + 1
     cc = c(ind) + 1
     dd = d(ind) + 1
-    
+
     f = [r(aa,:) - r(bb,:)]
     g = [r(bb,:) - r(cc,:)]
     h = [r(dd,:) - r(cc,:)]
@@ -59,31 +74,24 @@ subroutine cdf(f, r, box, a, b, c, d, cm, dm, energy)
     
     fg = dot_product(f, g)
     hg = dot_product(h, g)
-    
-    sc = v * fg / (vv * gn) - w * hg / (ww * gn)
+
+    ! Check if correct
+    coeff = cm(ind, :)
+    phase = dm(ind, :)
     df = 0.d0
 
     do i = 0, 7
-      energy = energy + cm(i + 1) * (1.d0 + cos(i * phi + dm(i + 1)))
-      df = df + m * cm(i + 1) * sin(i * phi + dm(i + 1))
+      energy = energy + coeff(i + 1) * (1.d0 + cos(i * phi + phase(i + 1)))
+      df = df + i * coeff(i + 1) * sin(i * phi + phase(i + 1))
     end do
  
     force_on_a = df * gnorm * v / vv
     force_on_d = df * gnorm * w / ww
 
-    force(aa, :) = force(aa, :) - force_on_a
-    force(bb, :) = force(bb, :) + df * sc + force_on_a
-    force(cc, :) = force(cc, :) - df * sc - force_on_d
-    force(dd, :) = force(dd, :) + force_on_d
+    sc = v * fg / (vv * gnorm) - w * hg / (ww * gnorm)
+    force(aa,:) = force(aa,:) - force_on_a
+    force(bb,:) = force(bb,:) + df * sc + force_on_a
+    force(cc,:) = force(cc,:) - df * sc - force_on_d
+    force(dd,:) = force(dd,:) + force_on_d
   end do
-
-  contains
-  function cross(vector1, vector2)
-    real, dimension(3) :: cross
-    real, dimension(3), intent(in) :: vector1, vector2
-    
-    cross(1) = vector1(2) * vector2(3) - vector1(3) * vector2(2)
-    cross(2) = vector1(3) * vector2(1) - vector1(1) * vector2(3)
-    cross(3) = vector1(1) * vector2(2) - vector1(2) * vector2(1)
-  end function cross 
 end subroutine cdf
