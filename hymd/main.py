@@ -13,6 +13,8 @@ import sys
 from types import ModuleType as moduleobj
 import warnings
 
+from scipy.optimize import fsolve
+
 
 from hamiltonian import DefaultNoChi, DefaultWithChi
 from field import (

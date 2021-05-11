@@ -67,3 +67,255 @@
 2021-05-04 16:09:18,660 INFO     [file_io.py:696] <store_data> {rank 0/4} 
            step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
              40             12      324.63345      120264.79      82377.824      37886.964      16093.036              0      9453.4761      12340.452      13.281784      12.117508      3.1543121
+2021-05-04 18:01:55,040 INFO     [main.py:182] <configure_runtime> {rank 0/4} Attempting to parse config file config-nocharge.toml as .toml
+2021-05-04 18:01:55,042 INFO     [main.py:189] <configure_runtime> {rank 0/4} Successfully parsed config-nocharge.toml as .toml file
+2021-05-04 18:01:55,042 INFO     [main.py:193] <configure_runtime> {rank 0/4} 
+
+	Config: /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml
+	--------------------------------------------------
+	n_steps: 200
+	time_step: 0.3
+	box_size: [13.0, 13.0, 14.0]
+	mesh_size: [24, 24, 24]
+	sigma: 0.5
+	kappa: 0.05
+	n_print: 10
+	tau: 0.1
+	start_temperature: 323
+	target_temperature: 323
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 10
+	integrator: respa
+	respa_inner: 10
+	file_name: /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml
+	name: DPPC bilayer with ML interaction parameters
+	tags: ['bilayer', 'solvent', 'DPPC']
+	n_particles: 6336
+	max_molecule_size: 15
+	n_flush: 50
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	coulombtype: None
+	dielectric_const: None
+	command_line_full: ../../hymd/main.py config-nocharge.toml dppc.h5 --verbose --velocity-output --logfile log-nocharge.txt
+	bonds:
+		N P: 0.47, 1250.0
+		P G: 0.47, 1250.0
+		G G: 0.37, 1250.0
+		G C: 0.47, 1250.0
+		C C: 0.47, 1250.0
+	angle_bonds:
+		P G G: 120.0, 25.0
+		P G C: 180.0, 25.0
+		G C C: 180.0, 25.0
+		C C C: 180.0, 25.0
+	chi:
+		C W: 42.24
+		C G: 10.47
+		N W: -3.77
+		G W: 4.53
+		N P: -9.34
+		G P: 8.04
+		G N: 1.97
+		C P: 14.72
+		P W: -1.51
+		C N: 13.56
+
+2021-05-04 18:01:55,085 WARNING  [input_parser.py:447] <check_chi> {rank 0/4} Chi interaction C--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-04 18:01:55,086 WARNING  [input_parser.py:447] <check_chi> {rank 0/4} Chi interaction N--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-04 18:01:55,086 WARNING  [input_parser.py:447] <check_chi> {rank 0/4} Chi interaction G--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-04 18:01:55,086 WARNING  [input_parser.py:447] <check_chi> {rank 0/4} Chi interaction P--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-04 18:01:55,087 INFO     [main.py:259] <generate_initial_velocities> {rank 0/4} Initialized 6336 velocities, target kinetic energy: 25536.96096644295, actual kinetic energy generated: 25536.961669921875
+2021-05-04 18:01:55,213 INFO     [main.py:397] <main> {rank 0/4} pfft-python processor mesh: (2, 2)
+2021-05-04 18:01:55,932 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+              0              0            323      201248.22      25536.961      175711.26      144296.81              0      7770.1514      23644.299 -0.00085830688    0.002368927   0.0011329651
+2021-05-04 18:01:56,288 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             10              3      326.59651      108972.19      25821.308      83150.878      75532.484              0      4416.0983      3202.2956       1.286499      1.7818451      4.6430626
+2021-05-04 18:01:56,630 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             20              6      317.82705      82890.361      25127.978      57762.383      51546.234              0       3926.129      2290.0192      1.6463013      2.5267181      4.0481701
+2021-05-04 18:01:56,971 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             30              9      325.07972      62355.946      25701.387      36654.559      32799.086              0      2043.1911      1812.2815      2.2747879      4.7415447      2.2215042
+2021-05-04 18:01:57,309 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             40             12      327.40784       45550.93      25885.453      19665.477      17408.676              0      965.84178      1290.9591      3.1625519      5.1853409     0.52425385
+2021-05-04 18:01:57,655 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             50             15      328.18822      47032.369      25947.151      21085.218      18517.016              0      1059.3161      1508.8863      3.5179596       5.980751    -0.13911438
+2021-05-04 18:01:58,010 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             60             18      323.71737      46532.835      25593.677      20939.157      18004.875              0      1232.5621      1701.7201      4.8139343      6.2033272     -4.6282654
+2021-05-04 18:01:58,357 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             70             21       325.0321      48697.009      25697.622      22999.386      19407.695              0      1427.8957      2163.7952      9.3297272       8.849968     -5.9425049
+2021-05-04 18:01:58,698 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             80             24      319.96942      50669.566      25297.358      25372.208      21136.703              0      1704.5999      2530.9049      10.065502      10.563354     -9.0164795
+2021-05-04 18:01:59,046 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             90             27      325.12384      50878.446      25704.876       25173.57      20260.598              0      1935.0821      2977.8905      12.588066      15.168137     -4.4832115
+2021-05-04 18:01:59,391 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            100             30      317.22397      49218.539      25080.297      24138.242      18971.994              0      1975.9893      3190.2583      13.587204      16.852203     -5.6763954
+2021-05-04 18:01:59,736 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            110             33      324.73151      51281.836      25673.857      25607.979      19814.826              0      2209.4009      3583.7514      21.558334      20.274582       -8.67659
+2021-05-04 18:02:00,085 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            120             36      320.08072      52453.631      25306.158      27147.473      20798.918              0      2513.2324      3835.3229      23.946865      22.167458     -6.3648605
+2021-05-04 18:02:00,437 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            130             39      325.16688      52559.365      25708.278      26851.086      20223.648              0      2462.3381      4165.0999      27.641739      21.317871     -6.4962158
+2021-05-04 18:02:00,777 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            140             42      318.61958      51659.073      25190.637      26468.435      19380.768              0      2679.9317      4407.7358      30.803329      23.903641     -10.123077
+2021-05-04 18:02:01,121 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            150             45      324.14105      53260.394      25627.175      27633.219      19935.246              0      3013.3143      4684.6585      32.401428      25.999557     -10.793552
+2021-05-04 18:02:01,479 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            160             48      323.57787      54569.006      25582.648      28986.358       20547.23              0      3294.9149      5144.2125      31.836044      28.713387     -9.9731827
+2021-05-04 18:02:01,839 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            170             51      325.56594      54386.372      25739.829      28646.544       19914.68              0      3409.0511      5322.8128      31.025013      30.262321     -9.2359314
+2021-05-04 18:02:02,209 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            180             54      334.78051      54627.197       26468.35      28158.847       19077.41              0       3577.515      5503.9222      36.698421      32.862614     -6.9094391
+2021-05-04 18:02:02,550 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            190             57      320.74603       54116.92      25358.758      28758.162       19441.77              0      3792.1486      5524.2439      42.501915      38.221127     -9.5067444
+2021-05-04 18:02:02,731 INFO     [main.py:1112] <main> {rank 0/4} Elapsed time:    Setup time:    MD loop time: 
+2021-05-04 18:02:02,805 INFO     [file_io.py:696] <store_data> {rank 0/4} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            199           59.7      321.34207      54551.758      25405.882      29145.876      19451.609              0      3915.3688      5778.8975      45.175472      42.199791     -11.647087
+2021-05-11 21:04:39,542 INFO     [main.py:184] <configure_runtime> {rank 0/1} Attempting to parse config file config-nocharge.toml as .toml
+2021-05-11 21:04:39,545 INFO     [main.py:191] <configure_runtime> {rank 0/1} Successfully parsed config-nocharge.toml as .toml file
+2021-05-11 21:04:39,545 INFO     [main.py:195] <configure_runtime> {rank 0/1} 
+
+	Config: /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml
+	--------------------------------------------------
+	n_steps: 200
+	time_step: 0.3
+	box_size: [13.0, 13.0, 14.0]
+	mesh_size: [24, 24, 24]
+	sigma: 0.5
+	kappa: 0.05
+	n_print: 10
+	tau: 0.1
+	start_temperature: 323
+	target_temperature: 323
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 10
+	integrator: respa
+	respa_inner: 10
+	file_name: /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml
+	name: DPPC bilayer with ML interaction parameters
+	tags: ['bilayer', 'solvent', 'DPPC']
+	n_particles: 6336
+	max_molecule_size: 15
+	n_flush: 50
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	coulombtype: None
+	dielectric_const: None
+	command_line_full: ../../hymd/main.py config-nocharge.toml dppc-dry.h5 --verbose --velocity-output --logfile log-nocharge.txt
+	bonds:
+		N P: 0.47, 1250.0
+		P G: 0.47, 1250.0
+		G G: 0.37, 1250.0
+		G C: 0.47, 1250.0
+		C C: 0.47, 1250.0
+	angle_bonds:
+		P G G: 120.0, 25.0
+		P G C: 180.0, 25.0
+		G C C: 180.0, 25.0
+		C C C: 180.0, 25.0
+	chi:
+		C W: 42.24
+		C G: 10.47
+		N W: -3.77
+		G W: 4.53
+		N P: -9.34
+		G P: 8.04
+		G N: 1.97
+		C P: 14.72
+		P W: -1.51
+		C N: 13.56
+
+2021-05-11 21:04:39,702 WARNING  [input_parser.py:447] <check_chi> {rank 0/1} Chi interaction C--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-11 21:04:39,703 WARNING  [input_parser.py:447] <check_chi> {rank 0/1} Chi interaction N--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-11 21:04:39,703 WARNING  [input_parser.py:447] <check_chi> {rank 0/1} Chi interaction G--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-11 21:04:39,703 WARNING  [input_parser.py:447] <check_chi> {rank 0/1} Chi interaction P--W specified in /Users/lixinmeng/Desktop/working/md-scf/HyMD-Dry/test-dry/run-dppc/config-nocharge.toml but no W atoms are present in the specified system (names array)
+2021-05-11 21:04:39,706 INFO     [main.py:261] <generate_initial_velocities> {rank 0/1} Initialized 6336 velocities, target kinetic energy: 25536.96096644295, actual kinetic energy generated: 25536.95947265625
+2021-05-11 21:04:40,376 INFO     [main.py:399] <main> {rank 0/1} pfft-python processor mesh: (1, 1)
+2021-05-11 21:04:43,189 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+              0              0      322.99998      201248.21      25536.959      175711.25      144296.81              0      7770.1436      23644.299              0   0.0037078857   -0.001991272
+2021-05-11 21:04:44,210 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             10              3      329.93308      109329.22      26085.103      83244.117      75582.961              0      4406.7466      3254.4091 -0.00082625449   0.0012715012    -0.02142334
+2021-05-11 21:04:45,170 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             20              6       332.4609      84106.451      26284.957      57821.494      51799.043              0      3729.7129      2292.7382 -0.00073720515  0.00029826164     0.15472966
+2021-05-11 21:04:46,124 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             30              9       327.0608      62668.642      25858.015      36810.627      32901.145              0      2085.9089      1823.5739 -0.00053805113  0.00016576052   -0.013643324
+2021-05-11 21:04:47,071 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             40             12      317.94833      45287.172      25137.567      20149.605      17829.057              0      986.44263      1334.1054 -0.00038087368   0.0011404753   -0.010857917
+2021-05-11 21:04:48,008 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             50             15      321.31477        46553.5      25403.724      21149.776      18606.367              0      1048.9604      1494.4481  -0.0012440085  -0.0011029243    0.046545982
+2021-05-11 21:04:48,960 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             60             18      325.25587      46571.217      25715.314      20855.903      17897.961              0      1215.4565      1742.4857  0.00077301264  -0.0017960072    0.051972628
+2021-05-11 21:04:49,907 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             70             21      321.25355      48691.516      25398.883      23292.633      19671.395              0      1491.7756      2129.4624 -0.00024783611 -0.00041306019   -0.002122432
+2021-05-11 21:04:50,849 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             80             24      324.20787      50852.405      25632.457      25219.948       20898.34              0      1702.3105      2619.2973  8.4757805e-05  -0.0006673336   -0.010278225
+2021-05-11 21:04:51,797 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+             90             27      323.62324      50543.802      25586.235      24957.567      20245.848              0      1804.1653      2907.5537 -0.00066947937 -0.00056540966   0.0060098916
+2021-05-11 21:04:52,765 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            100             30      324.31667      50345.514      25641.059      24704.455      19647.307              0       1880.731      3176.4171 -0.00038516521  -0.0026867688     0.02665633
+2021-05-11 21:04:53,704 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            110             33      325.75767       51378.41      25754.988      25623.423      20095.598              0      2120.8274      3406.9977   0.0018517971 -0.00058364868   -0.027705073
+2021-05-11 21:04:54,665 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            120             36      322.89893      52702.139       25528.97      27173.168      20898.172              0      2402.8477      3872.1489  0.00044846535 -0.00012874603  -0.0060005039
+2021-05-11 21:04:55,614 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            130             39      326.75595      52192.983      25833.913       26359.07      19908.711              0        2386.77      4063.5886 -0.00054824352  0.00033742189    0.021142513
+2021-05-11 21:04:56,566 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            140             42       325.6945      51807.712      25749.993      26057.719      19285.172              0      2512.6943       4259.853   0.0027025938   0.0034493208    -0.01441808
+2021-05-11 21:04:57,511 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            150             45      320.10247      52729.776      25307.877      27421.899      19854.729              0      2836.2305      4730.9403  0.00030248612   0.0016618967  0.00028538704
+2021-05-11 21:04:58,454 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            160             48      325.18213      54268.019      25709.484      28558.535      20462.666              0      3149.6321       4946.237   0.0039809346  0.00021672249    0.012585461
+2021-05-11 21:04:59,403 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            170             51      319.40756       53337.28      25252.937      28084.343      19733.273              0      3198.9746      5152.0951 -0.00062763691  -0.0042856336 -0.00054931641
+2021-05-11 21:05:00,359 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            180             54      326.26173      53507.165      25794.839      27712.326      19224.738              0      3303.8315      5183.7561   0.0032744408  6.6719949e-05   -0.007403031
+2021-05-11 21:05:01,340 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            190             57      324.36978      54389.033      25645.258      28743.775      19632.477              0      3566.1953      5545.1029 -0.00025963783 -0.00085401535   0.0023319125
+2021-05-11 21:05:01,604 INFO     [main.py:1114] <main> {rank 0/1} Elapsed time:    Setup time:    MD loop time: 
+2021-05-11 21:05:01,674 INFO     [file_io.py:696] <store_data> {rank 0/1} 
+           step           time    temperature        total E      kinetic E    potential E        field E      field q E         bond E        angle E       total Px       total Py       total Pz
+            199           59.7      326.44605      55342.124      25809.412      29532.712      19852.672              0      3838.0051      5842.0349   0.0037904978    0.003115654   0.0019955635

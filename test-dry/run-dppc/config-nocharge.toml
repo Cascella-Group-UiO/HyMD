@@ -8,7 +8,7 @@ tags = ["bilayer", "solvent", "DPPC"]
 # Number of total particles in the simulation. If an input .hdf5 format file is
 # specified, the number of particles will be inferred from this and *may* be
 # ommited.
-n_particles = 20336
+n_particles = 6336 #20336
 # Mass of the particles in [g/mol]. All masses are assumed equal.
 mass = 72.0
 # Maximum number of particles per molecules present in the system. A default of
@@ -18,9 +18,9 @@ max_molecule_size = 15
 
 [simulation]
 # Number of total time steps in the simulation in [picoseconds].
-n_steps = 500 #25000
+n_steps = 200 #500 #25000
 # Frequency of trajectory/energy file output in time steps.
-n_print = 20 #100 ##5000
+n_print = 10 #100 ##5000
 # Frequency of requesting that the HDF5 library flush the file output buffers
 # to disk after in number of n_print timesteps.
 n_flush = 50 #50 ##5000
