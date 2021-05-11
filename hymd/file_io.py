@@ -8,9 +8,14 @@ from logger import Logger
 
 
 class OutDataset:
-    def __init__(self, dest_directory, config, disable_mpio=False, comm=MPI.COMM_WORLD):
+    def __init__(self, dest_directory, config, double_out=False,
+                 disable_mpio=False, comm=MPI.COMM_WORLD):
         self.disable_mpio = disable_mpio
         self.config = config
+        if double_out:
+            self.float_dtype = "float64"
+        else:
+            self.float_dtype = "float32"
 
         if disable_mpio:
             self.file = h5py.File(
@@ -37,7 +42,7 @@ def setup_time_dependent_element(
 ):
     group = parent_group.create_group(name)
     step = group.create_dataset("step", (n_frames,), "int32")
-    time = group.create_dataset("time", (n_frames,), "int32")
+    time = group.create_dataset("time", (n_frames,), "float32")
     value = group.create_dataset("value", (n_frames, *shape), dtype)
 
     if units is not None:
@@ -54,8 +59,12 @@ def store_static(
     config,
     bonds_2_atom1,
     bonds_2_atom2,
+    velocity_out=False,
+    force_out=False,
     comm=MPI.COMM_WORLD,
 ):
+    dtype = h5md.float_dtype
+
     h5md_group = h5md.file.create_group("/h5md")
     h5md.h5md_group = h5md_group
     h5md.observables = h5md.file.create_group("/observables")
@@ -96,18 +105,20 @@ def store_static(
 
     h5md.particles_group = h5md.file.create_group("/particles")
     h5md.all_particles = h5md.particles_group.create_group("all")
-    mass = h5md.all_particles.create_dataset("mass", (config.n_particles,), "float32")
+    mass = h5md.all_particles.create_dataset("mass", (config.n_particles,), dtype)
     mass[:].fill(config.mass)
     box = h5md.all_particles.create_group("box")
     box.attrs["dimension"] = 3
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    #h5md.edges = box.create_dataset("edges", (3,), "float32")
+    #h5md.edges = box.create_dataset("edges", (3,), dtype)
     #h5md.edges[:] = np.array(config.box_size)
 
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
+        n_frames += 1
+    if np.mod(config.n_steps, config.n_print) == 1:
         n_frames += 1
 
     # Time dependent box: changes inside edges only.
@@ -128,29 +139,44 @@ def store_static(
         h5md.all_particles,
         n_frames,
         (config.n_particles, 3),
-        "float32",
+        dtype,
         units="nanometers",
     )
-    (
-        _,
-        h5md.velocities_step,
-        h5md.velocities_time,
-        h5md.velocities,
-    ) = setup_time_dependent_element(
-        "velocity",
-        h5md.all_particles,
-        n_frames,
-        (config.n_particles, 3),
-        "float32",
-        units="nanometers/picosecond",
-    )
+    if velocity_out:
+        (
+            _,
+            h5md.velocities_step,
+            h5md.velocities_time,
+            h5md.velocities,
+        ) = setup_time_dependent_element(
+            "velocity",
+            h5md.all_particles,
+            n_frames,
+            (config.n_particles, 3),
+            dtype,
+            units="nanometers/picosecond",
+        )
+    if force_out:
+        (
+            _,
+            h5md.forces_step,
+            h5md.forces_time,
+            h5md.forces
+        ) = setup_time_dependent_element(
+            'force',
+            h5md.all_particles,
+            n_frames,
+            (config.n_particles, 3),
+            dtype,
+            units='kJ/mol nanometer'
+        )
     (
         _,
         h5md.total_energy_step,
         h5md.total_energy_time,
         h5md.total_energy,
     ) = setup_time_dependent_element(
-        "total_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "total_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -158,7 +184,7 @@ def store_static(
         h5md.kinetc_energy_time,
         h5md.kinetc_energy,
     ) = setup_time_dependent_element(
-        "kinetic_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "kinetic_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -166,7 +192,7 @@ def store_static(
         h5md.potential_energy_time,
         h5md.potential_energy,
     ) = setup_time_dependent_element(  # noqa: E501
-        "potential_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "potential_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -174,7 +200,7 @@ def store_static(
         h5md.bond_energy_time,
         h5md.bond_energy,
     ) = setup_time_dependent_element(
-        "bond_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "bond_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -182,7 +208,7 @@ def store_static(
         h5md.angle_energy_time,
         h5md.angle_energy,
     ) = setup_time_dependent_element(
-        "angle_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -190,7 +216,7 @@ def store_static(
         h5md.field_energy_time,
         h5md.field_energy,
     ) = setup_time_dependent_element(
-        "field_energy", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -202,7 +228,7 @@ def store_static(
         h5md.observables,
         n_frames,
         (3,),
-        "float32",
+        dtype,
         units="nanometers g/picosecond mol",
     )
     (
@@ -211,7 +237,15 @@ def store_static(
         h5md.temperature_time,
         h5md.temperature,
     ) = setup_time_dependent_element(
-        "temperature", h5md.observables, n_frames, (3,), "float32", units="Kelvin"
+        "temperature", h5md.observables, n_frames, (3,), dtype, units="Kelvin"
+    )
+    (
+        _,
+        h5md.thermostat_work_step,
+        h5md.thermostat_work_time,
+        h5md.thermostat_work,
+    ) = setup_time_dependent_element(
+        "thermostat_work", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
     )
     (
         _,
@@ -255,7 +289,7 @@ def store_static(
     total_bonds = comm.allreduce(len(bonds_2_atom1), MPI.SUM)
     n_bonds_local = len(bonds_2_atom1)
 
-    receive_buffer = MPI.COMM_WORLD.gather(n_bonds_local, root=0)
+    receive_buffer = comm.gather(n_bonds_local, root=0)
     n_bonds_global = None
     if comm.Get_rank() == 0:
         n_bonds_global = receive_buffer
@@ -278,6 +312,7 @@ def store_data(
     indices,
     positions,
     velocities,
+    forces,
     box_size,
     temperature,
     pressure,
@@ -287,12 +322,13 @@ def store_data(
     field_energy,
     time_step,
     config,
+    velocity_out=False,
+    force_out=False,
     dump_per_particle=False,
     comm=MPI.COMM_WORLD,
 ):
     for dset in (
         h5md.positions_step,
-        h5md.velocities_step,
         h5md.total_energy_step,
         h5md.potential_energy,
         h5md.kinetc_energy_step,
@@ -302,13 +338,13 @@ def store_data(
         h5md.total_momentum_step,
         h5md.temperature_step,
         h5md.pressure_step,
-        h5md.box_step
+        h5md.box_step,
+        h5md.thermostat_work_step
     ):
         dset[frame] = step
 
     for dset in (
         h5md.positions_time,
-        h5md.velocities_time,
         h5md.total_energy_time,
         h5md.potential_energy_time,
         h5md.kinetc_energy_time,
@@ -318,13 +354,30 @@ def store_data(
         h5md.total_momentum_time,
         h5md.temperature_time,
         h5md.pressure_time,
-        h5md.box_time
+        h5md.box_time,
+        h5md.thermostat_work_time
     ):
         dset[frame] = step * time_step
 
+    if velocity_out:
+        h5md.velocities_step[frame] = step
+        h5md.velocities_time[frame] = step * time_step
+    if force_out:
+        h5md.forces_step[frame] = step
+        h5md.forces_time[frame] = step * time_step
+
+    # Time dependent box, fix this later.
+    # h5md.box_step[frame] = step
+    # h5md.box_time[frame] = step * time_step
+    # h5md.box_value[frame, ...] = np.array(box_size)
+
     ind_sort = np.argsort(indices)
     h5md.positions[frame, indices[ind_sort]] = positions[ind_sort]
-    h5md.velocities[frame, indices[ind_sort]] = velocities[ind_sort]
+
+    if velocity_out:
+        h5md.velocities[frame, indices[ind_sort]] = velocities[ind_sort]
+    if force_out:
+        h5md.forces[frame, indices[ind_sort]] = forces[ind_sort]
 
     potential_energy = bond2_energy + bond3_energy + field_energy
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0), MPI.SUM)
@@ -338,6 +391,7 @@ def store_data(
     h5md.temperature[frame] = temperature
     h5md.pressure[frame] = pressure
     h5md.box[frame] = np.array(config.box_size)
+    h5md.thermostat_work[frame] = config.thermostat_work
 
     header_ = 13 * "{:>15}"
     fmt_ = [
@@ -417,7 +471,7 @@ def distribute_input(
     # and iterate until we find a molecule break.
     #
     # Implicitly assuming no molecule is bigger than
-    # min(201, n_particles // n_MPI_ranks) atoms.
+    # min(max_molecule_size, n_particles // n_MPI_ranks) atoms.
     max_molecule_size += 2
     grab_extra = max_molecule_size if np_per_MPI > max_molecule_size else np_per_MPI
     if rank == 0:

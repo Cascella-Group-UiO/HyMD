@@ -84,7 +84,6 @@ def compute_field_and_kinetic_energy(
     return field_energy, kinetic_energy
 
 
-# This function does not take mono-atomic particles?
 def domain_decomposition(
     positions,
     pm,

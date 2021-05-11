@@ -67,4 +67,3 @@ if __name__ == '__main__':
 
     h5md_to_input(args.h5md_file, args.old_input_file, args.frame,
                   overwrite=args.force, out_path=args.out_path)
-
