@@ -35,7 +35,7 @@ class Angle(Bond):
 
 # 1- Fourier series
 # 2- Harmonic potential for impropers
-# 3- Combined bending-torsional potential?
+# 3- Combined bending-torsional potential for proteins
 @dataclass
 class Dihedral:
     atom_1: str
@@ -404,8 +404,8 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         sc = v * fg / (vv * gn) - w * hg / (ww * gn)
 
         df = 0
-        # Use 8 terms => len(cn) == len(dn) == 8
-        for m in range(8):
+        # Use 10 terms => len(cn) == len(dn) == 10
+        for m in range(10):
             energy += cm[m] * (1 + np.cos(m * phi + dm[m]))
             df += m * cm[m] * np.sin(m * phi + dm[m])
 
@@ -418,3 +418,58 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         f_dihedrals[d, :] += force_on_d
 
     return energy
+
+
+# Work in progress
+# def compute_cbt_forces(f_cbt, r, bonds_4, box_size):
+#     # cbt = combined bending-torsional
+#     f_cbt.fill(0.0)
+#     energy = 0.0
+#
+#     for a, b, c, d, cm, dm in bonds_4:
+#         f = r[a, :] - r[b, :]
+#         g = r[b, :] - r[c, :]
+#         h = r[d, :] - r[c, :]
+#
+#         for dim in range(3):
+#             f -= box_size[dim] * np.around(f[dim] / box_size[dim])
+#             g -= box_size[dim] * np.around(g[dim] / box_size[dim])
+#             h -= box_size[dim] * np.around(h[dim] / box_size[dim])
+#
+#         v = np.cross(f, g)
+#         w = np.cross(h, g)
+#         vv = np.dot(v, v)
+#         ww = np.dot(w, w)
+#         gn = np.linalg.norm(g)
+#
+#         cosphi = np.dot(v, w)
+#         sinphi = np.dot(np.cross(v, w), g) / gn
+#         phi = np.arctan2(sinphi, cosphi)
+#
+#         # Angle calculation, versor origin in B
+#         f_versor = f / np.linalg.norm(f)
+#         g_versor = g / gn * -1
+#
+#         cos_theta = np.dot(f_versor, g_versor)
+#         theta = np.arccos(cos_theta)
+#         theta0 = 106 - 13 * np.cos(phi - 45)
+#
+#         fg = np.dot(f, g)
+#         hg = np.dot(h, g)
+#         sc = v * fg / (vv * gn) - w * hg / (ww * gn)
+#
+#         v_pro, k_phi, df = 0, 0, 0
+#         for m in range(10):
+#             v_pro += v_c[m] * (1 + np.cos(m * phi + v_d[m]))
+#             k_phi += k_c[m] * (1 + np.cos(m * phi + k_d[m]))
+#             df += m * cm[m] * np.sin(m * phi + dm[m])
+#         energy += v_pro + 0.5 * k_phi * (theta - theta0) ** 2
+#
+#         force_on_a = df * gn * v / vv
+#         force_on_d = df * gn * w / ww
+#
+#         f_cbt[a, :] -= force_on_a
+#         f_cbt[b, :] += df * sc + force_on_a
+#         f_cbt[c, :] -= df * sc + force_on_d
+#         f_cbt[d, :] += force_on_d
+#     return energy
