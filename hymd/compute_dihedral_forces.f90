@@ -80,7 +80,7 @@ subroutine cdf(force, r, box, a, b, c, d, cm, dm, energy)
     phase = dm(ind, :)
     df = 0.d0
 
-    do i = 0, 7
+    do i = 0, 9 
       energy = energy + coeff(i + 1) * (1.d0 + cos(i * phi + phase(i + 1)))
       df = df + i * coeff(i + 1) * sin(i * phi + phase(i + 1))
     end do
