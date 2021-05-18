@@ -188,8 +188,8 @@ def test_prepare_bonds_4(alanine_octapeptide):
                     box_size=np.array([5.0, 5.0, 5.0]), sigma=0.5, kappa=1)
     config.dihedrals = CONF['bond_4']
     _, _, bonds_4 = prepare_bonds(molecules, names, bonds, indices, config)
-    bonds_4_ind = [b[:3] for b in bonds_4]
-    bonds_4_val = [b[3:] for b in bonds_4]
+    bonds_4_ind = [b[:4] for b in bonds_4]
+    bonds_4_val = [b[4:] for b in bonds_4]
 
     assert len(bonds_4) == 5
 
@@ -201,11 +201,11 @@ def test_prepare_bonds_4(alanine_octapeptide):
             [8, 10, 12, 14, [1 for _ in range(10)], [0 for _ in range(10)]],
                 ]
     for e in expected:
-        assert e[:3] in bonds_4_ind
+        assert e[:4] in bonds_4_ind
         for ind, val in zip(bonds_4_ind, bonds_4_val):
-            if ind == e[:3]:
-                assert np.radians(e[3]) == pytest.approx(val[0], abs=1e-13)
-                assert e[4] == pytest.approx(val[1], abs=1e-13)
+            if ind == e[:4]:
+                assert e[4] == pytest.approx(val[0], abs=1e-13)
+                assert e[5] == pytest.approx(val[1], abs=1e-13)
 
 
 def test_comp_dihedrals(alanine_octapeptide):
@@ -215,12 +215,13 @@ def test_comp_dihedrals(alanine_octapeptide):
     config.dihedrals = CONF['bond_4']
     _, _, bonds_4 = prepare_bonds(molecules, names, bonds, indices, config)
 
-    # FIX: calculate correct values and expected forces
+    # FIX: calculate correct values
     expected_energies = np.array([0.24138227262192161,
                                   3.0444037031216604,
                                   1.5356935533508376,
                                   9.2685834423945916,
-                                  3.2105275066822720], dtype=np.float64)
+                                  3.2105275066822720],
+                                  dtype=np.float64)
     expected_forces_i = np.array([
         [15.589371899758191,  -11.591790641852914,  -28.464343403274896],
         [-5.8509283842655613,  27.044650837391227,   -9.8747494843133659],
