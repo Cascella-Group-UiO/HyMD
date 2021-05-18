@@ -383,10 +383,6 @@ def comp_pressure(
     #              } 
 
 
-    #print('forces[\'x\'][0:3]:',forces['x'][0:3])
-    #print('positions[0:3]:',positions[0:3])
-    #print('rx[0:3]:',rx[0:3])
-    #print('Fxx:',Fxx[0:3])
 
     #PLOTS
     if(config.plot):

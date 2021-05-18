@@ -831,6 +831,7 @@ if __name__ == "__main__":
                      args
                 )
                 #pmesh repair attempt 2
+                #ugly but works for now
                 # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
                 # ragged nested sequences until it is fixed in pmesh
                 with warnings.catch_warnings():
