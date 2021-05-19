@@ -42,7 +42,7 @@ def test_comp_bonds(dppc_single):
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.bonds = CONF['bond_2']
-    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, config)
+    bonds_2, _, _ = prepare_bonds(molecules, names, bonds, indices, config)
 
     expected_energies = np.array([0.24545803261508981,
                                   0.76287125411373635,
