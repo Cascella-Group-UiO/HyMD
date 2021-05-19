@@ -120,7 +120,7 @@ def alanine_octapeptide():
                 |                 |
               SC(3)             SC(7)
     """
-    indices = np.array([range(16)], dtype=int)
+    indices = np.array(range(16), dtype=int)
     molecules = np.array([0 for _ in range(16)], dtype=int)
     r = np.array(
         [
