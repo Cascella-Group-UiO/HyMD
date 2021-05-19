@@ -11,7 +11,7 @@ module vector_product
     end function
 end module vector_product
 
-subroutine cdf(force, r, box, a, b, c, d, cm, dm, energy)
+subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
   ! ==============================================================================
   ! compute_dihedral_forces() speedup attempt.
   !
@@ -30,13 +30,13 @@ subroutine cdf(force, r, box, a, b, c, d, cm, dm, energy)
   integer, dimension(:), intent(in) :: b
   integer, dimension(:), intent(in) :: c
   integer, dimension(:), intent(in) :: d
-  real(8), dimension(:,:), intent(in) :: cm
-  real(8), dimension(:,:), intent(in) :: dm
+  real(8), dimension(:,:), intent(in) :: coeff 
+  real(8), dimension(:,:), intent(in) :: phase 
   real(8), intent(out) :: energy
    
   integer :: ind, aa, bb, cc, dd, i
   real(8), dimension(3) :: f, g, h, v, w, sc, force_on_a, force_on_d
-  real(8), dimension(8) :: coeff, phase
+  real(8), dimension(5) :: coeff_, phase_
   real(8) :: gnorm, vv, ww, fg, hg, df, cosphi, sinphi, phi
 
   energy = 0.d0
@@ -76,19 +76,19 @@ subroutine cdf(force, r, box, a, b, c, d, cm, dm, energy)
     hg = dot_product(h, g)
 
     ! Check if correct
-    coeff = cm(ind, :)
-    phase = dm(ind, :)
+    coeff_ = coeff(ind, :)
+    phase_ = phase(ind, :)
     df = 0.d0
 
-    do i = 0, 9 
-      energy = energy + coeff(i + 1) * (1.d0 + cos(i * phi + phase(i + 1)))
-      df = df + i * coeff(i + 1) * sin(i * phi + phase(i + 1))
+    do i = 0, 4 
+      energy = energy + coeff_(i + 1) * (1.d0 + cos(i * phi + phase_(i + 1)))
+      df = df + i * coeff_(i + 1) * sin(i * phi + phase_(i + 1))
     end do
  
+    sc = v * fg / (vv * gnorm) - w * hg / (ww * gnorm)
     force_on_a = df * gnorm * v / vv
     force_on_d = df * gnorm * w / ww
-
-    sc = v * fg / (vv * gnorm) - w * hg / (ww * gnorm)
+    
     force(aa,:) = force(aa,:) - force_on_a
     force(bb,:) = force(bb,:) + df * sc + force_on_a
     force(cc,:) = force(cc,:) - df * sc - force_on_d

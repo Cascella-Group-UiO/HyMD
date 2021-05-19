@@ -491,8 +491,8 @@ if __name__ == "__main__":
                 bonds_4_atom2,
                 bonds_4_atom3,
                 bonds_4_atom4,
-                bonds_4_cm,
-                bonds_4_dm,
+                bonds_4_coeff,
+                bonds_4_phase,
             ) = bonds_prep
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
@@ -526,8 +526,8 @@ if __name__ == "__main__":
                 bonds_4_atom2,
                 bonds_4_atom3,
                 bonds_4_atom4,
-                bonds_4_cm,
-                bonds_4_dm,
+                bonds_4_coeff,
+                bonds_4_phase,
             )
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
         else:
@@ -692,8 +692,8 @@ if __name__ == "__main__":
                         bonds_4_atom2,
                         bonds_4_atom3,
                         bonds_4_atom4,
-                        bonds_4_cm,
-                        bonds_4_dm,
+                        bonds_4_coeff,
+                        bonds_4_phase,
                     )
             velocities = integrate_velocity(
                 velocities,
@@ -813,8 +813,8 @@ if __name__ == "__main__":
                         bonds_4_atom2,
                         bonds_4_atom3,
                         bonds_4_atom4,
-                        bonds_4_cm,
-                        bonds_4_dm,
+                        bonds_4_coeff,
+                        bonds_4_phase,
                     ) = bonds_prep
 
         for t in range(config.n_types):
