@@ -42,8 +42,8 @@ class Dihedral:
     atom_2: str
     atom_3: str
     atom_4: str
-    cn: list
-    dn: list
+    coeff: list
+    phase: list
 
 
 @dataclass
@@ -148,8 +148,8 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     bond_graph.nodes()[path[1]]["local_index"],
                                     bond_graph.nodes()[path[2]]["local_index"],
                                     bond_graph.nodes()[j]["local_index"],
-                                    a.cn,
-                                    a.dn,
+                                    a.coeff,
+                                    a.phase,
                                 ]
                             )
 
@@ -187,15 +187,15 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
-    bonds_4_cn = np.empty(len(bonds_4), dtype=np.float64)
-    bonds_4_dn = np.empty(len(bonds_4), dtype=np.float64)
+    bonds_4_coeff = np.empty(len(bonds_4), dtype=np.float64)
+    bonds_4_phase = np.empty(len(bonds_4), dtype=np.float64)
     for i, b in enumerate(bonds_4):
         bonds_4_atom1[i] = b[0]
         bonds_4_atom2[i] = b[1]
         bonds_4_atom3[i] = b[2]
         bonds_4_atom4[i] = b[3]
-        bonds_4_cn[i] = b[4]
-        bonds_4_dn[i] = b[5]
+        bonds_4_coeff[i] = b[4]
+        bonds_4_phase[i] = b[5]
 
     return (
         bonds_2_atom1,
@@ -211,8 +211,8 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_4_atom2,
         bonds_4_atom3,
         bonds_4_atom4,
-        bonds_4_cn,
-        bonds_4_dn,
+        bonds_4_coeff,
+        bonds_4_phase,
     )
 
 
@@ -379,7 +379,7 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
     f_dihedrals.fill(0.0)
     energy = 0.0
 
-    for a, b, c, d, cm, dm in bonds_4:
+    for a, b, c, d, coeff, phase in bonds_4:
         f = r[a, :] - r[b, :]
         g = r[b, :] - r[c, :]
         h = r[d, :] - r[c, :]
@@ -404,10 +404,10 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         sc = v * fg / (vv * gn) - w * hg / (ww * gn)
 
         df = 0
-        # Use 10 terms => len(cn) == len(dn) == 10
-        for m in range(10):
-            energy += cm[m] * (1 + np.cos(m * phi + dm[m]))
-            df += m * cm[m] * np.sin(m * phi + dm[m])
+        # Use 5 terms => len(cn) == len(dn) == 5
+        for m in range(5):
+            energy += coeff[m] * (1 + np.cos(m * phi + phase[m]))
+            df += m * coeff[m] * np.sin(m * phi + phase[m])
 
         force_on_a = df * gn * v / vv
         force_on_d = df * gn * w / ww
@@ -426,7 +426,7 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
 #     f_cbt.fill(0.0)
 #     energy = 0.0
 #
-#     for a, b, c, d, cm, dm in bonds_4:
+#     for a, b, c, d, coeff, phase in bonds_4:
 #         f = r[a, :] - r[b, :]
 #         g = r[b, :] - r[c, :]
 #         h = r[d, :] - r[c, :]
@@ -459,6 +459,7 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
 #         sc = v * fg / (vv * gn) - w * hg / (ww * gn)
 #
 #         v_pro, k_phi, df = 0, 0, 0
+#         # Change coeff and phase names
 #         for m in range(10):
 #             v_pro += v_c[m] * (1 + np.cos(m * phi + v_d[m]))
 #             k_phi += k_c[m] * (1 + np.cos(m * phi + k_d[m]))

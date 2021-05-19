@@ -255,13 +255,13 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         if k == "dihedrals":
             config_dict["dihedrals"] = [None] * len(v)
             for i, b in enumerate(v):
-                config_dict["dihedrals"][i] = Angle(
+                config_dict["dihedrals"][i] = Dihedral(
                     atom_1=b[0][0],
                     atom_2=b[0][1],
                     atom_3=b[0][2],
                     atom_4=b[0][3],
-                    cm=b[1][0],
-                    dm=b[1][1],
+                    coeff=b[1][0],
+                    phase=b[1][1],
                 )
         if k == "chi":
             config_dict["chi"] = [None] * len(v)
