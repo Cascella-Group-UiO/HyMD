@@ -33,7 +33,7 @@ from input_parser import (
 )
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
-from thermostat import velocity_rescale
+from thermostat import csvr_thermostat
 from pressure import comp_pressure
 from barostat import isotropic, semiisotropic
 
@@ -46,7 +46,7 @@ def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     ret_str = ""
     if days != 0:
         ret_str += f"{days} days "
-        ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
+    ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
     return ret_str
 
 
@@ -91,10 +91,28 @@ def configure_runtime(comm):
         help="Use double precision positions/velocities",
     )
     ap.add_argument(
+        "--double-output",
+        default=False,
+        action="store_true",
+        help="Use double precision in output h5md",
+    )
+    ap.add_argument(
         "--dump-per-particle",
         default=False,
         action="store_true",
         help="Log energy values per particle, not total",
+    )
+    ap.add_argument(
+        "--force-output",
+        default=False,
+        action="store_true",
+        help="Dump forces to h5md output",
+    )
+    ap.add_argument(
+        "--velocity-output",
+        default=False,
+        action="store_true",
+        help="Dump velocities to h5md output",
     )
     ap.add_argument(
         "--disable-mpio",
@@ -215,7 +233,7 @@ def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
 
 
 def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
-    kT_start = (2.479 / 298.0) * config.start_temperature
+    kT_start = config.R * config.start_temperature
     n_particles_ = velocities.shape[0]
     velocities[...] = np.random.normal(
         loc=0, scale=kT_start / config.mass, size=(n_particles_, 3)
@@ -226,12 +244,9 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
     )
     start_kinetic_energy_target = (
-        (3 / 2)
-        * (2.479 / 298.0)
-        * config.n_particles
-        * config.start_temperature  # noqa: E501
+        1.5 * config.R * config.n_particles * config.start_temperature
     )
-    factor = np.sqrt((3 / 2) * config.n_particles * kT_start / kinetic_energy)
+    factor = np.sqrt(1.5 * config.n_particles * kT_start / kinetic_energy)
     velocities[...] = velocities[...] * factor
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
@@ -283,6 +298,7 @@ def initialize_pm():
     field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian, phi_gradient]
     return (pm, phi, phi_new, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian, phi_gradient, field_list)
 
+
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -297,7 +313,7 @@ if __name__ == "__main__":
         dtype = np.float64
         if dtype == np.float64:
             from force import (
-                compute_bond_forces__fortran__double as compute_bond_forces,
+                                    compute_bond_forces__fortran__double as compute_bond_forces,
             )  # noqa: E501, F811
             from force import (
                 compute_angle_forces__fortran__double as compute_angle_forces,
@@ -328,8 +344,8 @@ if __name__ == "__main__":
 
         types = None
         bonds = None
-        #molecules = []
-        molecules = None
+        molecules = []
+        #molecules = None
         if "types" in in_file:
             types = in_file["types"][rank_range]
         if molecules_flag:
@@ -361,6 +377,18 @@ if __name__ == "__main__":
     angle_energy = 0.0
     kinetic_energy = 0.0
 
+    # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
+    # ragged nested sequences until it is fixed in pmesh
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action="ignore",
+            category=np.VisibleDeprecationWarning,
+            message=r"Creating an ndarray from ragged nested sequences",
+        )
+        # The first argument of ParticleMesh has to be a tuple
+        pm = pmesh.ParticleMesh(
+            config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
+        )
 
     if config.hamiltonian.lower() == "defaultnochi":
         hamiltonian = DefaultNoChi(config)
@@ -377,10 +405,10 @@ if __name__ == "__main__":
         if rank == 0:
             raise NotImplementedError(err_str)
 
+    Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
     pm_stuff  = initialize_pm()
     (pm, phi, phi_new, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian,
     phi_gradient, field_list) = pm_stuff
-
 
     if config.domain_decomposition:
         dd = domain_decomposition(
@@ -504,7 +532,9 @@ if __name__ == "__main__":
         bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
-    out_dataset = OutDataset(args.destdir, config, disable_mpio=args.disable_mpio)
+    out_dataset = OutDataset(args.destdir, config,
+                             double_out=args.double_output,
+                             disable_mpio=args.disable_mpio)
     store_static(
         out_dataset,
         rank_range,
@@ -514,6 +544,8 @@ if __name__ == "__main__":
         config,
         bonds_2_atom1,
         bonds_2_atom2,
+        velocity_out=args.velocity_output,
+        force_out=args.force_output,
         comm=comm,
     )
 
@@ -534,7 +566,7 @@ if __name__ == "__main__":
             )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
-        temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         if config.pressure:
             pressure = comp_pressure(
                     phi,
@@ -558,6 +590,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
+            field_forces + bond_forces + angle_forces,
             config.box_size,
             temperature,
             pressure,
@@ -567,6 +600,8 @@ if __name__ == "__main__":
             field_energy,
             config.time_step,
             config,
+            velocity_out=args.velocity_output,
+            force_out=args.force_output,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
@@ -604,7 +639,8 @@ if __name__ == "__main__":
                 seconds_elapsed = tot_t.days * seconds_per_day
                 seconds_elapsed += tot_t.seconds
                 seconds_elapsed += 1e-6 * tot_t.microseconds
-                hours_elapsed = seconds_elapsed / 60
+                minutes_elapsed = seconds_elapsed / 60
+                hours_elapsed = minutes_elapsed / 60
                 days_elapsed = hours_elapsed / 24
 
                 ns_per_day = ns_sim / days_elapsed
@@ -667,7 +703,9 @@ if __name__ == "__main__":
         # Update slow forces
         if not args.disable_field:
             #should compute_field_energy be here?
-            compute_field_energy = np.mod(step + 1, config.n_print) == 0
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
             update_field(
                 phi,
                 layouts,
@@ -680,11 +718,7 @@ if __name__ == "__main__":
                 v_ext,
                 phi_fourier,
                 v_ext_fourier,
-                compute_potential=compute_field_energy,
             )
-            layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)
-            ]
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -774,30 +808,14 @@ if __name__ == "__main__":
                     logging.INFO,
                     (
                         f"(GHOSTS: Total number of particles of type "
-                        f"{config.type_to_name_map} to be "
+                        f"{config.type_to_name_map[t]} to be "
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
-        if not args.disable_field:
-            compute_field_energy = np.mod(step + 1, config.n_print) == 0
-            update_field(
-                phi,
-                layouts,
-                force_on_grid,
-                hamiltonian,
-                pm,
-                positions,
-                types,
-                config,
-                v_ext,
-                phi_fourier,
-                v_ext_fourier,
-                compute_potential=compute_field_energy,
-            )
 
         # Thermostat
         if config.target_temperature:
-            velocities = velocity_rescale(velocities, config, comm)
+            csvr_thermostat(velocities, names, config, comm=comm)
 
         # Berendsen Barostat
         if config.barostat:
@@ -869,7 +887,7 @@ if __name__ == "__main__":
                 )
             else:
                 kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
-
+        
         # Print trajectory
         if config.n_print > 0:
             if np.mod(step, config.n_print) == 0 and step != 0:
@@ -894,9 +912,7 @@ if __name__ == "__main__":
                         0.5 * config.mass * np.sum(velocities ** 2)
                     )
                 temperature = (
-                    (2 / 3)
-                    * kinetic_energy
-                    / ((2.479 / 298.0) * config.n_particles)  # noqa: E501
+                    (2 / 3) * kinetic_energy / (config.R * config.n_particles)
                 )
                 if args.disable_field:
                     field_energy = 0.0
@@ -924,6 +940,7 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
+                    field_forces + bond_forces + angle_forces,
                     config.box_size,
                     temperature,
                     pressure,
@@ -933,6 +950,8 @@ if __name__ == "__main__":
                     field_energy,
                     config.time_step,
                     config,
+                    velocity_out=args.velocity_output,
+                    force_out=args.force_output,
                     dump_per_particle=args.dump_per_particle,
                     comm=comm,
                 )
@@ -985,7 +1004,7 @@ if __name__ == "__main__":
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         frame = (step + 1) // config.n_print
-        temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         if args.disable_field:
             field_energy = 0.0
         if config.pressure:
@@ -1011,6 +1030,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
+            field_forces + bond_forces + angle_forces,
             config.box_size,
             temperature,
             pressure,
@@ -1020,6 +1040,8 @@ if __name__ == "__main__":
             field_energy,
             config.time_step,
             config,
+            velocity_out=args.velocity_output,
+            force_out=args.force_output,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
