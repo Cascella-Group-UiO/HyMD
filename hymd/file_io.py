@@ -8,8 +8,14 @@ from logger import Logger
 
 
 class OutDataset:
-    def __init__(self, dest_directory, config, double_out=False,
-                 disable_mpio=False, comm=MPI.COMM_WORLD):
+    def __init__(
+        self,
+        dest_directory,
+        config,
+        double_out=False,
+        disable_mpio=False,
+        comm=MPI.COMM_WORLD,
+    ):
         self.disable_mpio = disable_mpio
         self.config = config
         if double_out:
@@ -160,14 +166,14 @@ def store_static(
             _,
             h5md.forces_step,
             h5md.forces_time,
-            h5md.forces
+            h5md.forces,
         ) = setup_time_dependent_element(
-            'force',
+            "force",
             h5md.all_particles,
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units='kJ/mol nanometer'
+            units="kJ/mol nanometer",
         )
     (
         _,
@@ -208,6 +214,14 @@ def store_static(
         h5md.angle_energy,
     ) = setup_time_dependent_element(
         "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+    )
+    (
+        _,
+        h5md.dihedral_energy_step,
+        h5md.dihedral_energy_time,
+        h5md.dihedral_energy,
+    ) = setup_time_dependent_element(
+        "dihedral_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
     )
     (
         _,
@@ -262,6 +276,8 @@ def store_static(
     # whatever reason [VMD internals?]).
     name_dataset = vmd_group.create_dataset("name", (config.n_types,), "S16")
     type_dataset = vmd_group.create_dataset("type", (config.n_types,), "S16")
+
+    # Change this
     for i, n in config.type_to_name_map.items():
         name_dataset[i] = np.string_(n[:16])
         if n == "W":
@@ -301,6 +317,7 @@ def store_data(
     kinetic_energy,
     bond2_energy,
     bond3_energy,
+    bond4_energy,
     field_energy,
     time_step,
     config,
@@ -316,6 +333,7 @@ def store_data(
         h5md.kinetc_energy_step,
         h5md.bond_energy_step,
         h5md.angle_energy_step,
+        h5md.dihedral_energy_step,
         h5md.field_energy_step,
         h5md.total_momentum_step,
         h5md.temperature_step,
@@ -330,6 +348,7 @@ def store_data(
         h5md.kinetc_energy_time,
         h5md.bond_energy_time,
         h5md.angle_energy_time,
+        h5md.dihedral_energy_time,
         h5md.field_energy_time,
         h5md.total_momentum_time,
         h5md.temperature_time,
@@ -357,19 +376,20 @@ def store_data(
     if force_out:
         h5md.forces[frame, indices[ind_sort]] = forces[ind_sort]
 
-    potential_energy = bond2_energy + bond3_energy + field_energy
+    potential_energy = bond2_energy + bond3_energy + bond4_energy + field_energy
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0), MPI.SUM)
     h5md.total_energy[frame] = kinetic_energy + potential_energy
     h5md.potential_energy[frame] = potential_energy
     h5md.kinetc_energy[frame] = kinetic_energy
     h5md.bond_energy[frame] = bond2_energy
     h5md.angle_energy[frame] = bond3_energy
+    h5md.dihedral_energy[frame] = bond4_energy
     h5md.field_energy[frame] = field_energy
     h5md.total_momentum[frame, :] = total_momentum
     h5md.temperature[frame] = temperature
     h5md.thermostat_work[frame] = config.thermostat_work
 
-    header_ = 13 * "{:>15}"
+    header_ = 15 * "{:>15}"
     fmt_ = [
         "step",
         "time",
@@ -377,9 +397,11 @@ def store_data(
         "total E",
         "kinetic E",
         "potential E",
+        "Momentum",
         "field E",
         "bond E",
         "angle E",
+        "dihedral E",
         "total Px",
         "total Py",
         "total Pz",
@@ -388,6 +410,7 @@ def store_data(
     if config.initial_energy is None:
         fmt_[-1] = ""
 
+    momentum = np.linalg.norm(total_momentum)
     divide_by = 1.0
     if dump_per_particle:
         for i in range(3, 9):
@@ -404,7 +427,7 @@ def store_data(
         H_tilde = 0.0
 
     header = header_.format(*fmt_)
-    data_fmt = f'{"{:15}"}{12 * "{:15.8g}" }'
+    data_fmt = f'{"{:15}"}{14 * "{:15.8g}" }'
     data = data_fmt.format(
         step,
         time_step * step,
@@ -412,9 +435,11 @@ def store_data(
         total_energy / divide_by,
         kinetic_energy / divide_by,
         potential_energy / divide_by,
+        momentum,
         field_energy / divide_by,
         bond2_energy / divide_by,
         bond3_energy / divide_by,
+        bond4_energy / divide_by,
         total_momentum[0] / divide_by,
         total_momentum[1] / divide_by,
         total_momentum[2] / divide_by,

@@ -157,7 +157,7 @@ def configure_runtime(comm):
 
     # Setup logger
     Logger.setup(
-        default_level=logging.INFO, log_file=args.logfile, verbose=args.verbose
+        default_level=logging.INFO, log_file=f"{args.destdir}/{args.logfile}", verbose=args.verbose
     )
 
     if args.profile:
@@ -360,7 +360,6 @@ if __name__ == "__main__":
             category=np.VisibleDeprecationWarning,
             message=r"Creating an ndarray from ragged nested sequences",
         )
-        # The first argument of ParticleMesh has to be a tuple
         pm = pmesh.ParticleMesh(
             config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
         )
@@ -387,7 +386,7 @@ if __name__ == "__main__":
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
     force_on_grid = [
-        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+        [pm.create("real", value=0.0) for _ in range(3)] for _ in range(config.n_types)
     ]
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
@@ -950,7 +949,7 @@ if __name__ == "__main__":
             kinetic_energy,
             bond_energy,
             angle_energy,
-            dihedral_forces,
+            dihedral_energy,
             field_energy,
             config.time_step,
             config,
