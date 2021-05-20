@@ -3,7 +3,6 @@ import numpy as np
 from mpi4py import MPI
 from logger import Logger
 import sympy
-import matplotlib.pyplot as plt
 
 def plot(
         function, phi, hamiltonian, config, phi_laplacian, V_bar_tuple, title, *args
