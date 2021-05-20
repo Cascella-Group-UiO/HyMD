@@ -275,7 +275,6 @@ def initialize_pm():
         pm = pmesh.ParticleMesh(
             config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
         )
-    Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     phi_new = [pm.create("real", value=0.0) for _ in range(config.n_types)]
