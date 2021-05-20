@@ -187,8 +187,8 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
-    bonds_4_coeff = np.empty(len(bonds_4), dtype=np.float64)
-    bonds_4_phase = np.empty(len(bonds_4), dtype=np.float64)
+    bonds_4_coeff = np.empty((len(bonds_4), 5), dtype=np.float64)
+    bonds_4_phase = np.empty((len(bonds_4), 5), dtype=np.float64)
     for i, b in enumerate(bonds_4):
         bonds_4_atom1[i] = b[0]
         bonds_4_atom2[i] = b[1]

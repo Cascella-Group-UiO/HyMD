@@ -62,6 +62,15 @@ class Config:
                 for k in self.angle_bonds
             ]
         )
+        dihedrals_str = "\tdihedrals:\n" + "".join(
+            [
+                (
+                    f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
+                    + f"{k.coeff}, {k.phase}\n"
+                )
+                for k in self.dihedrals
+            ]
+        )
         chi_str = "\tchi:\n" + "".join(
             [
                 (f"\t\t{k.atom_1} {k.atom_2}: " + f"{k.interaction_energy}\n")
@@ -82,7 +91,7 @@ class Config:
         for k, v in self.__dict__.items():
             if k not in ("bonds", "angle_bonds", "dihedrals", "chi", "thermostat_coupling_groups"):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += bonds_str + angle_str + chi_str + thermostat_coupling_groups_str
+        ret_str += bonds_str + angle_str + dihedrals_str + chi_str + thermostat_coupling_groups_str
         return ret_str
 
 
