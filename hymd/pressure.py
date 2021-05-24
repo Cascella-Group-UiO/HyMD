@@ -255,7 +255,7 @@ def comp_pressure(
         config,
         phi_fourier,
         phi_laplacian,
-        phi_new,
+        lap_transfer,
         args,
         bond_forces,
         angle_forces,
@@ -295,13 +295,15 @@ def comp_pressure(
 
     #Term 3
     for t in range(config.n_types):
-        phi[t].r2c(out=phi_fourier[0])
-        phi_fourier[0].c2r(out = phi_new[t])
+        #print('Inside comp_pressure, phi_fourier for t= ',t, 'is ',phi_fourier[0].value[0][0][0:2])
         np.copyto(
-            phi_fourier[1].value, phi_fourier[0].value, casting="no", where=True
+            lap_transfer[0].value, phi_fourier[t].value, casting="no", where=True
         )
         np.copyto(
-            phi_fourier[2].value, phi_fourier[0].value, casting="no", where=True
+            lap_transfer[1].value, phi_fourier[t].value, casting="no", where=True
+        )
+        np.copyto(
+            lap_transfer[2].value, phi_fourier[t].value, casting="no", where=True
         )
 
         # Evaluate laplacian of phi in fourier space
@@ -313,9 +315,11 @@ def comp_pressure(
             def gradient_transfer(k, v, d=d):
                 return 1j * k * v
 
-            phi_fourier[d].apply(laplacian_transfer, out=Ellipsis)
-            phi_fourier[d].c2r(out=phi_laplacian[t][d])
+            lap_transfer[d].apply(laplacian_transfer, out=Ellipsis)
+            lap_transfer[d].c2r(out=phi_laplacian[t][d])
+            #print('Inside comp_pressure, phi_fourier.apply(lap) for t=',t,' d= ',d, 'is ',phi_fourier[d].value[0][0][0:2])
             #phi_fourier[d].apply(gradient_transfer, out=Ellipsis).c2r(out=phi_gradient[t][d])
+    #print('phi_fourier[2].value[0][0]:',phi_fourier[2].value[0][0])
 
     p2x = [
         1/V * config.sigma**2 * V_bar[i] * phi_laplacian[i][0] * volume_per_cell for i in range(config.n_types)
