@@ -23,8 +23,8 @@ export HYMD_PATH=${PWD}
 mkdir ${SCRATCH}
 cd ${SCRATCH}
 #mkdir ${SCRATCH}/utils/
-cp $1 ${SCRATCH}/config.toml
-cp $2 ${SCRATCH}/input.h5
+cp ${HYMD_PATH}/$1 ${SCRATCH}/config.toml
+cp ${HYMD_PATH}/$2 ${SCRATCH}/input.h5
 mkdir hymd
 cp -r ${HYMD_PATH}/hymd/* hymd/.
 #cp ${HYMD_PATH}/utils/*.* utils/
@@ -32,7 +32,8 @@ cp -r ${HYMD_PATH}/hymd/* hymd/.
 date
 srun --exclusive --ntasks ${MPI_NUM_RANKS}            \
      python3 hymd/main.py config.toml input.h5        \
-     --logfile=log.txt --verbose 2 --seed 5                                         
+     --logfile=log.txt --verbose 2 --seed 5           \
+     --velocity-out
      #--destdir ${DEST}                               \
      #--double-precision
 
