@@ -23,8 +23,8 @@ export HYMD_PATH=${PWD}
 mkdir ${SCRATCH}
 cd ${SCRATCH}
 #mkdir ${SCRATCH}/utils/
-cp $1 ${SCRATCH}/config.toml
-cp $2 ${SCRATCH}/input.h5
+cp ${HYMD_PATH}/$1 ${SCRATCH}/config.toml
+cp ${HYMD_PATH}/$2 ${SCRATCH}/input.h5
 mkdir hymd
 cp -r ${HYMD_PATH}/hymd/* hymd/.
 #cp ${HYMD_PATH}/utils/*.* utils/
