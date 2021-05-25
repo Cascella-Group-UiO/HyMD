@@ -32,7 +32,8 @@ cp -r ${HYMD_PATH}/hymd/* hymd/.
 date
 srun --exclusive --ntasks ${MPI_NUM_RANKS}            \
      python3 hymd/main.py config.toml input.h5        \
-     --logfile=log.txt --verbose 2 --seed 5                                         
+     --logfile=log.txt --verbose 2 --seed 5           \
+     --velocity-out
      #--destdir ${DEST}                               \
      #--double-precision
 

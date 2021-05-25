@@ -277,7 +277,6 @@ def initialize_pm():
         )
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-    phi_new = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
@@ -287,15 +286,14 @@ def initialize_pm():
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
-    phi_fft = [pm.create("complex", value=0.0) for _ in range(4)]
+    lap_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
     phi_laplacian = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
-    phi_gradient = [
-        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
-    ]
-    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian, phi_gradient]
-    return (pm, phi, phi_new, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian, phi_gradient, field_list)
+    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
+            phi_laplacian]
+    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
+            phi_laplacian, field_list)
 
 
 if __name__ == "__main__":
@@ -406,8 +404,10 @@ if __name__ == "__main__":
 
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
     pm_stuff  = initialize_pm()
-    (pm, phi, phi_new, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian,
-    phi_gradient, field_list) = pm_stuff
+    (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
+    field_list) = pm_stuff
+    #print('Creating phi_fourier ',phi_fourier[0].value[0][0][0:2])
+    #print('Creating phi_fft ',phi_fft[0].value[0][0][0:2])
 
     if config.domain_decomposition:
         dd = domain_decomposition(
@@ -470,6 +470,9 @@ if __name__ == "__main__":
             v_ext_fourier,
             compute_potential=True,
         )
+        #print('Updating phi_fourier for t=0',phi_fourier[0].value[0][0][0:2])
+        #print('Updating phi_fourier for t=1',phi_fourier[1].value[0][0][0:2])
+
         field_energy, kinetic_energy = compute_field_and_kinetic_energy(
             phi,
             velocities,
@@ -572,14 +575,15 @@ if __name__ == "__main__":
                     hamiltonian,
                     velocities,
                     config,
-                    phi_fft,
+                    phi_fourier,
                     phi_laplacian,
-                    phi_new,
+                    lap_transfer,
                     args,
                     bond_forces,
                     angle_forces,
                     positions
             )
+            #print('phi_fft after pressure call: phi_fft[d=0]',phi_fft[0].value[0][0][0:2])
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.
         store_data(
@@ -825,9 +829,9 @@ if __name__ == "__main__":
                      positions,
                      velocities,
                      config,
-                     phi_fft,
+                     phi_fourier,
                      phi_laplacian,
-                     phi_new,
+                     lap_transfer,
                      comm,
                      bond_forces,
                      angle_forces,
@@ -841,9 +845,9 @@ if __name__ == "__main__":
                      positions,
                      velocities,
                      config,
-                     phi_fft,
+                     phi_fourier,
                      phi_laplacian,
-                     phi_new,
+                     lap_transfer,
                      comm,
                      bond_forces,
                      angle_forces,
@@ -852,8 +856,8 @@ if __name__ == "__main__":
 
             #pmesh repair attempt: recreate all
             pm_stuff  = initialize_pm()
-            (pm, phi, phi_new, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_fft, phi_laplacian,
-            phi_gradient, field_list) = pm_stuff
+            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
+            field_list) = pm_stuff
             if not args.disable_field:
                 layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
                 update_field(
@@ -921,9 +925,9 @@ if __name__ == "__main__":
                             hamiltonian,
                             velocities,
                             config,
-                            phi_fft,
+                            phi_fourier,
                             phi_laplacian,
-                            phi_new,
+                            lap_transfer,
                             args,
                             bond_forces,
                             angle_forces,
@@ -1012,9 +1016,9 @@ if __name__ == "__main__":
                     hamiltonian,
                     velocities,
                     config,
-                    phi_fft,
+                    phi_fourier,
                     phi_laplacian,
-                    phi_new,
+                    lap_transfer,
                     args,
                     bond_forces,
                     angle_forces,
