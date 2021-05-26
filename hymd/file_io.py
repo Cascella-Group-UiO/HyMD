@@ -73,7 +73,10 @@ def store_static(
     h5md_group = h5md.file.create_group("/h5md")
     h5md.h5md_group = h5md_group
     h5md.observables = h5md.file.create_group("/observables")
+
+    # Is this used anywhere?
     h5md.connectivity = h5md.file.create_group("/connectivity")
+
     h5md.parameters = h5md.file.create_group("/parameters")
 
     h5md_group.attrs["version"] = np.array([1, 1], dtype=int)
@@ -389,7 +392,7 @@ def store_data(
     h5md.temperature[frame] = temperature
     h5md.thermostat_work[frame] = config.thermostat_work
 
-    header_ = 15 * "{:>15}"
+    header_ = 14 * "{:>15}"
     fmt_ = [
         "step",
         "time",
@@ -397,7 +400,6 @@ def store_data(
         "total E",
         "kinetic E",
         "potential E",
-        "Momentum",
         "field E",
         "bond E",
         "angle E",
@@ -410,7 +412,6 @@ def store_data(
     if config.initial_energy is None:
         fmt_[-1] = ""
 
-    momentum = np.linalg.norm(total_momentum)
     divide_by = 1.0
     if dump_per_particle:
         for i in range(3, 9):
@@ -427,7 +428,7 @@ def store_data(
         H_tilde = 0.0
 
     header = header_.format(*fmt_)
-    data_fmt = f'{"{:15}"}{14 * "{:15.8g}" }'
+    data_fmt = f'{"{:15}"}{13 * "{:15.8g}" }'
     data = data_fmt.format(
         step,
         time_step * step,
@@ -435,7 +436,6 @@ def store_data(
         total_energy / divide_by,
         kinetic_energy / divide_by,
         potential_energy / divide_by,
-        momentum,
         field_energy / divide_by,
         bond2_energy / divide_by,
         bond3_energy / divide_by,

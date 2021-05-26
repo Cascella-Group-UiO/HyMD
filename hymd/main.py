@@ -149,7 +149,8 @@ def configure_runtime(comm):
     if comm.rank == 0:
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
-
+    
+    # Is this used anywhere?
     if args.seed is not None:
         np.random.seed(args.seed)
     else:
@@ -333,6 +334,7 @@ if __name__ == "__main__":
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
+    # TODO: Get box_size from h5, not from toml?
     positions = np.mod(positions, config.box_size[None, :])
 
     bond_forces = np.zeros(
@@ -473,7 +475,6 @@ if __name__ == "__main__":
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
 
     if molecules_flag:
-        # Not sure about this
         if not (args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals):
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
             (
@@ -529,9 +530,9 @@ if __name__ == "__main__":
                 bonds_4_phase,
             )
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
-        else:
-            # What about bonds_3 and bonds_4?
-            bonds_2_atom1, bonds_2_atom2 = [], []
+        #else:
+        #    # What about bonds_3 and bonds_4?
+        #    bonds_2_atom1, bonds_2_atom2 = [], []
     else:
         # What about bonds_3 and bonds_4?
         bonds_2_atom1, bonds_2_atom2 = [], []
@@ -651,7 +652,7 @@ if __name__ == "__main__":
         for inner in range(config.respa_inner):
             velocities = integrate_velocity(
                 velocities,
-                (bond_forces + angle_forces) / config.mass,
+                (bond_forces + angle_forces + dihedral_forces) / config.mass,
                 config.time_step / config.respa_inner,
             )
             positions = integrate_position(
