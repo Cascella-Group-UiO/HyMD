@@ -46,7 +46,9 @@ def isotropic(
         comm,
         bond_forces,
         angle_forces,
-        args
+        args,
+        bond_pr,
+        angle_pr
     ):
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
 
@@ -62,7 +64,9 @@ def isotropic(
             args,
             bond_forces,
             angle_forces,
-            positions
+            positions,
+            bond_pr,
+            angle_pr
     )
 
     #Total pressure across all ranks
@@ -96,7 +100,9 @@ def semiisotropic(
         comm,
         bond_forces,
         angle_forces,
-        args
+        args,
+        bond_pr,
+        angle_pr
     ):
 
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
@@ -113,7 +119,9 @@ def semiisotropic(
             args,
             bond_forces,
             angle_forces,
-            positions
+            positions,
+            bond_pr,
+            angle_pr
     )
 
     #Total pressure across all ranks

@@ -1,4 +1,4 @@
-subroutine caf(f, r, box, a, b, c, t0, k, energy)
+subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
 ! ==============================================================================
 ! compute_angle_forces() speedup attempt.
 !
@@ -17,7 +17,8 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
     integer, dimension(:),   intent(in)     :: c
     real(8), dimension(:),   intent(in)     :: t0
     real(8), dimension(:),   intent(in)     :: k
-    real(8),                intent(out)     :: energy
+    real(8),                 intent(out)    :: energy
+    real(8), dimension(3),   intent(out)    :: angle_pr
 
     integer :: ind, aa, bb, cc
     real(8) :: ra_x, ra_y, ra_z, rc_x, rc_y, rc_z
@@ -28,6 +29,7 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
     real(8) :: cosphi, cosphi2, theta
 
     energy = 0.0d00
+    angle_pr = 0.0d00
     f = 0.0d00
 
     bx = 1.0d0 / box(1)
@@ -99,6 +101,11 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
         f(bb, 3) = f(bb, 3) - (fa_z + fc_z)
 
         energy = energy - 0.5d0 * ff * d
+
+        angle_pr(1) = angle_pr(1) + (fa_x * ra_x) + (fc_x * rc_x)
+        angle_pr(2) = angle_pr(2) + (fa_y * ra_y) + (fc_y * rc_y)
+        angle_pr(3) = angle_pr(3) + (fa_z * ra_z) + (fc_z * rc_z)
+
       end if
     end do
 end subroutine
