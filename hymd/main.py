@@ -595,9 +595,9 @@ if __name__ == "__main__":
                     angle_forces,
                     positions,
                     bond_pr_,
-                    angle_pr
+                    angle_pr_
             )
-            if rank ==0 : print(pressure[9:12])
+            #if rank ==0 : print(pressure[9:12])
             #print('phi_fft after pressure call: phi_fft[d=0]',phi_fft[0].value[0][0][0:2])
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.
@@ -852,7 +852,7 @@ if __name__ == "__main__":
                      angle_forces,
                      args,
                      bond_pr_,
-                     angle_pr
+                     angle_pr_
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
@@ -870,7 +870,7 @@ if __name__ == "__main__":
                      angle_forces,
                      args,
                      bond_pr_,
-                     angle_pr
+                     angle_pr_
                 )
 
             #pmesh repair attempt: recreate all
@@ -952,7 +952,7 @@ if __name__ == "__main__":
                             angle_forces,
                             positions,
                             bond_pr_,
-                            angle_pr
+                            angle_pr_
                     )
                 else:
                     pressure = 0.0 #0.0 indicates not calculated. To be changed.
@@ -1045,7 +1045,7 @@ if __name__ == "__main__":
                     angle_forces,
                     positions,
                     bond_pr_,
-                    angle_pr
+                    angle_pr_
             )
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.
