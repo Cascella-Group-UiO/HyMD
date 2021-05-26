@@ -65,17 +65,19 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     gnorm = sqrt(dot_product(g, g))
     
     cosphi = dot_product(v, w)
+    
+    ! Add check if cosphi > 1 or cosphi < -1?
+    ! if (cosphi > 1) then
+    !   cosphi = 1.d0
+    ! if (cosphi < -1) then 
+    !   cosphi = -1.d0
+
     sinphi = dot_product(cross(v, w), g) / gnorm
     phi = atan2(sinphi, cosphi) 
 
-    ! Add check if cosphi > 1 or cosphi < -1?
-    ! if (cosphi > 1) cosphi = 1.d0
-    ! if (cosphi < -1) cosphi = -1.d0
-    
     fg = dot_product(f, g)
     hg = dot_product(h, g)
 
-    ! Check if correct
     coeff_ = coeff(ind, :)
     phase_ = phase(ind, :)
     df = 0.d0
