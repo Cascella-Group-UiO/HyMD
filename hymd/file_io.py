@@ -249,6 +249,32 @@ def store_static(
     )
     (
         _,
+        h5md.angular_momentum_step,
+        h5md.angular_momentum_time,
+        h5md.angular_momentum,
+    ) = setup_time_dependent_element(  # noqa: E501
+        "angular_momentum",
+        h5md.observables,
+        n_frames,
+        (3,),
+        dtype,
+        units="nanometers squared g/picosecond mol",
+    )
+    (
+        _,
+        h5md.torque_step,
+        h5md.torque_time,
+        h5md.torque,
+    ) = setup_time_dependent_element(  # noqa: E501
+        "torque",
+        h5md.observables,
+        n_frames,
+        (3,),
+        dtype,
+        units="kJ nanometers squared/mol",
+    )
+    (
+        _,
         h5md.temperature_step,
         h5md.temperature_time,
         h5md.temperature,
@@ -275,8 +301,8 @@ def store_static(
     )
     index_of_species[:] = np.array(list(range(config.n_types)))
 
-    # VMD-h5mdplugin maximum name/type name length is 16 characters (for
-    # whatever reason [VMD internals?]).
+    # # VMD-h5mdplugin maximum name/type name length is 16 characters (for
+    # # whatever reason [VMD internals?]).
     name_dataset = vmd_group.create_dataset("name", (config.n_types,), "S16")
     type_dataset = vmd_group.create_dataset("type", (config.n_types,), "S16")
 
@@ -288,23 +314,24 @@ def store_static(
         else:
             type_dataset[i] = np.string_("membrane")
 
-    total_bonds = comm.allreduce(len(bonds_2_atom1), MPI.SUM)
-    n_bonds_local = len(bonds_2_atom1)
+    # This bonds implementation causes problems with the VMD-h5md plugin
+    # total_bonds = comm.allreduce(len(bonds_2_atom1), MPI.SUM)
+    # n_bonds_local = len(bonds_2_atom1)
 
-    receive_buffer = comm.gather(n_bonds_local, root=0)
-    n_bonds_global = None
-    if comm.Get_rank() == 0:
-        n_bonds_global = receive_buffer
-    n_bonds_global = np.array(comm.bcast(n_bonds_global, root=0))
-    rank_bond_start = np.sum(n_bonds_global[: comm.Get_rank()])
-    bonds_from = vmd_group.create_dataset("bond_from", (total_bonds,), "i")
-    bonds_to = vmd_group.create_dataset("bond_to", (total_bonds,), "i")
+    # receive_buffer = comm.gather(n_bonds_local, root=0)
+    # n_bonds_global = None
+    # if comm.Get_rank() == 0:
+    #     n_bonds_global = receive_buffer
+    # n_bonds_global = np.array(comm.bcast(n_bonds_global, root=0))
+    # rank_bond_start = np.sum(n_bonds_global[: comm.Get_rank()])
 
-    for i in range(n_bonds_local):
-        a = bonds_2_atom1[i]
-        b = bonds_2_atom2[i]
-        bonds_from[rank_bond_start + i] = indices[a]
-        bonds_to[rank_bond_start + i] = indices[b]
+    # bonds_from = vmd_group.create_dataset("bond_from", (total_bonds,), "i")
+    # bonds_to = vmd_group.create_dataset("bond_to", (total_bonds,), "i")
+    # for i in range(n_bonds_local):
+    #     a = bonds_2_atom1[i]
+    #     b = bonds_2_atom2[i]
+    #     bonds_from[rank_bond_start + i] = indices[a]
+    #     bonds_to[rank_bond_start + i] = indices[b]
 
 
 def store_data(
@@ -339,6 +366,8 @@ def store_data(
         h5md.dihedral_energy_step,
         h5md.field_energy_step,
         h5md.total_momentum_step,
+        h5md.angular_momentum_step,
+        h5md.torque_step,
         h5md.temperature_step,
         h5md.thermostat_work_step,
     ):
@@ -354,6 +383,8 @@ def store_data(
         h5md.dihedral_energy_time,
         h5md.field_energy_time,
         h5md.total_momentum_time,
+        h5md.angular_momentum_time,
+        h5md.torque_time,
         h5md.temperature_time,
         h5md.thermostat_work_time,
     ):
@@ -381,6 +412,12 @@ def store_data(
 
     potential_energy = bond2_energy + bond3_energy + bond4_energy + field_energy
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0), MPI.SUM)
+    angular_momentum = config.mass * comm.allreduce(
+        np.sum(np.cross(positions, velocities), axis=0), MPI.SUM
+    )
+    torque = config.mass * comm.allreduce(
+        np.sum(np.cross(positions, forces), axis=0), MPI.SUM
+    )
     h5md.total_energy[frame] = kinetic_energy + potential_energy
     h5md.potential_energy[frame] = potential_energy
     h5md.kinetc_energy[frame] = kinetic_energy
@@ -389,6 +426,8 @@ def store_data(
     h5md.dihedral_energy[frame] = bond4_energy
     h5md.field_energy[frame] = field_energy
     h5md.total_momentum[frame, :] = total_momentum
+    h5md.angular_momentum[frame, :] = angular_momentum
+    h5md.torque[frame, :] = torque
     h5md.temperature[frame] = temperature
     h5md.thermostat_work[frame] = config.thermostat_work
 
