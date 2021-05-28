@@ -63,7 +63,7 @@ ImportError: No module named utils
 ```
 
 #### INFORMATION:
-The example in the main directory (`dppc.h5`,`config.toml`) contains 264 lipids/layer and 1400 Martini waters.
+The example in the main directory (`dppc.h5`,`config.toml`) contains 264 lipids/layer and 14000 Martini waters.
 
 ### OUTPUT  
 A folder called `out_XXXXXXX` is created in the slurm submit dir (in this case, at the location of `HyMD-2021`), where `XXXXXXX` is the job ID.
