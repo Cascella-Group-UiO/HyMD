@@ -135,7 +135,7 @@ def configure_runtime(comm):
         help="Set the numpy random generator seed for every rank",
     )
     ap.add_argument(
-        "--logfile", default=None, help="Redirect event logging to specified file"
+        "--logfile", default="sim.log", help="Redirect event logging to specified file"
     )
     ap.add_argument("config", help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
