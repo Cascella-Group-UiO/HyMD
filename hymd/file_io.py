@@ -162,7 +162,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="nm/ps",
+            units="nm ps-1",
         )
     if force_out:
         (
@@ -176,7 +176,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="kJ/mol nm",
+            units="kJ mol-1 nm-1",
         )
     (
         _,
@@ -184,7 +184,7 @@ def store_static(
         h5md.total_energy_time,
         h5md.total_energy,
     ) = setup_time_dependent_element(
-        "total_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "total_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -192,7 +192,7 @@ def store_static(
         h5md.kinetc_energy_time,
         h5md.kinetc_energy,
     ) = setup_time_dependent_element(
-        "kinetic_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "kinetic_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -200,7 +200,7 @@ def store_static(
         h5md.potential_energy_time,
         h5md.potential_energy,
     ) = setup_time_dependent_element(  # noqa: E501
-        "potential_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "potential_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -208,7 +208,7 @@ def store_static(
         h5md.bond_energy_time,
         h5md.bond_energy,
     ) = setup_time_dependent_element(
-        "bond_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "bond_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -216,7 +216,7 @@ def store_static(
         h5md.angle_energy_time,
         h5md.angle_energy,
     ) = setup_time_dependent_element(
-        "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -224,7 +224,7 @@ def store_static(
         h5md.dihedral_energy_time,
         h5md.dihedral_energy,
     ) = setup_time_dependent_element(
-        "dihedral_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "dihedral_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -232,7 +232,7 @@ def store_static(
         h5md.field_energy_time,
         h5md.field_energy,
     ) = setup_time_dependent_element(
-        "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -245,7 +245,7 @@ def store_static(
         n_frames,
         (3,),
         dtype,
-        units="nm g/ps mol",
+        units="nm g ps-1 mol-1",
     )
     (
         _,
@@ -258,7 +258,7 @@ def store_static(
         n_frames,
         (3,),
         dtype,
-        units="nm² g/ps mol",
+        units="nm+2 g ps-1 mol-1",
     )
     (
         _,
@@ -271,7 +271,7 @@ def store_static(
         n_frames,
         (3,),
         dtype,
-        units="kJ nm²/mol",
+        units="kJ nm+2 mol-1",
     )
     (
         _,
@@ -279,7 +279,7 @@ def store_static(
         h5md.temperature_time,
         h5md.temperature,
     ) = setup_time_dependent_element(
-        "temperature", h5md.observables, n_frames, (3,), dtype, units="Kelvin"
+        "temperature", h5md.observables, n_frames, (3,), dtype, units="K"
     )
     (
         _,
@@ -287,7 +287,7 @@ def store_static(
         h5md.thermostat_work_time,
         h5md.thermostat_work,
     ) = setup_time_dependent_element(
-        "thermostat_work", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
+        "thermostat_work", h5md.observables, n_frames, (1,), "float32", units="kJ mol-1"
     )
 
     ind_sort = np.argsort(indices)
