@@ -148,7 +148,7 @@ def store_static(
         n_frames,
         (config.n_particles, 3),
         dtype,
-        units="nanometers",
+        units="nm",
     )
     if velocity_out:
         (
@@ -162,7 +162,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="nanometers/picosecond",
+            units="nm/ps",
         )
     if force_out:
         (
@@ -176,7 +176,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="kJ/mol nanometer",
+            units="kJ/mol nm",
         )
     (
         _,
@@ -245,7 +245,7 @@ def store_static(
         n_frames,
         (3,),
         dtype,
-        units="nanometers g/picosecond mol",
+        units="nm g/ps mol",
     )
     (
         _,
@@ -258,7 +258,7 @@ def store_static(
         n_frames,
         (3,),
         dtype,
-        units="nanometers squared g/picosecond mol",
+        units="nm² g/ps mol",
     )
     (
         _,
@@ -271,7 +271,7 @@ def store_static(
         n_frames,
         (3,),
         dtype,
-        units="kJ nanometers squared/mol",
+        units="kJ nm²/mol",
     )
     (
         _,
