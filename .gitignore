@@ -14,3 +14,7 @@ coverage.xml
 __pycache__
 RUN/
 *.so
+test-xinmeng-electrostatic/*
+*.h5
+!test-xinmeng-electrostatic/run-dppc/
+#!test-xinmeng-electrostatic/run-sds/
