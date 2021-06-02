@@ -2,10 +2,12 @@ from distribute_input import distribute_input
 from force import (
     Bond,
     Angle,
+    Dihedral,
     Chi,
     prepare_bonds,
     compute_bond_forces,
     compute_angle_forces,
+    compute_dihedral_forces,
 )
 from hamiltonian import W, DefaultNoChi, DefaultWithChi
 from input_parser import (
@@ -18,6 +20,7 @@ from input_parser import (
     _find_unique_names,
     check_bonds,
     check_angles,
+    check_dihedrals,
     check_chi,
     check_box_size,
     check_integrator,
@@ -29,10 +32,12 @@ __all__ = [
     "distribute_input",
     "Bond",
     "Angle",
+    "Dihedral",
     "Chi",
     "prepare_bonds",
     "compute_bond_forces",
     "compute_angle_forces",
+    "compute_dihedral_forces",
     "W",
     "DefaultNoChi",
     "DefaultWithChi",
@@ -45,6 +50,7 @@ __all__ = [
     "_find_unique_names",
     "check_bonds",
     "check_angles",
+    "check_dihedrals",
     "check_chi",
     "check_box_size",
     "check_integrator",
