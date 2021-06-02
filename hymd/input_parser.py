@@ -45,7 +45,9 @@ class Config:
     thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: bool = False
-
+    coulombtype: str = None
+    dielectric_const: float = None
+    
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
             [
@@ -226,9 +228,11 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "name",
         "n_particles",
         "max_molecule_size",
+        "coulombtype", 
+        "dielectric_const",  
     ):
         config_dict[n] = None
-
+    
     # Defaults = []
     for n in ("bonds", "angle_bonds", "dihedrals", "chi", "tags"):
         config_dict[n] = []
