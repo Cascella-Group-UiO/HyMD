@@ -6,12 +6,18 @@ from compute_bond_forces import cbf as compute_bond_forces__fortran  # noqa: F40
 from compute_angle_forces import (
     caf as compute_angle_forces__fortran,
 )  # noqa: F401, E501
+from compute_dihedral_forces import (
+    cdf as compute_dihedral_forces__fortran,
+)  # noqa: F401, E501
 from compute_bond_forces__double import (
     cbf as compute_bond_forces__fortran__double,
 )  # noqa: F401, E501
 from compute_angle_forces__double import (
     caf as compute_angle_forces__fortran__double,
 )  # noqa: F401, E501
+from compute_dihedral_forces__double import (
+    cdf as compute_dihedral_forces__fortran__double,
+)
 
 
 @dataclass
@@ -27,6 +33,19 @@ class Angle(Bond):
     atom_3: str
 
 
+# 1- Fourier series
+# 2- Harmonic potential for impropers
+# 3- Combined bending-torsional potential for proteins
+@dataclass
+class Dihedral:
+    atom_1: str
+    atom_2: str
+    atom_3: str
+    atom_4: str
+    coeff: list
+    phase: list
+
+
 @dataclass
 class Chi:
     atom_1: str
@@ -37,9 +56,12 @@ class Chi:
 def prepare_bonds_old(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
+    bonds_4 = []
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
         bond_graph = nx.Graph()
+
+        # Won't this be super slow for big systems?
         for local_index, global_index in enumerate(indices):
             if molecules[local_index] != mol:
                 continue
@@ -100,11 +122,45 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     a.strength,
                                 ]
                             )
-    return bonds_2, bonds_3
+                if len(path) == 4 and path[-1] > path[0]:
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_mid_1 = bond_graph.nodes()[path[1]]["name"]
+                    name_mid_2 = bond_graph.nodes()[path[2]]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
+
+                    for a in config.dihedrals:
+                        match_forward = (
+                            name_i == a.atom_1
+                            and name_mid_1 == a.atom_2
+                            and name_mid_2 == a.atom_3
+                            and name_j == a.atom_4
+                        )
+                        match_backward = (
+                            name_i == a.atom_4
+                            and name_mid_1 == a.atom_3
+                            and name_mid_2 == a.atom_2
+                            and name_j == a.atom_1
+                        )
+                        if match_forward or match_backward:
+                            bonds_4.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[path[1]]["local_index"],
+                                    bond_graph.nodes()[path[2]]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    a.coeff,
+                                    a.phase,
+                                ]
+                            )
+
+    return bonds_2, bonds_3, bonds_4
 
 
 def prepare_bonds(molecules, names, bonds, indices, config):
-    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices, config)
+    bonds_2, bonds_3, bonds_4 = prepare_bonds_old(
+        molecules, names, bonds, indices, config
+    )
+    # Bonds
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
     bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
@@ -114,6 +170,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_2_atom2[i] = b[1]
         bonds_2_equilibrium[i] = b[2]
         bonds_2_stength[i] = b[3]
+    # Angles
     bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
@@ -125,6 +182,21 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
+    # Dihedrals
+    bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_coeff = np.empty((len(bonds_4), 5), dtype=np.float64)
+    bonds_4_phase = np.empty((len(bonds_4), 5), dtype=np.float64)
+    for i, b in enumerate(bonds_4):
+        bonds_4_atom1[i] = b[0]
+        bonds_4_atom2[i] = b[1]
+        bonds_4_atom3[i] = b[2]
+        bonds_4_atom4[i] = b[3]
+        bonds_4_coeff[i] = b[4]
+        bonds_4_phase[i] = b[5]
+
     return (
         bonds_2_atom1,
         bonds_2_atom2,
@@ -135,6 +207,12 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3,
         bonds_3_equilibrium,
         bonds_3_stength,
+        bonds_4_atom1,
+        bonds_4_atom2,
+        bonds_4_atom3,
+        bonds_4_atom4,
+        bonds_4_coeff,
+        bonds_4_phase,
     )
 
 
@@ -289,8 +367,54 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
         f_angles[a, :] += fa
         f_angles[c, :] += fc
-        f_angles[b, :] += -(fa + fc)
+        f_angles[b, :] -= fa + fc
+        # f_angles[b, :] += -(fa + fc)
 
         energy -= 0.5 * f * d
+
+    return energy
+
+
+def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
+    f_dihedrals.fill(0.0)
+    energy = 0.0
+
+    for a, b, c, d, coeff, phase in bonds_4:
+        f = r[a, :] - r[b, :]
+        g = r[b, :] - r[c, :]
+        h = r[d, :] - r[c, :]
+
+        for dim in range(3):
+            f -= box_size[dim] * np.around(f[dim] / box_size[dim])
+            g -= box_size[dim] * np.around(g[dim] / box_size[dim])
+            h -= box_size[dim] * np.around(h[dim] / box_size[dim])
+
+        v = np.cross(f, g)
+        w = np.cross(h, g)
+        vv = np.dot(v, v)
+        ww = np.dot(w, w)
+        gn = np.linalg.norm(g)
+
+        cosphi = np.dot(v, w)
+        sinphi = np.dot(np.cross(v, w), g) / gn
+        phi = np.arctan2(sinphi, cosphi)
+
+        fg = np.dot(f, g)
+        hg = np.dot(h, g)
+        sc = v * fg / (vv * gn) - w * hg / (ww * gn)
+
+        df = 0
+        # Use 5 terms => len(cn) == len(dn) == 5
+        for m in range(5):
+            energy += coeff[m] * (1 + np.cos(m * phi + phase[m]))
+            df += m * coeff[m] * np.sin(m * phi + phase[m])
+
+        force_on_a = df * gn * v / vv
+        force_on_d = df * gn * w / ww
+
+        f_dihedrals[a, :] -= force_on_a
+        f_dihedrals[b, :] += df * sc + force_on_a
+        f_dihedrals[c, :] -= df * sc + force_on_d
+        f_dihedrals[d, :] += force_on_d
 
     return energy

@@ -6,13 +6,15 @@ import warnings
 import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
-from typing import List, Union
-from force import Bond, Angle, Chi
+from typing import List, Union, ClassVar
+from force import Bond, Angle, Dihedral, Chi
 from logger import Logger
 
 
 @dataclass
 class Config:
+    R: ClassVar[float] = 0.00831446261815324  # kJ/mol K, gas constant
+
     n_steps: int
     time_step: float
     box_size: Union[List[float], np.ndarray]
@@ -32,13 +34,15 @@ class Config:
     file_name: str = "<config file path unknown>"
     name: str = None
     tags: List[str] = field(default_factory=list)
-    chi: List[Chi] = field(default_factory=list)
-    angle_bonds: List[Angle] = field(default_factory=list)
     bonds: List[Bond] = field(default_factory=list)
+    angle_bonds: List[Angle] = field(default_factory=list)
+    dihedrals: List[Dihedral] = field(default_factory=list)
+    chi: List[Chi] = field(default_factory=list)
     n_particles: int = None
     max_molecule_size: int = None
     n_flush: int = None
     thermostat_work: float = 0.0
+    thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: bool = False
     coulombtype: str = None
@@ -60,18 +64,36 @@ class Config:
                 for k in self.angle_bonds
             ]
         )
+        dihedrals_str = "\tdihedrals:\n" + "".join(
+            [
+                (
+                    f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
+                    + f"{k.coeff}, {k.phase}\n"
+                )
+                for k in self.dihedrals
+            ]
+        )
         chi_str = "\tchi:\n" + "".join(
             [
                 (f"\t\t{k.atom_1} {k.atom_2}: " + f"{k.interaction_energy}\n")
                 for k in self.chi
             ]
         )
+        thermostat_coupling_groups_str = ""
+        if any(self.thermostat_coupling_groups):
+            thermostat_coupling_groups_str = "\tthermostat_coupling_groups:\n" + "".join(
+                [
+                    "\t\t" + ", ".join(
+                        [f"{n}" for n in ng]
+                    ) + "\n" for ng in self.thermostat_coupling_groups
+                ]
+            )
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            if k not in ("bonds", "angle_bonds", "chi"):
+            if k not in ("bonds", "angle_bonds", "dihedrals", "chi", "thermostat_coupling_groups"):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += bonds_str + angle_str + chi_str
+        ret_str += bonds_str + angle_str + dihedrals_str + chi_str + thermostat_coupling_groups_str
         return ret_str
 
 
@@ -212,7 +234,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict[n] = None
     
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "chi", "tags"):
+    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "tags"):
         config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
@@ -242,6 +264,17 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_3=b[0][2],
                     equilibrium=b[1][0],
                     strength=b[1][1],
+                )
+        if k == "dihedrals":
+            config_dict["dihedrals"] = [None] * len(v)
+            for i, b in enumerate(v):
+                config_dict["dihedrals"][i] = Dihedral(
+                    atom_1=b[0][0],
+                    atom_2=b[0][1],
+                    atom_3=b[0][2],
+                    atom_4=b[0][3],
+                    coeff=b[1][0],
+                    phase=b[1][1],
                 )
         if k == "chi":
             config_dict["chi"] = [None] * len(v)
@@ -411,6 +444,41 @@ def check_angles(config, names, comm=MPI.COMM_WORLD):
 
             warn_str = (
                 f"Angle bond type {a.atom_1}--{a.atom_2}--{a.atom_3} "
+                f"specified in {config.file_name} but no {missing_str} atoms "
+                f"are present in the specified system (names array)"
+            )
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+    return config
+
+def check_dihedrals(config, names, comm=MPI.COMM_WORLD):
+    if not hasattr(config, "unique_names"):
+        config = _find_unique_names(config, names)
+    unique_names = config.unique_names
+
+    for a in config.dihedrals:
+        if (
+            a.atom_1 not in unique_names
+            or a.atom_2 not in unique_names
+            or a.atom_3 not in unique_names
+            or a.atom_4 not in unique_names
+        ):
+            missing = [
+                a.atom_1 not in unique_names,
+                a.atom_2 not in unique_names,
+                a.atom_3 not in unique_names,
+                a.atom_4 not in unique_names,
+            ]
+            missing_names = [
+                atom
+                for i, atom in enumerate([a.atom_1, a.atom_2, a.atom_3, a.atom_4])
+                if missing[i]
+            ]
+            missing_str = ", ".join(np.unique(missing_names))
+
+            warn_str = (
+                f"Dihedral type {a.atom_1}--{a.atom_2}--{a.atom_3}--{a.atom_4} "
                 f"specified in {config.file_name} but no {missing_str} atoms "
                 f"are present in the specified system (names array)"
             )
@@ -671,6 +739,45 @@ def check_name(config, comm=MPI.COMM_WORLD):
     return config
 
 
+def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
+    if any(config.thermostat_coupling_groups):
+        found = [0 for _ in config.unique_names]
+        unique_names = [n for n in config.unique_names]
+        for i, group in enumerate(config.thermostat_coupling_groups):
+            for species in group:
+                try:
+                    ind = unique_names.index(species)
+                    found[ind] += 1
+                except ValueError as e:
+                    err_str = (
+                        f"Particle species {species} specified in thermostat "
+                        f"coupling group {i}, but no {species} particles were "
+                        "found in the system."
+                    )
+                    raise ValueError(err_str) from e
+        if any([True if f > 1 else False for f in found]):
+            for i, f in enumerate(found):
+                if f > 1:
+                    species = unique_names[i]
+                    err_str = (
+                        f"Particle species {species} specified in multiple "
+                        "thermostat coupling groups; "
+                        f"{config.thermostat_coupling_groups}."
+                    )
+                    raise ValueError(err_str)
+        if not all([True if f == 1 else False for f in found]):
+            for i, f in enumerate(found):
+                if f != 1:
+                    species = unique_names[i]
+                    err_str = (
+                        f"Particle species {species} not specified in any "
+                        f"thermostat coupling group, but {species} particles "
+                        "were found in the system"
+                    )
+                    raise ValueError(err_str)
+    return config
+
+
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config.box_size = np.array(config.box_size)  ######## <<<<< FIX ME
     config = _find_unique_names(config, names, comm=comm)
@@ -686,7 +793,9 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_name(config, comm=comm)
     config = check_n_particles(config, indices, comm=comm)
     config = check_chi(config, names, comm=comm)
-    config = check_angles(config, names, comm=comm)
     config = check_bonds(config, names, comm=comm)
+    config = check_angles(config, names, comm=comm)
+    config = check_dihedrals(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
+    config = check_thermostat_coupling_groups(config, comm=comm)
     return config

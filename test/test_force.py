@@ -2,16 +2,18 @@ import pytest
 import numpy as np
 from force import compute_bond_forces__plain as compute_bond_forces
 from force import compute_angle_forces__plain as compute_angle_forces
+from force import compute_dihedral_forces__plain as compute_dihedral_forces
 from force import prepare_bonds_old as prepare_bonds
 from input_parser import Config
 
-
+# This doesn't check fortran routines?
+# fmt: off
 def test_prepare_bonds_2(dppc_single):
     indices, bonds, names, molecules, r, CONF = dppc_single
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.bonds = CONF['bond_2']
-    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, config)
+    bonds_2, _, _ = prepare_bonds(molecules, names, bonds, indices, config)
     bonds_2_ind = [b[:2] for b in bonds_2]
     bonds_2_val = [b[2:] for b in bonds_2]
 
@@ -40,7 +42,7 @@ def test_comp_bonds(dppc_single):
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.bonds = CONF['bond_2']
-    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, config)
+    bonds_2, _, _ = prepare_bonds(molecules, names, bonds, indices, config)
 
     expected_energies = np.array([0.24545803261508981,
                                   0.76287125411373635,
@@ -98,7 +100,7 @@ def test_prepare_bonds_3(dppc_single):
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.angle_bonds = CONF['bond_3']
-    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, config)
+    _, bonds_3, _ = prepare_bonds(molecules, names, bonds, indices, config)
     bonds_3_ind = [b[:3] for b in bonds_3]
     bonds_3_val = [b[3:] for b in bonds_3]
 
@@ -125,7 +127,7 @@ def test_comp_angles(dppc_single):
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.angle_bonds = CONF['bond_3']
-    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, config)
+    _, bonds_3, _ = prepare_bonds(molecules, names, bonds, indices, config)
 
     expected_energies = np.array([0.24138227262192161,
                                   12.962077271327919,
@@ -179,4 +181,93 @@ def test_comp_angles(dppc_single):
         assert f_angles[b[1], :] == pytest.approx(expected_forces_j[i],
                                                   abs=1e-13)
         assert f_angles[b[2], :] == pytest.approx(expected_forces_k[i],
+                                                  abs=1e-13)
+
+def test_prepare_bonds_4(alanine_octapeptide):
+    indices, bonds, names, molecules, r, CONF = alanine_octapeptide
+    config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
+                    box_size=np.array([5.0, 5.0, 5.0]), sigma=0.5, kappa=1)
+    config.dihedrals = CONF['bond_4']
+    _, _, bonds_4 = prepare_bonds(molecules, names, bonds, indices, config)
+    bonds_4_ind = [b[:4] for b in bonds_4]
+    bonds_4_val = [b[4:] for b in bonds_4]
+
+    assert len(bonds_4) == 5
+
+    expected = [
+            [0, 2, 4, 6, [1 for _ in range(5)], [0 for _ in range(5)]],
+            [2, 4, 6, 8, [1 for _ in range(5)], [0 for _ in range(5)]],
+            [4, 6, 8, 10, [1 for _ in range(5)], [0 for _ in range(5)]],
+            [6, 8, 10, 12, [1 for _ in range(5)], [0 for _ in range(5)]],
+            [8, 10, 12, 14, [1 for _ in range(5)], [0 for _ in range(5)]],
+                ]
+    for e in expected:
+        assert e[:4] in bonds_4_ind
+        for ind, val in zip(bonds_4_ind, bonds_4_val):
+            if ind == e[:4]:
+                # check if this works for arrays?
+                assert e[4] == pytest.approx(val[0], abs=1e-13)
+                assert e[5] == pytest.approx(val[1], abs=1e-13)
+
+
+def test_comp_dihedrals(alanine_octapeptide):
+    indices, bonds, names, molecules, r, CONF = alanine_octapeptide
+    config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
+                    box_size=np.array([5.0, 5.0, 5.0]), sigma=0.5, kappa=1)
+    config.dihedrals = CONF['bond_4']
+    _, _, bonds_4 = prepare_bonds(molecules, names, bonds, indices, config)
+    
+    expected_energies = np.array([
+        5.512306711980792,
+        5.501816505737047,
+        5.4980072293920745,
+        5.50682559136485,
+        5.898283428858097],
+        dtype=np.float64
+    )
+    expected_forces_i = np.array([
+        [4.167404131528236, 5.964780465237133, 6.027290456833508],
+        [-3.88119996455415, -3.364625086216446, -7.922274353931893],
+        [1.3438193964197254, 1.721469069878616, 9.164234842488652],
+        [-0.5176523283261323, 1.4537046377291065, -9.32030878092003],
+        [-1.303516982371019, -1.850843743470206, 5.13282909125343]],
+        dtype=np.float64
+    )
+    expected_forces_j = np.array([
+        [-4.374426036878856, -7.901212696584612, -4.597926617980788],
+        [5.786331030404696, 4.600082932906689, 7.009782945316923],
+        [-1.9629100610700134, -4.100983501069195, -9.046763701062986],
+        [2.5517409922373115, -0.20115938578524672, 9.79905918235492],
+        [0.9717585303396479, 0.9912206160390491, -4.7894353408271675]],
+        dtype=np.float64
+    )
+    expected_forces_k = np.array([
+        [-3.6709627463157175, -1.4254054894919777, -9.345075121810787],
+        [-0.5590864711877845, 0.4888617624497804, 10.091901087338766],
+        [0.10213174348825493, 3.831271798222488, -9.42529515500928],
+        [-4.236386262425887, -4.37955378853861, 8.193186622885671],
+        [1.8761151329061132, 3.5095816408063003, -5.2916344246712885]],
+        dtype=np.float64
+    )
+    expected_forces_l = np.array([
+        [3.8779846516663383, 3.3618377208394574, 7.915711282958067],
+        [-1.346044594662762, -1.7243196091400235, -9.179409678723795],
+        [0.5169589211620331, -1.4517573670319093, 9.307824013583614],
+        [2.202297598514707, 3.1270085365947504, -8.671937024320561],
+        [-1.544356680874742, -2.649958513375143, 4.948240674245026]],
+        dtype=np.float64
+    )
+
+    for i, b in enumerate(bonds_4):
+        f_dihedrals = np.zeros(shape=r.shape, dtype=np.float64)
+        energy = 0.0
+        energy = compute_dihedral_forces(f_dihedrals, r, (b,), CONF['L'])
+        assert energy == pytest.approx(expected_energies[i], abs=1e-13)
+        assert f_dihedrals[b[0], :] == pytest.approx(expected_forces_i[i],
+                                                  abs=1e-13)
+        assert f_dihedrals[b[1], :] == pytest.approx(expected_forces_j[i],
+                                                  abs=1e-13)
+        assert f_dihedrals[b[2], :] == pytest.approx(expected_forces_k[i],
+                                                  abs=1e-13)
+        assert f_dihedrals[b[3], :] == pytest.approx(expected_forces_l[i],
                                                   abs=1e-13)

@@ -1,33 +1,33 @@
-[meta]
+# [meta]
 # Name of the simulation. May be ommitted.
-name = "DPPC bilayer with ML interaction parameters"
+# name = "Alanine octa-peptide in vacuum"
 # Tags classifying the simulation. May be ommitted.
-tags = ["bilayer", "solvent", "DPPC"]
+# tags = ["peptide", "ALA"]
 
 [particles]
 # Number of total particles in the simulation. If an input .hdf5 format file is
 # specified, the number of particles will be inferred from this and *may* be
 # ommited.
-n_particles = 10000
+n_particles = 6830
 # Mass of the particles in [g/mol]. All masses are assumed equal.
 mass = 72.0
 # Maximum number of particles per molecules present in the system. A default of
 # 200 is assumed, and this keyword may be ommitted for any system with smaller
 # molecules.
-max_molecule_size = 15
+# max_molecule_size = 15
 
 [simulation]
 # Number of total time steps in the simulation.
-n_steps = 5000
+n_steps = 10000
 # Frequency of trajectory/energy file output in time steps.
-n_print = 100
+n_print = 10
 # Frequency of requesting that the HDF5 library flush the file output buffers
 # to disk after in number of n_print timesteps.
-n_flush = 1000
+n_flush = 10000
 # Time step used in the simulation in [picoseconds].
-time_step = 0.03
+time_step = 0.3
 # Simulation box size in [nanometers].
-box_size = [10.0, 10.0, 10.0]
+box_size = [9.46553, 9.46553, 9.46553]
 # Time integrator used in the simulation. Either "velocity-verlet" or "respa".
 # If "respa", specify also the number of small rRESPA time steps per large
 # time_step with the 'respa_inner' keyword.
@@ -43,16 +43,16 @@ domain_decomposition = false
 cancel_com_momentum = true
 # Starting temperature to generate before simulation begins in [kelvin]. Ommit
 # or set to 'false' to not change the temperature before starting.
-start_temperature = false
+start_temperature = 323
 # Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
 # or set to 'false' to use no thermostat, i.e. a constant energy simulation.
 target_temperature = 323
 # Thermostat collision frequency in [1/picoseconds].
-tau = 0.7
+tau = 1
 # Couple groups of particles species to individual different thermostats.
 thermostat_coupling_groups = [
-  ["N", "P", "G", "C"],
-  ["W"],
+  ["BB", "SC"],
+  ["W"]
 ]
 # The energy functional W[phi] to use. Options:
 #    "SquaredPhi":      φ² / 2κφ₀,
@@ -60,7 +60,6 @@ thermostat_coupling_groups = [
 #    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
 # Subclass Hamiltonian to create a new energy functional.
 hamiltonian = 'DefaultNoChi'
-
 
 [field]
 # Particle-mesh grid size, either a single integer or an array of 3 integers
@@ -78,34 +77,32 @@ kappa = 0.05
 sigma = 0.5
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
+# Why aren't these just dictionaries?
 chi = [
-  [["C", "W"], [42.24]],
-  [["G", "C"], [10.47]],
-  [["N", "W"], [-3.77]],
-  [["G", "W"],  [4.53]],
-  [["N", "P"], [-9.34]],
-  [["P", "G"],  [8.04]],
-  [["N", "G"],  [1.97]],
-  [["P", "C"], [14.72]],
-  [["P", "W"], [-1.51]],
-  [["N", "C"], [13.56]],
+    [["BB", "SC"], [0]],
+    [["BB", "W"], [0]],
+    [["W", "SC"], [0]],
 ]
 
 [bonds]
 # Two-particle bonds, ((atom name 1, atom name 2), (equilibrium length in
 # [nanometers], bond strength in [kJ/mol])). Note the two
+# Second term is missing in Sigbjørn's fort.3. (k = 0)
+# Same for the angles since he used the combined angle-torsion potential.
+# IMPORTANT: numbers in arrays must have the same type!
 bonds = [
-  [["N", "P"], [0.47, 1250.0]],
-  [["P", "G"], [0.47, 1250.0]],
-  [["G", "G"], [0.37, 1250.0]],
-  [["G", "C"], [0.47, 1250.0]],
-  [["C", "C"], [0.47, 1250.0]],
+  [["BB", "BB"], [0.35, 1000.0]],
+  [["BB", "SC"], [0.27, 1000.0]],
 ]
 # Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
 # (equilibrium angle in [degrees], bond strength in [kJ/mol])).
 angle_bonds = [
-  [["P", "G", "G"], [120.0, 25.0]],
-  [["P", "G", "C"], [180.0, 25.0]],
-  [["G", "C", "C"], [180.0, 25.0]],
-  [["C", "C", "C"], [180.0, 25.0]],
+  [["BB", "BB", "BB"], [127.0, 100.0]],
+  [["BB", "BB", "SC"], [100.0, 100.0]],
+]
+# Four-particles torsion angles defined with a fourier series potential.
+# ((atom name 1, atom name 2, atom name 3, atom name 4),
+# ((fourier coefficients), (phase coefficients)))
+dihedrals = [
+  [["BB", "BB", "BB", "BB"], [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0]]]
 ]

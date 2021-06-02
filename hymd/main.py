@@ -28,6 +28,7 @@ from field import (
 from file_io import distribute_input, OutDataset, store_static, store_data, store_static_with_charge
 from force import compute_bond_forces__fortran as compute_bond_forces
 from force import compute_angle_forces__fortran as compute_angle_forces
+from force import compute_dihedral_forces__fortran as compute_dihedral_forces
 from force import prepare_bonds
 from input_parser import (
     read_config_toml,
@@ -37,7 +38,7 @@ from input_parser import (
 )
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
-from thermostat import velocity_rescale
+from thermostat import csvr_thermostat
 
 
 def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
@@ -48,7 +49,7 @@ def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     ret_str = ""
     if days != 0:
         ret_str += f"{days} days "
-        ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
+    ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
     return ret_str
 
 
@@ -85,6 +86,12 @@ def configure_runtime(comm):
         default=False,
         action="store_true",
         help="Disable three-particle angle bond forces",
+    )
+    ap.add_argument(
+        "--disable-dihedrals",
+        default=False,
+        action="store_true",
+        help="Disable four-particle dihedral forces",
     )
     ap.add_argument(
         "--double-precision",
@@ -132,7 +139,7 @@ def configure_runtime(comm):
         help="Set the numpy random generator seed for every rank",
     )
     ap.add_argument(
-        "--logfile", default=None, help="Redirect event logging to specified file"
+        "--logfile", default="sim.log", help="Redirect event logging to specified file"
     )
     ap.add_argument("config", help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
@@ -146,7 +153,8 @@ def configure_runtime(comm):
     if comm.rank == 0:
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
-
+    
+    # Is this used anywhere?
     if args.seed is not None:
         np.random.seed(args.seed)
     else:
@@ -154,7 +162,7 @@ def configure_runtime(comm):
 
     # Setup logger
     Logger.setup(
-        default_level=logging.INFO, log_file=args.logfile, verbose=args.verbose
+        default_level=logging.INFO, log_file=f"{args.destdir}/{args.logfile}", verbose=args.verbose
     )
 
     if args.profile:
@@ -235,7 +243,7 @@ def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
 
 
 def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
-    kT_start = (2.479 / 298.0) * config.start_temperature
+    kT_start = config.R * config.start_temperature
     n_particles_ = velocities.shape[0]
     velocities[...] = np.random.normal(
         loc=0, scale=kT_start / config.mass, size=(n_particles_, 3)
@@ -246,12 +254,9 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
     )
     start_kinetic_energy_target = (
-        (3 / 2)
-        * (2.479 / 298.0)
-        * config.n_particles
-        * config.start_temperature  # noqa: E501
+        1.5 * config.R * config.n_particles * config.start_temperature
     )
-    factor = np.sqrt((3 / 2) * config.n_particles * kT_start / kinetic_energy)
+    factor = np.sqrt(1.5 * config.n_particles * kT_start / kinetic_energy)
     velocities[...] = velocities[...] * factor
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
@@ -267,9 +272,9 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
     return velocities
 
 
-def judge_add_force( charges_flag, field_forces, bond_forces, angle_forces, elec_forces):
+def judge_add_force( charges_flag, field_forces, bond_forces, angle_forces, dihedral_forces, elec_forces):
     if charges_flag == True: 
-        return field_forces+bond_forces+angle_forces+elec_forces
+        return field_forces+bond_forces+angle_forces+ dihedral_forces+elec_forces
     else:
         return field_forces+bond_forces+angle_forces
 
@@ -293,6 +298,9 @@ if __name__ == "__main__":
             )  # noqa: E501, F811
             from force import (
                 compute_angle_forces__fortran__double as compute_angle_forces,
+            )  # noqa: E501, F811
+            from force import (
+                compute_dihedral_forces__fortran__double as compute_dihedral_forces,
             )  # noqa: E501, F811
     else:
         dtype = np.float32
@@ -350,6 +358,7 @@ if __name__ == "__main__":
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
+    # TODO: Get box_size from h5, not from toml?
     positions = np.mod(positions, config.box_size[None, :])
 
     bond_forces = np.zeros(
@@ -358,11 +367,15 @@ if __name__ == "__main__":
     angle_forces = np.zeros(
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
+    dihedral_forces = np.zeros(
+        shape=(len(positions), 3), dtype=dtype
+    )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
     
     field_energy = 0.0
     bond_energy = 0.0
     angle_energy = 0.0
+    dihedral_energy = 0.0
     kinetic_energy = 0.0
     field_q_energy = 0.0 ## q related 
 
@@ -374,7 +387,6 @@ if __name__ == "__main__":
             category=np.VisibleDeprecationWarning,
             message=r"Creating an ndarray from ragged nested sequences",
         )
-        # The first argument of ParticleMesh has to be a tuple
         pm = pmesh.ParticleMesh(
             config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
         )
@@ -403,7 +415,7 @@ if __name__ == "__main__":
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
     force_on_grid = [
-        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+        [pm.create("real", value=0.0) for _ in range(3)] for _ in range(config.n_types)
     ]
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
@@ -465,6 +477,7 @@ if __name__ == "__main__":
          indices,
          bond_forces,
          angle_forces,
+      dihedral_forces, #--- add dihedrals 
          field_forces,
          names, 
          types
@@ -511,6 +524,7 @@ if __name__ == "__main__":
             verbose=args.verbose,
             comm=comm,
         )
+        
         exec(_cmd_receive_dd ) ## args_recv = dd WRONG 
     
     #print('field_forces.shape', field_forces.shape)
@@ -548,9 +562,7 @@ if __name__ == "__main__":
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
     angle_forces = np.asfortranarray(angle_forces)
-    #charges = np.asfortranarray(charges)
-    #print('here', charges.shape, type(charges))
-    #print('here', positions.shape, type(positions))
+    dihedral_forces = np.asfortranarray(dihedral_forces)
     
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
@@ -635,7 +647,7 @@ if __name__ == "__main__":
 
     
     if molecules_flag:
-        if not (args.disable_bonds and args.disable_angle_bonds):
+        if not (args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals):
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
             (
                 bonds_2_atom1,
@@ -647,6 +659,12 @@ if __name__ == "__main__":
                 bonds_3_atom3,
                 bonds_3_equilibrium,
                 bonds_3_stength,
+                bonds_4_atom1,
+                bonds_4_atom2,
+                bonds_4_atom3,
+                bonds_4_atom4,
+                bonds_4_coeff,
+                bonds_4_phase,
             ) = bonds_prep
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
@@ -671,13 +689,27 @@ if __name__ == "__main__":
                 bonds_3_stength,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-        else:
-
-            bonds_2_atom1, bonds_2_atom2 = [], []
+        if not args.disable_dihedrals:
+            dihedral_energy_ = compute_dihedral_forces(
+                dihedral_forces,
+                positions,
+                config.box_size,
+                bonds_4_atom1,
+                bonds_4_atom2,
+                bonds_4_atom3,
+                bonds_4_atom4,
+                bonds_4_coeff,
+                bonds_4_phase,
+            )
+            dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
+        #else:
+        #    # What about bonds_3 and bonds_4?
+        #    bonds_2_atom1, bonds_2_atom2 = [], []
     else:
+        # What about bonds_3 and bonds_4?
         bonds_2_atom1, bonds_2_atom2 = [], []
-
-    config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy
+    
+    config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy + dihedral_energy #with dihedral
 
     out_dataset = OutDataset(args.destdir, config,
                              double_out=args.double_output,
@@ -742,7 +774,9 @@ if __name__ == "__main__":
             #    )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
-        temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        
+        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
+        
         #print('field_forces.shape', field_forces.shape)
         #print('bond_forces.shape',  bond_forces.shape) 
         #print('elec_forces.shape',  elec_forces.shape) 
@@ -753,12 +787,13 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces) , #field_forces + bond_forces + angle_forces + elec_forces, ## <------ judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #
+            judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, dihedral_forces, elec_forces) , # add dihedrals #field_forces + bond_forces + angle_forces + elec_forces, ## <------ judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #
             config.box_size,
             temperature,
             kinetic_energy,
             bond_energy,
             angle_energy,
+            dihedral_energy,
             field_energy,
             field_q_energy, ##<---------- 
             config.time_step,
@@ -807,7 +842,8 @@ if __name__ == "__main__":
                 seconds_elapsed = tot_t.days * seconds_per_day
                 seconds_elapsed += tot_t.seconds
                 seconds_elapsed += 1e-6 * tot_t.microseconds
-                hours_elapsed = seconds_elapsed / 60
+                minutes_elapsed = seconds_elapsed / 60
+                hours_elapsed = minutes_elapsed / 60
                 days_elapsed = hours_elapsed / 24
 
                 ns_per_day = ns_sim / days_elapsed
@@ -835,7 +871,7 @@ if __name__ == "__main__":
         for inner in range(config.respa_inner):
             velocities = integrate_velocity(
                 velocities,
-                (bond_forces + angle_forces) / config.mass,
+                (bond_forces + angle_forces + dihedral_forces) / config.mass,
                 config.time_step / config.respa_inner,
             )
             positions = integrate_position(
@@ -866,14 +902,29 @@ if __name__ == "__main__":
                         bonds_3_equilibrium,
                         bonds_3_stength,
                     )
+                if not args.disable_dihedrals:
+                    dihedral_energy_ = compute_dihedral_forces(
+                        dihedral_forces,
+                        positions,
+                        config.box_size,
+                        bonds_4_atom1,
+                        bonds_4_atom2,
+                        bonds_4_atom3,
+                        bonds_4_atom4,
+                        bonds_4_coeff,
+                        bonds_4_phase,
+                    )
             velocities = integrate_velocity(
                 velocities,
-                (bond_forces + angle_forces) / config.mass,
+                (bond_forces + angle_forces + dihedral_forces) / config.mass,
                 config.time_step / config.respa_inner,
             )
         
         # Update slow forces
         if not args.disable_field:
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
             update_field(
                 phi,
                 layouts,
@@ -887,9 +938,6 @@ if __name__ == "__main__":
                 phi_fourier,
                 v_ext_fourier,
             )
-            layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)
-            ]
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -940,8 +988,9 @@ if __name__ == "__main__":
                 bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
             if not args.disable_angle_bonds:
                 angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-        ##print('here ok')
-        
+            if not args.disable_dihedrals:
+                dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
+                
         if step != 0 and config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
                 #print(positions.shape)
@@ -951,14 +1000,16 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
+                dihedral_forces = np.ascontiguousarray(dihedral_forces)
+
                 
                 
-                ##################### 
                 args_in = [
                      velocities,
                      indices,
                      bond_forces,
                      angle_forces,
+                     dihedral_forces, # add dihedrals 
                      field_forces,
                      names, 
                      types
@@ -975,6 +1026,7 @@ if __name__ == "__main__":
                     verbose=args.verbose,
                     comm=comm,
                 )
+                
                 exec(_cmd_receive_dd )
                 ##############################
                 ########################### call explicitly 
@@ -997,13 +1049,14 @@ if __name__ == "__main__":
                 #)
                 #exec(_cmd_receive_dd)
                 
-                
+               
 
         
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
                 angle_forces = np.asfortranarray(angle_forces)
-    
+                dihedral_forces = np.asfortranarray(dihedral_forces)
+                
                 layouts = [
                     pm.decompose(positions[types == t]) for t in range(config.n_types)
                 ]
@@ -1020,6 +1073,12 @@ if __name__ == "__main__":
                         bonds_3_atom3,
                         bonds_3_equilibrium,
                         bonds_3_stength,
+                        bonds_4_atom1,
+                        bonds_4_atom2,
+                        bonds_4_atom3,
+                        bonds_4_atom4,
+                        bonds_4_coeff,
+                        bonds_4_phase,
                     ) = bonds_prep
        
         for t in range(config.n_types):
@@ -1029,14 +1088,16 @@ if __name__ == "__main__":
                     logging.INFO,
                     (
                         f"(GHOSTS: Total number of particles of type "
-                        f"{config.type_to_name_map} to be "
+                        f"{config.type_to_name_map[t]} to be "
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
 
         # Thermostat
         if config.target_temperature:
-            velocities = velocity_rescale(velocities, config, comm)
+        # Add loop if multiple groups/temperatures are defined 
+        # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
+            csvr_thermostat(velocities, names, config, comm=comm)
 
         # Print trajectory
         if config.n_print > 0:
@@ -1071,9 +1132,7 @@ if __name__ == "__main__":
                         0.5 * config.mass * np.sum(velocities ** 2)
                     )
                 temperature = (
-                    (2 / 3)
-                    * kinetic_energy
-                    / ((2.479 / 298.0) * config.n_particles)  # noqa: E501
+                    (2 / 3) * kinetic_energy / (config.R * config.n_particles)
                 )
                 if args.disable_field:
                     field_energy = 0.0
@@ -1084,12 +1143,13 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
-                    judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #field_forces + bond_forces + angle_forces + elec_forces, 
+                    judge_add_force(charges_flag,field_forces,bond_forces,angle_forces,dihedral_forces, elec_forces), #field_forces + bond_forces + angle_forces + elec_forces, 
                     config.box_size,
                     temperature,
                     kinetic_energy,
                     bond_energy,
                     angle_energy,
+                    dihedral_energy,
                     field_energy,
                     field_q_energy, #<---------
                     config.time_step,
@@ -1175,7 +1235,7 @@ if __name__ == "__main__":
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         frame = (step + 1) // config.n_print
-        temperature = (2 / 3) * kinetic_energy / ((2.479 / 298.0) * config.n_particles)
+        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         if args.disable_field:
             field_energy = 0.0
         store_data(
@@ -1185,12 +1245,13 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #field_forces + bond_forces + angle_forces + elec_forces, #<-----------
+            judge_add_force(charges_flag,field_forces,bond_forces,angle_forces,  dihedral_forces, elec_forces), #field_forces + bond_forces + angle_forces + elec_forces, #<-----------
             config.box_size,
             temperature,
             kinetic_energy,
             bond_energy,
             angle_energy,
+            dihedral_energy,
             field_energy,
             field_q_energy, #<-----------
             config.time_step,
