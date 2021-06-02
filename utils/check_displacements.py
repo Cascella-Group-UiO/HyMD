@@ -18,17 +18,20 @@ sys.argv[2:]:  i)  all : checks for displacements across all frames in the traje
 flag = False
 values = h5py.File(sys.argv[1], 'r')
 steps = values['particles/all/position/step']
+
 if(sys.argv[2] == 'all'):
-    frames = list(range(0,len(steps)))
+    frames = list(range(0,67))
+    #    frames = list(range(0,len(steps)))
 else:
     frames = list(sys.argv[2:])
     frames = list(map(int, frames))
-    print(frames)
+
 for frame in frames:
     positions = values['particles/all/position/value'][frame, :, :]
+    species_type = values['particles/all/species']
     displaced_index = []
     for i in range(len(positions)):
-        if(positions[i][0] == 0.000):
+        if(positions[i][0] == 0.000 and not species_type[i] == 4):
             displaced_index.append(i)
     if(len(displaced_index)>0):
         flag = True
