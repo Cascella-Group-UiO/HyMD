@@ -20,8 +20,8 @@ values = h5py.File(sys.argv[1], 'r')
 steps = values['particles/all/position/step']
 
 if(sys.argv[2] == 'all'):
-    frames = list(range(0,67))
-    #    frames = list(range(0,len(steps)))
+    #frames = list(range(0,67))
+    frames = list(range(0,len(steps)))
 else:
     frames = list(sys.argv[2:])
     frames = list(map(int, frames))
