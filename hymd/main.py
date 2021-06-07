@@ -595,7 +595,8 @@ if __name__ == "__main__":
                     angle_forces,
                     positions,
                     bond_pr_,
-                    angle_pr_
+                    angle_pr_,
+                    comm=comm
             )
             #if rank ==0 : print(pressure[9:12])
             #print('phi_fft after pressure call: phi_fft[d=0]',phi_fft[0].value[0][0][0:2])
@@ -847,12 +848,12 @@ if __name__ == "__main__":
                      phi_fourier,
                      phi_laplacian,
                      lap_transfer,
-                     comm,
                      bond_forces,
                      angle_forces,
                      args,
                      bond_pr_,
-                     angle_pr_
+                     angle_pr_,
+                     comm=comm
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
@@ -865,12 +866,12 @@ if __name__ == "__main__":
                      phi_fourier,
                      phi_laplacian,
                      lap_transfer,
-                     comm,
                      bond_forces,
                      angle_forces,
                      args,
                      bond_pr_,
-                     angle_pr_
+                     angle_pr_,
+                     comm=comm
                 )
 
             #pmesh repair attempt: recreate all
@@ -952,7 +953,8 @@ if __name__ == "__main__":
                             angle_forces,
                             positions,
                             bond_pr_,
-                            angle_pr_
+                            angle_pr_,
+                            comm=comm
                     )
                 else:
                     pressure = 0.0 #0.0 indicates not calculated. To be changed.
@@ -1045,7 +1047,8 @@ if __name__ == "__main__":
                     angle_forces,
                     positions,
                     bond_pr_,
-                    angle_pr_
+                    angle_pr_,
+                    comm=comm
             )
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.
