@@ -37,7 +37,7 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
   integer :: ind, aa, bb, cc, dd, i
   real(8), dimension(3) :: f, g, h, v, w, sc, force_on_a, force_on_d
   real(8), dimension(5) :: coeff_, phase_
-  real(8) :: gnorm, vv, ww, fg, hg, df, cosphi, sinphi, phi
+  real(8) :: g_norm, vv, ww, fg, hg, df, cos_phi, sin_phi, phi
 
   energy = 0.d0
   force = 0.d0
@@ -62,9 +62,9 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     w = cross(h, g)
     vv = dot_product(v, v)
     ww = dot_product(w, w)
-    gnorm = sqrt(dot_product(g, g))
+    g_norm = norm2(g)
     
-    cosphi = dot_product(v, w)
+    cos_phi = dot_product(v, w)
     
     ! Add check if cosphi > 1 or cosphi < -1?
     ! if (cosphi > 1) then
@@ -72,8 +72,8 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     ! if (cosphi < -1) then 
     !   cosphi = -1.d0
 
-    sinphi = dot_product(cross(v, w), g) / gnorm
-    phi = atan2(sinphi, cosphi) 
+    sin_phi = dot_product(cross(v, w), g) / g_norm
+    phi = atan2(sin_phi, cos_phi) 
 
     fg = dot_product(f, g)
     hg = dot_product(h, g)
@@ -87,9 +87,9 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
       df = df + i * coeff_(i + 1) * sin(i * phi + phase_(i + 1))
     end do
  
-    sc = v * fg / (vv * gnorm) - w * hg / (ww * gnorm)
-    force_on_a = df * gnorm * v / vv
-    force_on_d = df * gnorm * w / ww
+    sc = v * fg / (vv * g_norm) - w * hg / (ww * g_norm)
+    force_on_a = df * g_norm * v / vv
+    force_on_d = df * g_norm * w / ww
     
     force(aa,:) = force(aa,:) - force_on_a
     force(bb,:) = force(bb,:) + df * sc + force_on_a
