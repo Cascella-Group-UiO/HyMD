@@ -73,10 +73,6 @@ def store_static(
     h5md_group = h5md.file.create_group("/h5md")
     h5md.h5md_group = h5md_group
     h5md.observables = h5md.file.create_group("/observables")
-
-    # Is this used anywhere?
-    h5md.connectivity = h5md.file.create_group("/connectivity")
-
     h5md.parameters = h5md.file.create_group("/parameters")
 
     h5md_group.attrs["version"] = np.array([1, 1], dtype=int)
