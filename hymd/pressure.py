@@ -259,9 +259,11 @@ def comp_pressure(
         args,
         bond_forces,
         angle_forces,
-        positions
+        positions,
+        bond_pr,
+        angle_pr,
+        comm=MPI.COMM_WORLD
 ):
-    comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
 
@@ -339,30 +341,40 @@ def comp_pressure(
     p2z = np.sum(p2z)
 
     #Bonded force term: linking 2 particles
-    forces = {
-            'x': bond_forces[:,0],
-            'y': bond_forces[:,1],
-            'z': bond_forces[:,2]
-             }
+    #forces = {
+    #        'x': bond_forces[:,0],
+    #        'y': bond_forces[:,1],
+    #        'z': bond_forces[:,2]
+    #         }
 
-    p_bond = {
-            'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
-            'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
-            'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
-              }
+    #p_bond = {
+    #        'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
+    #        'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
+    #        'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
+    #          }
+    p_bond  = {
+             'x': bond_pr[0]/V,
+             'y': bond_pr[1]/V,
+             'z': bond_pr[2]/V
+             }
 
     #Angle force term: linking 3 particles
-    forces = {
-            'x': angle_forces[:,0],
-            'y': angle_forces[:,1],
-            'z': angle_forces[:,2]
-             }
+    #forces = {
+    #        'x': angle_forces[:,0],
+    #        'y': angle_forces[:,1],
+    #        'z': angle_forces[:,2]
+    #         }
 
-    p_angle = {
-            'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
-            'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
-            'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
-               }
+    #p_angle = {
+    #        'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
+    #        'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
+    #        'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
+    #           }
+    p_angle =  {
+             'x': angle_pr[0]/V,
+             'y': angle_pr[1]/V,
+             'z': angle_pr[2]/V
+             }
 
     #Dihedral angle force term: linking 4 atoms
     p_dihedral = {
@@ -419,5 +431,5 @@ def comp_pressure(
                 p_tot['x'], p_tot['y'], p_tot['z']
     ]
 
-    return_value = [comm.allreduce(_) for _ in return_value]
+    return_value = [comm.allreduce(_, MPI.sum) for _ in return_value]
     return return_value

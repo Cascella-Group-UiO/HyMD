@@ -505,7 +505,7 @@ if __name__ == "__main__":
                 bonds_3_stength,
             ) = bonds_prep
         if not args.disable_bonds:
-            bond_energy_ = compute_bond_forces(
+            bond_energy_,bond_pr_= compute_bond_forces(
                 bond_forces,
                 positions,
                 config.box_size,
@@ -515,8 +515,14 @@ if __name__ == "__main__":
                 bonds_2_stength,
             )
             bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
+            #bond_pr = comm.allreduce(bond_pr_, MPI.SUM)
+            #if(rank == 0):
+            #    print('bond_energy:',bond_energy)
+            #    print('bond_pr in x:', bond_pr[0])
+            #    print('bond_pr in y:', bond_pr[1])
+            #    print('bond_pr in z:', bond_pr[2])
         if not args.disable_angle_bonds:
-            angle_energy_ = compute_angle_forces(
+            angle_energy_, angle_pr_ = compute_angle_forces(
                 angle_forces,
                 positions,
                 config.box_size,
@@ -527,6 +533,12 @@ if __name__ == "__main__":
                 bonds_3_stength,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+            angle_pr = comm.allreduce(angle_pr_, MPI.SUM)
+            #if(rank == 0):
+            #    print('angle_energy:',angle_energy)
+            #    print('angle_pr in x:', angle_pr[0])
+            #    print('angle_pr in y:', angle_pr[1])
+            #    print('angle_pr in z:', angle_pr[2])
         else:
             bonds_2_atom1, bonds_2_atom2 = [], []
     else:
@@ -581,8 +593,12 @@ if __name__ == "__main__":
                     args,
                     bond_forces,
                     angle_forces,
-                    positions
+                    positions,
+                    bond_pr_,
+                    angle_pr_,
+                    comm=comm
             )
+            #if rank ==0 : print(pressure[9:12])
             #print('phi_fft after pressure call: phi_fft[d=0]',phi_fft[0].value[0][0][0:2])
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.
@@ -677,7 +693,7 @@ if __name__ == "__main__":
             # Update fast forces
             if molecules_flag:
                 if not args.disable_bonds:
-                    bond_energy_ = compute_bond_forces(
+                    bond_energy_, bond_pr_ = compute_bond_forces(
                         bond_forces,
                         positions,
                         config.box_size,
@@ -687,7 +703,7 @@ if __name__ == "__main__":
                         bonds_2_stength,
                     )
                 if not args.disable_angle_bonds:
-                    angle_energy_ = compute_angle_forces(
+                    angle_energy_, angle_pr_ = compute_angle_forces(
                         angle_forces,
                         positions,
                         config.box_size,
@@ -832,10 +848,12 @@ if __name__ == "__main__":
                      phi_fourier,
                      phi_laplacian,
                      lap_transfer,
-                     comm,
                      bond_forces,
                      angle_forces,
-                     args
+                     args,
+                     bond_pr_,
+                     angle_pr_,
+                     comm=comm
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
@@ -848,10 +866,12 @@ if __name__ == "__main__":
                      phi_fourier,
                      phi_laplacian,
                      lap_transfer,
-                     comm,
                      bond_forces,
                      angle_forces,
-                     args
+                     args,
+                     bond_pr_,
+                     angle_pr_,
+                     comm=comm
                 )
 
             #pmesh repair attempt: recreate all
@@ -931,7 +951,10 @@ if __name__ == "__main__":
                             args,
                             bond_forces,
                             angle_forces,
-                            positions
+                            positions,
+                            bond_pr_,
+                            angle_pr_,
+                            comm=comm
                     )
                 else:
                     pressure = 0.0 #0.0 indicates not calculated. To be changed.
@@ -1022,7 +1045,10 @@ if __name__ == "__main__":
                     args,
                     bond_forces,
                     angle_forces,
-                    positions
+                    positions,
+                    bond_pr_,
+                    angle_pr_,
+                    comm=comm
             )
         else:
             pressure = 0.0 #0.0 indicates not calculated. To be changed.

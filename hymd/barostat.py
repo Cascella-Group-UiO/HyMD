@@ -1,6 +1,7 @@
 # Berendsen Barostat
 import numpy as np
 from pressure import comp_pressure
+from mpi4py import MPI
 
 # Isotropic barostat from HyMD-2020
 #def BERENDSEN_BAROSTAT(tau_p, P):
@@ -42,11 +43,13 @@ def isotropic(
         config,
         phi_fft,
         phi_laplacian,
-        phi_new,
-        comm,
+        lap_transfer,
         bond_forces,
         angle_forces,
-        args
+        args,
+        bond_pr,
+        angle_pr,
+        comm=MPI.COMM_WORLD
     ):
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
 
@@ -58,11 +61,14 @@ def isotropic(
             config,
             phi_fft,
             phi_laplacian,
-            phi_new,
+            lap_transfer,
             args,
             bond_forces,
             angle_forces,
-            positions
+            positions,
+            bond_pr,
+            angle_pr,
+            comm=comm
     )
 
     #Total pressure across all ranks
@@ -92,11 +98,13 @@ def semiisotropic(
         config,
         phi_fft,
         phi_laplacian,
-        phi_new,
-        comm,
+        lap_transfer,
         bond_forces,
         angle_forces,
-        args
+        args,
+        bond_pr,
+        angle_pr,
+        comm=MPI.COMM_WORLD
     ):
 
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
@@ -109,11 +117,14 @@ def semiisotropic(
             config,
             phi_fft,
             phi_laplacian,
-            phi_new,
+            lap_transfer,
             args,
             bond_forces,
             angle_forces,
-            positions
+            positions,
+            bond_pr,
+            angle_pr,
+            comm=comm
     )
 
     #Total pressure across all ranks

@@ -1,5 +1,5 @@
 
-subroutine cbf(f, r, box, i, j, r0, k, energy)
+subroutine cbf(f, r, box, i, j, r0, k, energy, bond_pr)
 ! ==============================================================================
 ! compute_bond_forces() speedup attempt.
 !
@@ -18,6 +18,7 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
     real(4), dimension(:),   intent(in)     :: r0
     real(4), dimension(:),   intent(in)     :: k
     real(4),                 intent(out)    :: energy
+    real(8), dimension(3),   intent(out)    :: bond_pr
 
     integer :: ind, ii, jj
     real(4) :: rij, rij_x, rij_y, rij_z
@@ -25,6 +26,7 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
     real(4) :: bx, by, bz
 
     energy = 0.0d00
+    bond_pr = 0.0d00 !Set x, y, z components to 0
     f = 0.0d00 ! Set all array elements
 
     bx = 1.0d00 / box(1)
@@ -57,5 +59,11 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
       f(jj, 3) = f(jj, 3) + df * rij_z / rij
 
       energy = energy + 0.5d00 * k(ind) * (rij - r0(ind))**2
+
+      bond_pr(1) = bond_pr(1) + ( df * rij_x / rij) * rij_x
+      bond_pr(2) = bond_pr(2) + ( df * rij_y / rij) * rij_y
+      bond_pr(3) = bond_pr(3) + ( df * rij_z / rij) * rij_z
+
     end do
+
 end subroutine
