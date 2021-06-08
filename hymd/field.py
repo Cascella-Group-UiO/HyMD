@@ -105,7 +105,7 @@ def domain_decomposition(
         args = (*args, bonds, molecules)
     else:
         layout = pm.decompose(positions, smoothing=0)
-    if verbose > 1:
+    if verbose > 2:
         Logger.rank0.log(
             logging.INFO,
             "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",

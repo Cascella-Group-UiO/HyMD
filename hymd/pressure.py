@@ -431,5 +431,5 @@ def comp_pressure(
                 p_tot['x'], p_tot['y'], p_tot['z']
     ]
 
-    return_value = [comm.allreduce(_, MPI.sum) for _ in return_value]
+    return_value = [comm.allreduce(_, MPI.SUM) for _ in return_value]
     return return_value
