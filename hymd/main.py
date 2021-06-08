@@ -505,6 +505,8 @@ if __name__ == "__main__":
                 bonds_2_stength,
             )
             bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
+        else:
+            bonds_2_atom1, bonds_2_atom2 = [], []
         if not args.disable_angle_bonds:
             angle_energy_ = compute_angle_forces(
                 angle_forces,
@@ -530,11 +532,7 @@ if __name__ == "__main__":
                 bonds_4_phase,
             )
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
-        #else:
-        #    # What about bonds_3 and bonds_4?
-        #    bonds_2_atom1, bonds_2_atom2 = [], []
     else:
-        # What about bonds_3 and bonds_4?
         bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy + dihedral_energy
@@ -831,8 +829,8 @@ if __name__ == "__main__":
 
         # Thermostat
         if config.target_temperature:
-        # Add loop if multiple groups/temperatures are defined 
-        # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
+            # TODO: Add loop if multiple groups/temperatures are defined:
+            # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
             csvr_thermostat(velocities, names, config, comm=comm)
 
         # Print trajectory

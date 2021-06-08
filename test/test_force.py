@@ -205,7 +205,6 @@ def test_prepare_bonds_4(alanine_octapeptide):
         assert e[:4] in bonds_4_ind
         for ind, val in zip(bonds_4_ind, bonds_4_val):
             if ind == e[:4]:
-                # check if this works for arrays?
                 assert e[4] == pytest.approx(val[0], abs=1e-13)
                 assert e[5] == pytest.approx(val[1], abs=1e-13)
 

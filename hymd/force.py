@@ -61,7 +61,6 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
     for mol in different_molecules:
         bond_graph = nx.Graph()
 
-        # Won't this be super slow for big systems?
         for local_index, global_index in enumerate(indices):
             if molecules[local_index] != mol:
                 continue
