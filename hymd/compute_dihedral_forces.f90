@@ -52,11 +52,9 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     g = [r(bb,:) - r(cc,:)]
     h = [r(dd,:) - r(cc,:)]
       
-    do i = 1, 3
-      f(i) = f(i) - box(i) * nint(f(i) / box(i))
-      g(i) = g(i) - box(i) * nint(g(i) / box(i))
-      h(i) = h(i) - box(i) * nint(h(i) / box(i))
-    end do
+    f = f - box * nint(f / box)
+    g = g - box * nint(g / box)
+    h = h - box * nint(h / box)
   
     v = cross(f, g)
     w = cross(h, g)
@@ -68,9 +66,9 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     
     ! Add check if cosphi > 1 or cosphi < -1?
     ! if (cosphi > 1) then
-    !   cosphi = 1.d0
+    !     cosphi = 1.d0
     ! if (cosphi < -1) then 
-    !   cosphi = -1.d0
+    !     cosphi = -1.d0
 
     sin_phi = dot_product(cross(v, w), g) / g_norm
     phi = atan2(sin_phi, cos_phi) 
