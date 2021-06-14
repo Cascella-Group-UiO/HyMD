@@ -895,7 +895,8 @@ if __name__ == "__main__":
             )
 
             ## add q related 
-            if charges_flag:
+            #if charges_flag:
+            if charges_flag and config.coulombtype == 'PIC_Spectral':
                 layout_q = pm.decompose( positions ) 
                 ### split 
                 update_field_force_q(
@@ -1058,7 +1059,8 @@ if __name__ == "__main__":
                         comm=comm,
                     )
 
-                    if charges_flag:
+                    #if charges_flag:
+                    if charges_flag and config.coulombtype == 'PIC_Spectral':
                         field_q_energy=compute_field_energy_q(
                             config,
                             phi_q_fourier,
@@ -1147,7 +1149,8 @@ if __name__ == "__main__":
             )
             
             ## add q related 
-            if charges_flag:
+            #if charges_flag:
+            if charges_flag and config.coulombtype == 'PIC_Spectral':
                 layout_q = pm.decompose( positions ) 
                 ### split 
                 update_field_force_q(
