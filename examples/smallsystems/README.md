@@ -1,5 +1,5 @@
 HyMD uses Martini coarse-graining mapping. A Martini structure can be created in many ways. Here we use CHARMM-GUI to build it and then convert it into the `.h5` format that HyMD needs.
-Let's use as an example a very small system of a DPPC bilayer with 4DPPC in a box of size `[1.58750, 1.58750, 10.0]` nm.  
+Let's use as an example a very small system of a DPPC bilayer with 8 DPPC in a box of size `[1.58750, 1.58750, 10.0]` nm.  
 Start here: `CHARMM-GUI` > `Input Generator` > `Martini Maker` > `Bilayer Builder`  
 We will build a `Martini only system`  
 `Select Martini Models:` Select `martini22`  
