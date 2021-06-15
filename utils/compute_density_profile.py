@@ -102,13 +102,14 @@ bins : int, optional
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('traj_file', type=str, help='trajectory file with path. Eg: home/sim.h5')
 parser.add_argument('--start_frames', type=int, nargs="+",
-        help='First frames to be considered. Eg: -50 means range starts from 50th fram from last')
+        help='first frames to be considered. Eg: -50 means range starts from 50th fram from last')
 parser.add_argument('--end_frames', type=int, nargs="+",
-        help='Last frames to be considered. Eg: -1 means range ends at the last frame')
-parser.add_argument('--dimension', type=str, default='z', help='Axis along which density profile is computed.'\
+        help='last frames to be considered. Eg: -1 means range ends at the last frame')
+parser.add_argument('--dimension', type=str, default='z', help='axis along which density profile is computed'\
         ' Eg: x [/y/z]')
-parser.add_argument('--species', type=str, default='all', help='species whose density profile is computed.'\
+parser.add_argument('--species', type=str, default='all', help='species whose density profile is computed'\
         ' Eg: all [/W/N]')
+parser.add_argument('--bins', type=int, default='60', help='number of bins along axis of plot')
 args = parser.parse_args()
 home_directory = pathlib.Path.home()
 file_path = args.traj_file
@@ -118,7 +119,7 @@ fig.set_figwidth(8)
 fig.set_figheight(5)
 for i in range(len(args.start_frames)):
     _ = h5md_density_profile(
-            file_path, species=args.species, time_steps=(args.start_frames[i], args.end_frames[i]), dimension=args.dimension, bins=60,
+            file_path, species=args.species, time_steps=(args.start_frames[i], args.end_frames[i]), dimension=args.dimension, bins=args.bins,
     )
 
 plt.show()
