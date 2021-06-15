@@ -18,21 +18,12 @@ respa_inner = 10
 domain_decomposition = 1000
 start_temperature = 323
 target_temperature = 323
-<<<<<<< HEAD
-#target_pressure = 1
-tau = 0.1
-#tau_p = 1
-hamiltonian = 'DefaultWithChi'
-pressure = true
-#barostat = 'semiisotropic'
-=======
 target_pressure = 1
 tau = 0.1
 tau_p = 1
 hamiltonian = 'DefaultWithChi'
 pressure = true
 barostat = 'semiisotropic'
->>>>>>> c53b1ed190fd57246bae42cacce7028883829008
 plot = false
 
 
