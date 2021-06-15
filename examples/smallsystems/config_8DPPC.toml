@@ -8,8 +8,8 @@ mass = 72.0
 max_molecule_size = 15
 
 [simulation]
-n_steps = 3333
-n_print = 300
+n_steps = 333333
+n_print = 3000
 n_flush = 5000
 time_step = 0.3
 box_size = [1.58750, 1.58750, 10.0]
@@ -18,12 +18,21 @@ respa_inner = 10
 domain_decomposition = 1000
 start_temperature = 323
 target_temperature = 323
+<<<<<<< HEAD
+#target_pressure = 1
+tau = 0.1
+#tau_p = 1
+hamiltonian = 'DefaultWithChi'
+pressure = true
+#barostat = 'semiisotropic'
+=======
 target_pressure = 1
 tau = 0.1
 tau_p = 1
 hamiltonian = 'DefaultWithChi'
 pressure = true
 barostat = 'semiisotropic'
+>>>>>>> c53b1ed190fd57246bae42cacce7028883829008
 plot = false
 
 

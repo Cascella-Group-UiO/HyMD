@@ -74,7 +74,8 @@ config.toml  hymd  input.h5  log.txt  sim.h5  srun-2717351.err
 See that the files copied include: inputs (`config.toml`,`input.h5`), a log file (`log.txt`) and the output trajectory (`sim.h5`)
 
 ## Other README.md 's in this repository
-How to build a binary system -- [examples/binary/README.md](https://github.com/Cascella-Group-UiO/HyMD-2021/tree/pressure/examples/binary)
+How to build a binary system : [examples/binary/README.md](https://github.com/Cascella-Group-UiO/HyMD-2021/tree/pressure/examples/binary)  
+How to build a membrane: from CHARMM-GUI to `input.h5` ready for HyMD  -- [examples/smallsystems/README.md](https://github.com/Cascella-Group-UiO/HyMD-2021/tree/pressure/examples/smallsystems)
 
 Notes:
 - Changed numpy data types (Float32, Int32 -> float32, int32) to run in local computer
