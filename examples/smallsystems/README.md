@@ -17,4 +17,4 @@ Name the file `step5_charmm2gmx.gro`
 __Way 2:__ Use `gmx pdb2gmx -f step5_charmm2gmx.pdb -o step5_charmm2gmx.gro`. Make sure you use the correct forcefields. All relevant forcefields should be in the folder `toppar` though some Gromacs versions might cause some errors and require some additional files (like `.atp`)
 
 #### Do a Gromacs run and get a `.gro`
-__Way 3__:
+__Way 3__: See `job_charmm_equil.sh`. In this script we run Gromacs for energy minimization, some NPT equilibration runs with different time steps, an NPT production run, an NVT equilibration, an NVT production run. Of the many output files, we get the final frame as a `.gro` file.
