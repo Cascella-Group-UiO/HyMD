@@ -13,7 +13,7 @@ from compute_angle_forces__double import (
     caf as compute_angle_forces__fortran__double,
 )  # noqa: F401, E501
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 @dataclass
 class Bond:
