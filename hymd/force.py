@@ -13,6 +13,7 @@ from compute_angle_forces__double import (
     caf as compute_angle_forces__fortran__double,
 )  # noqa: F401, E501
 
+import matplotlib.pyplot as plt
 
 @dataclass
 class Bond:
@@ -51,19 +52,29 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
             )
             for bond in [b for b in bonds[local_index] if b != -1]:
                 bond_graph.add_edge(global_index, bond)
-
+        
+        #nx.draw(bond_graph)
+        #plt.show()
+        
         connectivity = nx.all_pairs_shortest_path(bond_graph)
+        #print(dict(connectivity))
         for c in connectivity:
             i = c[0]
             connected = c[1]
             for j, path in connected.items():
                 if len(path) == 2 and path[-1] > path[0]:
+                    #print(path)
                     name_i = bond_graph.nodes()[i]["name"]
                     name_j = bond_graph.nodes()[j]["name"]
 
                     for b in config.bonds:
+                        #### majesty thanks manuel 
+                        #match_forward = name_i == b.atom_1 and name_j == b.atom_2
+                        #match_backward = name_j == b.atom_2 and name_i == b.atom_1
+                        #### 2021-06-14
                         match_forward = name_i == b.atom_1 and name_j == b.atom_2
-                        match_backward = name_j == b.atom_2 and name_i == b.atom_1
+                        match_backward = name_j == b.atom_1 and name_i == b.atom_2
+                        #### 
                         if match_forward or match_backward:
                             bonds_2.append(
                                 [
@@ -73,7 +84,16 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     b.strength,
                                 ]
                             )
-
+                            #print('FOUND!!!', mol, name_i, name_j)
+                            #print([
+                            #        bond_graph.nodes()[i]["local_index"],
+                            #        bond_graph.nodes()[j]["local_index"],
+                            #        b.equilibrium,
+                            #        b.strength,
+                            #    ])
+                        #else:
+                            #print('NOT FOUND!!!',mol, name_i, name_j)
+                    
                 if len(path) == 3 and path[-1] > path[0]:
                     name_i = bond_graph.nodes()[i]["name"]
                     name_mid = bond_graph.nodes()[path[1]]["name"]
