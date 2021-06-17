@@ -1,3 +1,5 @@
+We do NVT runs for self-assembly.
+
 ### Self-assembly of lipids to form a bilayer-configuration
 The steps we follow to see the self-assembly of DPPC in water.
 1. Use CHARMM-GUI to make Martini structure of DPPC in water.  
