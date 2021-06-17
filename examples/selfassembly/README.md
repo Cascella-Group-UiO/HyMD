@@ -1,3 +1,4 @@
+### Self-assembly of lipids from a bilayer-configuration
 The steps we follow to see the self-assembly of DPPC in water.
 1. Use CHARMM-GUI to make Martini structure of DPPC in water.  
 2. Download the `.tgz`, unzip, and run Gromacs for preparing the system. See `job_charmm_equil.sh`: Input - `step 6.4*` ; Output - `step9_production.*`  
@@ -18,3 +19,6 @@ The steps we follow to see the self-assembly of DPPC in water.
 
 We expect to see self-assembly.
 What did we do: We started from an equilibrated stable bilayer. Blew it up by rasining the temperature. Cooled it down. Ran HyMD. We did not start from a random system. This is for being able to compare the kind of self-assembled structure we get from HyMD with the structure we had built on CHARMM-GUI followed by Gromacs equilibration.
+
+### Self-assembly of lipids that should form vesicles
+We do not start from a structured lipid bilayer. The reason is the self-assembled structure we expect to get is not an equilibrium structure. So there is no need for a mechanism in which we compare the HyMD-self-assembled-structure with a Gromacs-structure.
