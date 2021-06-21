@@ -25,4 +25,14 @@ What did we do: We started from an equilibrated stable bilayer. Blew it up by ra
 ### Self-assembly of lipids to form vesicles
 __WAY 1:__ We do not start from a structured system. The reason is the self-assembled structure we expect to get is not an equilibrium structure. So there is no need for a mechanism in which we compare the HyMD-self-assembled-structure with a Gromacs-equilibrated-structure. We calculate the ratios of lipids and water and size of box blabla that can possibly aggregate into a vesicle. Then we just throw in those molecules randomly in a box and run HyMD.
 
-__WAY 2:__ We build a vesicle from CHARMM-GUI or Packmol. Then we blow it up (step 4 of bilayer self-assembly). Then we run HyMD (step 5 of bilayer self-assembly).
+__WAY 2:__ We build a vesicle from CHARMM-GUI or Packmol. We do not bother with running Gromacs (i.e. step 2 of bilayer self-assembly) or with HyMD equilibration (i.e. step 3 of bilayer self-assmebly).
+1. Use CHARMM-GUI to make Martini structure of DPPC vesicle in water. (See [examples/small systems](https://github.com/Cascella-Group-UiO/HyMD-2021/tree/pressure/examples/smallsystems) for system details)
+2. Download the `.tgz`, unzip. Find `step5_charmm2gmx.pdb`. Convert to `step5_charmm2gmx.gro` (See ways to do it in [examples/small systems](https://github.com/Cascella-Group-UiO/HyMD-2021/tree/pressure/examples/smallsystems).) Check if this `.gro` has the correct indices and velocities. If yes, jump to step 4.
+3. If no velocities are present, simply add `0.000  0.000  0.000` for every particle. If indices are not correct, use:  
+   `python3 utils/split_gro_molecules.py step5_charmm2gmx --out step5_charmm2gmx_split.gro -f`  
+4. Convert `.gro` to `.h5`:  
+   `python3 ~/hymdtest/utils/gro2fort5.py step5_charmm2gmx_split.gro --out step5_charmm2gmx.5 -f`  
+   `python3 ~/hymdtest/utils/fort5_to_hdf5.py step5_charmm2gmx.h5 --out charmm_inp.h5`  
+5. Blow it up (step 4 of bilayer self-assembly) by:  
+   `sbatch job_destroy_bilayer.sh config_destroy_bilayer.toml charmm_inp.h5`
+6. Then we run HyMD (step 5 of bilayer self-assembly).
