@@ -136,6 +136,9 @@ def semiisotropic(
     #scaling factor                                                                                        
     alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
     alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
+    #alphaL = 1 - 30.0 * beta * (config.target_pressure - PL)
+    #alphaN = 1 - 30.0 * beta * (config.target_pressure - PN)
+    #if comm.Get_rank()==0: print(alphaL,' ',alphaN)
 
     #length scaling
     L0 = alphaL**(1/3) * config.box_size[0]

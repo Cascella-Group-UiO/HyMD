@@ -374,18 +374,6 @@ if __name__ == "__main__":
     angle_energy = 0.0
     kinetic_energy = 0.0
 
-    # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
-    # ragged nested sequences until it is fixed in pmesh
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            action="ignore",
-            category=np.VisibleDeprecationWarning,
-            message=r"Creating an ndarray from ragged nested sequences",
-        )
-        # The first argument of ParticleMesh has to be a tuple
-        pm = pmesh.ParticleMesh(
-            config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
-        )
 
     if config.hamiltonian.lower() == "defaultnochi":
         hamiltonian = DefaultNoChi(config)
@@ -402,10 +390,10 @@ if __name__ == "__main__":
         if rank == 0:
             raise NotImplementedError(err_str)
 
-    Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
     pm_stuff  = initialize_pm()
     (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
     field_list) = pm_stuff
+    Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
     #print('Creating phi_fourier ',phi_fourier[0].value[0][0][0:2])
     #print('Creating phi_fft ',phi_fft[0].value[0][0][0:2])
 
