@@ -149,7 +149,7 @@ def configure_runtime(comm):
     if comm.rank == 0:
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
-    
+
     # Is this used anywhere?
     if args.seed is not None:
         np.random.seed(args.seed)
@@ -158,7 +158,9 @@ def configure_runtime(comm):
 
     # Setup logger
     Logger.setup(
-        default_level=logging.INFO, log_file=f"{args.destdir}/{args.logfile}", verbose=args.verbose
+        default_level=logging.INFO,
+        log_file=f"{args.destdir}/{args.logfile}",
+        verbose=args.verbose,
     )
 
     if args.profile:
@@ -343,9 +345,13 @@ if __name__ == "__main__":
     angle_forces = np.zeros(
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
+
+    # Is it worth it to avoid initialization entirily?
+    # if config.dihedrals:
     dihedral_forces = np.zeros(
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
+
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
 
     field_energy = 0.0
@@ -431,6 +437,7 @@ if __name__ == "__main__":
                 indices,
                 bond_forces,
                 angle_forces,
+                dihedral_forces,  # Needed here?
                 field_forces,
                 names,
                 types,
@@ -439,7 +446,8 @@ if __name__ == "__main__":
     velocities = np.asfortranarray(velocities)
     bond_forces = np.asfortranarray(bond_forces)
     angle_forces = np.asfortranarray(angle_forces)
-    dihedral_forces = np.asfortranarray(dihedral_forces)
+    if config.dihedrals:
+        dihedral_forces = np.asfortranarray(dihedral_forces)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
@@ -475,7 +483,9 @@ if __name__ == "__main__":
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
 
     if molecules_flag:
-        if not (args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals):
+        if not (
+            args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals
+        ):
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
             (
                 bonds_2_atom1,
@@ -519,7 +529,7 @@ if __name__ == "__main__":
                 bonds_3_stength,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-        if not args.disable_dihedrals:
+        if not args.disable_dihedrals and config.dihedrals:
             dihedral_energy_ = compute_dihedral_forces(
                 dihedral_forces,
                 positions,
@@ -535,10 +545,15 @@ if __name__ == "__main__":
     else:
         bonds_2_atom1, bonds_2_atom2 = [], []
 
-    config.initial_energy = field_energy + kinetic_energy + bond_energy + angle_energy + dihedral_energy
-    out_dataset = OutDataset(args.destdir, config,
-                             double_out=args.double_output,
-                             disable_mpio=args.disable_mpio)
+    config.initial_energy = (
+        field_energy + kinetic_energy + bond_energy + angle_energy + dihedral_energy
+    )
+    out_dataset = OutDataset(
+        args.destdir,
+        config,
+        double_out=args.double_output,
+        disable_mpio=args.disable_mpio,
+    )
     store_static(
         out_dataset,
         rank_range,
@@ -570,7 +585,9 @@ if __name__ == "__main__":
             )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
-        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
+        temperature = (
+            (2 / 3) * kinetic_energy / (config.R * config.n_particles)
+        )  # noqa: E501
         store_data(
             out_dataset,
             step,
@@ -681,7 +698,7 @@ if __name__ == "__main__":
                         bonds_3_equilibrium,
                         bonds_3_stength,
                     )
-                if not args.disable_dihedrals:
+                if not args.disable_dihedrals and config.dihedrals:
                     dihedral_energy_ = compute_dihedral_forces(
                         dihedral_forces,
                         positions,
@@ -733,7 +750,7 @@ if __name__ == "__main__":
                 bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
             if not args.disable_angle_bonds:
                 angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-            if not args.disable_dihedrals:
+            if not args.disable_dihedrals and config.dihedrals:
                 dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
         if step != 0 and config.domain_decomposition:
@@ -741,7 +758,8 @@ if __name__ == "__main__":
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
-                dihedral_forces = np.ascontiguousarray(dihedral_forces)
+                if config.dihedrals:
+                    dihedral_forces = np.ascontiguousarray(dihedral_forces)
 
                 dd = domain_decomposition(
                     positions,
@@ -789,7 +807,8 @@ if __name__ == "__main__":
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
                 angle_forces = np.asfortranarray(angle_forces)
-                dihedral_forces = np.asfortranarray(dihedral_forces)
+                if config.dihedrals:
+                    dihedral_forces = np.asfortranarray(dihedral_forces)
 
                 layouts = [
                     pm.decompose(positions[types == t]) for t in range(config.n_types)
@@ -856,9 +875,7 @@ if __name__ == "__main__":
                     kinetic_energy = comm.allreduce(
                         0.5 * config.mass * np.sum(velocities ** 2)
                     )
-                temperature = (
-                    (2 / 3) * kinetic_energy / (config.R * config.n_particles)
-                )
+                temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)
                 if args.disable_field:
                     field_energy = 0.0
                 store_data(
@@ -932,7 +949,9 @@ if __name__ == "__main__":
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         frame = (step + 1) // config.n_print
-        temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
+        temperature = (
+            (2 / 3) * kinetic_energy / (config.R * config.n_particles)
+        )  # noqa: E501
         if args.disable_field:
             field_energy = 0.0
         store_data(
