@@ -418,3 +418,20 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         f_dihedrals[d, :] += force_on_d
 
     return energy
+
+
+def dipole_forces_redistribution(f_dipoles, f_elec, trans_matrices, b, c, d):
+    """Redistribute electrostatic forces calculated from ghost dipole point charges
+    to the backcone atoms of the protein."""
+
+    dipole_pairs = [(f_elec[i], f_elec[i + 1]) for i in range(0, len(f_elec), 2)]
+    for i, j, k, force, matrix in zip(b, c, d, dipole_pairs, trans_matrices):
+        # Positive dipole charge
+        f_dipoles[i] += matrix[0] @ force[0]  # Atom B
+        f_dipoles[j] += matrix[1] @ force[0]  # Atom C
+        f_dipoles[k] += matrix[2] @ force[0]  # Atom D
+
+        # Negative dipole charge
+        f_dipoles[i] += matrix[0] @ force[1]  # Atom B
+        f_dipoles[j] += matrix[1] @ force[1]  # Atom C
+        f_dipoles[k] += matrix[2] @ force[1]  # Atom D
