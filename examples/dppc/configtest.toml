@@ -3,21 +3,22 @@ name = "DPPC bilayer with ML interaction parameters"
 tags = ["bilayer", "solvent", "DPPC"]
 
 [particles]
-n_particles = 202
+n_particles = 20336
 mass = 72.0
 max_molecule_size = 15
 
 [simulation]
 n_steps = 333333
-n_print = 3000
+n_print = 1
 n_flush = 1
 time_step = 0.3
-box_size = [1.58750, 1.58750, 10.0]
+box_size = [13, 13, 14]
 integrator = "respa"
 respa_inner = 10
-domain_decomposition = 1000
+domain_decomposition = 5000
 start_temperature = 323
 target_temperature = 323
+cancel_com_momentum = true
 target_pressure = 1
 tau = 0.1
 tau_p = 1
@@ -28,7 +29,7 @@ plot = false
 
 
 [field]
-mesh_size = [12, 12, 12]
+mesh_size = [50, 50, 50]
 kappa = 0.05
 sigma = 0.5
 rho_0 = 8.86
