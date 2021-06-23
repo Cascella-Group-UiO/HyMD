@@ -17,7 +17,7 @@ The steps we follow to see the self-assembly of DPPC in water.
    i) Switch off field (use `disable-field` flag) . It raises the thermostat temperature to 500K. Thermostat coupling groups only between individual cpl groups. Run for 1ns. Use `utils/h5md2input.py` to extract last frame for next step. Call it `hymd_inp_1.h5`  
    ii) Switch on only compressibility term (`hamiltonian = DefaultNoChi`. Remove `disable-field` flag). Still at 500K. Thermostat between all cpl + water groups. Run for 1ns. Use `utils/h5md2input.py` to extract last frame for next step. Call it `hymd_inp_2.h5`  
    iii) Bring down temperature to 323K. No other configuration changes. Run for 1ns. Use `utils/h5md2input.py` to extract last frame for output. Call it `hymd_inp_3.h5` that you will find in the folder `hymd-random-out`  
-5. `hymd_inp_3.h5` is the input for HyMD. Run a regular job script with this input. For example, you can run `job_self-assembly.sh` which runs the same MD with 4 different seeds.
+5. `hymd_inp_3.h5` is the input for HyMD. Run a regular job script with this input. For example, you can run `job_self_assembly.sh` which runs the same MD with 4 different seeds.
 
 We expect to see self-assembly.
 What did we do: We started from an equilibrated stable bilayer. Blew it up by raising the temperature. Cooled it down. Ran HyMD. We did not start from a random system. This is for being able to compare the kind of self-assembled structure we get from HyMD with the structure we had built on CHARMM-GUI followed by Gromacs equilibration.
