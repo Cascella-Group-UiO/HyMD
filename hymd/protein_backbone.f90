@@ -1,8 +1,11 @@
-subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
+subroutine cpbbd(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, phase, energy)
+! Compute Protein BackBone Dihedrals (and dipoles)
+  use dipole_reconstruction
   implicit none
 
   real(4), dimension(:,:), intent(in out) :: force
   real(4), dimension(:,:), intent(in) :: r
+  real(8), dimension(:,:,:), intent(in out) :: dipoles
   real(8), dimension(:), intent(in) :: box
   integer, dimension(:), intent(in) :: a
   integer, dimension(:), intent(in) :: b
@@ -11,14 +14,17 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
   real(8), dimension(:,:), intent(in) :: coeff 
   real(8), dimension(:,:), intent(in) :: phase 
   real(8), intent(out) :: energy
+  real(8), dimension(:,:,:,:), intent(in out) :: trans_matrix
    
   integer :: ind, aa, bb, cc, dd, i
   real(8), dimension(3) :: f, g, h, v, w, sc, force_on_a, force_on_d
   real(8), dimension(5) :: coeff_, phase_
   real(8) :: g_norm, vv, ww, fg, hg, df, cos_phi, sin_phi, phi
 
+  ! Use this routine only for backbone dihedrals
   energy = 0.d0
   force = 0.d0
+  dipoles = 0.d0
   
   do ind = 1, size(a)
     aa = a(ind) + 1
@@ -41,6 +47,12 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     g_norm = norm2(g)
     
     cos_phi = dot_product(v, w)
+    
+    ! Add check if cosphi > 1 or cosphi < -1?
+    ! if (cosphi > 1) then
+    !     cosphi = 1.d0
+    ! if (cosphi < -1) then 
+    !     cosphi = -1.d0
 
     sin_phi = dot_product(cross(v, w), g) / g_norm
     phi = atan2(sin_phi, cos_phi) 
@@ -65,4 +77,6 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     force(bb,:) = force(bb,:) + df * sc + force_on_a
     force(cc,:) = force(cc,:) - df * sc - force_on_d
     force(dd,:) = force(dd,:) + force_on_d
+
+    call reconstruct(g, h, g_norm, r(cc,:), box, dipoles(ind,:,:), trans_matrix(ind,:,:,:))
 end subroutine cdf

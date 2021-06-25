@@ -1,5 +1,5 @@
 module dipole_reconstruction
-  implicit none
+implicit none
 
 contains
 function cross(vector1, vector2) result(vector3)
@@ -12,8 +12,8 @@ function cross(vector1, vector2) result(vector3)
 end function
 
 function cross_matrix(M, v) result(output)
-  ! The i-th row of the output matrix is the cross product 
-  ! between the i-th row of the input (M)atrix and the input (v)ector.
+  ! The i-th column of the output matrix is the cross product 
+  ! between the i-th column of the input (M)atrix and the input (v)ector.
   real(8), dimension(3,3), intent(in) :: M
   real(8), dimension(3),   intent(in) :: v
   real(8), dimension(3,3)             :: output
@@ -95,6 +95,7 @@ subroutine reconstruct(g, h, g_norm, r_b, box, dipole, trans_matrix)
   dipole(1, :) = dipole(1, :) - box * nint(dipole(1, :) / box)
   dipole(2, :) = dipole(2, :) - box * nint(dipole(2, :) / box)
 
+  ! Set up transfer matrices
   do i = 1, 3
       do j = 1, 3
           V_b(i, j) = v(i) * v(j)
@@ -120,9 +121,9 @@ subroutine reconstruct(g, h, g_norm, r_b, box, dipole, trans_matrix)
   M_a = cross_matrix(N_a, v)
   M_b = cross_matrix(N_b, v) - cross_matrix(V_b, n)
   M_c = cross_matrix(N_c, v) - cross_matrix(V_c, n)
- 
+
   ! A lot of terms in S10 go away because, 
-  ! since phi = const., ∂phi/∂gamma = 0
+  ! since φ = const., ∂φ/∂γ = 0
   fac = sin_theta * d_theta / sin_gamma
   FN_a = fac * outer_product(force_on_a, n)
   FN_b = fac * outer_product(force_on_b, n)
