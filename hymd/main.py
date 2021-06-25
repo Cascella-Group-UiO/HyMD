@@ -281,15 +281,7 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
     return velocities
 
 
-def judge_add_force(
-    charges_flag,
-    field_forces,
-    bond_forces,
-    angle_forces,
-    dihedral_forces,
-    reconstructed_forces,
-    elec_forces,
-):
+def add_forces():
     if charges_flag == True:
         return (
             field_forces
@@ -321,6 +313,7 @@ if __name__ == "__main__":
 
     if args.double_precision:
         dtype = np.float64
+        # Pointelss if condition?
         if dtype == np.float64:
             from force import (
                 compute_bond_forces__fortran__double as compute_bond_forces,
@@ -501,6 +494,7 @@ if __name__ == "__main__":
         args_recv.append("molecules")
 
     ## convert to tuple
+    # Why?
     args_in = tuple(args_in)
 
     ## cmd string to excecut the (...) = dd
@@ -803,15 +797,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            judge_add_force(
-                charges_flag,
-                field_forces,
-                bond_forces,
-                angle_forces,
-                dihedral_forces,
-                reconstructed_forces,
-                elec_forces,
-            ),  # add dihedrals #field_forces + bond_forces + angle_forces + elec_forces, ## <------ judge_add_force(charges_flag,field_forces,bond_forces,angle_forces, elec_forces), #
+            add_forces(),
             config.box_size,
             temperature,
             kinetic_energy,
@@ -1195,15 +1181,7 @@ if __name__ == "__main__":
                     indices,
                     positions,
                     velocities,
-                    judge_add_force(
-                        charges_flag,
-                        field_forces,
-                        bond_forces,
-                        angle_forces,
-                        dihedral_forces,
-                        reconstructed_forces,
-                        elec_forces,
-                    ),  # field_forces + bond_forces + angle_forces + elec_forces,
+                    add_forces(),
                     config.box_size,
                     temperature,
                     kinetic_energy,
@@ -1307,15 +1285,7 @@ if __name__ == "__main__":
             indices,
             positions,
             velocities,
-            judge_add_force(
-                charges_flag,
-                field_forces,
-                bond_forces,
-                angle_forces,
-                dihedral_forces,
-                reconstructed_forces,
-                elec_forces,
-            ),  # field_forces + bond_forces + angle_forces + elec_forces, #<-----------
+            add_forces(),
             config.box_size,
             temperature,
             kinetic_energy,
