@@ -1,4 +1,5 @@
 subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
+  use dipole_reconstruction
   implicit none
 
   real(4), dimension(:,:), intent(in out) :: force
@@ -26,9 +27,9 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     cc = c(ind) + 1
     dd = d(ind) + 1
 
-    f = [r(aa,:) - r(bb,:)]
-    g = [r(bb,:) - r(cc,:)]
-    h = [r(dd,:) - r(cc,:)]
+    f = [r(aa, :) - r(bb, :)]
+    g = [r(bb, :) - r(cc, :)]
+    h = [r(dd, :) - r(cc, :)]
       
     f = f - box * nint(f / box)
     g = g - box * nint(g / box)
@@ -61,8 +62,8 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     force_on_a = df * g_norm * v / vv
     force_on_d = df * g_norm * w / ww
     
-    force(aa,:) = force(aa,:) - force_on_a
-    force(bb,:) = force(bb,:) + df * sc + force_on_a
-    force(cc,:) = force(cc,:) - df * sc - force_on_d
-    force(dd,:) = force(dd,:) + force_on_d
+    force(aa, :) = force(aa, :) - force_on_a
+    force(bb, :) = force(bb, :) + df * sc + force_on_a
+    force(cc, :) = force(cc, :) - df * sc - force_on_d
+    force(dd, :) = force(dd, :) + force_on_d
 end subroutine cdf
