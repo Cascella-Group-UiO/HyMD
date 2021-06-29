@@ -31,6 +31,9 @@ class Bond:
 @dataclass
 class Angle(Bond):
     atom_3: str
+    # Specify angle type in config.toml
+    # Set to 1 if backbone angle
+    type: int
 
 
 # 1- Fourier series
@@ -120,6 +123,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     bond_graph.nodes()[j]["local_index"],
                                     np.radians(a.equilibrium),
                                     a.strength,
+                                    a.type,
                                 ]
                             )
                 if len(path) == 4 and path[-1] > path[0]:
@@ -176,12 +180,14 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
     bonds_3_equilibrium = np.empty(len(bonds_3), dtype=np.float64)
     bonds_3_stength = np.empty(len(bonds_3), dtype=np.float64)
+    bonds_3_type = np.empty(len(bonds_3), dtype=np.float64)
     for i, b in enumerate(bonds_3):
         bonds_3_atom1[i] = b[0]
         bonds_3_atom2[i] = b[1]
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
+        bonds_3_type[i] = b[5]
     # Dihedrals
     bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
@@ -207,6 +213,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3,
         bonds_3_equilibrium,
         bonds_3_stength,
+        bonds_3_type,
         bonds_4_atom1,
         bonds_4_atom2,
         bonds_4_atom3,
@@ -416,22 +423,26 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         f_dihedrals[b, :] += df * sc + force_on_a
         f_dihedrals[c, :] -= df * sc + force_on_d
         f_dihedrals[d, :] += force_on_d
-
     return energy
 
 
-def dipole_forces_redistribution(f_dipoles, f_elec, trans_matrices, b, c, d):
+def dipole_forces_redistribution(
+    f_dipoles, f_elec, trans_matrices, a, b, c, angle_type
+):
     """Redistribute electrostatic forces calculated from ghost dipole point charges
     to the backcone atoms of the protein."""
 
     dipole_pairs = [(f_elec[i], f_elec[i + 1]) for i in range(0, len(f_elec), 2)]
-    for i, j, k, force, matrix in zip(b, c, d, dipole_pairs, trans_matrices):
-        # Positive dipole charge
-        f_dipoles[i] += matrix[0] @ force[0]  # Atom B
-        f_dipoles[j] += matrix[1] @ force[0]  # Atom C
-        f_dipoles[k] += matrix[2] @ force[0]  # Atom D
+    for i, j, k, force, matrix, type in zip(
+        a, b, c, dipole_pairs, trans_matrices, angle_type
+    ):
+        if type == 1:
+            # Positive dipole charge
+            f_dipoles[i] += matrix[0] @ force[0]  # Atom B
+            f_dipoles[j] += matrix[1] @ force[0]  # Atom C
+            f_dipoles[k] += matrix[2] @ force[0]  # Atom D
 
-        # Negative dipole charge
-        f_dipoles[i] += matrix[0] @ force[1]  # Atom B
-        f_dipoles[j] += matrix[1] @ force[1]  # Atom C
-        f_dipoles[k] += matrix[2] @ force[1]  # Atom D
+            # Negative dipole charge
+            f_dipoles[i] += matrix[0] @ force[1]  # Atom B
+            f_dipoles[j] += matrix[1] @ force[1]  # Atom C
+            f_dipoles[k] += matrix[2] @ force[1]  # Atom D
