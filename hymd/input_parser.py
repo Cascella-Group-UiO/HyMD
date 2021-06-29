@@ -279,7 +279,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_3=b[0][2],
                     equilibrium=b[1][0],
                     strength=b[1][1],
-                    type=b[1][2] if b[1][2] else 0,
+                    type=b[1][2] if len(b[1]) > 2 else 0,
                 )
         if k == "dihedrals":
             config_dict["dihedrals"] = [None] * len(v)
