@@ -12,8 +12,8 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
 
     real(4), dimension(:,:),     intent(in out) :: f
     real(4), dimension(:,:),     intent(in)     :: r
-    real(8), dimension(:,:),     intent(in out) :: dipole
-    real(8), dimension(:,:,:),   intent(in out) :: trans_matrices 
+    real(4), dimension(:,:),     intent(in out) :: dipole
+    real(4), dimension(:,:,:),   intent(in out) :: trans_matrices 
     real(8), dimension(:),       intent(in)     :: box
     integer, dimension(:),       intent(in)     :: a
     integer, dimension(:),       intent(in)     :: b
