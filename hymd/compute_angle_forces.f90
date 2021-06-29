@@ -69,7 +69,8 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
 
         energy = energy - 0.5d0 * ff * d
         if (type(ind) == 1.0) then
-          call reconstruct(ra, rc, ea, ec, norm_a, norm_c, theta, cosphi, sinphi, r(bb, :), box, dipole(ind, :, :), trans_matrices(ind, :, :, :))
+          call reconstruct(ra, rc, ea, ec, norm_a, norm_c, theta, cosphi, sinphi, r(bb, :), box, dipole(2 * ind -1: 2 * ind, :),
+                trans_matrices(3 * ind - 2: 3 * ind, :, :))
         end if
       end if
 
