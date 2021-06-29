@@ -12,8 +12,8 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
 
     real(4), dimension(:,:),     intent(in out) :: f
     real(4), dimension(:,:),     intent(in)     :: r
-    real(8), dimension(:,:,:),   intent(in out) :: dipole
-    real(8), dimension(:,:,:,:), intent(in out) :: trans_matrices 
+    real(8), dimension(:,:),     intent(in out) :: dipole
+    real(8), dimension(:,:,:),   intent(in out) :: trans_matrices 
     real(8), dimension(:),       intent(in)     :: box
     integer, dimension(:),       intent(in)     :: a
     integer, dimension(:),       intent(in)     :: b
@@ -25,9 +25,9 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
 
     integer :: ind, aa, bb, cc
     real(8), dimension(3) :: ra, rc, ea, ec, fa, fc
-    real(8) :: d, ff, xsinph
+    real(8) :: d, ff, xsinph, norm_a, norm_c
     real(8) :: xrasin, xrcsin
-    real(8) :: cosphi, cosphi2, theta
+    real(8) :: cosphi, cosphi2, sinphi, theta
 
     energy = 0.0d00
     f = 0.0d00
@@ -69,8 +69,7 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
 
         energy = energy - 0.5d0 * ff * d
         if (type(ind) == 1.0) then
-          call reconstruct(ra, rc, ea, ec, norm_a, norm_c, theta, cosphi, sinphi, r(bb, :), box, dipole(2 * ind -1: 2 * ind, :),
-                trans_matrices(3 * ind - 2: 3 * ind, :, :))
+          call reconstruct(ra, rc, ea, ec, norm_a, norm_c, theta, cosphi, sinphi, r(bb, :), box, dipole(2 * ind -1: 2 * ind, :), trans_matrices(3 * ind - 2: 3 * ind, :, :))
         end if
       end if
 
