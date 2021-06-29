@@ -85,10 +85,11 @@ subroutine reconstruct(ra, rc, w, v, norm_a, norm_c, gamma_ang, cos_gamma, sin_g
               V_b(i, j) = V_b(i, j) - 1.d0
               W_b(i, j) = W_b(i, j) - 1.d0
           end if
-          V_b(i, j) = V_b(i, j) / norm_c
-          W_b(i, j) = W_b(i, j) / norm_a
       end do 
   end do
+
+  V_b = V_b / norm_c
+  W_b = W_b / norm_a
 
   V_c = -V_b
   W_a = -W_b
