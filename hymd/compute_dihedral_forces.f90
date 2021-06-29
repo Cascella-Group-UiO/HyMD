@@ -66,4 +66,5 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
     force(bb, :) = force(bb, :) + df * sc + force_on_a
     force(cc, :) = force(cc, :) - df * sc - force_on_d
     force(dd, :) = force(dd, :) + force_on_d
+  end do
 end subroutine cdf
