@@ -39,7 +39,7 @@ __WAY 2:__ We build a vesicle from CHARMM-GUI or Packmol. We do not bother with 
    `python3 ~/hymdtest/utils/split_gro_molecules.py step5_charmm2gmx.gro --out step5_charmm2gmx_split.gro -f`  
 4. Convert `.gro` to `.h5`:  
    `python3 ~/hymdtest/utils/gro2fort5.py step5_charmm2gmx_split.gro --out step5_charmm2gmx.5 -f`  
-   `python3 ~/hymdtest/utils/fort5_to_hdf5.py step5_charmm2gmx.h5 --out charmm_inp.h5`  
+   `python3 ~/hymdtest/utils/fort5_to_hdf5.py step5_charmm2gmx.5 --out charmm_inp.h5`  
 5. Blow it up (step 4 of bilayer self-assembly) by:  
    `sbatch job_destroy_bilayer.sh config_destroy_bilayer.toml charmm_inp.h5`
 6. Then we run HyMD (step 5 of bilayer self-assembly).
