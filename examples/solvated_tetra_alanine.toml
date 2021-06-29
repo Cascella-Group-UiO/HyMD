@@ -60,6 +60,7 @@ thermostat_coupling_groups = [
 #    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
 # Subclass Hamiltonian to create a new energy functional.
 hamiltonian = 'DefaultNoChi'
+dielectric_const = 80.0
 
 [field]
 # Particle-mesh grid size, either a single integer or an array of 3 integers

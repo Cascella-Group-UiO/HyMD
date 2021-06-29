@@ -38,8 +38,8 @@ subroutine reconstruct(ra, rc, w, v, norm_a, norm_c, gamma_ang, cos_gamma, sin_g
   real(8), intent(in) :: norm_a, norm_c, gamma_ang, cos_gamma, sin_gamma
   real(4), dimension(3), intent(in) :: rb
   real(8), dimension(3), intent(in) :: ra, rc, w, v, box
-  real(8), dimension(2, 3), intent(in out) :: dipole
-  real(8), dimension(3, 3, 3), intent(in out) :: trans_matrix
+  real(4), dimension(2, 3), intent(in out) :: dipole
+  real(4), dimension(3, 3, 3), intent(in out) :: trans_matrix
 
   integer :: i, j
   real(8) :: theta, d_theta, cos_theta, sin_theta, fac
