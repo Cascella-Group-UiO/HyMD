@@ -32,17 +32,20 @@ from file_io import (
     store_data,
     store_static_with_charge,
 )
+
 from force import compute_bond_forces__fortran as compute_bond_forces
 from force import compute_angle_forces__fortran as compute_angle_forces
 from force import compute_dihedral_forces__fortran as compute_dihedral_forces
 from force import dipole_forces_redistribution
 from force import prepare_bonds
+
 from input_parser import (
     read_config_toml,
     parse_config_toml,
     check_config,
     convert_CONF_to_config,
 )
+
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
 from thermostat import csvr_thermostat
@@ -282,7 +285,7 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
 
 
 def add_forces():
-    if charges_flag == True:
+    if charges_flag:
         return (
             field_forces
             + bond_forces
@@ -386,17 +389,23 @@ if __name__ == "__main__":
     angle_forces = np.zeros(
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
+    # Initialize only if config.dihedrals?
     dihedral_forces = np.zeros(
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
+    # Initialize only for proteins?
     reconstructed_forces = np.zeros(
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
-    trans_matrices = np.zeros(
-        shape=(len(positions), 3, 3, 3), dtype=dtype
-    )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
 
+    # Initialize dipoles (for DD), populate them if config.protein is specified
+    dipole_positions = None
+    dipole_forces = None
+    dipole_charges = None
+    trans_matrices = None
+
+    # Initialize energies
     field_energy = 0.0
     bond_energy = 0.0
     angle_energy = 0.0
@@ -433,8 +442,8 @@ if __name__ == "__main__":
 
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
+    # Initialize density fields
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
@@ -444,6 +453,7 @@ if __name__ == "__main__":
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
+    # Initialize charge density fields
     _SPACE_DIM = 3
     if charges_flag and config.coulombtype == "PIC_Spectral":
         phi_q = pm.create("real", value=0.0)
@@ -468,6 +478,9 @@ if __name__ == "__main__":
         dihedral_forces,
         trans_matrices,
         reconstructed_forces,
+        dipole_positions,  # dd with None?
+        dipole_charges,
+        dipole_forces,
         field_forces,
         names,
         types,
@@ -480,18 +493,22 @@ if __name__ == "__main__":
         "dihedral_forces",
         "trans_matrices",
         "reconstructed_forces",
+        "dipole_positions",
+        "dipole_charges",
+        "dipole_forces",
         "field_forces",
         "names",
         "types",
     ]
+
     if charges_flag:  ## add charge related
         args_in.append(charges)
         args_in.append(elec_forces)
         args_recv.append("charges")
         args_recv.append("elec_forces")
     if molecules_flag:
-        args_recv.append("bonds")
         args_recv.append("molecules")
+        args_recv.append("bonds")
 
     ## convert to tuple
     # Why?
@@ -591,6 +608,7 @@ if __name__ == "__main__":
                 bonds_3_atom3,
                 bonds_3_equilibrium,
                 bonds_3_stength,
+                bonds_3_type,
                 bonds_4_atom1,
                 bonds_4_atom2,
                 bonds_4_atom3,
@@ -599,15 +617,26 @@ if __name__ == "__main__":
                 bonds_4_phase,
             ) = bonds_prep
 
-            # Only works if all dihedrals are backbone dihedrals, needs to be generalized.
-            dipole_positions = np.zeros((len(bonds_4_atom1), 2, 3))
-            dipole_charges = np.array(
-                list((0.25, -0.25) for _ in len(dipole_positions))
-            )
-            dipole_forces = np.zeros(shape=(len(dipole_positions), 2, 3), dtype=dtype)
+            if bonds_3_type.any() > 1:
+                err_str = "0 and 1 are the only currently supported angle types."
+                Logger.rank0.log(logging.ERROR, err_str)
+                if rank == 0:
+                    raise NotImplementedError(err_str)
 
-            # TODO: modify and add specific flag for dipoles reconstruction
-            if charges_flag and config.coulombtype == "PIC_Spectral":
+            protein_flag = bonds_3_type.any() == 1
+
+            if protein_flag:
+                # Dipoles defined by three consecutive BB angles, angle type 1
+                dipole_positions = np.zeros((len(2 * bonds_3_atom1), 3))    # flat array 2N x 3, instead of N x 2 x 3
+                dipole_charges = np.array(
+                    [0.25, -0.25] if bonds_3_type[i] == 1 else [0.0, 0.0] for i in range(len(bonds_3_type))
+                ).flatten() # Flat array
+                dipole_forces = np.zeros(
+                    shape=(len(dipole_positions), 3), dtype=dtype
+                )
+                trans_matrices = np.zeros(
+                    shape=(len(3 * bonds_3_atom1), 3, 3), dtype=dtype
+                )  # , order='F')  # noqa: E501
                 phi_dipoles = pm.create("real", value=0.0)
                 phi_dipoles_fourier = pm.create("complex", value=0.0)
                 dipoles_field_fourier = [
@@ -617,32 +646,26 @@ if __name__ == "__main__":
                     pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
                 ]  # for force calculation
 
-            if config.domain_decomposition:
-                args_in.append(dipole_positions)
-                args_in.append(dipole_charges)
-                args_in.append(dipole_forces)
-                args_recv.append("dipole_positions")
-                args_recv.append("dipole_charges")
-                args_recv.append("dipole_forces")
-                dd = domain_decomposition(
-                    positions,
-                    pm,
-                    *args_in,
-                    molecules=molecules if molecules_flag else None,
-                    bonds=bonds if molecules_flag else None,
-                    verbose=args.verbose,
-                    comm=comm,
-                )
-                exec(_cmd_receive_dd)  ## args_recv = dd WRONG
+                if config.domain_decomposition:
+                    dd = domain_decomposition(
+                        positions,
+                        pm,
+                        *args_in,
+                        molecules=molecules if molecules_flag else None,
+                        bonds=bonds if molecules_flag else None,
+                        verbose=args.verbose,
+                        comm=comm,
+                    )
+                    exec(_cmd_receive_dd)
+
+                dipole_positions = np.asfortranarray(dipole_positions)
+                trans_matrices = np.asfortranarray(trans_matrices)
 
         positions = np.asfortranarray(positions)
         velocities = np.asfortranarray(velocities)
         bond_forces = np.asfortranarray(bond_forces)
         angle_forces = np.asfortranarray(angle_forces)
-
         dihedral_forces = np.asfortranarray(dihedral_forces)
-        dipole_positions = np.asfortranarray(dipole_positions)
-        trans_matrices = np.asfortranarray(trans_matrices)
 
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
@@ -651,6 +674,7 @@ if __name__ == "__main__":
                 config.box_size,
                 bonds_2_atom1,
                 bonds_2_atom2,
+            # But only if protein_flag?
                 bonds_2_equilibrium,
                 bonds_2_stength,
             )
@@ -661,21 +685,21 @@ if __name__ == "__main__":
             angle_energy_ = compute_angle_forces(
                 angle_forces,
                 positions,
+                dipole_positions,
+                trans_matrices,
                 config.box_size,
                 bonds_3_atom1,
                 bonds_3_atom2,
                 bonds_3_atom3,
                 bonds_3_equilibrium,
                 bonds_3_stength,
+                bonds_3_type,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
         if not args.disable_dihedrals:
-            # Also here would be nice to have separate routines when dipole calculation isn't needed.
             dihedral_energy_ = compute_dihedral_forces(
                 dihedral_forces,
                 positions,
-                dipole_positions,
-                trans_matrices,
                 config.box_size,
                 bonds_4_atom1,
                 bonds_4_atom2,
@@ -687,6 +711,7 @@ if __name__ == "__main__":
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
             # Calculate dipole-dipole interactions?
+        if protein_flag:
             layout_dipoles = pm.decompose(dipole_positions)
             update_field_force_q(
                 dipole_charges,
@@ -705,9 +730,10 @@ if __name__ == "__main__":
                 reconstructed_forces,
                 dipole_forces,
                 trans_matrices,
-                bonds_4_atom1,
-                bonds_4_atom2,
-                bonds_4_atom3,
+                bonds_3_atom1,
+                bonds_3_atom2,
+                bonds_3_atom3,
+                bonds_3_type,
             )
 
     else:
@@ -715,7 +741,7 @@ if __name__ == "__main__":
 
     config.initial_energy = (
         field_energy + kinetic_energy + bond_energy + angle_energy + dihedral_energy
-    )  # with dihedral
+    )
 
     out_dataset = OutDataset(
         args.destdir,
@@ -723,9 +749,7 @@ if __name__ == "__main__":
         double_out=args.double_output,
         disable_mpio=args.disable_mpio,
     )
-    # print('here')
-    # print(type(indices), indices.shape)
-    # print(type(names), names.shape)
+
     if charges_flag and config.coulombtype == "PIC_Spectral":
         store_static_with_charge(
             out_dataset,
@@ -771,15 +795,6 @@ if __name__ == "__main__":
                 layouts,
                 comm=comm,
             )
-        ### add charge related
-        ### field_q_energy = 0.0
-        # if charges_flag:
-        #    field_q_energy=compute_field_energy_q(
-        #        phi_q_fourier,
-        #        elec_energy_field, #for energy calculation
-        #        field_q_energy,
-        #        comm=comm
-        #    )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
 
@@ -787,9 +802,6 @@ if __name__ == "__main__":
             (2 / 3) * kinetic_energy / (config.R * config.n_particles)
         )  # noqa: E501
 
-        # print('field_forces.shape', field_forces.shape)
-        # print('bond_forces.shape',  bond_forces.shape)
-        # print('elec_forces.shape',  elec_forces.shape)
         store_data(
             out_dataset,
             step,
@@ -904,19 +916,20 @@ if __name__ == "__main__":
                     angle_energy_ = compute_angle_forces(
                         angle_forces,
                         positions,
+                        dipole_positions,
+                        trans_matrices,
                         config.box_size,
                         bonds_3_atom1,
                         bonds_3_atom2,
                         bonds_3_atom3,
                         bonds_3_equilibrium,
                         bonds_3_stength,
+                        bonds_3_type,
                     )
                 if not args.disable_dihedrals:
                     dihedral_energy_ = compute_dihedral_forces(
                         dihedral_forces,
                         positions,
-                        dipole_positions,
-                        trans_matrices,
                         config.box_size,
                         bonds_4_atom1,
                         bonds_4_atom2,
@@ -925,8 +938,11 @@ if __name__ == "__main__":
                         bonds_4_coeff,
                         bonds_4_phase,
                     )
-                    # Calculate dipole-dipole interactions?
-                    # Inside the inner or outer loop?
+                # Calculate dipole-dipole interactions
+                # Inside the inner or outer loop?
+                # If outer only the last step has to calculate dipole positions
+                # and transfer matrices
+                if protein_flag:
                     layout_dipoles = pm.decompose(dipole_positions)
                     update_field_force_q(
                         dipole_charges,
@@ -949,6 +965,7 @@ if __name__ == "__main__":
                         bonds_4_atom2,
                         bonds_4_atom3,
                     )
+
             velocities = integrate_velocity(
                 velocities,
                 (bond_forces + angle_forces + dihedral_forces + reconstructed_forces)
@@ -1004,6 +1021,10 @@ if __name__ == "__main__":
                 )
                 # print(field_q_energy, elec_forces[0])
 
+        # if protein_flag:
+        #     Dipole force redistribution here?
+        # Then add reconstructed_forces to velocities
+
         # Second rRESPA velocity step
         if charges_flag and config.coulombtype == "PIC_Spectral":
             velocities = integrate_velocity(
@@ -1013,9 +1034,6 @@ if __name__ == "__main__":
             velocities = integrate_velocity(
                 velocities, field_forces / config.mass, config.time_step
             )
-        ### <-------- TBF
-        # print(type(field_forces),type(field_forces))
-        # print(field)
 
         # Only compute and keep the molecular bond energy from the last rRESPA
         # inner step
@@ -1029,10 +1047,6 @@ if __name__ == "__main__":
 
         if step != 0 and config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
-                # print(positions.shape)
-                # print(bond_forces.shape)
-                # print(elec_forces.shape)
-                # print(velocities.shape)
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
@@ -1040,20 +1054,6 @@ if __name__ == "__main__":
                 dipole_positions = np.ascontiguousarray(dipole_positions)
                 trans_matrices = np.ascontiguousarray(trans_matrices)
 
-                # Why is args_in initialized again?
-                # args_in = [
-                #     velocities,
-                #     indices,
-                #     bond_forces,
-                #     angle_forces,
-                #     dihedral_forces,  # add dihedrals
-                #     field_forces,
-                #     names,
-                #     types,
-                # ]
-                # if charges_flag:  ## add charge related
-                #     args_in.append(charges)
-                #     args_in.append(elec_forces)
                 dd = domain_decomposition(
                     positions,
                     pm,
@@ -1065,26 +1065,6 @@ if __name__ == "__main__":
                 )
 
                 exec(_cmd_receive_dd)
-                ##############################
-                ########################### call explicitly
-                # dd = domain_decomposition(
-                #    positions,
-                #    pm,
-                #    velocities,
-                #    indices,
-                #    bond_forces,
-                #    angle_forces,
-                #    field_forces,
-                #    names,
-                #    types,
-                #    charges,
-                #    elec_forces,
-                #    molecules=molecules if molecules_flag else None,
-                #    bonds=bonds if molecules_flag else None,
-                #    verbose=args.verbose,
-                #    comm=comm,
-                # )
-                # exec(_cmd_receive_dd)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
@@ -1097,6 +1077,7 @@ if __name__ == "__main__":
                     pm.decompose(positions[types == t]) for t in range(config.n_types)
                 ]
 
+                # Why do we need to do this again? Molecules moving to different ranks?
                 if molecules_flag:
                     bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
                     (
@@ -1128,10 +1109,6 @@ if __name__ == "__main__":
                         f"exchanged = {exchange_cost[rank]}"
                     ),
                 )
-
-        # Protein dipole-dipole flag
-        # if config.protein_dipoles:
-        #     Dipole force redistribution here?
 
         # Thermostat
         if config.target_temperature:
