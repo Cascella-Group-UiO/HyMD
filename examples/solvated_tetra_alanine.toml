@@ -95,9 +95,10 @@ bonds = [
   [["BB", "SC"], [0.27, 1000.0]],
 ]
 # Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
-# (equilibrium angle in [degrees], bond strength in [kJ/mol])).
+# (equilibrium angle in [degrees], bond strength in [kJ/mol], angle type)
+# Angle type = 1.0 has to be specified only for angles between protein backbone beads. 
 angle_bonds = [
-  [["BB", "BB", "BB"], [127.0, 100.0]],
+  [["BB", "BB", "BB"], [127.0, 100.0, 1.0]],
   [["BB", "BB", "SC"], [100.0, 100.0]],
 ]
 # Four-particles torsion angles defined with a fourier series potential.

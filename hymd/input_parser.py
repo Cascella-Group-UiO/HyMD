@@ -47,7 +47,7 @@ class Config:
     cancel_com_momentum: bool = False
     coulombtype: str = None
     dielectric_const: float = None
-    
+
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
             [
@@ -59,7 +59,7 @@ class Config:
             [
                 (
                     f"\t\t{k.atom_1} {k.atom_2} {k.atom_3}: "
-                    + f"{k.equilibrium}, {k.strength}\n"
+                    + f"{k.equilibrium}, {k.strength}, type = {k.type}\n"
                 )
                 for k in self.angle_bonds
             ]
@@ -81,19 +81,33 @@ class Config:
         )
         thermostat_coupling_groups_str = ""
         if any(self.thermostat_coupling_groups):
-            thermostat_coupling_groups_str = "\tthermostat_coupling_groups:\n" + "".join(
-                [
-                    "\t\t" + ", ".join(
-                        [f"{n}" for n in ng]
-                    ) + "\n" for ng in self.thermostat_coupling_groups
-                ]
+            thermostat_coupling_groups_str = (
+                "\tthermostat_coupling_groups:\n"
+                + "".join(
+                    [
+                        "\t\t" + ", ".join([f"{n}" for n in ng]) + "\n"
+                        for ng in self.thermostat_coupling_groups
+                    ]
+                )
             )
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            if k not in ("bonds", "angle_bonds", "dihedrals", "chi", "thermostat_coupling_groups"):
+            if k not in (
+                "bonds",
+                "angle_bonds",
+                "dihedrals",
+                "chi",
+                "thermostat_coupling_groups",
+            ):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += bonds_str + angle_str + dihedrals_str + chi_str + thermostat_coupling_groups_str
+        ret_str += (
+            bonds_str
+            + angle_str
+            + dihedrals_str
+            + chi_str
+            + thermostat_coupling_groups_str
+        )
         return ret_str
 
 
@@ -228,11 +242,11 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "name",
         "n_particles",
         "max_molecule_size",
-        "coulombtype", 
-        "dielectric_const",  
+        "coulombtype",
+        "dielectric_const",
     ):
         config_dict[n] = None
-    
+
     # Defaults = []
     for n in ("bonds", "angle_bonds", "dihedrals", "chi", "tags"):
         config_dict[n] = []
@@ -258,12 +272,14 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         if k == "angle_bonds":
             config_dict["angle_bonds"] = [None] * len(v)
             for i, b in enumerate(v):
+
                 config_dict["angle_bonds"][i] = Angle(
                     atom_1=b[0][0],
                     atom_2=b[0][1],
                     atom_3=b[0][2],
                     equilibrium=b[1][0],
                     strength=b[1][1],
+                    type=b[1][2] if b[1][2] else 0,
                 )
         if k == "dihedrals":
             config_dict["dihedrals"] = [None] * len(v)
@@ -451,6 +467,7 @@ def check_angles(config, names, comm=MPI.COMM_WORLD):
             if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
     return config
+
 
 def check_dihedrals(config, names, comm=MPI.COMM_WORLD):
     if not hasattr(config, "unique_names"):
