@@ -30,7 +30,6 @@ from file_io import (
     OutDataset,
     store_static,
     store_data,
-    store_static_with_charge,
 )
 
 from force import compute_bond_forces__fortran as compute_bond_forces
@@ -622,20 +621,22 @@ if __name__ == "__main__":
                 Logger.rank0.log(logging.ERROR, err_str)
                 if rank == 0:
                     raise NotImplementedError(err_str)
-
-            protein_flag = bonds_3_type.any() == 1
+            protein_flag = comm.allreduce(bonds_3_type.any() == 1)
 
             if protein_flag:
                 # Dipoles defined by three consecutive BB angles, angle type 1
-                dipole_positions = np.zeros((len(2 * bonds_3_atom1), 3))    # flat array 2N x 3, instead of N x 2 x 3
+                dipole_positions = np.zeros(
+                    (2 * len(bonds_3_atom1), 3), dtype=dtype
+                )  # flat array 2N x 3, instead of N x 2 x 3
                 dipole_charges = np.array(
-                    [0.25, -0.25] if bonds_3_type[i] == 1 else [0.0, 0.0] for i in range(len(bonds_3_type))
-                ).flatten() # Flat array
-                dipole_forces = np.zeros(
-                    shape=(len(dipole_positions), 3), dtype=dtype
-                )
+                    [
+                        [0.25, -0.25] if bonds_3_type[i] == 1 else [0.0, 0.0]
+                        for i in range(len(bonds_3_type))
+                    ]
+                ).flatten()
+                dipole_forces = np.zeros(shape=(len(dipole_positions), 3), dtype=dtype)
                 trans_matrices = np.zeros(
-                    shape=(len(3 * bonds_3_atom1), 3, 3), dtype=dtype
+                    shape=(3 * len(bonds_3_atom1), 3, 3), dtype=dtype
                 )  # , order='F')  # noqa: E501
                 phi_dipoles = pm.create("real", value=0.0)
                 phi_dipoles_fourier = pm.create("complex", value=0.0)
@@ -674,7 +675,7 @@ if __name__ == "__main__":
                 config.box_size,
                 bonds_2_atom1,
                 bonds_2_atom2,
-            # But only if protein_flag?
+                # But only if protein_flag?
                 bonds_2_equilibrium,
                 bonds_2_stength,
             )
@@ -750,35 +751,20 @@ if __name__ == "__main__":
         disable_mpio=args.disable_mpio,
     )
 
-    if charges_flag and config.coulombtype == "PIC_Spectral":
-        store_static_with_charge(
-            out_dataset,
-            rank_range,
-            names,
-            types,
-            indices,
-            charges,  # <---------- simple add charges
-            config,
-            bonds_2_atom1,
-            bonds_2_atom2,
-            velocity_out=args.velocity_output,
-            force_out=args.force_output,
-            comm=comm,
-        )
-    else:
-        store_static(
-            out_dataset,
-            rank_range,
-            names,
-            types,
-            indices,
-            config,
-            bonds_2_atom1,
-            bonds_2_atom2,
-            velocity_out=args.velocity_output,
-            force_out=args.force_output,
-            comm=comm,
-        )
+    store_static(
+        out_dataset,
+        rank_range,
+        names,
+        types,
+        indices,
+        config,
+        bonds_2_atom1,
+        bonds_2_atom2,
+        velocity_out=args.velocity_output,
+        force_out=args.force_output,
+        charge_out=charges_flag,
+        comm=comm,
+    )
 
     if config.n_print > 0:
         step = 0
@@ -822,6 +808,7 @@ if __name__ == "__main__":
             config,
             velocity_out=args.velocity_output,
             force_out=args.force_output,
+            charge_out=charges_flag,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
@@ -964,6 +951,7 @@ if __name__ == "__main__":
                         bonds_4_atom1,
                         bonds_4_atom2,
                         bonds_4_atom3,
+                        bonds_3_type,
                     )
 
             velocities = integrate_velocity(
@@ -1171,6 +1159,7 @@ if __name__ == "__main__":
                     config,
                     velocity_out=args.velocity_output,
                     force_out=args.force_output,
+                    charge_out=charges_flag,
                     dump_per_particle=args.dump_per_particle,
                     comm=comm,
                 )
@@ -1275,6 +1264,7 @@ if __name__ == "__main__":
             config,
             velocity_out=args.velocity_output,
             force_out=args.force_output,
+            charge_out=charges_flag,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
