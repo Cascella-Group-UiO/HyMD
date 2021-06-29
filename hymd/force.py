@@ -426,23 +426,21 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
     return energy
 
 
-def dipole_forces_redistribution(
-    f_dipoles, f_elec, trans_matrices, a, b, c, angle_type
-):
+def dipole_forces_redistribution(f_dipoles, f_elec, trans, a, b, c, angle_type):
     """Redistribute electrostatic forces calculated from ghost dipole point charges
     to the backcone atoms of the protein."""
 
-    dipole_pairs = [(f_elec[i], f_elec[i + 1]) for i in range(0, len(f_elec), 2)]
-    for i, j, k, force, matrix, type in zip(
-        a, b, c, dipole_pairs, trans_matrices, angle_type
-    ):
+    pairs = [f_elec[i : i + 2] for i in range(0, len(f_elec), 2)]
+    matrices = [trans[i : i + 3] for i in range(0, len(trans), 3)]
+
+    for i, j, k, force, matrix, type in zip(a, b, c, pairs, matrices, angle_type):
         if type == 1:
             # Positive dipole charge
-            f_dipoles[i] += matrix[0] @ force[0]  # Atom B
-            f_dipoles[j] += matrix[1] @ force[0]  # Atom C
-            f_dipoles[k] += matrix[2] @ force[0]  # Atom D
+            f_dipoles[i] += matrix[0] @ force[0]  # Atom A
+            f_dipoles[j] += matrix[1] @ force[0]  # Atom B
+            f_dipoles[k] += matrix[2] @ force[0]  # Atom C
 
             # Negative dipole charge
-            f_dipoles[i] += matrix[0] @ force[1]  # Atom B
-            f_dipoles[j] += matrix[1] @ force[1]  # Atom C
-            f_dipoles[k] += matrix[2] @ force[1]  # Atom D
+            f_dipoles[i] += matrix[0] @ force[1]  # Atom A
+            f_dipoles[j] += matrix[1] @ force[1]  # Atom B
+            f_dipoles[k] += matrix[2] @ force[1]  # Atom C
