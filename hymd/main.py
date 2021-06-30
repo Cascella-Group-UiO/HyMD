@@ -20,7 +20,7 @@ from field import (
     update_field,
     compute_field_and_kinetic_energy,
     domain_decomposition,
-    update_field_force_energy_q,  # elec related
+    #    update_field_force_energy_q,  # elec related
     update_field_force_q,
     compute_field_energy_q,
 )
@@ -398,7 +398,7 @@ if __name__ == "__main__":
     )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
 
-    # Initialize dipoles (for DD), populate them if config.protein is specified
+    # Initialize dipoles (for DD), populate them if protein_flag = True
     dipole_positions = None
     dipole_forces = None
     dipole_charges = None
@@ -477,7 +477,7 @@ if __name__ == "__main__":
         dihedral_forces,
         trans_matrices,
         reconstructed_forces,
-        dipole_positions,  # dd with None?
+        dipole_positions,
         dipole_charges,
         dipole_forces,
         field_forces,
@@ -529,7 +529,7 @@ if __name__ == "__main__":
             comm=comm,
         )
 
-        exec(_cmd_receive_dd)  ## args_recv = dd WRONG
+        exec(_cmd_receive_dd)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
@@ -568,8 +568,6 @@ if __name__ == "__main__":
     ##field_q_energy = 0.0
     if charges_flag and config.coulombtype == "PIC_Spectral":
         layout_q = pm.decompose(positions)
-
-        ### split
         update_field_force_q(
             charges,  # charge
             phi_q,  # chage density
@@ -590,7 +588,6 @@ if __name__ == "__main__":
             field_q_energy,
             comm=comm,
         )
-        # print(field_q_energy, elec_forces[0])
 
     if molecules_flag:
         if not (
@@ -633,7 +630,7 @@ if __name__ == "__main__":
                         [0.25, -0.25] if bonds_3_type[i] == 1 else [0.0, 0.0]
                         for i in range(len(bonds_3_type))
                     ]
-                ).flatten()
+                ).flatten()  # Flat 1D array
                 dipole_forces = np.zeros(shape=(len(dipole_positions), 3), dtype=dtype)
                 trans_matrices = np.zeros(
                     shape=(3 * len(bonds_3_atom1), 3, 3), dtype=dtype
@@ -675,7 +672,6 @@ if __name__ == "__main__":
                 config.box_size,
                 bonds_2_atom1,
                 bonds_2_atom2,
-                # But only if protein_flag?
                 bonds_2_equilibrium,
                 bonds_2_stength,
             )
@@ -711,7 +707,6 @@ if __name__ == "__main__":
             )
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
-            # Calculate dipole-dipole interactions?
         if protein_flag:
             layout_dipoles = pm.decompose(dipole_positions)
             update_field_force_q(
@@ -900,6 +895,9 @@ if __name__ == "__main__":
                         bonds_2_stength,
                     )
                 if not args.disable_angle_bonds:
+                    # Calculate dipoles only on last inner respa step?
+                    # Would need two separate routines
+                    # Or adding a flag for (innner == config.respa_inner - 1)
                     angle_energy_ = compute_angle_forces(
                         angle_forces,
                         positions,
@@ -925,39 +923,10 @@ if __name__ == "__main__":
                         bonds_4_coeff,
                         bonds_4_phase,
                     )
-                # Calculate dipole-dipole interactions
-                # Inside the inner or outer loop?
-                # If outer only the last step has to calculate dipole positions
-                # and transfer matrices
-                if protein_flag:
-                    layout_dipoles = pm.decompose(dipole_positions)
-                    update_field_force_q(
-                        dipole_charges,
-                        phi_dipoles,
-                        phi_dipoles_fourier,
-                        dipoles_field_fourier,
-                        dipoles_field,
-                        dipole_forces,
-                        layout_dipoles,
-                        pm,
-                        dipole_positions,
-                        config,
-                    )
-
-                    dipole_forces_redistribution(
-                        reconstructed_forces,
-                        dipole_forces,
-                        trans_matrices,
-                        bonds_4_atom1,
-                        bonds_4_atom2,
-                        bonds_4_atom3,
-                        bonds_3_type,
-                    )
 
             velocities = integrate_velocity(
                 velocities,
-                (bond_forces + angle_forces + dihedral_forces + reconstructed_forces)
-                / config.mass,
+                (bond_forces + angle_forces + dihedral_forces) / config.mass,
                 config.time_step / config.respa_inner,
             )
 
@@ -1009,18 +978,43 @@ if __name__ == "__main__":
                 )
                 # print(field_q_energy, elec_forces[0])
 
-        # if protein_flag:
-        #     Dipole force redistribution here?
-        # Then add reconstructed_forces to velocities
+        if protein_flag:
+            layout_dipoles = pm.decompose(dipole_positions)
+            update_field_force_q(
+                dipole_charges,
+                phi_dipoles,
+                phi_dipoles_fourier,
+                dipoles_field_fourier,
+                dipoles_field,
+                dipole_forces,
+                layout_dipoles,
+                pm,
+                dipole_positions,
+                config,
+            )
+
+            dipole_forces_redistribution(
+                reconstructed_forces,
+                dipole_forces,
+                trans_matrices,
+                bonds_4_atom1,
+                bonds_4_atom2,
+                bonds_4_atom3,
+                bonds_3_type,
+            )
 
         # Second rRESPA velocity step
+        velocities = integrate_velocity(
+            velocities, field_forces / config.mass, config.time_step
+        )
+
         if charges_flag and config.coulombtype == "PIC_Spectral":
             velocities = integrate_velocity(
-                velocities, (field_forces + elec_forces) / config.mass, config.time_step
+                velocities, elec_forces / config.mass, config.time_step
             )
-        else:
+        if protein_flag:
             velocities = integrate_velocity(
-                velocities, field_forces / config.mass, config.time_step
+                velocities, reconstructed_forces / config.mass, config.time_step
             )
 
         # Only compute and keep the molecular bond energy from the last rRESPA
