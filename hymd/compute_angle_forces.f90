@@ -20,7 +20,7 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
     integer, dimension(:),       intent(in)     :: c
     real(8), dimension(:),       intent(in)     :: t0
     real(8), dimension(:),       intent(in)     :: k
-    real(8), dimension(:),       intent(in)     :: type 
+    real(8), dimension(:),       intent(in)     :: ang_type 
     real(8),                    intent(out)     :: energy
 
     integer :: ind, aa, bb, cc
@@ -68,7 +68,7 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
         f(bb, :) = f(bb, :) - (fa + fc)
 
         energy = energy - 0.5d0 * ff * d
-        if (type(ind) == 1.0) then
+        if (ang_type(ind) == 1.0) then
           call reconstruct(ra, rc, ea, ec, norm_a, norm_c, theta, cosphi, sinphi, r(bb, :), box, dipole(2 * ind -1: 2 * ind, :), trans_matrices(3 * ind - 2: 3 * ind, :, :))
         end if
       end if
