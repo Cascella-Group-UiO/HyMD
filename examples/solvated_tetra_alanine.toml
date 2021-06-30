@@ -18,7 +18,7 @@ mass = 72.0
 
 [simulation]
 # Number of total time steps in the simulation.
-n_steps = 10000
+n_steps = 1000
 # Frequency of trajectory/energy file output in time steps.
 n_print = 10
 # Frequency of requesting that the HDF5 library flush the file output buffers
@@ -106,5 +106,8 @@ angle_bonds = [
 # ((atom name 1, atom name 2, atom name 3, atom name 4),
 # ((fourier coefficients), (phase coefficients)))
 dihedrals = [
-  [["BB", "BB", "BB", "BB"], [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0]]]
-]
+  [
+        ["BB", "BB", "BB", "BB"],
+        [3.000785990808481518, 6.167173336139853745, -3.275979346004096460, -0.685088677490307551, 0.274878135288439851],
+        [5.948860311572183868, 0.098922473311817383,  0.974412862301472060,  0.793015982671696595, 2.582494443709347554],
+]]
