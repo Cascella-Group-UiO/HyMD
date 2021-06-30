@@ -68,7 +68,8 @@ class Config:
             [
                 (
                     f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
-                    + f"{k.coeff}, {k.phase}\n"
+                    + f"{[round(c, 3) for c in k.coeff]}, "
+                    + f"{[round(p, 3) for p in k.phase]}\n"
                 )
                 for k in self.dihedrals
             ]
@@ -289,8 +290,8 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_2=b[0][1],
                     atom_3=b[0][2],
                     atom_4=b[0][3],
-                    coeff=b[1][0],
-                    phase=b[1][1],
+                    coeff=b[1],
+                    phase=b[2],
                 )
         if k == "chi":
             config_dict["chi"] = [None] * len(v)
