@@ -860,13 +860,16 @@ if __name__ == "__main__":
                 Logger.rank0.log(logging.INFO, info_str)
 
         # Initial rRESPA velocity step
+        velocities = integrate_velocity(
+            velocities, field_forces / config.mass, config.time_step
+        )
         if charges_flag and config.coulombtype == "PIC_Spectral":
             velocities = integrate_velocity(
                 velocities, (field_forces + elec_forces) / config.mass, config.time_step
             )
-        else:
+        if protein_flag:
             velocities = integrate_velocity(
-                velocities, field_forces / config.mass, config.time_step
+                velocities, reconstructed_forces / config.mass, config.time_step
             )
 
         # Inner rRESPA steps
