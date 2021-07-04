@@ -865,7 +865,7 @@ if __name__ == "__main__":
         )
         if charges_flag and config.coulombtype == "PIC_Spectral":
             velocities = integrate_velocity(
-                velocities, (field_forces + elec_forces) / config.mass, config.time_step
+                velocities, elec_forces / config.mass, config.time_step
             )
         if protein_flag:
             velocities = integrate_velocity(
@@ -876,8 +876,7 @@ if __name__ == "__main__":
         for inner in range(config.respa_inner):
             velocities = integrate_velocity(
                 velocities,
-                (bond_forces + angle_forces + dihedral_forces + reconstructed_forces)
-                / config.mass,
+                (bond_forces + angle_forces + dihedral_forces) / config.mass,
                 config.time_step / config.respa_inner,
             )
             positions = integrate_position(
@@ -981,32 +980,34 @@ if __name__ == "__main__":
                 )
                 # print(field_q_energy, elec_forces[0])
 
-        if protein_flag:
-            layout_dipoles = pm.decompose(dipole_positions)
-            update_field_force_q(
-                dipole_charges,
-                phi_dipoles,
-                phi_dipoles_fourier,
-                dipoles_field_fourier,
-                dipoles_field,
-                dipole_forces,
-                layout_dipoles,
-                pm,
-                dipole_positions,
-                config,
-            )
+            if protein_flag:
+                layout_dipoles = pm.decompose(dipole_positions)
+                update_field_force_q(
+                    dipole_charges,
+                    phi_dipoles,
+                    phi_dipoles_fourier,
+                    dipoles_field_fourier,
+                    dipoles_field,
+                    dipole_forces,
+                    layout_dipoles,
+                    pm,
+                    dipole_positions,
+                    config,
+                )
 
-            dipole_forces_redistribution(
-                reconstructed_forces,
-                dipole_forces,
-                trans_matrices,
-                bonds_4_atom1,
-                bonds_4_atom2,
-                bonds_4_atom3,
-                bonds_3_type,
-            )
+                dipole_forces_redistribution(
+                    reconstructed_forces,
+                    dipole_forces,
+                    trans_matrices,
+                    bonds_4_atom1,
+                    bonds_4_atom2,
+                    bonds_4_atom3,
+                    bonds_3_type,
+                )
 
         # Second rRESPA velocity step
+        # Move these under the previous if conditions instead of having new ones?
+        # Field forces are zeros anyway even if disable_field == True
         velocities = integrate_velocity(
             velocities, field_forces / config.mass, config.time_step
         )
