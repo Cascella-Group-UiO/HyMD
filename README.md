@@ -10,7 +10,7 @@ Compile FORTRAN modules:
 
 Run a simple example simulation with
 ```bash
-> mpirun -n 4 python3 hymd/main.py config.toml dppc.h5 --verbose -logfile log.txt
+> mpirun -n 4 python3 hymd/main.py config.toml dppc.h5 --verbose --logfile log.txt
 ```
 
 Notes:
