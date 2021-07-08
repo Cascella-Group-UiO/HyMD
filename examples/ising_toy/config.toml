@@ -1,0 +1,40 @@
+[meta]
+name = "Pure A type spins"
+tags = ["ising","spin", "pure", "A"]
+
+[particles]
+n_particles = 3102
+mass = 18.0
+max_molecule_size = 3
+
+[simulation]
+n_steps = 300
+n_print = 10
+n_flush = 1
+time_step = 0.3
+box_size = [4, 4, 4]
+integrator = "respa"
+respa_inner = 10
+domain_decomposition = 5000
+start_temperature = 323
+target_temperature = 323
+cancel_com_momentum = true
+#target_pressure = 1
+tau = 0.1
+#tau_p = 1
+hamiltonian = 'DefaultNoChi'
+#pressure = true
+#barostat = 'semiisotropic'
+#plot = false
+
+
+[field]
+mesh_size = [24, 24, 24]
+kappa = 0.05
+sigma = 0.5
+#rho_0 = 8.86
+
+[bonds]
+bonds = [
+  [["A1", "A2"], [0.17, 1250.0]],
+]
