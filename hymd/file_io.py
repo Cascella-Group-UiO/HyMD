@@ -161,7 +161,7 @@ def store_static(
         n_frames,
         (config.n_particles, 3),
         dtype,
-        units="nanometers",
+        units="nm",
     )
     if velocity_out:
         (
@@ -175,7 +175,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="nanometers/picosecond",
+            units="nm ps-1",
         )
     if force_out:
         (
@@ -189,7 +189,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="kJ/mol nanometer",
+            units="kJ nm mol-1",
         )
     (
         _,
@@ -197,7 +197,7 @@ def store_static(
         h5md.total_energy_time,
         h5md.total_energy,
     ) = setup_time_dependent_element(
-        "total_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "total_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -205,7 +205,7 @@ def store_static(
         h5md.kinetc_energy_time,
         h5md.kinetc_energy,
     ) = setup_time_dependent_element(
-        "kinetic_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "kinetic_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -213,7 +213,7 @@ def store_static(
         h5md.potential_energy_time,
         h5md.potential_energy,
     ) = setup_time_dependent_element(  # noqa: E501
-        "potential_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "potential_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -221,7 +221,7 @@ def store_static(
         h5md.bond_energy_time,
         h5md.bond_energy,
     ) = setup_time_dependent_element(
-        "bond_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "bond_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -229,7 +229,7 @@ def store_static(
         h5md.angle_energy_time,
         h5md.angle_energy,
     ) = setup_time_dependent_element(
-        "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     (
         _,
@@ -245,7 +245,7 @@ def store_static(
         h5md.field_energy_time,
         h5md.field_energy,
     ) = setup_time_dependent_element(
-        "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ/mol"
+        "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
     if charge_out:
         (
@@ -371,7 +371,7 @@ def store_data(
     bond3_energy,
     bond4_energy,
     field_energy,
-    field_q_energy,  ##<----- xinmeng add
+    field_q_energy,
     time_step,
     config,
     velocity_out=False,
@@ -422,7 +422,7 @@ def store_data(
         h5md.forces_time[frame] = step * time_step
     if charge_out:
         h5md.field_q_energy_step[frame] = step
-        h5md.field_energy_time[frame] = step * time_step
+        h5md.field_q_energy_time[frame] = step * time_step
 
     # Time dependent box, fix this later.
     # h5md.box_step[frame] = step
@@ -440,8 +440,8 @@ def store_data(
         h5md.field_q_energy[frame] = field_q_energy
 
     potential_energy = (
-        bond2_energy + bond3_energy + field_energy + bond4_energy + field_q_energy
-    )  # <-------- xinmeng; add bond4_energy from dihedrals
+        bond2_energy + bond3_energy + bond4_energy + field_energy + field_q_energy
+    )
 
     total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0), MPI.SUM)
     angular_momentum = config.mass * comm.allreduce(
