@@ -33,12 +33,16 @@ class Angle(Bond):
     atom_3: str
     # Specify angle type in config.toml
     # Set to 1 if backbone angle
+    # Probably useless since we will most likely use
+    # the CBT potential
+    # That means the type should be set for the dihedrals
+    # and no angle (3-body interactions) should be set for BB atoms.
+    # Type would then also be used for improper dihedrals.
     type: int
 
 
-# 1- Fourier series
 # 2- Harmonic potential for impropers
-# 3- Combined bending-torsional potential for proteins
+# 1- Fourier series
 @dataclass
 class Dihedral:
     atom_1: str
@@ -47,6 +51,15 @@ class Dihedral:
     atom_4: str
     coeff: list
     phase: list
+    # type: (0) Fourier or (1) CBT, (2) impropers
+    type: int
+
+
+# 3- Combined bending-torsional potential
+@dataclass
+class CBT_potential(Dihedral):
+    coeff_k: list
+    phase_k: list
 
 
 @dataclass
@@ -411,8 +424,8 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         sc = v * fg / (vv * gn) - w * hg / (ww * gn)
 
         df = 0
-        # Use 5 terms => len(cn) == len(dn) == 5
-        for m in range(5):
+
+        for m in range(len(coeff)):
             energy += coeff[m] * (1 + np.cos(m * phi + phase[m]))
             df += m * coeff[m] * np.sin(m * phi + phase[m])
 

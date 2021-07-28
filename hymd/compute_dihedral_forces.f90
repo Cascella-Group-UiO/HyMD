@@ -1,5 +1,5 @@
 subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
-  use dipole_reconstruction
+  use cbt_angle
   implicit none
 
   real(4), dimension(:,:), intent(in out) :: force
@@ -11,6 +11,10 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
   integer, dimension(:), intent(in) :: d
   real(8), dimension(:,:), intent(in) :: coeff 
   real(8), dimension(:,:), intent(in) :: phase 
+  ! integer, dimension(:), intent(in) :: type 
+  ! real(8), dimension(:,:), intent(in) :: coeff_k 
+  ! real(8), dimension(:,:), intent(in) :: phase_k
+
   real(8), intent(out) :: energy
    
   integer :: ind, aa, bb, cc, dd, i
@@ -57,6 +61,23 @@ subroutine cdf(force, r, box, a, b, c, d, coeff, phase, energy)
       energy = energy + coeff_(i + 1) * (1.d0 + cos(i * phi + phase_(i + 1)))
       df = df + i * coeff_(i + 1) * sin(i * phi + phase_(i + 1))
     end do
+
+    if (type == 1) then
+    ! V = V_prop + k * (gamma - gamma_0)      
+      k = 0.d0
+
+      do i = 0, 4 
+        k = k + coeff_(i + 1) * (1.d0 + cos(i * phi + phase_(i + 1)))
+        df = df + i * coeff_(i + 1) * sin(i * phi + phase_(i + 1))
+      end do
+      ! Levitt-Warshel, convert to rad
+      ! gamma_0 = 106 - 13 * cos(phi - 45)
+      gamma_0 = 1.85d0 - 0.227d0 * cos(phi - 0.785d0)
+
+      call cbt_angle(r(aa,:), r(bb,:), r(cc,:), box, gamm)
+      energy = energy + 0.5d0 * k * (gamm - gamma_0) * (gamm - gamma_0)
+      
+    end if
  
     sc = v * fg / (vv * g_norm) - w * hg / (ww * g_norm)
     force_on_a = df * g_norm * v / vv
