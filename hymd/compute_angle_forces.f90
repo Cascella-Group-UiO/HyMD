@@ -1,4 +1,4 @@
-subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
+subroutine caf(f, r, box, a, b, c, t0, k, energy)
 ! ==============================================================================
 ! compute_angle_forces() speedup attempt.
 !
@@ -7,20 +7,16 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
 ! Import:
 !   from compute_angle_forces import caf as compute_angle_forces__fortran
 ! ==============================================================================
-    use dipole_reconstruction
     implicit none
 
     real(4), dimension(:,:),     intent(in out) :: f
     real(4), dimension(:,:),     intent(in)     :: r
-    real(4), dimension(:,:),     intent(in out) :: dipole
-    real(4), dimension(:,:,:),   intent(in out) :: trans_matrices 
     real(8), dimension(:),       intent(in)     :: box
     integer, dimension(:),       intent(in)     :: a
     integer, dimension(:),       intent(in)     :: b
     integer, dimension(:),       intent(in)     :: c
     real(8), dimension(:),       intent(in)     :: t0
     real(8), dimension(:),       intent(in)     :: k
-    real(8), dimension(:),       intent(in)     :: ang_type 
     real(8),                    intent(out)     :: energy
 
     integer :: ind, aa, bb, cc
@@ -68,10 +64,5 @@ subroutine caf(f, r, dipole, trans_matrices, box, a, b, c, t0, k, type, energy)
         f(bb, :) = f(bb, :) - (fa + fc)
 
         energy = energy - 0.5d0 * ff * d
-        if (ang_type(ind) == 1.0) then
-          call reconstruct(ra, rc, ea, ec, norm_a, norm_c, theta, cosphi, sinphi, r(bb, :), box, dipole(2 * ind -1: 2 * ind, :), trans_matrices(3 * ind - 2: 3 * ind, :, :))
-        end if
-      end if
-
     end do
 end subroutine
