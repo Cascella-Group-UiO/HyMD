@@ -34,9 +34,13 @@ function outer_product(vector1, vector2) result(output)
   output(3,:) = vector1(3) * vector2
 end function outer_product
 
-subroutine reconstruct(rab, rb, rcb, box, phi, gamm, energy, df_cbt, fa, fc, dipole, trans_matrix)
+! REfactoring in FORTRAN is kinda bad :(
+! subroutine angle_force()
+! end subroutine angle_force
+
+subroutine reconstruct(rab, rb, rcb, box, phi, energy, df_cbt, fa, fc, dipole, trans_matrix)
   real(8), dimension(3), intent(in)  :: rab, rb, rcb, box
-  real(8),               intent(in)  :: phi, gamm
+  real(8),               intent(in)  :: phi, gamm, dipole_flag
   real(8),               intent(out) :: energy, df_cbt
   real(8), dimension(3), intent(out) :: fa, fc
   real(4), dimension(2, 3), intent(in out) :: dipole
@@ -47,7 +51,11 @@ subroutine reconstruct(rab, rb, rcb, box, phi, gamm, energy, df_cbt, fa, fc, dip
   real(8) :: theta, d_theta, cos_theta, sin_theta, fac
   real(8) :: cos_gamma, sin_gamma, cos2
   real(8), dimension(3) :: w, v, n, m, r0, d, fb 
-  real(8), dimension(3, 3) :: W_a, W_b, V_b, V_c, N_a, N_b, N_c, M_a, M_b, M_c, FN_a, FN_b, FN_c, FM_a, FM_b, FM_c
+  real(8), dimension(3, 3) :: W_a, W_b, V_b, V_c
+  real(8), dimension(3, 3) :: N_a, N_b, N_c
+  real(8), dimension(3, 3) :: M_a, M_b, M_c
+  real(8), dimension(3, 3) :: FN_a, fN_b, fN_c
+  real(8), dimension(3, 3) :: FM_a, FM_b, FM_c
   real(8), parameter :: delta = 0.3d0, cos_phi = cos(1.390927), sin_phi = sin(1.390927) 
   ! cos_phi = 0,17890101
   ! sin_phi = 0,983867079
@@ -99,12 +107,19 @@ subroutine reconstruct(rab, rb, rcb, box, phi, gamm, energy, df_cbt, fa, fc, dip
     energy = 0.5d0 * k * var_sq      
     df_cbt = 0.5d0 * dk * var_sq + df_ang * dg
     
+    ! Exit subroutine if we only need the forces
+    if (dipole_flag == 0) then
+      fa = -df_ang * fa
+      fc = -df_ang * fc
+      return
+    end if
+
     ! 2 - Dipole reconstruction
     ! θ(γ)
     ! This function needs to be fit again    
     fac = exp((gamm - 1.73d0) / 0.025d0)
-    theta = -1.607d0 * gamm + 0.094d0 + 1.883d0 / (1.0d0 + fac)
-    d_theta = -1.607d0 - 1.883d0 / 0.025d0 * fac / ((1.0d0 + fac)**2)
+    theta = -1.607d0 * gamm + 0.094d0 + 1.883d0 / (1.d0 + fac)
+    d_theta = -1.607d0 - 1.883d0 / 0.025d0 * fac / ((1.d0 + fac)**2)
     cos_theta = cos(theta)
     sin_theta = sin(theta)
 
@@ -172,6 +187,5 @@ subroutine reconstruct(rab, rb, rcb, box, phi, gamm, energy, df_cbt, fa, fc, dip
     fa = -df_ang * fa
     fc = -df_ang * fc
     end if
-
 end subroutine reconstruct
 end module dipole_reconstruction
