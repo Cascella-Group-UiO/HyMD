@@ -31,14 +31,6 @@ class Bond:
 @dataclass
 class Angle(Bond):
     atom_3: str
-    # Specify angle type in config.toml
-    # Set to 1 if backbone angle
-    # Probably useless since we will most likely use
-    # the CBT potential
-    # That means the type should be set for the dihedrals
-    # and no angle (3-body interactions) should be set for BB atoms.
-    # Type would then also be used for improper dihedrals.
-    type: int
 
 
 # 2- Harmonic potential for impropers
@@ -49,17 +41,17 @@ class Dihedral:
     atom_2: str
     atom_3: str
     atom_4: str
-    coeff: list
-    phase: list
-    # type: (0) Fourier or (1) CBT, (2) impropers
+    coeffs: list
+    # type: (0) Fourier or (1) CBT
+    # Impropers to be specified in the toml?
     type: int
 
 
 # 3- Combined bending-torsional potential
-@dataclass
-class CBT_potential(Dihedral):
-    coeff_k: list
-    phase_k: list
+# @dataclass
+# class CBT_potential(Dihedral):
+#     coeff_k: list
+#     phase_k: list
 
 
 @dataclass
@@ -136,7 +128,6 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     bond_graph.nodes()[j]["local_index"],
                                     np.radians(a.equilibrium),
                                     a.strength,
-                                    a.type,
                                 ]
                             )
                 if len(path) == 4 and path[-1] > path[0]:
@@ -165,8 +156,8 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     bond_graph.nodes()[path[1]]["local_index"],
                                     bond_graph.nodes()[path[2]]["local_index"],
                                     bond_graph.nodes()[j]["local_index"],
-                                    a.coeff,
-                                    a.phase,
+                                    a.coeffs,
+                                    a.type,
                                 ]
                             )
 
@@ -193,28 +184,27 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
     bonds_3_equilibrium = np.empty(len(bonds_3), dtype=np.float64)
     bonds_3_stength = np.empty(len(bonds_3), dtype=np.float64)
-    bonds_3_type = np.empty(len(bonds_3), dtype=np.float64)
     for i, b in enumerate(bonds_3):
         bonds_3_atom1[i] = b[0]
         bonds_3_atom2[i] = b[1]
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
-        bonds_3_type[i] = b[5]
     # Dihedrals
     bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
-    bonds_4_coeff = np.empty((len(bonds_4), 5), dtype=np.float64)
-    bonds_4_phase = np.empty((len(bonds_4), 5), dtype=np.float64)
+    n_coeff = 6 if (bonds_4[5].any() == 1) else 2
+    bonds_4_coeff = np.empty((len(bonds_4), n_coeff, 5), dtype=np.float64)
+    bonds_4_type = np.empty(len(bonds_3), dtype=int)
     for i, b in enumerate(bonds_4):
         bonds_4_atom1[i] = b[0]
         bonds_4_atom2[i] = b[1]
         bonds_4_atom3[i] = b[2]
         bonds_4_atom4[i] = b[3]
-        bonds_4_coeff[i] = b[4]
-        bonds_4_phase[i] = b[5]
+        bonds_4_coeff[i] = np.resize(b[4], (n_coeff, 5))
+        bonds_4_type[i] = b[5]
 
     return (
         bonds_2_atom1,
@@ -226,13 +216,12 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3,
         bonds_3_equilibrium,
         bonds_3_stength,
-        bonds_3_type,
         bonds_4_atom1,
         bonds_4_atom2,
         bonds_4_atom3,
         bonds_4_atom4,
         bonds_4_coeff,
-        bonds_4_phase,
+        bonds_4_type,
     )
 
 
