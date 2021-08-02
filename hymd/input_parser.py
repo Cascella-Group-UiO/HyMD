@@ -59,7 +59,7 @@ class Config:
             [
                 (
                     f"\t\t{k.atom_1} {k.atom_2} {k.atom_3}: "
-                    + f"{k.equilibrium}, {k.strength}, type = {k.type}\n"
+                    + f"{k.equilibrium}, {k.strength}\n"
                 )
                 for k in self.angle_bonds
             ]
@@ -69,7 +69,8 @@ class Config:
                 (
                     f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
                     + f"{[round(c, 3) for c in k.coeff]}, "
-                    + f"{[round(p, 3) for p in k.phase]}\n"
+                    + f"{[round(p, 3) for p in k.phase]}, "
+                    + f"type = {k.type}\n"
                 )
                 for k in self.dihedrals
             ]
@@ -280,7 +281,6 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_3=b[0][2],
                     equilibrium=b[1][0],
                     strength=b[1][1],
-                    type=b[1][2] if len(b[1]) > 2 else 0,
                 )
         if k == "dihedrals":
             config_dict["dihedrals"] = [None] * len(v)
@@ -290,9 +290,12 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_2=b[0][1],
                     atom_3=b[0][2],
                     atom_4=b[0][3],
-                    coeff=b[1],
-                    phase=b[2],
+                    coeffs=b[1],
+                    type=int(b[2]) if len(b[1]) > 2 else 0,
                 )
+        # if k == "improper dihedrals":
+        #     config_dict["improper dihedrals"] = [None] * len(v)
+        # ...
         if k == "chi":
             config_dict["chi"] = [None] * len(v)
             for i, c in enumerate(v):

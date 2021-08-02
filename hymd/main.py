@@ -604,31 +604,31 @@ if __name__ == "__main__":
                 bonds_3_atom3,
                 bonds_3_equilibrium,
                 bonds_3_stength,
-                bonds_3_type,
                 bonds_4_atom1,
                 bonds_4_atom2,
                 bonds_4_atom3,
                 bonds_4_atom4,
                 bonds_4_coeff,
-                bonds_4_phase,
+                bonds_4_type,
             ) = bonds_prep
 
-            if bonds_3_type.any() > 1:
+            if bonds_4_type.any() > 1:
                 err_str = "0 and 1 are the only currently supported angle types."
                 Logger.rank0.log(logging.ERROR, err_str)
                 if rank == 0:
                     raise NotImplementedError(err_str)
-            protein_flag = comm.allreduce(bonds_3_type.any() == 1)
+            protein_flag = comm.allreduce(bonds_4_type.any() == 1)
 
             if protein_flag:
                 # Dipoles defined by three consecutive BB angles, angle type 1
+                dipole_flag = 1
                 dipole_positions = np.zeros(
-                    (2 * len(bonds_3_atom1), 3), dtype=dtype
+                    (2 * len(bonds_4_atom1) + 2, 3), dtype=dtype
                 )  # flat array 2N x 3, instead of N x 2 x 3
                 dipole_charges = np.array(
                     [
-                        [0.25, -0.25] if bonds_3_type[i] == 1 else [0.0, 0.0]
-                        for i in range(len(bonds_3_type))
+                        [0.25, -0.25] if bonds_4_type[i] == 1 else [0.0, 0.0]
+                        for i in range(len(bonds_4_type))
                     ]
                 ).flatten()  # Flat 1D array
                 dipole_forces = np.zeros(shape=(len(dipole_positions), 3), dtype=dtype)
@@ -664,6 +664,8 @@ if __name__ == "__main__":
         bond_forces = np.asfortranarray(bond_forces)
         angle_forces = np.asfortranarray(angle_forces)
         dihedral_forces = np.asfortranarray(dihedral_forces)
+        bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
+        
 
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
@@ -682,28 +684,28 @@ if __name__ == "__main__":
             angle_energy_ = compute_angle_forces(
                 angle_forces,
                 positions,
-                dipole_positions,
-                trans_matrices,
                 config.box_size,
                 bonds_3_atom1,
                 bonds_3_atom2,
                 bonds_3_atom3,
                 bonds_3_equilibrium,
                 bonds_3_stength,
-                bonds_3_type,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
         if not args.disable_dihedrals:
             dihedral_energy_ = compute_dihedral_forces(
                 dihedral_forces,
                 positions,
+                dipole_positions,
+                trans_matrices,
                 config.box_size,
                 bonds_4_atom1,
                 bonds_4_atom2,
                 bonds_4_atom3,
                 bonds_4_atom4,
                 bonds_4_coeff,
-                bonds_4_phase,
+                bonds_4_type,
+                dipole_flag,
             )
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
@@ -872,6 +874,7 @@ if __name__ == "__main__":
                 velocities, reconstructed_forces / config.mass, config.time_step
             )
 
+        dipole_flag = 0
         # Inner rRESPA steps
         for inner in range(config.respa_inner):
             velocities = integrate_velocity(
@@ -897,33 +900,32 @@ if __name__ == "__main__":
                         bonds_2_stength,
                     )
                 if not args.disable_angle_bonds:
-                    # Calculate dipoles only on last inner respa step?
-                    # Would need two separate routines
-                    # Or adding a flag for (innner == config.respa_inner - 1)
                     angle_energy_ = compute_angle_forces(
                         angle_forces,
                         positions,
-                        dipole_positions,
-                        trans_matrices,
                         config.box_size,
                         bonds_3_atom1,
                         bonds_3_atom2,
                         bonds_3_atom3,
                         bonds_3_equilibrium,
                         bonds_3_stength,
-                        bonds_3_type,
                     )
                 if not args.disable_dihedrals:
+                    if inner == config.respa_inner - 1
+                        dipole_flag = 1
                     dihedral_energy_ = compute_dihedral_forces(
                         dihedral_forces,
                         positions,
+                        dipole_positions,
+                        trans_matrices,
                         config.box_size,
                         bonds_4_atom1,
                         bonds_4_atom2,
                         bonds_4_atom3,
                         bonds_4_atom4,
                         bonds_4_coeff,
-                        bonds_4_phase,
+                        bonds_4_type,
+                        dipole_flag,
                     )
 
             velocities = integrate_velocity(
