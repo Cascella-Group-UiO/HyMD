@@ -38,9 +38,10 @@ end function outer_product
 ! subroutine angle_force()
 ! end subroutine angle_force
 
-subroutine reconstruct(rab, rb, rcb, box, phi, energy, df_cbt, fa, fc, dipole, trans_matrix)
+subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, energy, df_cbt, fa, fc, dipole, trans_matrix)
   real(8), dimension(3), intent(in)  :: rab, rb, rcb, box
-  real(8),               intent(in)  :: phi, gamm, dipole_flag
+  real(8), dimension(5), intent(in)  :: c_k, c_g, d_k, d_g
+  real(8),               intent(in)  :: phi, dipole_flag
   real(8),               intent(out) :: energy, df_cbt
   real(8), dimension(3), intent(out) :: fa, fc
   real(4), dimension(2, 3), intent(in out) :: dipole
@@ -111,6 +112,8 @@ subroutine reconstruct(rab, rb, rcb, box, phi, energy, df_cbt, fa, fc, dipole, t
     if (dipole_flag == 0) then
       fa = -df_ang * fa
       fc = -df_ang * fc
+      dipole = 0.d0
+      trans_matrix = 0.d0
       return
     end if
 
