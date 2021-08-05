@@ -9,7 +9,7 @@ export HYMD_PATH="/Users/samiransen23/hymdtest/hymd/"
 export INPUT_PATH="/Users/samiransen23/hymdtest/"
 
 declare -a a
-a=(8.00) #9.00 9.50 10.00 10.50 11.00 11.50 12.00)
+a=(9.15 9.25 9.30)
 mkdir -p ${DEST_DIR}
 
 for i in ${a[*]}
