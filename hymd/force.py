@@ -65,11 +65,13 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
     bonds_4 = []
+    bb_index = []
+    bb_dihedral = 0
+
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
         bond_graph = nx.Graph()
 
-        # Won't this be super slow for big systems?
         for local_index, global_index in enumerate(indices):
             if molecules[local_index] != mol:
                 continue
@@ -130,6 +132,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     a.strength,
                                 ]
                             )
+
                 if len(path) == 4 and path[-1] > path[0]:
                     name_i = bond_graph.nodes()[i]["name"]
                     name_mid_1 = bond_graph.nodes()[path[1]]["name"]
@@ -160,12 +163,17 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     a.type,
                                 ]
                             )
+                            if a.type == 1:
+                                bb_dihedral = len(bonds_4)
 
-    return bonds_2, bonds_3, bonds_4
+                if bb_dihedral:
+                    bb_index.append(bb_dihedral - 1)
+
+    return bonds_2, bonds_3, bonds_4, bb_index
 
 
 def prepare_bonds(molecules, names, bonds, indices, config):
-    bonds_2, bonds_3, bonds_4 = prepare_bonds_old(
+    bonds_2, bonds_3, bonds_4, bb_index = prepare_bonds_old(
         molecules, names, bonds, indices, config
     )
     # Bonds
@@ -195,16 +203,18 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
-    n_coeff = 6 if (bonds_4[5].any() == 1) else 2
-    bonds_4_coeff = np.empty((len(bonds_4), n_coeff, 5), dtype=np.float64)
-    bonds_4_type = np.empty(len(bonds_3), dtype=int)
+    # 6 => 3 sets of two parameters
+    bonds_4_coeff = np.empty((len(bonds_4), 6, 5), dtype=np.float64)
+    bonds_4_type = np.empty(len(bonds_4), dtype=int)
+    bonds_4_last = np.empty(len(bonds_4), dtype=int)
     for i, b in enumerate(bonds_4):
         bonds_4_atom1[i] = b[0]
         bonds_4_atom2[i] = b[1]
         bonds_4_atom3[i] = b[2]
         bonds_4_atom4[i] = b[3]
-        bonds_4_coeff[i] = np.resize(b[4], (n_coeff, 5))
+        bonds_4_coeff[i] = np.resize(b[4], (6, 5))
         bonds_4_type[i] = b[5]
+    bonds_4_last[bb_index] = 1
 
     return (
         bonds_2_atom1,
@@ -222,6 +232,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_4_atom4,
         bonds_4_coeff,
         bonds_4_type,
+        bonds_4_last,
     )
 
 
@@ -428,21 +439,31 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
     return energy
 
 
-def dipole_forces_redistribution(f_dipoles, f_elec, trans, a, b, c, angle_type):
-    """Redistribute electrostatic forces calculated from ghost dipole point charges
-    to the backcone atoms of the protein."""
+def dipole_forces_redistribution(
+    f_dipoles, f_elec, trans_matrices, a, b, c, d, dih_type, last_bb
+):
+    """Redistribute electrostatic forces calculated from ghost dipole point charges to the backcone atoms of the protein."""
 
-    pairs = [f_elec[i : i + 2] for i in range(0, len(f_elec), 2)]
-    matrices = [trans[i : i + 3] for i in range(0, len(trans), 3)]
-
-    for i, j, k, force, matrix, type in zip(a, b, c, pairs, matrices, angle_type):
-        if type == 1:
+    for i, j, k, l, f, m, t, n in zip(
+        a, b, c, d, f_elec, trans_matrices, dih_type, last_bb
+    ):
+        if t == 1:
             # Positive dipole charge
-            f_dipoles[i] += matrix[0] @ force[0]  # Atom A
-            f_dipoles[j] += matrix[1] @ force[0]  # Atom B
-            f_dipoles[k] += matrix[2] @ force[0]  # Atom C
+            f_dipoles[i] += m[0] @ f[0]  # Atom A
+            f_dipoles[j] += m[1] @ f[0]  # Atom B
+            f_dipoles[k] += m[2] @ f[0]  # Atom C
 
             # Negative dipole charge
-            f_dipoles[i] += matrix[0] @ force[1]  # Atom A
-            f_dipoles[j] += matrix[1] @ force[1]  # Atom B
-            f_dipoles[k] += matrix[2] @ force[1]  # Atom C
+            f_dipoles[i] += m[0] @ f[1]  # Atom A
+            f_dipoles[j] += m[1] @ f[1]  # Atom B
+            f_dipoles[k] += m[2] @ f[1]  # Atom C
+            if n == 1:
+                # Positive dipole charge
+                f_dipoles[j] += m[3] @ f[2]  # Atom B
+                f_dipoles[k] += m[4] @ f[2]  # Atom C
+                f_dipoles[l] += m[5] @ f[2]  # Atom D
+
+                # Negative dipole charge
+                f_dipoles[j] += m[3] @ f[3]  # Atom B
+                f_dipoles[k] += m[4] @ f[3]  # Atom C
+                f_dipoles[l] += m[5] @ f[3]  # Atom D
