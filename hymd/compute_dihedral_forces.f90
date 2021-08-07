@@ -1,4 +1,4 @@
-subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, dipole_flag, energy)
+subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, bb_index, dipole_flag, energy)
   use dipole_reconstruction
   implicit none
 
@@ -13,6 +13,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, d
   integer, dimension(:), intent(in) :: d
   real(8), dimension(:,:,:), intent(in) :: coeff 
   integer, dimension(:), intent(in) :: dtype
+  integer, dimension(:), intent(in) :: bb_index
   integer, intent(in) :: dipole_flag
   real(8), intent(out) :: energy
    
@@ -25,7 +26,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, d
 
   energy = 0.d0
   force = 0.d0
-  
+
   do ind = 1, size(a)
     aa = a(ind) + 1
     bb = b(ind) + 1
@@ -64,7 +65,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, d
       df_dih = df_dih + i * c_v(i + 1) * sin(i * phi + d_v(i + 1))
     end do
 
-    if (type == 1) then
+    if (dtype(ind) == 1) then
       c_k = coeff(ind, 3, :)
       d_k = phase(ind, 4, :)
       c_g = coeff(ind, 5, :)
@@ -83,8 +84,9 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, d
       force(bb, :) = force(bb, :) - fa - fc
       force(cc, :) = force(cc, :) + fc
 
-      if (ind == size(a)) then
+      if (bb_index(ind) == 1) then
         ! calculate last angle
+        ! Use the same coefficients as the previous angle here?
         call dipole_reconstruction( &
           g, r(cc, :), h, box, c_k, d_k, c_g, d_g, phi, dipole_flag, &
           energy_cbt, df_cbt, fb, fd, dipole, trans_matrix)
