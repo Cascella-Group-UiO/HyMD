@@ -40,7 +40,7 @@ end function outer_product
 
 subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, energy, df_cbt, fa, fc, dipole, trans_matrix)
   real(8), dimension(3), intent(in)  :: rab, rb, rcb, box
-  real(8), dimension(5), intent(in)  :: c_k, c_g, d_k, d_g
+  real(8), dimension(:), intent(in)  :: c_k, c_g, d_k, d_g
   real(8),               intent(in)  :: phi, dipole_flag
   real(8),               intent(out) :: energy, df_cbt
   real(8), dimension(3), intent(out) :: fa, fc
@@ -73,7 +73,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, 
   dk = 0.d0
   dg = 0.d0
 
-  do i = 0, 4 
+  do i = 0, size(c_k) - 1 
     k = k + c_k(i + 1) * (1.d0 + cos(i * phi + d_k(i + 1)))
     gamma_0 = gamma_0 + c_g(i + 1) * (1.d0 + cos(i * phi + d_g(i + 1)))
 
