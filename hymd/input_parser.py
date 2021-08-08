@@ -285,13 +285,18 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         if k == "dihedrals":
             config_dict["dihedrals"] = [None] * len(v)
             for i, b in enumerate(v):
+                type_if = len(b[1]) > 2 or isinstance(type(b[1][0]), float)
                 config_dict["dihedrals"][i] = Dihedral(
                     atom_1=b[0][0],
                     atom_2=b[0][1],
                     atom_3=b[0][2],
                     atom_4=b[0][3],
                     coeffs=b[1],
-                    type=int(b[2]) if len(b[1]) > 2 else 0,
+                    # Can adapt this condition for improper dihedrals
+                    # fourier = [[], []] == len 2
+                    # CBT = [[], [], [], [], [], []] == len 6
+                    # improper = [eq, k] == len 2 but type(eq) == float
+                    dih_type=int(b[2]) if type_if else 0,
                 )
         # if k == "improper dihedrals":
         #     config_dict["improper dihedrals"] = [None] * len(v)

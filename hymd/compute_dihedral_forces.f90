@@ -40,6 +40,11 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     f = f - box * nint(f / box)
     g = g - box * nint(g / box)
     h = h - box * nint(h / box)
+
+!     Improper dihedrals
+!     if (dtype == 2) then
+! 
+!     end if
   
     v = cross(f, g)
     w = cross(h, g)
@@ -60,7 +65,8 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
 
     df_dih = 0.d0
 
-    do i = 0, 4 
+    ! coefficients with different sizes might be problematic
+    do i = 0, size(c_v) - 1
       energy = energy + c_v(i + 1) * (1.d0 + cos(i * phi + d_v(i + 1)))
       df_dih = df_dih + i * c_v(i + 1) * sin(i * phi + d_v(i + 1))
     end do
