@@ -44,7 +44,7 @@ class Dihedral:
     coeffs: list
     # type: (0) Fourier or (1) CBT
     # Impropers to be specified in the toml?
-    type: int
+    dih_type: int
 
 
 # 3- Combined bending-torsional potential
@@ -160,10 +160,10 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     bond_graph.nodes()[path[2]]["local_index"],
                                     bond_graph.nodes()[j]["local_index"],
                                     a.coeffs,
-                                    a.type,
+                                    a.dih_type,
                                 ]
                             )
-                            if a.type == 1:
+                            if a.dih_type == 1:
                                 bb_dihedral = len(bonds_4)
 
                 if bb_dihedral:
@@ -204,6 +204,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
     # 6 => 3 sets of two parameters
+    # Might it be useful to decouple dihedral types to prevent having lots of zeros/empty slots?
     bonds_4_coeff = np.empty((len(bonds_4), 6, 5), dtype=np.float64)
     bonds_4_type = np.empty(len(bonds_4), dtype=int)
     bonds_4_last = np.empty(len(bonds_4), dtype=int)
