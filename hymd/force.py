@@ -66,10 +66,10 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
     bonds_3 = []
     bonds_4 = []
     bb_index = []
-    bb_dihedral = 0
 
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
+        bb_dihedral = 0
         bond_graph = nx.Graph()
 
         for local_index, global_index in enumerate(indices):
@@ -166,8 +166,8 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                             if a.dih_type == 1:
                                 bb_dihedral = len(bonds_4)
 
-                if bb_dihedral:
-                    bb_index.append(bb_dihedral - 1)
+        if bb_dihedral:
+            bb_index.append(bb_dihedral - 1)
 
     return bonds_2, bonds_3, bonds_4, bb_index
 
@@ -203,17 +203,17 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
-    # 6 => 3 sets of two parameters
+    # 4 => 2 sets of 2 parameters
     # Might it be useful to decouple dihedral types to prevent having lots of zeros/empty slots?
-    bonds_4_coeff = np.empty((len(bonds_4), 6, 5), dtype=np.float64)
+    bonds_4_coeff = np.empty((len(bonds_4), 4, 5), dtype=np.float64)
     bonds_4_type = np.empty(len(bonds_4), dtype=int)
-    bonds_4_last = np.empty(len(bonds_4), dtype=int)
+    bonds_4_last = np.zeros(len(bonds_4), dtype=int)
     for i, b in enumerate(bonds_4):
         bonds_4_atom1[i] = b[0]
         bonds_4_atom2[i] = b[1]
         bonds_4_atom3[i] = b[2]
         bonds_4_atom4[i] = b[3]
-        bonds_4_coeff[i] = np.resize(b[4], (6, 5))
+        bonds_4_coeff[i] = np.resize(b[4], (4, 5))
         bonds_4_type[i] = b[5]
     bonds_4_last[bb_index] = 1
 
