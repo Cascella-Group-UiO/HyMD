@@ -64,5 +64,6 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
         f(bb, :) = f(bb, :) - (fa + fc)
 
         energy = energy - 0.5d0 * ff * d
+      end if
     end do
 end subroutine
