@@ -445,6 +445,7 @@ def dipole_forces_redistribution(
 ):
     """Redistribute electrostatic forces calculated from ghost dipole point charges to the backcone atoms of the protein."""
 
+    f_dipoles.fill(0.0)
     for i, j, k, l, f, m, t, n in zip(
         a, b, c, d, f_elec, trans_matrices, dih_type, last_bb
     ):
@@ -468,3 +469,4 @@ def dipole_forces_redistribution(
                 f_dipoles[j] += m[3] @ f[3]  # Atom B
                 f_dipoles[k] += m[4] @ f[3]  # Atom C
                 f_dipoles[l] += m[5] @ f[3]  # Atom D
+    return f_dipoles
