@@ -8,7 +8,7 @@
 # Number of total particles in the simulation. If an input .hdf5 format file is
 # specified, the number of particles will be inferred from this and *may* be
 # ommited here.
-n_particles = 6830
+n_particles = 2143
 # Mass of the particles in [g/mol]. All masses are assumed equal.
 mass = 72.0
 # Maximum number of particles per molecules present in the system. A default of
@@ -18,7 +18,7 @@ mass = 72.0
 
 [simulation]
 # Number of total time steps in the simulation.
-n_steps = 1000
+n_steps = 10000
 # Frequency of trajectory/energy file output in time steps.
 n_print = 10
 # Frequency of requesting that the HDF5 library flush the file output buffers
@@ -27,7 +27,7 @@ n_flush = 10000
 # Time step used in the simulation in [picoseconds].
 time_step = 0.3
 # Simulation box size in [nanometers].
-box_size = [9.46553, 9.46553, 9.46553]
+box_size = [6.25, 6.25, 6.25]
 # Time integrator used in the simulation. Either "velocity-verlet" or "respa".
 # If "respa", specify also the number of small rRESPA time steps per large
 # time_step with the 'respa_inner' keyword.
@@ -43,10 +43,10 @@ domain_decomposition = false
 cancel_com_momentum = true
 # Starting temperature to generate before simulation begins in [kelvin]. Ommit
 # or set to 'false' to not change the temperature before starting.
-start_temperature = 323
+start_temperature = 300
 # Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
 # or set to 'false' to use no thermostat, i.e. a constant energy simulation.
-target_temperature = 323
+target_temperature = 300
 # Thermostat collision frequency in [1/picoseconds].
 tau = 1
 # Couple groups of particles species to individual different thermostats.
@@ -60,7 +60,7 @@ thermostat_coupling_groups = [
 #    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
 # Subclass Hamiltonian to create a new energy functional.
 hamiltonian = 'DefaultNoChi'
-dielectric_const = 80.0
+dielectric_const = 5.0
 
 [field]
 # Particle-mesh grid size, either a single integer or an array of 3 integers
@@ -71,7 +71,7 @@ dielectric_const = 80.0
 mesh_size = [40, 40, 40]
 # Compressibility used in the relaxed incompressibility term of W(phi) in
 # [mol/kJ].
-kappa = 0.05
+kappa = 0.03
 # Standard deviation in the Gaussian filter (window function) in [nanometers].
 # This value is a characteristic length scale for the size of the particles in
 # the simulation.
@@ -81,7 +81,7 @@ sigma = 0.5
 chi = [
     [["BB", "SC"], [0]],
     [["BB", "W"], [0]],
-    [["W", "SC"], [0]],
+    [["SC", "W"], [0]],
 ]
 
 [bonds]
@@ -94,24 +94,30 @@ bonds = [
   [["BB", "SC"], [0.27, 1000.0]],
 ]
 # Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
-# (equilibrium angle in [degrees], bond strength in [kJ/mol], angle type)
+# (equilibrium angle in [degrees], bond strength in [kJ/mol])
 angle_bonds = [
-  [["BB", "BB", "BB"], [127.0, 100.0]],
   [["BB", "BB", "SC"], [100.0, 100.0]],
 ]
 # Four-particles torsion angles defined with a fourier series potential.
 # ((atom name 1, atom name 2, atom name 3, atom name 4),
-# ((fourier coefficients), (phase coefficients)))
+#  (coefficients), 
+#  (dihedral type))
 dihedrals = [
   [
         ["BB", "BB", "BB", "BB"],
         [
-          [3.000785990808481518, 6.167173336139853745, -3.275979346004096460, -0.685088677490307551, 0.274878135288439851], # c_v
-          [5.948860311572183868, 0.098922473311817383,  0.974412862301472060,  0.793015982671696595, 2.582494443709347554], # d_v
-          [2.245384808330835540e+02, 3.051299815724911468e+02, -2.722364108336881259e+02, 1.258130006050673586e+02, -4.249914781390292973e+01], # c_k
-          [-1.758521930087656528e+02, -1.126350335645522591e+02, -1.240104819300817951e+02, -8.264140987960490747e+01, 1.922763173583805951e+01], # d_k
-          [1.928488925653020303e+01, -3.766664434715483734e-01, -5.854922942917285822e-02, -1.334309288380483849e-01, 4.414148949695701624e-02], # c_g
-          [2.878138993421017133e+01, 1.172309345390426749e+00, 4.319322156682900982e-01, -1.499066170285407174e-01, 1.128982656710350918e+00], # d_g
+          # Move this out and provide propensity instead?
+          # α propensity (λ = -1)
+          [7.406, -5.298, -2.570, 1.336, 0.739], # c_v (kJ/mol)
+          [-16.405, 69.323, 67.679, 28.118, 56.434], # d_v (deg)
+          # β propensity (λ = 1) 
+          # [3.770, 5.929, -4.151, -0.846, 0.190], # c_v
+          # [-13.182, -3.342, 56.919, 59.151, 166.250], # d_v
+          # No propensity (λ = 0)
+          # [1.416, -0.739, 0.990, -0.397, 0.136], # c_v
+          # [77.326, 26.155, 132.033, -7.033, -15.000], # d_v
+          [0.13680, 0.18589, -0.16586, 0.07664, -0.02589], # c_k (kJ/mol deg-2)
+          [4.412, 26.488, 94.723, -55.004, 21.662], # d_k
         ],
-        [1.0] # Type
+    [1.0] # Type
 ]]
