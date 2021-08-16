@@ -365,8 +365,6 @@ if __name__ == "__main__":
         ## charges xinmeng
         if "charge" in in_file:
             charges = in_file["charge"][rank_range]
-            # print('charges --- ', len(charges))
-            # print(type(charges), charges.shape)
             charges_flag = True
         else:
             charges_flag = False
@@ -384,28 +382,20 @@ if __name__ == "__main__":
     # TODO: Get box_size from h5, not from toml?
     positions = np.mod(positions, config.box_size[None, :])
 
-    # Change these to np.zeros_like(positions)?
-    bond_forces = np.zeros(
-        shape=positions.shape, dtype=dtype
-    )  # , order='F')  # noqa: E501
-    angle_forces = np.zeros(
-        shape=positions.shape, dtype=dtype
-    )  # , order='F')  # noqa: E501
-    # Initialize only if config.dihedrals?
-    dihedral_forces = np.zeros(
-        shape=positions.shape, dtype=dtype
-    )  # , order='F')  # noqa: E501
+    bond_forces = np.zeros_like(positions)
+    angle_forces = np.zeros_like(positions)
+    dihedral_forces = np.zeros_like(positions)
     # Initialize only for proteins?
-    reconstructed_forces = np.zeros(
-        shape=positions.shape, dtype=dtype
-    )  # , order='F')  # noqa: E501
-    field_forces = np.zeros(shape=positions.shape, dtype=dtype)
+    reconstructed_forces = np.zeros_like(positions)
+    field_forces = np.zeros_like(positions)
+    elec_forces = np.zeros_like(positions)
 
     # Initialize dipoles (for DD), populate them if protein_flag = True
-    dipole_positions = None
-    dipole_forces = None
-    dipole_charges = None
-    trans_matrices = None
+    dipole_flag = 1  # Only calculate dipole in the outer Respa step
+    dipole_positions = np.zeros(shape=(4, 3))
+    dipole_forces = np.zeros(shape=(4, 3))
+    dipole_charges = np.zeros(shape=4)
+    trans_matrices = np.zeros(shape=(6, 3, 3))
 
     # Initialize energies
     field_energy = 0.0
@@ -469,8 +459,6 @@ if __name__ == "__main__":
         elec_energy_field = pm.create(
             "complex", value=0.0
         )  # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
-
-    elec_forces = np.zeros(shape=positions.shape, dtype=dtype)
 
     args_in = [
         velocities,
@@ -624,31 +612,31 @@ if __name__ == "__main__":
                 if rank == 0:
                     raise NotImplementedError(err_str)
 
+            # Check if we have a protein
             protein_flag = comm.allreduce(bonds_4_type.any() == 1)
             if protein_flag:
                 # Dipoles only if dih_type == 1
-                dipole_flag = 1  # Only calculate dipole in the outer step
                 n_tors = len(bonds_4_atom1)
                 dipole_positions = np.zeros((n_tors, 4, 3), dtype=dtype)
-                # 4 cause we need to take into account last angle in the molecule
+                # 4 cause we need to take into account the last angle in the molecule
                 dipole_charges = np.array(
                     [
                         2 * [0.25, -0.25] if bonds_4_type[i] == 1 else 2 * [0.0, 0.0]
                         for i in range(n_tors)
-                    ]
+                    ],
+                    dtype=dtype,
                 ).flatten()
-                dipole_forces = np.zeros(shape=dipole_positions.shape, dtype=dtype)
-                trans_matrices = np.zeros(
-                    shape=(n_tors, 6, 3, 3), dtype=dtype
-                )  # , order='F')  # noqa: E501
+                dipole_forces = np.zeros_like(dipole_positions)
+                trans_matrices = np.zeros(shape=(n_tors, 6, 3, 3), dtype=dtype)
+                # Fields
                 phi_dipoles = pm.create("real", value=0.0)
                 phi_dipoles_fourier = pm.create("complex", value=0.0)
                 dipoles_field_fourier = [
                     pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
-                ]  # for force calculation
+                ]
                 dipoles_field = [
                     pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
-                ]  # for force calculation
+                ]
 
                 if config.domain_decomposition:
                     dd = domain_decomposition(
@@ -716,7 +704,8 @@ if __name__ == "__main__":
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
         if protein_flag:
-            dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3))
+            dipole_positions = np.ascontiguousarray(dipole_positions)
+            dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3), order="C")
             dipole_forces = np.reshape(dipole_forces, (4 * n_tors, 3))
 
             layout_dipoles = pm.decompose(dipole_positions)
@@ -733,7 +722,8 @@ if __name__ == "__main__":
                 config,
             )
 
-            dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3))
+            dipole_positions = np.asfortranarray(dipole_positions)
+            dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3), order="F")
             dipole_forces = np.reshape(dipole_forces, (n_tors, 4, 3))
 
             dipole_forces_redistribution(
@@ -836,7 +826,6 @@ if __name__ == "__main__":
     # ======================================================================= #
     for step in range(config.n_steps):
         # if comm.Get_rank() == 0:
-        # print('--------------- step ---------------', step)
         current_step_time = datetime.datetime.now()
 
         if step == 0 and args.verbose > 1:
@@ -996,9 +985,9 @@ if __name__ == "__main__":
                     field_q_energy,
                     comm=comm,
                 )
-                # print(field_q_energy, elec_forces[0])
 
             if protein_flag:
+                dipole_positions = np.ascontiguousarray(dipole_positions)
                 dipole_positions = np.reshape(
                     dipole_positions, (4 * n_tors, 3), order="C"
                 )
@@ -1018,10 +1007,11 @@ if __name__ == "__main__":
                     config,
                 )
 
+                dipole_positions = np.asfortranarray(dipole_positions)
                 dipole_positions = np.reshape(
                     dipole_positions, (n_tors, 4, 3), order="F"
                 )
-                dipole_forces = np.reshape(dipole_forces, (n_tors, 4, 3))
+                dipole_forces = np.reshape(dipole_forces, (n_tors, 4, 3), order="F")
                 dipole_forces_redistribution(
                     reconstructed_forces,
                     dipole_forces,
@@ -1114,7 +1104,8 @@ if __name__ == "__main__":
                         bonds_4_last,
                     ) = bonds_prep
 
-                    # if protein_flag: Initialize dipole positions again?
+                    bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
+                    # if protein_flag: Initialize dipole positions again or not?
 
         for t in range(config.n_types):
             if args.verbose > 2:
@@ -1264,7 +1255,6 @@ if __name__ == "__main__":
                     field_q_energy,
                     comm=comm,
                 )
-                # print(field_q_energy, elec_forces[0])
 
         #             Does this part also need to be here?
         #             if protein_flag:
