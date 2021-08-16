@@ -38,47 +38,53 @@ end function outer_product
 ! subroutine angle_force()
 ! end subroutine angle_force
 
-subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, energy, df_cbt, fa, fc, dipole, trans_matrix)
-  real(8), dimension(3), intent(in)  :: rab, rb, rcb, box
-  real(8), dimension(:), intent(in)  :: c_k, c_g, d_k, d_g
-  real(8),               intent(in)  :: phi, dipole_flag
-  real(8),               intent(out) :: energy, df_cbt
-  real(8), dimension(3), intent(out) :: fa, fc
+subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt, df_cbt, fa, fb, fc, dipole, trans_matrix)
+  real(8), dimension(3), intent(in)  :: rab, rcb, box
+  real(4), dimension(3), intent(in)  :: rb
+  real(8), dimension(:), intent(in)  :: c_k, d_k
+  ! real(8), dimension(:), intent(in)  :: c_g, d_g
+  real(8),               intent(in)  :: phi
+  integer                            :: dipole_flag
+  real(8),               intent(out) :: energy_cbt, df_cbt
+  real(8), dimension(3), intent(out) :: fa, fb, fc
   real(4), dimension(2, 3), intent(in out) :: dipole
   real(4), dimension(3, 3, 3), intent(in out) :: trans_matrix
 
   integer :: i, j
-  real(8) :: k, gamma_0. dk, dg
+  real(8) :: k, gamma_0, dk, dg, norm_a, norm_c, df_ang, var_sq
   real(8) :: theta, d_theta, cos_theta, sin_theta, fac
-  real(8) :: cos_gamma, sin_gamma, cos2
-  real(8), dimension(3) :: w, v, n, m, r0, d, fb 
+  real(8) :: gamm, cos_gamma, sin_gamma, cos2
+  real(8), dimension(3) :: w, v, n, m, r0, d
   real(8), dimension(3, 3) :: W_a, W_b, V_b, V_c
   real(8), dimension(3, 3) :: N_a, N_b, N_c
   real(8), dimension(3, 3) :: M_a, M_b, M_c
   real(8), dimension(3, 3) :: FN_a, fN_b, fN_c
   real(8), dimension(3, 3) :: FM_a, FM_b, FM_c
   real(8), parameter :: delta = 0.3d0, cos_phi = cos(1.390927), sin_phi = sin(1.390927) 
+  ! real(8), parameter :: small = 0.001d0
   ! cos_phi = 0,17890101
   ! sin_phi = 0,983867079
+  energy_cbt = 0.d0
 
   ! 1 - Angle forces calculation
   ! Levitt-Warshel
   ! gamma_0 = 106 - 13 * cos(phi - 45)
-  ! gamma_0 = 1.85d0 - 0.227d0 * cos(phi - 0.785d0)
+  gamma_0 = 1.85d0 - 0.227d0 * cos(phi - 0.785d0)
+  dg = 0.227d0 * sin(phi - 0.785d0)
   ! Not used in the end?
   ! We use another Fourier expansion?
 
   k = 0.d0
-  gamma_0 = 0.d0
+  ! gamma_0 = 0.d0
   dk = 0.d0
-  dg = 0.d0
+  ! dg = 0.d0
 
-  do i = 0, size(c_k) - 1 
-    k = k + c_k(i + 1) * (1.d0 + cos(i * phi + d_k(i + 1)))
-    gamma_0 = gamma_0 + c_g(i + 1) * (1.d0 + cos(i * phi + d_g(i + 1)))
+  do i = 0, 4
+    k = k + c_k(i + 1) * (1.d0 + cos(i * phi - d_k(i + 1)))
+    ! gamma_0 = gamma_0 + c_g(i + 1) * (1.d0 + cos(i * phi + d_g(i + 1)))
 
-    dk = dk + i * c_k(i + 1) * sin(i * phi + d_k(i + 1))
-    dg = dg + i * c_g(i + 1) * sin(i * phi + d_g(i + 1))
+    dk = dk + i * c_k(i + 1) * sin(i * phi - d_k(i + 1))
+    ! dg = dg + i * c_g(i + 1) * sin(i * phi + d_g(i + 1))
   end do
 
   norm_a = norm2(rab)
@@ -94,7 +100,11 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, 
   ! This prevents sin_gamma == 0
   if (cos2 < 1.0) then
     gamm = acos(cos_gamma)
-    sin_gamma = sin(theta)
+    sin_gamma = sin(gamm)
+
+    ! if (sin_gamma < small) then
+    !    sin_gamma = small
+    ! endif
 
     ! Bending forces == f_gamma_i in the paper
     ! 1/sin(γ) ∂cos(γ)/∂γ
@@ -103,17 +113,16 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, 
     fb = -(fa + fc)
 
     ! CBT energy and force factors
-    df_ang = -k * (gamm - gamma_0) 
+    df_ang = -k * (gamm - gamma_0)
     var_sq = (gamm - gamma_0)**2
-    energy = 0.5d0 * k * var_sq      
-    df_cbt = 0.5d0 * dk * var_sq + df_ang * dg
+    energy_cbt = 0.5d0 * k * var_sq
+    df_cbt = 0.5d0 * dk * var_sq - df_ang * dg
     
     ! Exit subroutine if we only need the forces
     if (dipole_flag == 0) then
       fa = -df_ang * fa
+      fb = -df_ang * fb
       fc = -df_ang * fc
-      dipole = 0.d0
-      trans_matrix = 0.d0
       return
     end if
 
@@ -159,7 +168,6 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, 
     W_a = -W_b
     
     ! Last term is 0 for N_a, second term is 0 for N_c (S19)
-    ! fac = cos_gamma
     N_a = (cos_gamma * outer_product(fa, n) + cross_matrix(W_a, v)                       ) / sin_gamma
     N_b = (cos_gamma * outer_product(fb, n) + cross_matrix(W_b, v) - cross_matrix(V_b, w)) / sin_gamma
     N_c = (cos_gamma * outer_product(fc, n)                        - cross_matrix(V_c, w)) / sin_gamma
@@ -175,7 +183,6 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, 
     FN_b = sin_theta * d_theta * outer_product(fb, n)
     FN_c = sin_theta * d_theta * outer_product(fc, n)
 
-    ! fac = cos_theta * d_theta
     FM_a = cos_theta * d_theta * outer_product(fa, m)
     FM_b = cos_theta * d_theta * outer_product(fb, m)
     FM_c = cos_theta * d_theta * outer_product(fc, m)
@@ -188,6 +195,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, c_g, d_g, phi, dipole_flag, 
 
     ! Final angle forces
     fa = -df_ang * fa
+    fb = -df_ang * fb
     fc = -df_ang * fc
     end if
 end subroutine reconstruct
