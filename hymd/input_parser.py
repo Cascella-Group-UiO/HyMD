@@ -68,9 +68,9 @@ class Config:
             [
                 (
                     f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
-                    + f"{[round(c, 3) for c in k.coeff]}, "
-                    + f"{[round(p, 3) for p in k.phase]}, "
-                    + f"type = {k.type}\n"
+                    # This might need to be fixed/made prettier
+                    + f"{[c for c in k.coeffs]}, "
+                    + f"dih_type = {k.dih_type}\n"
                 )
                 for k in self.dihedrals
             ]
@@ -296,7 +296,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     # fourier = [[], []] == len 2
                     # CBT = [[], [], [], [], [], []] == len 6
                     # improper = [eq, k] == len 2 but type(eq) == float
-                    dih_type=int(b[2]) if type_if else 0,
+                    dih_type=int(b[2][0]) if type_if else 0,
                 )
         # if k == "improper dihedrals":
         #     config_dict["improper dihedrals"] = [None] * len(v)
