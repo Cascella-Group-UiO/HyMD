@@ -57,4 +57,3 @@ clean:
 	$(RM) -r compute_bond_forces/
 	$(RM) -r compute_angle_forces/
 	$(RM) -r compute_dihedral_forces/
-	$(RM) -r protein_backbone/
