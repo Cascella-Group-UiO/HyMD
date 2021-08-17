@@ -84,6 +84,7 @@ def semiisotropic(
     ):
     rank = comm.Get_rank()
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
+    eps_alpha = abs(1 - config.alpha_0)
 
     #compute pressure
     pressure = comp_pressure(
@@ -113,7 +114,7 @@ def semiisotropic(
     alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
     alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
     #if comm.Get_rank()==0: print(alphaL,' ',alphaN)
-    if(abs(alphaL) < config.alpha_0 or abs(alphaN) < config.alpha_0):
+    if(abs(1-alphaL) > eps_alpha or abs(1-alphaN) > eps_alpha):
         #length scaling
         L0 = alphaL**(1/3) * config.box_size[0]
         L1 = alphaL**(1/3) * config.box_size[1]
