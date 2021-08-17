@@ -2,7 +2,41 @@ import logging
 import numpy as np
 from mpi4py import MPI
 from logger import Logger
+import warnings
 
+def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
+
+    # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
+    # ragged nested sequences until it is fixed in pmesh
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action="ignore",
+            category=np.VisibleDeprecationWarning,
+            message=r"Creating an ndarray from ragged nested sequences",
+        )
+        # The first argument of ParticleMesh has to be a tuple
+        pm = pmesh.ParticleMesh(
+            config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
+        )
+
+    phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+    phi_fourier = [
+        pm.create("complex", value=0.0) for _ in range(config.n_types)
+    ]  # noqa: E501
+    force_on_grid = [
+        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+    ]
+    v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
+    v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+
+    lap_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
+    phi_laplacian = [
+        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+    ]
+    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
+            phi_laplacian]
+    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
+            phi_laplacian, field_list)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     for t in range(n_types):

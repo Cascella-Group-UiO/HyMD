@@ -1,41 +1,11 @@
 # Berendsen Barostat
 import numpy as np
-from pressure import comp_pressure
 from mpi4py import MPI
-
-# Isotropic barostat from HyMD-2020
-#def BERENDSEN_BAROSTAT(tau_p, P):
-#    beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
-#    P_target = CONF['P_target'] #bar
-#    dt = CONF['dt']
-#
-#    #scaling factor
-#    alpha = 1 - dt/tau_p*beta*(P_target - P)
-#    #print("scaling factor: alpha:",alpha)
-#   
-#    #length scaling
-#    L0 = alpha**(1/3) * CONF['L'][0]
-#    L1 = alpha**(1/3) * CONF['L'][1]
-#    L2 = alpha**(1/3) * CONF['L'][2]
-#
-#    #volume scaling
-#    V  = L0 * L1 * L2
-#    CONF['L'][0] = L0
-#    CONF['L'][1] = L1
-#    CONF['L'][2] = L2
-#    CONF['V'] = V
-#    CONF['dV']     = CONF['V']/(CONF['Nv']**3)
-#    volumes.append(CONF['V'])
-#    
-#    #coordinates scaling
-#    for i in range(len(r)):
-#        r[i]  = alpha**(1/3) * r[i]
-#
-#    return
-
-
+from pressure import comp_pressure
+from field import initialize_pm
 
 def isotropic(
+        pmesh,
         phi,
         hamiltonian,
         positions,
@@ -88,9 +58,15 @@ def isotropic(
     #position coordinates scaling
     positions = alpha**(1/3) * positions
 
-    return positions
+    #pmesh re-initialize
+    pm_stuff  = initialize_pm(pmesh, config, comm)
+    #(pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
+    #field_list) = pm_stuff
+    return pm_stuff
 
 def semiisotropic(
+        pmesh,
+        pm_stuff,
         phi,
         hamiltonian,
         positions,
@@ -106,8 +82,9 @@ def semiisotropic(
         angle_pr,
         comm=MPI.COMM_WORLD
     ):
-
+    rank = comm.Get_rank()
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
+    eps_alpha = 10**(-6)
 
     #compute pressure
     pressure = comp_pressure(
@@ -136,23 +113,23 @@ def semiisotropic(
     #scaling factor                                                                                        
     alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
     alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
-    #alphaL = 1 - 30.0 * beta * (config.target_pressure - PL)
-    #alphaN = 1 - 30.0 * beta * (config.target_pressure - PN)
     #if comm.Get_rank()==0: print(alphaL,' ',alphaN)
-
-    #length scaling
-    L0 = alphaL**(1/3) * config.box_size[0]
-    L1 = alphaL**(1/3) * config.box_size[1]
-    L2 = alphaN**(1/3) * config.box_size[2]
-    config.box_size[0] = L0
-    config.box_size[1] = L1
-    config.box_size[2] = L2
-
-    #position coordinates scaling
-    #print('positions[0] before:',positions[0])
-    for i in range(len(positions)):
-        positions[i][0:2] = alphaL**(1/3) * positions[i][0:2]
-        positions[i][2] = alphaN**(1/3) * positions[i][2]
-    #print('positions[0] after:',positions[0])
-
-    return positions
+    if(abs(1-alphaL) or abs(1-alphaN) > eps_alpha):
+        #if(rank==0): print("re-initializing pmesh;  abs(1-alphaL):",abs(1-alphaL))
+        #length scaling
+        L0 = alphaL**(1/3) * config.box_size[0]
+        L1 = alphaL**(1/3) * config.box_size[1]
+        L2 = alphaN**(1/3) * config.box_size[2]
+        config.box_size[0] = L0
+        config.box_size[1] = L1
+        config.box_size[2] = L2
+    
+        for i in range(len(positions)):
+            positions[i][0:2] = alphaL**(1/3) * positions[i][0:2]
+            positions[i][2] = alphaN**(1/3) * positions[i][2]
+    
+        #pmesh re-initialize
+        pm_stuff  = initialize_pm(pmesh, config, comm)
+        #(pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
+        #field_list) = pm_stuff
+    return pm_stuff
