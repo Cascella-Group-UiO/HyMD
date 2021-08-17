@@ -53,6 +53,7 @@ class Config:
     barostat: str = None
     tau_p: float = None
     target_pressure: float = None
+    alpha_0: float = None
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -226,6 +227,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "name",
         "n_particles",
         "max_molecule_size",
+        "alpha_0"
     ):
         config_dict[n] = None
 
@@ -272,7 +274,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     if file_path is not None:
         config_dict["file_name"] = file_path
 
-    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure","plot",
+    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure",
         ):
         if n not in config_dict:
             err_str = (
@@ -746,9 +748,14 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                     raise ValueError(err_str)
     return config
 
+def check_alpha_0(config, comm = MPI.COMM_WORLD):
+    if config.alpha_0 is None:
+        config.alpha_0 = 0.9999999
+    return config
+
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
-    config.box_size = np.array(config.box_size)  ######## <<<<< FIX ME
+    config.box_size = np.array(config.box_size)
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
         config = _setup_type_to_name_map(config, names, types, comm=comm)
@@ -767,5 +774,6 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_hamiltonian(config, comm=comm)
     config = check_barostat(config, comm=comm)
     #config = check_tau_p(config, comm=comm)
+    config = check_alpha_0(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     return config

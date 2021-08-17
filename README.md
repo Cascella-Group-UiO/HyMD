@@ -33,6 +33,12 @@ For python3.8
    conda install -c conda-forge "h5py>=2.9=mpi*"
    pip install h5glance
 ```
+Locate installation of `pmesh` and modify `pmesh/pmesh/pmesh.py`>`ParticleMesh.__init__` `pmeshpmesh/pmesh.py`:
+```python
+_cache_args = (tuple(Nmesh),
+                       MPI._addressof(comm), comm.rank, comm.size,
+                       tuple(np), dtype, plan_method, paddedflag)
+```
 
 ## Running HyMD on a Cluster
 ```bash
