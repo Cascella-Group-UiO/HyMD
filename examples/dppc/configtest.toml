@@ -8,7 +8,7 @@ mass = 72.0
 max_molecule_size = 15
 
 [simulation]
-n_steps = 333333
+n_steps = 3
 n_print = 1
 n_flush = 1
 time_step = 0.3

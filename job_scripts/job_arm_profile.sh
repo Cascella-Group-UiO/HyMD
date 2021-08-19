@@ -1,14 +1,27 @@
 #!/bin/bash
+
+##SBATCH --job-name=dppc_npt_profile
+##SBATCH --account=nn4654k
+##SBATCH --time=1-0:0:0
+##SBATCH --nodes=4
+##SBATCH --ntasks-per-node=128
+## ^For Betzy
+
 #SBATCH --job-name=dppc_npt_profile
 #SBATCH --account=nn4654k
-#SBATCH --time=1-0:0:0
+#SBATCH --time=0-1:0:0
 #SBATCH --nodes=4
-#SBATCH --ntasks-per-node=128
-# ^For Betzy
+#SBATCH --ntasks-per-node=16
+#SBATCH --mem-per-cpu=4G
+#SBATCH --qos=devel
+# ^For Saga
 
 set -o errexit # exit on errors
 # arm-map profile module
-module load Arm-Forge/20.1.2
+#module load Arm-Forge/20.1.2 
+#^ For Betzy
+module load Arm-Forge/21.0
+#^For Saga
 module load h5py/2.10.0-foss-2020a-Python-3.8.2
 module load pfft-python/0.1.21-foss-2020a-Python-3.8.2
 set -x
@@ -33,7 +46,8 @@ cp -r ${HYMD_PATH}/hymd/* hymd/.
 
 date
 # run arm-map profile on hymd
-map -profile  mpirun -n ${MPI_NUM_RANKS}        \
+#ddt mpiexec                       \
+map -profile mpirun -n ${MPI_NUM_RANKS}        \
 python3 hymd/main.py config.toml input.h5       \
 --logfile=log.txt --verbose 2 --velocity-output \
 --destdir=RUN_1ns_profile --seed 5

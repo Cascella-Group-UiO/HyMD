@@ -4,19 +4,19 @@ tags = ["water", "solvent", "monoatomic"]
 
 [particles]
 n_particles = 1171
-mass = 18.0
+mass = 72.0
 max_molecule_size = 1
 
 [simulation]
-n_steps = 600
-n_print = 1
-n_flush = 1000
+n_steps = 3333
+n_print = 333
+n_flush = 3
 time_step = 0.3
 box_size = [5.2, 5.2, 5.2]
-integrator = "velocity-verlet"
-#integrator = "respa"
-#respa_inner = 10
-domain_decomposition = 100
+#integrator = "velocity-verlet"
+integrator = "respa"
+respa_inner = 10
+domain_decomposition = 3000
 start_temperature = 300
 cancel_com_momentum = true
 target_temperature = 300
