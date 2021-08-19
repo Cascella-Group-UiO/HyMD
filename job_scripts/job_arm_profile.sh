@@ -49,8 +49,8 @@ date
 #ddt mpiexec                       \
 map -profile mpirun -n ${MPI_NUM_RANKS}        \
 python3 hymd/main.py config.toml input.h5       \
---logfile=log.txt --verbose 2 \
---destdir=RUN_profile --seed 5
+--logfile=log.txt --verbose 2 --velocity-output \
+--destdir=RUN_1ns_profile --seed 5
 
 wait
 mkdir ${SLURM_SUBMIT_DIR}/out_${SLURM_JOB_ID}

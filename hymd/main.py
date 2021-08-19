@@ -636,7 +636,7 @@ if __name__ == "__main__":
                 or np.mod(step, config.n_print) == 0
             ):
                 log_step = True
-            if rank == 0 and log_step and args.verbose > 1:
+            if rank == 0 and log_step and args.verbose > 2:
                 step_t = current_step_time - last_step_time
                 tot_t = current_step_time - loop_start_time
                 avg_t = (current_step_time - loop_start_time) / (step + 1)

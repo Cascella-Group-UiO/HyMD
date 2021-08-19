@@ -23,7 +23,7 @@ def h5md_to_input(h5md_file, old_input, frame, out_path=None, overwrite=False):
     if not 'box' in f_in.keys():
         print('No box information in old_input')
     # Updating box in f_out
-    f_out['box'] = new_values['particles/all/box/edges/value'][frame]
+    #f_out['box'] = new_values['particles/all/box/edges/value'][frame]
 
     in_steps = new_values['particles/all/position/step']
     in_time = new_values['particles/all/position/time']

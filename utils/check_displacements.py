@@ -28,6 +28,7 @@ else:
 
 for frame in frames:
     positions = values['particles/all/position/value'][frame, :, :]
+    #velocities = values['particles/all/velocity/value'][frame, :, :]
     species_type = values['particles/all/species']
     displaced_index = []
     for i in range(len(positions)):
@@ -40,5 +41,5 @@ for frame in frames:
         print('Index of particles displaced to origin: ', displaced_index)
 
 if(flag == False):
-    print('Number of particles displaced origin is 0 in all frames')
+    print('Number of particles displaced to origin is 0 in all frames')
 
