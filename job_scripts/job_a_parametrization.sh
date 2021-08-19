@@ -15,7 +15,7 @@ set -x
 
 export MPI_NUM_RANKS=${SLURM_NTASKS}
 ERR_LOG="srun-${SLURM_JOB_ID}.err"
-
+export OMP_NUM_THREADS=1
 
 # Copy data to /cluster/work/jobs/$SLURM_JOB_ID
 export SCRATCH="/cluster/work/users/samiransen23/${SLURM_JOB_ID}"

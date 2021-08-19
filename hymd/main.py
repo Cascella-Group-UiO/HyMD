@@ -20,6 +20,7 @@ from field import (
     update_field,
     compute_field_and_kinetic_energy,
     domain_decomposition,
+    initialize_pm
 )
 from file_io import distribute_input, OutDataset, store_static, store_data
 from force import compute_bond_forces__fortran as compute_bond_forces
@@ -261,41 +262,6 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
     )
     return velocities
 
-def initialize_pm():
-
-    # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
-    # ragged nested sequences until it is fixed in pmesh
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            action="ignore",
-            category=np.VisibleDeprecationWarning,
-            message=r"Creating an ndarray from ragged nested sequences",
-        )
-        # The first argument of ParticleMesh has to be a tuple
-        pm = pmesh.ParticleMesh(
-            config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
-        )
-
-    phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-    phi_fourier = [
-        pm.create("complex", value=0.0) for _ in range(config.n_types)
-    ]  # noqa: E501
-    force_on_grid = [
-        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
-    ]
-    v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
-    v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-
-    lap_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
-    phi_laplacian = [
-        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
-    ]
-    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
-            phi_laplacian]
-    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
-            phi_laplacian, field_list)
-
-
 if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -390,7 +356,7 @@ if __name__ == "__main__":
         if rank == 0:
             raise NotImplementedError(err_str)
 
-    pm_stuff  = initialize_pm()
+    pm_stuff  = initialize_pm(pmesh, config, comm)
     (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
     field_list) = pm_stuff
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
@@ -827,7 +793,8 @@ if __name__ == "__main__":
         # Berendsen Barostat
         if config.barostat:
             if config.barostat.lower() == 'isotropic':
-                positions = isotropic(
+                pm_stuff = isotropic(
+                     pmesh,
                      phi,
                      hamiltonian,
                      positions,
@@ -845,7 +812,9 @@ if __name__ == "__main__":
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
-                positions = semiisotropic(
+                pm_stuff = semiisotropic(
+                     pmesh,
+                     pm_stuff,
                      phi,
                      hamiltonian,
                      positions,
@@ -862,10 +831,14 @@ if __name__ == "__main__":
                      comm=comm
                 )
 
-            #pmesh repair attempt: recreate all
-            pm_stuff  = initialize_pm()
             (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
             field_list) = pm_stuff
+            if (rank==0):
+                #print('pmesh box:',pm.BoxSize,'\n',
+                #'box:',config.box_size
+                #'positions[-1]:',positions[-1])
+                pass
+
             if not args.disable_field:
                 layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
                 update_field(
