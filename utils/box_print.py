@@ -25,6 +25,11 @@ time = list(f["particles/all/box/edges/time"])[first_frame:last_frame]
 #    print(t,'\t',p)
 #
 
+stillbox=[]
+for i in range(len(x_value)-1):
+    if(x_value[i] == x_value[i+1]):
+        stillbox.append("(%s)"%(str(i)))
+if(stillbox): print("unchanged box frames:",stillbox)
 print('Last frame:', last_frame, '; box_size: [',x_value[-1],' ',y_value[-1],' ',z_value[-1],']')
 
 ##PLOTS
@@ -32,7 +37,7 @@ plt.xlabel("Time (ps)")
 plt.ylabel("Length (nm)")
 plt.plot(time, x_value, label='Box length in x')
 plt.plot(list(time), y_value, label='Box length in y')
-plt.plot(list(time), z_value, label='Box length in z')
+plt.plot(list(time), z_value, marker='o', label='Box length in z')
 plt.legend()
 plt.savefig("box.png")
 plt.show()
