@@ -795,6 +795,7 @@ if __name__ == "__main__":
             if config.barostat.lower() == 'isotropic':
                 pm_stuff = isotropic(
                      pmesh,
+                     pm_stuff,
                      phi,
                      hamiltonian,
                      positions,
