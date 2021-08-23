@@ -26,6 +26,7 @@ time = list(f["particles/all/box/edges/time"])[first_frame:last_frame]
 #
 
 stillbox=[]
+print('x_value:',x_value)
 for i in range(len(x_value)-1):
     if(x_value[i] == x_value[i+1]):
         stillbox.append("(%s)"%(str(i)))
