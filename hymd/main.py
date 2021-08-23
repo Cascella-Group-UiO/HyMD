@@ -360,8 +360,6 @@ if __name__ == "__main__":
     (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
     field_list) = pm_stuff
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
-    #print('Creating phi_fourier ',phi_fourier[0].value[0][0][0:2])
-    #print('Creating phi_fft ',phi_fft[0].value[0][0][0:2])
 
     if config.domain_decomposition:
         dd = domain_decomposition(
@@ -422,6 +420,7 @@ if __name__ == "__main__":
             v_ext,
             phi_fourier,
             v_ext_fourier,
+            config.m,
             compute_potential=True,
         )
         #print('Updating phi_fourier for t=0',phi_fourier[0].value[0][0][0:2])
@@ -691,6 +690,7 @@ if __name__ == "__main__":
                 v_ext,
                 phi_fourier,
                 v_ext_fourier,
+                config.m,
             )
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
@@ -853,6 +853,7 @@ if __name__ == "__main__":
                     v_ext,
                     phi_fourier,
                     v_ext_fourier,
+                    config.m,
                     compute_potential=True,
                 )
                 field_energy, kinetic_energy = compute_field_and_kinetic_energy(
@@ -975,6 +976,7 @@ if __name__ == "__main__":
                 v_ext,
                 phi_fourier,
                 v_ext_fourier,
+                config.m,
                 compute_potential=True,
             )
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(

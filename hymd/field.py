@@ -57,13 +57,14 @@ def update_field(
     v_ext,
     phi_fourier,
     v_ext_fourier,
+    m,
     compute_potential=False,
 ):
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
     for t in range(config.n_types):
-        pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
+        pm.paint(positions[types == t],mass=m[t], layout=layouts[t], out=phi[t])
         phi[t] /= volume_per_cell
         phi[t].r2c(out=phi_fourier[t])
         phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)

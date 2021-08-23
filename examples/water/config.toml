@@ -8,9 +8,9 @@ mass = 72.0
 max_molecule_size = 1
 
 [simulation]
-n_steps = 3333
-n_print = 333
-n_flush = 3
+n_steps = 3
+n_print = 1 
+n_flush = 1
 time_step = 0.3
 box_size = [5.2, 5.2, 5.2]
 #integrator = "velocity-verlet"
@@ -35,6 +35,7 @@ kappa = 0.05
 sigma = 0.238
 rho_0 = 8.33
 a = 9.67
+m = [2]
 chi = [
   [["A", "B"], [0]],
 ]

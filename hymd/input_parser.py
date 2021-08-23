@@ -54,6 +54,7 @@ class Config:
     tau_p: float = None
     target_pressure: float = None
     alpha_0: float = None
+    m: List[float] = None
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -232,7 +233,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "chi", "tags"):
+    for n in ("bonds", "angle_bonds", "chi", "tags","m"):
         config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
