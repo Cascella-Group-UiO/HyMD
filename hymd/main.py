@@ -704,8 +704,7 @@ if __name__ == "__main__":
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
         if protein_flag:
-            dipole_positions = np.ascontiguousarray(dipole_positions)
-            dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3), order="C")
+            dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3))
             dipole_forces = np.reshape(dipole_forces, (4 * n_tors, 3))
 
             layout_dipoles = pm.decompose(dipole_positions)
@@ -722,10 +721,10 @@ if __name__ == "__main__":
                 config,
             )
 
-            dipole_positions = np.asfortranarray(dipole_positions)
-            dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3), order="F")
+            dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3))
             dipole_forces = np.reshape(dipole_forces, (n_tors, 4, 3))
 
+            dipole_positions = np.asfortranarray(dipole_positions)
             dipole_forces_redistribution(
                 reconstructed_forces,
                 dipole_forces,
@@ -987,10 +986,7 @@ if __name__ == "__main__":
                 )
 
             if protein_flag:
-                dipole_positions = np.ascontiguousarray(dipole_positions)
-                dipole_positions = np.reshape(
-                    dipole_positions, (4 * n_tors, 3), order="C"
-                )
+                dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3))
                 dipole_forces = np.reshape(dipole_forces, (4 * n_tors, 3))
 
                 layout_dipoles = pm.decompose(dipole_positions)
@@ -1007,11 +1003,10 @@ if __name__ == "__main__":
                     config,
                 )
 
+                dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3))
+                dipole_forces = np.reshape(dipole_forces, (n_tors, 4, 3))
+
                 dipole_positions = np.asfortranarray(dipole_positions)
-                dipole_positions = np.reshape(
-                    dipole_positions, (n_tors, 4, 3), order="F"
-                )
-                dipole_forces = np.reshape(dipole_forces, (n_tors, 4, 3), order="F")
                 dipole_forces_redistribution(
                     reconstructed_forces,
                     dipole_forces,
