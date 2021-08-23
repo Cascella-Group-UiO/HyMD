@@ -12,17 +12,17 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
 
     real(4), dimension(:,:), intent(in out) :: f
     real(4), dimension(:,:), intent(in)     :: r
-    real(4), dimension(:),   intent(in)     :: box
+    real(8), dimension(:),   intent(in)     :: box
     integer, dimension(:),   intent(in)     :: i
     integer, dimension(:),   intent(in)     :: j
-    real(4), dimension(:),   intent(in)     :: r0
-    real(4), dimension(:),   intent(in)     :: k
-    real(4),                 intent(out)    :: energy
+    real(8), dimension(:),   intent(in)     :: r0
+    real(8), dimension(:),   intent(in)     :: k
+    real(8),                 intent(out)    :: energy
 
     integer :: ind, ii, jj
-    real(4) :: rij, rij_x, rij_y, rij_z
-    real(4) :: df
-    real(4) :: bx, by, bz
+    real(8) :: rij, rij_x, rij_y, rij_z
+    real(8) :: df
+    real(8) :: bx, by, bz
 
     energy = 0.0d00
     f = 0.0d00 ! Set all array elements
