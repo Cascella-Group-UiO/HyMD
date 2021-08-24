@@ -27,6 +27,7 @@ def PLOT_aVSdensity(sigma, a, folder_path):
             N = len(list(f["particles/all/species"]))
             V[ii,i] = np.prod(f["particles/all/box/edges/value"][-1])
             density[ii,i] = N/V[ii,i] * 0.11955 #gm/cc
+            f.close()
 
     ##PLOTS
     [float(i) for i in a]
@@ -43,23 +44,35 @@ def PLOT_aVSdensity(sigma, a, folder_path):
 
 def PLOT_mVSvolume(m, folder_path):
     '''
-    folder_path:   path to folder containing sigma and a valued folders.
+    This function plots a list of chosen density factors m versus
+    the equilibrium volume under constant ext pressure.
+    folder_path:   path to folder containing m valued folders.
                    Example: /Users/samiransen23/out
                    >ls /Users/samiransen23/out
                    m=1.0 m=1.1 m=1.2 m=1.3
                    m=1.0 should contain the trajectory sim.h5
     '''
     volume = np.zeros(len(m))
+    density = np.zeros(len(m))
     for ii in range(len(m)):
         file_path = os.path.abspath(folder_path+"/m="+m[ii]+"/sim.h5")
         f = h5py.File(file_path, "r")
         volume[ii] = np.prod(f["particles/all/box/edges/value"][-1])
+        N = len(list(f["particles/all/species"]))
+        density[ii] = N/volume[ii] * 0.11955 #gm/cc
+        f.close()
+
     ##PLOTS
     [float(i) for i in m]
     print('m:',m)
     plt.xlabel("m")
     plt.ylabel("volume (nm^3)")
     plt.plot(m, volume, marker='o', label="m vs volume")
+    plt.legend()
+    plt.show()
+    plt.xlabel("m")
+    plt.ylabel("density (gm/cm^3)")
+    plt.plot(m, density, marker='o', label="m vs density")
     plt.legend()
     plt.show()
 
