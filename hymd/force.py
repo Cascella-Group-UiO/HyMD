@@ -397,6 +397,7 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
 
 def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
+    # Fourier series
     f_dihedrals.fill(0.0)
     energy = 0.0
 
@@ -427,8 +428,8 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         df = 0
 
         for m in range(len(coeff)):
-            energy += coeff[m] * (1 + np.cos(m * phi + phase[m]))
-            df += m * coeff[m] * np.sin(m * phi + phase[m])
+            energy += coeff[m] * (1 + np.cos(m * phi - phase[m]))
+            df += m * coeff[m] * np.sin(m * phi - phase[m])
 
         force_on_a = df * gn * v / vv
         force_on_d = df * gn * w / ww
