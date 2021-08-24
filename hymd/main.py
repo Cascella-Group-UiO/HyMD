@@ -379,9 +379,6 @@ if __name__ == "__main__":
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
-    # TODO: Get box_size from h5, not from toml?
-    positions = np.mod(positions, config.box_size[None, :])
-
     bond_forces = np.zeros_like(positions)
     angle_forces = np.zeros_like(positions)
     dihedral_forces = np.zeros_like(positions)
@@ -389,6 +386,9 @@ if __name__ == "__main__":
     reconstructed_forces = np.zeros_like(positions)
     field_forces = np.zeros_like(positions)
     elec_forces = np.zeros_like(positions)
+
+    # TODO: Get box_size from h5, not from toml?
+    positions = np.mod(positions, config.box_size[None, :])
 
     # Initialize dipoles (for DD), populate them if protein_flag = True
     dipole_flag = 1  # Only calculate dipole in the outer Respa step
@@ -650,15 +650,14 @@ if __name__ == "__main__":
                     )
                     exec(_cmd_receive_dd)
 
-                dipole_positions = np.asfortranarray(dipole_positions)
-                trans_matrices = np.asfortranarray(trans_matrices)
-
         positions = np.asfortranarray(positions)
         velocities = np.asfortranarray(velocities)
         bond_forces = np.asfortranarray(bond_forces)
         angle_forces = np.asfortranarray(angle_forces)
         dihedral_forces = np.asfortranarray(dihedral_forces)
         bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
+        dipole_positions = np.asfortranarray(dipole_positions)
+        trans_matrices = np.asfortranarray(trans_matrices)
 
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
