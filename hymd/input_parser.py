@@ -24,7 +24,7 @@ class Config:
     rho_0: float
     a: float
     pressure: bool
-    plot: bool
+    plot: bool = False
 
     n_print: int = None
     tau: float = None
@@ -235,6 +235,9 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     for n in ("bonds", "angle_bonds", "chi", "tags"):
         config_dict[n] = []
 
+    # Defaults: bool
+    config_dict["pressure"] = False
+
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
     # any).
     for k, v in parsed_toml.items():
@@ -274,7 +277,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     if file_path is not None:
         config_dict["file_name"] = file_path
 
-    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure",
+    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a",
         ):
         if n not in config_dict:
             err_str = (
@@ -698,6 +701,21 @@ def check_barostat(config, comm=MPI.COMM_WORLD):
         Logger.rank0.log(logging.ERROR, err_str)
         if comm.Get_rank() == 0:
             raise TypeError(err_str)
+    if config.barostat is not None:
+        if config.target_pressure is None:
+            config.target_pressure = 1.0 #bar
+            warn_str = "barostat specified but no target_pressure, defaulting to 1.0 bar"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+        if config.tau_p is None:
+            if config.tau <= 0.1:
+                config.tau_p = config.tau * 10.0
+            else:
+                config.tau_p = 1.0
+            warn_str = "barostat specified but no tau_p, defaulting to "+str(config.tau_p)
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+
     return config
 
 
@@ -747,6 +765,7 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                     )
                     raise ValueError(err_str)
     return config
+
 
 def check_alpha_0(config, comm = MPI.COMM_WORLD):
     if config.alpha_0 is None:
