@@ -695,6 +695,8 @@ def check_name(config, comm=MPI.COMM_WORLD):
     return config
 
 def check_barostat(config, comm=MPI.COMM_WORLD):
+    if comm.Get_rank() == 0:
+        print('config.tau_p:',config.tau_p)
     if config.barostat is None and (config.tau_p is not None or config.target_pressure is not None):
         err_str = "barostat not specified but config.tau_p "\
                   "or config.target_pressure specified, cannot start simulation {config.barostat}"
@@ -702,6 +704,11 @@ def check_barostat(config, comm=MPI.COMM_WORLD):
         if comm.Get_rank() == 0:
             raise TypeError(err_str)
     if config.barostat is not None:
+        if (config.barostat != 'isotropic' and config.barostat != 'semiisotropic'):
+            err_str = "barostat option not recognised. Valid options: isotropic, semiisotropic"
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise TypeError(err_str)
         if config.target_pressure is None:
             config.target_pressure = 1.0 #bar
             warn_str = "barostat specified but no target_pressure, defaulting to 1.0 bar"
