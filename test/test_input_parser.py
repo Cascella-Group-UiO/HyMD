@@ -10,7 +10,8 @@ from input_parser import (Config, read_config_toml, parse_config_toml,
                           check_bonds, check_angles, check_chi,
                           check_box_size, check_integrator,
                           convert_CONF_to_config,
-                          check_thermostat_coupling_groups)
+                          check_thermostat_coupling_groups,
+                          check_cancel_com_momentum)
 
 
 def test_input_parser_read_config_toml(config_toml):
@@ -471,7 +472,6 @@ def test_input_parser_thermostat_coupling_groups(config_toml, caplog):
         assert all([(s in log) for s in ('species C', 'not specified')])
 
     message = str(recorded_error.value)
-    print(message)
     assert all([(s in message) for s in ('species C', 'not specified')])
     caplog.clear()
 
@@ -507,4 +507,26 @@ def test_input_parser_thermostat_coupling_groups(config_toml, caplog):
     message = str(recorded_error.value)
     print(message)
     assert all([(s in message) for s in ('species P', 'specified', 'multiple')])
+    caplog.clear()
+
+
+def test_input_parser_check_cancel_com_momentum(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    for t in (1.1, "hello", MPI.COMM_WORLD, config_toml, [1],):
+        config.cancel_com_momentum = t
+        with pytest.raises(ValueError) as recorded_error:
+            _ = check_cancel_com_momentum(config)
+            log = caplog.text
+            assert all([(s in log) for s in ('not interpret', 'an integer')])
+
+        message = str(recorded_error.value)
+        assert all([(s in message) for s in ('not interpret', 'an integer')])
+        caplog.clear()
+
+    for t in (-1, -100, 0, False):
+        config.cancel_com_momentum = t
+        config_ = check_cancel_com_momentum(config)
+        assert config_.cancel_com_momentum is False
     caplog.clear()
