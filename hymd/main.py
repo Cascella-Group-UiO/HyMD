@@ -1125,6 +1125,11 @@ if __name__ == "__main__":
             # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
             csvr_thermostat(velocities, names, config, comm=comm)
 
+        # Remove total linear momentum
+        if config.cancel_com_momentum:
+            if np.mod(step, config.cancel_com_momentum) == 0:
+                velocities = cancel_com_momentum(velocities, config, comm=comm)
+
         # Print trajectory
         if config.n_print > 0:
             if np.mod(step, config.n_print) == 0 and step != 0:
