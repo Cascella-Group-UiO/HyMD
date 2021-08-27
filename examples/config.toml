@@ -23,7 +23,7 @@ n_steps = 5000
 n_print = 100
 # Frequency of requesting that the HDF5 library flush the file output buffers
 # to disk after in number of n_print timesteps.
-n_flush = 1000
+n_flush = 10
 # Time step used in the simulation in [picoseconds].
 time_step = 0.03
 # Simulation box size in [nanometers].
@@ -39,8 +39,10 @@ respa_inner = 5
 # decomposition.
 domain_decomposition = false
 # Remove linear center of mass momentum from the system before integration
-# starts.
-cancel_com_momentum = true
+# starts and at every x steps subsequently. If 'true', the linear momentum is
+# removed before starting. Ommit or set to 'false' or 0 to never remove the
+# center of mass momentum.
+cancel_com_momentum = 20
 # Starting temperature to generate before simulation begins in [kelvin]. Ommit
 # or set to 'false' to not change the temperature before starting.
 start_temperature = false
