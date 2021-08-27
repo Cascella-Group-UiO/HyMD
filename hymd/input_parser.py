@@ -43,7 +43,7 @@ class Config:
     thermostat_work: float = 0.0
     thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
-    cancel_com_momentum: bool = False
+    cancel_com_momentum: Union[int, bool] = False
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -718,8 +718,21 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
     return config
 
 
+def check_cancel_com_momentum(config, comm=MPI.COMM_WORLD):
+    if isinstance(config.cancel_com_momentum, int):
+        if config.cancel_com_momentum == 0 or config.cancel_com_momentum < 0:
+            config.cancel_com_momentum = False
+    elif not isinstance(config.cancel_com_momentum, bool):
+        err_str = (
+            f"Could not interpret {config.cancel_com_momentum} as an integer "
+            f"or boolean."
+        )
+        raise ValueError(err_str)
+    return config
+
+
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
-    config.box_size = np.array(config.box_size)  ######## <<<<< FIX ME
+    config.box_size = np.array(config.box_size)
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
         config = _setup_type_to_name_map(config, names, types, comm=comm)
@@ -737,4 +750,5 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_bonds(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
+    config = check_cancel_com_momentum(config, comm=comm)
     return config
