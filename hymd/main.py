@@ -621,11 +621,13 @@ if __name__ == "__main__":
                 # 4 cause we need to take into account the last angle in the molecule
                 dipole_charges = np.array(
                     [
-                        2 * [0.25, -0.25] if bonds_4_type[i] == 1 else 2 * [0.0, 0.0]
+                        [0.25, -0.25, 0.0, 0.0]
+                        if bonds_4_type[i] == 1
+                        else 2 * [0.0, 0.0]
                         for i in range(n_tors)
                     ],
                     dtype=dtype,
-                ).flatten()
+                )
                 dipole_forces = np.zeros_like(dipole_positions)
                 trans_matrices = np.zeros(shape=(n_tors, 6, 3, 3), dtype=dtype)
                 # Fields
@@ -703,6 +705,10 @@ if __name__ == "__main__":
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
         if protein_flag:
+            # Fix last dipole in molecule and flatten charges array
+            dipole_charges[np.where(bonds_4_last == 1)] = 2 * [0.25, -0.25]
+            dipole_charges = dipole_charges.flatten()
+
             dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3))
             dipole_forces = np.reshape(dipole_forces, (4 * n_tors, 3))
 
