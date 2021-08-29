@@ -605,7 +605,7 @@ if __name__ == "__main__":
                 or np.mod(step, config.n_print) == 0
             ):
                 log_step = True
-            if rank == 0 and log_step and args.verbose > 2:
+            if rank == 0 and log_step and args.verbose > 1:
                 step_t = current_step_time - last_step_time
                 tot_t = current_step_time - loop_start_time
                 avg_t = (current_step_time - loop_start_time) / (step + 1)
@@ -839,44 +839,39 @@ if __name__ == "__main__":
 
             (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
             field_list) = pm_stuff
-            if (rank==0):
-                #print('pmesh box:',pm.BoxSize,'\n',
-                #'box:',config.box_size
-                #'positions[-1]:',positions[-1])
-                pass
 
-            if not args.disable_field:
-                layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
-                update_field(
-                    phi,
-                    layouts,
-                    force_on_grid,
-                    hamiltonian,
-                    pm,
-                    positions,
-                    types,
-                    config,
-                    v_ext,
-                    phi_fourier,
-                    v_ext_fourier,
-                    compute_potential=True,
-                )
-                field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-                    phi,
-                    velocities,
-                    hamiltonian,
-                    positions,
-                    types,
-                    v_ext,
-                    config,
-                    layouts,
-                    comm=comm,
-                )
-                compute_field_force(
-                    layouts, positions, force_on_grid, field_forces, types, config.n_types
-                )
-            else:
-                kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
+#            if not args.disable_field:
+#                layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
+#                update_field(
+#                    phi,
+#                    layouts,
+#                    force_on_grid,
+#                    hamiltonian,
+#                    pm,
+#                    positions,
+#                    types,
+#                    config,
+#                    v_ext,
+#                    phi_fourier,
+#                    v_ext_fourier,
+#                    compute_potential=True,
+#                )
+#                field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+#                    phi,
+#                    velocities,
+#                    hamiltonian,
+#                    positions,
+#                    types,
+#                    v_ext,
+#                    config,
+#                    layouts,
+#                    comm=comm,
+#                )
+#                compute_field_force(
+#                    layouts, positions, force_on_grid, field_forces, types, config.n_types
+#                )
+#            else:
+#                kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         
         # Print trajectory
         if config.n_print > 0:
