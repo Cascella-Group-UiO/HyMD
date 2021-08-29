@@ -54,6 +54,7 @@ class Config:
     tau_p: float = None
     target_pressure: float = None
     alpha_0: float = None
+    n_b: int = None
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -227,7 +228,8 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "name",
         "n_particles",
         "max_molecule_size",
-        "alpha_0"
+        "alpha_0",
+        "n_b"
     ):
         config_dict[n] = None
 
@@ -695,8 +697,6 @@ def check_name(config, comm=MPI.COMM_WORLD):
     return config
 
 def check_barostat(config, comm=MPI.COMM_WORLD):
-    if comm.Get_rank() == 0:
-        print('config.tau_p:',config.tau_p)
     if config.barostat is None and (config.tau_p is not None or config.target_pressure is not None):
         err_str = "barostat not specified but config.tau_p "\
                   "or config.target_pressure specified, cannot start simulation {config.barostat}"
@@ -723,16 +723,6 @@ def check_barostat(config, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.WARNING, warn_str)
             if comm.Get_rank() == 0: warnings.warn(warn_str)
 
-    return config
-
-
-def check_tau_p(config, comm=MPI.COMM_WORLD):
-    if config.tau_p is None:
-       warn_str = "target_pressure specified but no tau_p, defaulting to 1.0"
-       config.tau_p = 1.0
-       Logger.rank0.log(logging.WARNING, warn_str)
-       if comm.Get_rank() == 0:
-           warnings.warn(warn_str)
     return config
 
 def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
@@ -779,6 +769,16 @@ def check_alpha_0(config, comm = MPI.COMM_WORLD):
         config.alpha_0 = 0.9999999
     return config
 
+def check_n_b(config, comm = MPI.COMM_WORLD):
+    if config.n_b is None:
+        warn_str = (
+        f"config.n_b not specified."
+        "Defaulting to config.n_steps = %s"%(str(config.n_steps))
+        )
+        config.n_b = config.n_steps
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0: warnings.warn(warn_str)
+    return config
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config.box_size = np.array(config.box_size)
@@ -799,7 +799,7 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_bonds(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
     config = check_barostat(config, comm=comm)
-    #config = check_tau_p(config, comm=comm)
     config = check_alpha_0(config, comm=comm)
+    config = check_n_b(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     return config

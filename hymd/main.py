@@ -536,6 +536,7 @@ if __name__ == "__main__":
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         if config.pressure:
+            eps = np.zeros(2)
             pressure = comp_pressure(
                     phi,
                     hamiltonian,
@@ -550,8 +551,10 @@ if __name__ == "__main__":
                     positions,
                     bond_pr_,
                     angle_pr_,
+                    eps,
                     comm=comm
             )
+
             #if rank ==0 : print(pressure[9:12])
             #print('phi_fft after pressure call: phi_fft[d=0]',phi_fft[0].value[0][0][0:2])
         else:
@@ -829,6 +832,8 @@ if __name__ == "__main__":
                      args,
                      bond_pr_,
                      angle_pr_,
+                     eps,
+                     step,
                      comm=comm
                 )
 
@@ -916,6 +921,7 @@ if __name__ == "__main__":
                             positions,
                             bond_pr_,
                             angle_pr_,
+                            eps,
                             comm=comm
                     )
                 else:
@@ -1010,6 +1016,7 @@ if __name__ == "__main__":
                     positions,
                     bond_pr_,
                     angle_pr_,
+                    eps,
                     comm=comm
             )
         else:

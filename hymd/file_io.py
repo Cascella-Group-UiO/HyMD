@@ -112,7 +112,7 @@ def store_static(
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    box_edges = box.create_group("edges")
+    #box_edges = box.create_group("edges")
 
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
@@ -249,15 +249,15 @@ def store_static(
     ) = setup_time_dependent_element(
         "pressure", h5md.observables, n_frames, (18,), "float32", units="Bar"
     )
-    #(
-    #    _,
-    #    h5md.box_step,
-    #    h5md.box_time,
-    #    h5md.box,
-    #) = setup_time_dependent_element(
-    #    "edges", box, n_frames, (3,), "float32", units="nm"
-    #)
-    h5md.box_value = box_edges.create_dataset("value", (n_frames, 3, 3), "float32")
+    (
+        _,
+        h5md.box_step,
+        h5md.box_time,
+        h5md.box_value,
+    ) = setup_time_dependent_element(
+        "edges", box, n_frames, (3,3), "float32", units="nm"
+    )
+    #h5md.box_value = box_edges.create_dataset("value", (n_frames, 3, 3), "float32")
 
 
     ind_sort = np.argsort(indices)
@@ -334,7 +334,7 @@ def store_data(
         h5md.total_momentum_step,
         h5md.temperature_step,
         h5md.pressure_step,
-        #h5md.box_step,
+        h5md.box_step,
         h5md.thermostat_work_step
     ):
         dset[frame] = step
@@ -350,7 +350,7 @@ def store_data(
         h5md.total_momentum_time,
         h5md.temperature_time,
         h5md.pressure_time,
-        #h5md.box_time,
+        h5md.box_time,
         h5md.thermostat_work_time
     ):
         dset[frame] = step * time_step

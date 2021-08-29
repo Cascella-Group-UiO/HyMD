@@ -54,17 +54,18 @@ def PLOT_mVSvolume(m, folder_path):
     '''
     volume = np.zeros(len(m))
     density = np.zeros(len(m))
+    areapl = np.zeros(len(m))
     for ii in range(len(m)):
         file_path = os.path.abspath(folder_path+"/m="+m[ii]+"/sim.h5")
         f = h5py.File(file_path, "r")
         volume[ii] = np.prod(f["particles/all/box/edges/value"][-1])
         N = len(list(f["particles/all/species"]))
         density[ii] = N/volume[ii] * 0.11955 #gm/cc
+        areapl[ii] = np.prod(f["particles/all/box/edges/value"][-1][0:2])/264
         f.close()
 
     ##PLOTS
     [float(i) for i in m]
-    print('m:',m)
     plt.xlabel("m")
     plt.ylabel("volume (nm^3)")
     plt.plot(m, volume, marker='o', label="m vs volume")
@@ -73,6 +74,11 @@ def PLOT_mVSvolume(m, folder_path):
     plt.xlabel("m")
     plt.ylabel("density (gm/cm^3)")
     plt.plot(m, density, marker='o', label="m vs density")
+    plt.legend()
+    plt.show()
+    plt.xlabel("m")
+    plt.ylabel("area per lipid (nm^2)")
+    plt.plot(m, areapl, marker='o', label="m vs area per lipid")
     plt.legend()
     plt.show()
 

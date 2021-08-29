@@ -3,6 +3,7 @@ import numpy as np
 from mpi4py import MPI
 from logger import Logger
 import sympy
+from decimal import Decimal
 
 def plot(
         function, phi, hamiltonian, config, phi_laplacian, V_bar_tuple, title, *args
@@ -262,6 +263,7 @@ def comp_pressure(
         positions,
         bond_pr,
         angle_pr,
+        eps,
         comm=MPI.COMM_WORLD
 ):
     rank = comm.Get_rank()
@@ -432,4 +434,17 @@ def comp_pressure(
     ]
 
     return_value = [comm.allreduce(_, MPI.SUM) for _ in return_value]
+    #Total pressure across all ranks
+
+    if config.barostat:
+        #L: Lateral; N: Normal
+        [PL, PN] = [0, 0]
+        PL = (return_value[-3] + return_value[-2])/2
+        PN = return_value[-1]
+        beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
+        eps_alpha = Decimal('%.0E'%abs(1 - config.alpha_0))
+        alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
+        alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
+        eps[0] = abs(1-alphaL); eps[1] = abs(1-alphaN)
+
     return return_value
