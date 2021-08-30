@@ -20,7 +20,7 @@ mass = 72.0
 # Number of total time steps in the simulation.
 n_steps = 1000
 # Frequency of trajectory/energy file output in time steps.
-n_print = 10
+n_print = 50
 # Frequency of requesting that the HDF5 library flush the file output buffers
 # to disk after in number of n_print timesteps.
 n_flush = 10000
@@ -40,7 +40,7 @@ respa_inner = 5
 domain_decomposition = false
 # Remove linear center of mass momentum from the system before integration
 # starts.
-cancel_com_momentum = true
+cancel_com_momentum = 51
 # Starting temperature to generate before simulation begins in [kelvin]. Ommit
 # or set to 'false' to not change the temperature before starting.
 start_temperature = 300
