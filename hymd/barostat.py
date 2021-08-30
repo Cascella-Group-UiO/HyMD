@@ -90,7 +90,6 @@ def semiisotropic(
     rank = comm.Get_rank()
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
     eps_alpha = Decimal('%.0E'%abs(1 - config.alpha_0))
-    #if rank==0: print('eps:',eps,'condition:',eps[0]>eps_alpha or eps[1]>eps_alpha)
     if(eps[0]>eps_alpha or eps[1]>eps_alpha or np.mod(step, config.n_b)==0):
         #compute pressure
         pressure = comp_pressure(

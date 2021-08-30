@@ -334,6 +334,7 @@ if __name__ == "__main__":
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
+    eps = np.zeros(2)
 
     field_energy = 0.0
     bond_energy = 0.0
@@ -358,7 +359,7 @@ if __name__ == "__main__":
 
     pm_stuff  = initialize_pm(pmesh, config, comm)
     (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
-    field_list) = pm_stuff
+    ) = pm_stuff
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
     #print('Creating phi_fourier ',phi_fourier[0].value[0][0][0:2])
     #print('Creating phi_fft ',phi_fft[0].value[0][0][0:2])
@@ -536,7 +537,6 @@ if __name__ == "__main__":
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         if config.pressure:
-            eps = np.zeros(2)
             pressure = comp_pressure(
                     phi,
                     hamiltonian,
@@ -838,46 +838,29 @@ if __name__ == "__main__":
                 )
 
             (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
-            field_list) = pm_stuff
+            ) = pm_stuff
 
-#            if not args.disable_field:
-#                layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
-#                update_field(
-#                    phi,
-#                    layouts,
-#                    force_on_grid,
-#                    hamiltonian,
-#                    pm,
-#                    positions,
-#                    types,
-#                    config,
-#                    v_ext,
-#                    phi_fourier,
-#                    v_ext_fourier,
-#                    compute_potential=True,
-#                )
-#                field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-#                    phi,
-#                    velocities,
-#                    hamiltonian,
-#                    positions,
-#                    types,
-#                    v_ext,
-#                    config,
-#                    layouts,
-#                    comm=comm,
-#                )
-#                compute_field_force(
-#                    layouts, positions, force_on_grid, field_forces, types, config.n_types
-#                )
-#            else:
-#                kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         
         # Print trajectory
         if config.n_print > 0:
             if np.mod(step, config.n_print) == 0 and step != 0:
                 frame = step // config.n_print
                 if not args.disable_field:
+                    layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
+                    update_field(
+                        phi,
+                        layouts,
+                        force_on_grid,
+                        hamiltonian,
+                        pm,
+                        positions,
+                        types,
+                        config,
+                        v_ext,
+                        phi_fourier,
+                        v_ext_fourier,
+                        compute_potential=True,
+                    )
                     (
                         field_energy,
                         kinetic_energy,

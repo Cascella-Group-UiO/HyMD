@@ -33,10 +33,8 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     phi_laplacian = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
-    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
-            phi_laplacian]
     return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
-            phi_laplacian, field_list)
+            phi_laplacian)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     for t in range(n_types):
