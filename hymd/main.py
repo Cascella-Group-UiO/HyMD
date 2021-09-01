@@ -796,7 +796,7 @@ if __name__ == "__main__":
         # Berendsen Barostat
         if config.barostat:
             if config.barostat.lower() == 'isotropic':
-                pm_stuff = isotropic(
+                pm_stuff, change = isotropic(
                      pmesh,
                      pm_stuff,
                      phi,
@@ -816,7 +816,7 @@ if __name__ == "__main__":
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
-                pm_stuff = semiisotropic(
+                pm_stuff, change = semiisotropic(
                      pmesh,
                      pm_stuff,
                      phi,
@@ -836,9 +836,28 @@ if __name__ == "__main__":
                      step,
                      comm=comm
                 )
-
-            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
-            ) = pm_stuff
+            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian
+                   ) = pm_stuff
+            if (change and not args.disable_field):
+                layouts = [
+                    pm.decompose(positions[types == t]) for t in range(config.n_types)
+                ]
+                update_field(
+                    phi,
+                    layouts,
+                    force_on_grid,
+                    hamiltonian,
+                    pm,
+                    positions,
+                    types,
+                    config,
+                    v_ext,
+                    phi_fourier,
+                    v_ext_fourier,
+                )
+                compute_field_force(
+                    layouts, positions, force_on_grid, field_forces, types, config.n_types
+                )
 
         
         # Print trajectory
