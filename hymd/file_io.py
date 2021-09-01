@@ -325,16 +325,16 @@ def store_static(
 
     # # VMD-h5mdplugin maximum name/type name length is 16 characters (for
     # # whatever reason [VMD internals?]).
-    name_dataset = vmd_group.create_dataset("name", (config.n_types,), "S16")
-    type_dataset = vmd_group.create_dataset("type", (config.n_types,), "S16")
+    # name_dataset = vmd_group.create_dataset("name", (config.n_types,), "S16")
+    # type_dataset = vmd_group.create_dataset("type", (config.n_types,), "S16")
 
     # Change this
-    for i, n in config.type_to_name_map.items():
-        name_dataset[i] = np.string_(n[:16])
-        if n == "W":
-            type_dataset[i] = np.string_("solvent")
-        else:
-            type_dataset[i] = np.string_("membrane")
+    # for i, n in config.type_to_name_map.items():
+    #     name_dataset[i] = np.string_(n[:16])
+    #     if n == "W":
+    #         type_dataset[i] = np.string_("solvent")
+    #     else:
+    #         type_dataset[i] = np.string_("membrane")
 
     # This bonds implementation causes problems with the VMD-h5md plugin
     # total_bonds = comm.allreduce(len(bonds_2_atom1), MPI.SUM)
@@ -463,23 +463,23 @@ def store_data(
     h5md.temperature[frame] = temperature
     h5md.thermostat_work[frame] = config.thermostat_work
 
-    header_ = 14 * "{:>15}"
+    header_ = 14 * "{:>13}"
     fmt_ = [
         "step",
         "time",
-        "temperature",
-        "total E",
-        "kinetic E",
-        "potential E",
+        "temp",
+        "tot E",
+        "kin E",
+        "pot E",
         "field E",
-        # "field q E",  # <-------- xinmeng
+        # "field q E",
         "bond E",
-        "angle E",
-        "dihedral E",
-        "total Px",
-        "total Py",
-        "total Pz",
-        "ΔH tilde" if config.target_temperature else "ΔE",
+        "ang E",
+        "dih E",
+        "Px",
+        "Py",
+        "Pz",
+        "ΔH" if config.target_temperature else "ΔE",
     ]
     if config.initial_energy is None:
         fmt_[-1] = ""
@@ -500,7 +500,7 @@ def store_data(
         H_tilde = 0.0
 
     header = header_.format(*fmt_)
-    data_fmt = f'{"{:15}"}{13 * "{:15.8g}" }'
+    data_fmt = f'{"{:13}"}{13 * "{:13.5g}" }'
     data = data_fmt.format(
         step,
         time_step * step,
@@ -509,7 +509,7 @@ def store_data(
         kinetic_energy / divide_by,
         potential_energy / divide_by,
         field_energy / divide_by,
-        # field_q_energy / divide_by,  # <--------
+        # field_q_energy / divide_by,
         bond2_energy / divide_by,
         bond3_energy / divide_by,
         bond4_energy / divide_by,
