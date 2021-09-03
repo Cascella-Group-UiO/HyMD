@@ -790,7 +790,7 @@ if __name__ == "__main__":
                 )
 
         # Thermostat
-        if config.target_temperature:
+        if config.target_temperature and np.mod(step, config.n_b)==0:
             csvr_thermostat(velocities, names, config, comm=comm)
 
         # Berendsen Barostat
