@@ -71,7 +71,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     ! coefficients with different sizes might be problematic
     do i = 0, size(c_v) - 1
       energy = energy + c_v(i + 1) * (1.d0 + cos(i * phi - d_v(i + 1)))
-      df_dih = df_dih + i * c_v(i + 1) * sin(i * phi - d_v(i + 1))
+      df_dih = df_dih - i * c_v(i + 1) * sin(i * phi - d_v(i + 1))
     end do
 
     if (dtype(ind) == 1) then
@@ -91,36 +91,39 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
       df_dih = df_dih + df_cbt
 
       ! Angle forces
-      force(aa, :) = force(aa, :) + fa
-      force(bb, :) = force(bb, :) + fb
-      force(cc, :) = force(cc, :) + fc
+      force(aa, :) = force(aa, :) - fa
+      force(bb, :) = force(bb, :) - fb
+      force(cc, :) = force(cc, :) - fc
 
       if (bb_index(ind) == 1) then
-        ! calculate last angle
+        ! calculate dihedral from last angle
         call reconstruct( &
           g, r(cc, :), h, box, c_k, d_k, phi, dipole_flag, &
           energy_cbt, df_cbt, fb, fc, fd, dipoles(ind, 3:4, :), trans_matrix(ind, 4:6, :, :))
 
         energy = energy + energy_cbt
+        df_dih = df_dih + df_cbt
 
         ! Angle forces
-        force(bb, :) = force(bb, :) + fb
-        force(cc, :) = force(cc, :) + fc
-        force(dd, :) = force(dd, :) + fd
+        force(bb, :) = force(bb, :) - fb
+        force(cc, :) = force(cc, :) - fc
+        force(dd, :) = force(dd, :) - fd
       end if
     end if
 
     ! Dihedral forces
     sc = v * fg / (vv * g_norm) - w * hg / (ww * g_norm)
 
-    fa = df_dih * g_norm * v / vv
-    fd = df_dih * g_norm * w / ww
-    fb = df_dih * sc + fa
-    fc = df_dih * sc + fd
+    fa = -df_dih * g_norm * v / vv
+    fd =  df_dih * g_norm * w / ww
+
+    fb =  df_dih * sc - fa
+    fc = -df_dih * sc - fd
     
+    ! Subtract negative gradient
     force(aa, :) = force(aa, :) - fa
-    force(bb, :) = force(bb, :) + fb
+    force(bb, :) = force(bb, :) - fb
     force(cc, :) = force(cc, :) - fc
-    force(dd, :) = force(dd, :) + fd
+    force(dd, :) = force(dd, :) - fd
   end do
 end subroutine cdf
