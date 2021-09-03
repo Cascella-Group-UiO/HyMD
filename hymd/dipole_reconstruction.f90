@@ -12,15 +12,15 @@ function cross(vector1, vector2) result(vector3)
 end function
 
 function cross_matrix(matrix, vector) result(output)
-  ! The i-th column of the output matrix is the cross product 
-  ! between the i-th column of the input matrix and the input vector.
+  ! The i-th row of the output matrix is the cross product 
+  ! between the i-th row of the input matrix and the input vector.
   real(8), dimension(3,3), intent(in) :: matrix
   real(8), dimension(3),   intent(in) :: vector
   real(8), dimension(3,3)             :: output
 
-  output(:,1) = matrix(:,2) * vector(3) - matrix(:,3) * vector(2)
-  output(:,2) = matrix(:,3) * vector(1) - matrix(:,1) * vector(3)
-  output(:,3) = matrix(:,1) * vector(2) - matrix(:,2) * vector(1)
+  output(1, :) = cross(matrix(1, :), vector)
+  output(2, :) = cross(matrix(2, :), vector)
+  output(3, :) = cross(matrix(3, :), vector)
 end function
 
 function outer_product(vector1, vector2) result(output)
@@ -29,14 +29,10 @@ function outer_product(vector1, vector2) result(output)
   real(8), dimension(3), intent(in) :: vector1, vector2
   real(8), dimension(3,3)           :: output
 
-  output(1,:) = vector1(1) * vector2
-  output(2,:) = vector1(2) * vector2
-  output(3,:) = vector1(3) * vector2
+  output(1, :) = vector1(1) * vector2
+  output(2, :) = vector1(2) * vector2
+  output(3, :) = vector1(3) * vector2
 end function outer_product
-
-! REfactoring in FORTRAN is kinda bad :(
-! subroutine angle_force()
-! end subroutine angle_force
 
 subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt, df_cbt, fa, fb, fc, dipole, trans_matrix)
   real(8), dimension(3), intent(in)  :: rab, rcb, box
@@ -60,7 +56,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   real(8), dimension(3, 3) :: M_a, M_b, M_c
   real(8), dimension(3, 3) :: FN_a, fN_b, fN_c
   real(8), dimension(3, 3) :: FM_a, FM_b, FM_c
-  real(8), parameter :: delta = 0.3d0, cos_phi = cos(1.390927), sin_phi = sin(1.390927) 
+  real(8), parameter :: delta = 0.3d0, cos_phi = cos(1.392947), sin_phi = sin(1.392947) 
   ! real(8), parameter :: small = 0.001d0
   ! cos_phi = 0,17890101
   ! sin_phi = 0,983867079
@@ -75,15 +71,14 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   ! We use another Fourier expansion?
 
   k = 0.d0
-  ! gamma_0 = 0.d0
   dk = 0.d0
+  ! gamma_0 = 0.d0
   ! dg = 0.d0
 
   do i = 0, 4
     k = k + c_k(i + 1) * (1.d0 + cos(i * phi - d_k(i + 1)))
+    dk = dk - i * c_k(i + 1) * sin(i * phi - d_k(i + 1))
     ! gamma_0 = gamma_0 + c_g(i + 1) * (1.d0 + cos(i * phi + d_g(i + 1)))
-
-    dk = dk + i * c_k(i + 1) * sin(i * phi - d_k(i + 1))
     ! dg = dg + i * c_g(i + 1) * sin(i * phi + d_g(i + 1))
   end do
 
@@ -106,23 +101,30 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     !    sin_gamma = small
     ! endif
 
+    ! 𝜕V(γ)/𝜕γ = 𝜕V(γ)/𝜕γ 𝜕V(γ)/𝜕γ 
     ! Bending forces == f_gamma_i in the paper
     ! 1/sin(γ) ∂cos(γ)/∂γ
-    fa = (v - cos_gamma * w) / (norm_a * sin_gamma)
-    fc = (w - cos_gamma * v) / (norm_c * sin_gamma)
+    fa = (v - cos_gamma * w) / norm_a
+    fc = (w - cos_gamma * v) / norm_c
+
+    fa = -fa / sin_gamma
+    fc = -fc / sin_gamma
+
     fb = -(fa + fc)
 
     ! CBT energy and force factors
-    df_ang = -k * (gamm - gamma_0)
+    df_ang = k * (gamm - gamma_0)
     var_sq = (gamm - gamma_0)**2
+
     energy_cbt = 0.5d0 * k * var_sq
+    ! Positive gradient, add to V_prop gradient
     df_cbt = 0.5d0 * dk * var_sq - df_ang * dg
     
     ! Exit subroutine if we only need the forces
     if (dipole_flag == 0) then
-      fa = -df_ang * fa
-      fb = -df_ang * fb
-      fc = -df_ang * fc
+      fa = df_ang * fa
+      fb = df_ang * fb
+      fc = df_ang * fc
       return
     end if
 
@@ -141,6 +143,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     ! Dipole coordinates
     r0 = rb + 0.5d0 * rcb
     d  = 0.5d0 * delta * (cos_phi * v + sin_phi * (cos_theta * n + sin_theta * m))
+    ! d  = 0.5d0 * delta * (cos_theta * v + sin_theta * (cos_phi * n + sin_phi * m))
 
     dipole(1, :) = r0 + d
     dipole(2, :) = r0 - d
@@ -168,6 +171,8 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     W_a = -W_b
     
     ! Last term is 0 for N_a, second term is 0 for N_c (S19)
+    ! Minus in the last term because inverse cross_matrix
+    ! 1 / sin(γ) is already inside fa, fb, and fc
     N_a = (cos_gamma * outer_product(fa, n) + cross_matrix(W_a, v)                       ) / sin_gamma
     N_b = (cos_gamma * outer_product(fb, n) + cross_matrix(W_b, v) - cross_matrix(V_b, w)) / sin_gamma
     N_c = (cos_gamma * outer_product(fc, n)                        - cross_matrix(V_c, w)) / sin_gamma
@@ -194,9 +199,9 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     trans_matrix(3, :, :) = 0.5d0 * delta * (cos_phi * V_c + sin_phi * (cos_theta * N_c + sin_theta * M_c + FN_c - FM_c))
 
     ! Final angle forces
-    fa = -df_ang * fa
-    fb = -df_ang * fb
-    fc = -df_ang * fc
+    fa = df_ang * fa
+    fb = df_ang * fb
+    fc = df_ang * fc
     end if
 end subroutine reconstruct
 end module dipole_reconstruction
