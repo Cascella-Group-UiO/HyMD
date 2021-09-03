@@ -451,16 +451,16 @@ def dipole_forces_redistribution(
         a, b, c, d, f_elec, trans_matrices, dih_type, last_bb
     ):
         if t == 1:
-            tot_force = 0.5 * (f[0] + f[1])
-            force_diff = f[0] - f[1]
-            f_dipoles[i] += m[0] @ force_diff  # Atom A
-            f_dipoles[j] += m[1] @ force_diff + tot_force  # Atom B
-            f_dipoles[k] += m[2] @ force_diff + tot_force  # Atom C
+            tot_force = f[0] + f[1]
+            # force_diff = f[0] - f[1]
+            f_dipoles[i] += m[0] @ tot_force  # Atom A
+            f_dipoles[j] += m[1] @ tot_force + 0.5 * tot_force  # Atom B
+            f_dipoles[k] += m[2] @ tot_force + 0.5 * tot_force  # Atom C
 
             if n == 1:
-                tot_force = 0.5 * (f[2] + f[3])
-                force_diff = f[2] - f[3]
-                f_dipoles[j] += m[3] @ force_diff  # Atom B
-                f_dipoles[k] += m[4] @ force_diff + tot_force  # Atom C
-                f_dipoles[l] += m[5] @ force_diff + tot_force  # Atom D
+                tot_force = f[2] + f[3]
+                # force_diff = f[2] - f[3]
+                f_dipoles[j] += m[3] @ tot_force  # Atom B
+                f_dipoles[k] += m[4] @ tot_force + 0.5 * tot_force  # Atom C
+                f_dipoles[l] += m[5] @ tot_force + 0.5 * tot_force  # Atom D
     return f_dipoles
