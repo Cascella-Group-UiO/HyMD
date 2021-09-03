@@ -451,23 +451,16 @@ def dipole_forces_redistribution(
         a, b, c, d, f_elec, trans_matrices, dih_type, last_bb
     ):
         if t == 1:
-            # Positive dipole charge
-            f_dipoles[i] += m[0] @ f[0]  # Atom A
-            f_dipoles[j] += m[1] @ f[0]  # Atom B
-            f_dipoles[k] += m[2] @ f[0]  # Atom C
+            tot_force = 0.5 * (f[0] + f[1])
+            force_diff = f[0] - f[1]
+            f_dipoles[i] += m[0] @ force_diff  # Atom A
+            f_dipoles[j] += m[1] @ force_diff + tot_force  # Atom B
+            f_dipoles[k] += m[2] @ force_diff + tot_force  # Atom C
 
-            # Negative dipole charge
-            f_dipoles[i] += m[0] @ f[1]  # Atom A
-            f_dipoles[j] += m[1] @ f[1]  # Atom B
-            f_dipoles[k] += m[2] @ f[1]  # Atom C
             if n == 1:
-                # Positive dipole charge
-                f_dipoles[j] += m[3] @ f[2]  # Atom B
-                f_dipoles[k] += m[4] @ f[2]  # Atom C
-                f_dipoles[l] += m[5] @ f[2]  # Atom D
-
-                # Negative dipole charge
-                f_dipoles[j] += m[3] @ f[3]  # Atom B
-                f_dipoles[k] += m[4] @ f[3]  # Atom C
-                f_dipoles[l] += m[5] @ f[3]  # Atom D
+                tot_force = 0.5 * (f[2] + f[3])
+                force_diff = f[2] - f[3]
+                f_dipoles[j] += m[3] @ force_diff  # Atom B
+                f_dipoles[k] += m[4] @ force_diff + tot_force  # Atom C
+                f_dipoles[l] += m[5] @ force_diff + tot_force  # Atom D
     return f_dipoles
