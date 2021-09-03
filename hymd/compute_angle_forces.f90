@@ -52,18 +52,19 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
         sinphi = sin(theta)
 
         d = theta - t0(ind)
-        ff = - k(ind) * d
+        ff = k(ind) * d
 
-        xrasin = ff / (norm_a * sinphi)
-        xrcsin = ff / (norm_c * sinphi)
-        fa = (cosphi * ea - ec) * xrasin
-        fc = (cosphi * ec - ea) * xrcsin
+        xrasin = -ff / (norm_a * sinphi)
+        xrcsin = -ff / (norm_c * sinphi)
+        ! 𝜕θ/𝜕cos(θ) * 𝜕cos(θ)/𝜕r
+        fa = (ec - cosphi * ea) * xrasin
+        fc = (ea - cosphi * ec) * xrcsin
+        
+        f(aa, :) = f(aa, :) - fa
+        f(cc, :) = f(cc, :) - fc
+        f(bb, :) = f(bb, :) + fa + fc
 
-        f(aa, :) = f(aa, :) + fa
-        f(cc, :) = f(cc, :) + fc
-        f(bb, :) = f(bb, :) - (fa + fc)
-
-        energy = energy - 0.5d0 * ff * d
+        energy = energy + 0.5d0 * ff * d
       end if
     end do
 end subroutine
