@@ -21,36 +21,43 @@ def isotropic(
         args,
         bond_pr,
         angle_pr,
+        eps,
+        step,
         comm=MPI.COMM_WORLD
     ):
+    rank = comm.Get_rank()
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
     eps_alpha = Decimal('%.0E'%abs(1 - config.alpha_0))
+    change = False
 
-    #compute pressure
-    pressure = comp_pressure(
-            phi,
-            hamiltonian,
-            velocities,
-            config,
-            phi_fft,
-            phi_laplacian,
-            lap_transfer,
-            args,
-            bond_forces,
-            angle_forces,
-            positions,
-            bond_pr,
-            angle_pr,
-            comm=comm
-    )
+    if(eps[0]>eps_alpha or np.mod(step, config.n_b)==0):
+        change = True
+        #compute pressure
+        pressure = comp_pressure(
+                phi,
+                hamiltonian,
+                velocities,
+                config,
+                phi_fft,
+                phi_laplacian,
+                lap_transfer,
+                args,
+                bond_forces,
+                angle_forces,
+                positions,
+                bond_pr,
+                angle_pr,
+                eps,
+                comm=comm
+        )
 
-    #Total pressure across all ranks
-    P = np.average(pressure[-3:-1])
+        #Total pressure across all ranks
+        P = np.average(pressure[-3:-1])
 
-    #scaling factor                                                                                        
-    alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - P)
+        #scaling factor                                                                                        
+        alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - P)
 
-    if(abs(1-alpha) > eps_alpha):
+        eps[0] = abs(1-alpha)
         #length scaling
         L0 = alpha**(1/3) * config.box_size[0]
         L1 = alpha**(1/3) * config.box_size[1]
@@ -136,6 +143,4 @@ def semiisotropic(
         
         #pmesh re-initialize
         pm_stuff  = initialize_pm(pmesh, config, comm)
-        #(pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
-        #field_list) = pm_stuff
     return (pm_stuff, change)

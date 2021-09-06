@@ -437,14 +437,18 @@ def comp_pressure(
     #Total pressure across all ranks
 
     if config.barostat:
-        #L: Lateral; N: Normal
-        [PL, PN] = [0, 0]
-        PL = (return_value[-3] + return_value[-2])/2
-        PN = return_value[-1]
         beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
-        eps_alpha = Decimal('%.0E'%abs(1 - config.alpha_0))
-        alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
-        alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
-        eps[0] = abs(1-alphaL); eps[1] = abs(1-alphaN)
-
+        if config.barostat == 'semiisotropic':
+            #L: Lateral; N: Normal
+            [PL, PN] = [0, 0]
+            PL = (return_value[-3] + return_value[-2])/2
+            PN = return_value[-1]
+            alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
+            alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
+            eps[0] = abs(1-alphaL); eps[1] = abs(1-alphaN)
+            if rank == 0: print('eps:',eps, type(eps))
+        elif config.barostat == 'isotropic':
+            P = np.average(return_value[-3:-1])
+            alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - P)
+            eps = abs(1-alpha)
     return return_value
