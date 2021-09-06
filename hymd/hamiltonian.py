@@ -124,14 +124,15 @@ class DefaultWithChi(Hamiltonian):
         ):
             interaction = 0
             for i in range(self.config.n_types):
-                for j in range(i + 1, self.config.n_types):
+                #for j in range(i + 1, self.config.n_types):
+                for j in range(i, self.config.n_types):
                     ni = type_to_name_map[i]
                     nj = type_to_name_map[j]
                     names = sorted([ni, nj])
                     c = chi_type_dictionary[tuple(names)]
-
                     interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
+            
             return incompressibility + interaction
 
         def V_bar(
