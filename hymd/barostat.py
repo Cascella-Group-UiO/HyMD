@@ -67,7 +67,7 @@ def isotropic(
         config.box_size[2] = L2
 
         #position coordinates scaling
-        positions = alpha**(1/3) * positions
+        positions[:] = alpha**(1/3) * positions[:]
 
         #pmesh re-initialize
         pm_stuff  = initialize_pm(pmesh, config, comm)
