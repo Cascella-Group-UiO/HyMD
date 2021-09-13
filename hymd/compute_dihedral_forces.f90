@@ -11,7 +11,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
   integer, dimension(:), intent(in) :: b
   integer, dimension(:), intent(in) :: c
   integer, dimension(:), intent(in) :: d
-  real(8), dimension(:,:,:), intent(in) :: coeff 
+  real(4), dimension(:,:,:), intent(in) :: coeff 
   integer, dimension(:), intent(in) :: dtype
   integer, dimension(:), intent(in) :: bb_index
   integer, intent(in) :: dipole_flag
@@ -22,7 +22,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
   real(8), dimension(5) :: c_v, c_k, d_v, d_k
   ! real(8), dimension(5) :: c_g, d_g
   real(8) :: energy_cbt, df_cbt
-  real(8) :: g_norm, vv, ww, fg, hg
+  real(8) :: g_norm, v_sq, w_sq, f_dot_g, h_dot_g
   real(8) :: df_dih, df_ang, cos_phi, sin_phi, phi
 
   energy = 0.d0
@@ -36,9 +36,9 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     cc = c(ind) + 1
     dd = d(ind) + 1
 
-    f = [r(aa, :) - r(bb, :)]
-    g = [r(bb, :) - r(cc, :)]
-    h = [r(dd, :) - r(cc, :)]
+    f = r(aa, :) - r(bb, :)
+    g = r(bb, :) - r(cc, :)
+    h = r(dd, :) - r(cc, :)
       
     f = f - box * nint(f / box)
     g = g - box * nint(g / box)
@@ -51,8 +51,8 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
   
     v = cross(f, g)
     w = cross(h, g)
-    vv = dot_product(v, v)
-    ww = dot_product(w, w)
+    v_sq = dot_product(v, v)
+    w_sq = dot_product(w, w)
     g_norm = norm2(g)
     
     cos_phi = dot_product(v, w)
@@ -60,8 +60,8 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     sin_phi = dot_product(cross(v, w), g) / g_norm
     phi = -1.d0 * atan2(sin_phi, cos_phi) 
 
-    fg = dot_product(f, g)
-    hg = dot_product(h, g)
+    f_dot_g = dot_product(f, g)
+    h_dot_g = dot_product(h, g)
 
     c_v = coeff(ind, 1, :)
     d_v = coeff(ind, 2, :)
@@ -96,7 +96,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
       force(cc, :) = force(cc, :) - fc
 
       if (bb_index(ind) == 1) then
-        ! calculate dihedral from last angle
+        ! calculate last angle in the chain
         call reconstruct( &
           g, r(cc, :), h, box, c_k, d_k, phi, dipole_flag, &
           energy_cbt, df_cbt, fb, fc, fd, dipoles(ind, 3:4, :), trans_matrix(ind, 4:6, :, :))
@@ -112,10 +112,10 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     end if
 
     ! Dihedral forces
-    sc = v * fg / (vv * g_norm) - w * hg / (ww * g_norm)
+    sc = v * f_dot_g / (v_sq * g_norm) - w * h_dot_g / (w_sq * g_norm)
 
-    fa = -df_dih * g_norm * v / vv
-    fd =  df_dih * g_norm * w / ww
+    fa = -df_dih * g_norm * v / v_sq
+    fd =  df_dih * g_norm * w / w_sq
 
     fb =  df_dih * sc - fa
     fc = -df_dih * sc - fd
