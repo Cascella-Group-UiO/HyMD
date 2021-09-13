@@ -58,7 +58,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     cos_phi = dot_product(v, w)
 
     sin_phi = dot_product(cross(v, w), g) / g_norm
-    phi = atan2(sin_phi, cos_phi) 
+    phi = -1.d0 * atan2(sin_phi, cos_phi) 
 
     fg = dot_product(f, g)
     hg = dot_product(h, g)
