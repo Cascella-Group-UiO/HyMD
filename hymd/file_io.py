@@ -325,16 +325,16 @@ def store_static(
 
     # # VMD-h5mdplugin maximum name/type name length is 16 characters (for
     # # whatever reason [VMD internals?]).
-    # name_dataset = vmd_group.create_dataset("name", (config.n_types,), "S16")
-    # type_dataset = vmd_group.create_dataset("type", (config.n_types,), "S16")
+    name_dataset = vmd_group.create_dataset("name", (config.n_types,), "S16")
+    type_dataset = vmd_group.create_dataset("type", (config.n_types,), "S16")
 
     # Change this
-    # for i, n in config.type_to_name_map.items():
-    #     name_dataset[i] = np.string_(n[:16])
-    #     if n == "W":
-    #         type_dataset[i] = np.string_("solvent")
-    #     else:
-    #         type_dataset[i] = np.string_("membrane")
+    for i, n in config.type_to_name_map.items():
+        name_dataset[i] = np.string_(n[:16])
+        if n == "W":
+            type_dataset[i] = np.string_("solvent")
+        else:
+            type_dataset[i] = np.string_("membrane")
 
     # This bonds implementation causes problems with the VMD-h5md plugin
     # total_bonds = comm.allreduce(len(bonds_2_atom1), MPI.SUM)
