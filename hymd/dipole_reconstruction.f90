@@ -49,18 +49,21 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   integer :: i, j
   real(8) :: k, gamma_0, dk, dg, norm_a, norm_c, df_ang, var_sq
   real(8) :: theta, d_theta, cos_theta, sin_theta, fac
-  real(8) :: gamm, cos_gamma, sin_gamma, cos2
+  real(8) :: gamm, cos_gamma, sin_gamma, cos2, cos_phi, sin_phi
   real(8), dimension(3) :: w, v, n, m, r0, d
   real(8), dimension(3, 3) :: W_a, W_b, V_b, V_c
   real(8), dimension(3, 3) :: N_a, N_b, N_c
   real(8), dimension(3, 3) :: M_a, M_b, M_c
   real(8), dimension(3, 3) :: FN_a, fN_b, fN_c
   real(8), dimension(3, 3) :: FM_a, FM_b, FM_c
-  real(8), parameter :: delta = 0.3d0, cos_phi = cos(1.392947), sin_phi = sin(1.392947) 
+  real(8), parameter :: delta = 0.3d0 , cos_psi = cos(1.392947), sin_psi = sin(1.392947), small = 0.001d0
+
+  cos_phi = cos(phi)
+  sin_phi = sin(phi)
   ! real(8), parameter :: small = 0.001d0
   ! cos_phi = 0,17890101
   ! sin_phi = 0,983867079
-  energy_cbt = 0.d0
+  ! energy_cbt = 0.d0
 
   ! 1 - Angle forces calculation
   ! Levitt-Warshel
@@ -96,13 +99,8 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   if (cos2 < 1.0) then
     gamm = acos(cos_gamma)
     sin_gamma = sin(gamm)
-
-    ! if (sin_gamma < small) then
-    !    sin_gamma = small
-    ! endif
-
-    ! 𝜕V(γ)/𝜕γ = 𝜕V(γ)/𝜕γ 𝜕V(γ)/𝜕γ 
-    ! Bending forces == f_gamma_i in the paper
+    
+    ! Bending "forces" == f_gamma_i in the paper
     ! 1/sin(γ) ∂cos(γ)/∂γ
     fa = (v - cos_gamma * w) / norm_a
     fc = (w - cos_gamma * v) / norm_c
@@ -130,7 +128,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     ! 2 - Dipole reconstruction
     ! θ(γ)
-    ! This function needs to be fit again    
+    ! This function needs to be fit again
     fac = exp((gamm - 1.73d0) / 0.025d0)
     theta = -1.607d0 * gamm + 0.094d0 + 1.883d0 / (1.d0 + fac)
     d_theta = -1.607d0 - 1.883d0 / 0.025d0 * fac / ((1.d0 + fac)**2)
@@ -142,8 +140,8 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     ! Dipole coordinates
     r0 = rb + 0.5d0 * rcb
-    d  = 0.5d0 * delta * (cos_phi * v + sin_phi * (cos_theta * n + sin_theta * m))
-    ! d  = 0.5d0 * delta * (cos_theta * v + sin_theta * (cos_phi * n + sin_phi * m))
+    ! From Michele's paper, it's wrong in Sigbjorn's
+    d  = 0.5d0 * delta * (cos_psi * v + sin_psi * (cos_theta * n + sin_theta * m))
 
     dipole(1, :) = r0 + d
     dipole(2, :) = r0 - d
@@ -194,9 +192,9 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     ! Final transfer matrices D_i
     ! 0.5 cause we have two equally distant points
-    trans_matrix(1, :, :) = 0.5d0 * delta * (                sin_phi * (cos_theta * N_a + sin_theta * M_a + FN_a - FM_a))
-    trans_matrix(2, :, :) = 0.5d0 * delta * (cos_phi * V_b + sin_phi * (cos_theta * N_b + sin_theta * M_b + FN_b - FM_b))
-    trans_matrix(3, :, :) = 0.5d0 * delta * (cos_phi * V_c + sin_phi * (cos_theta * N_c + sin_theta * M_c + FN_c - FM_c))
+    trans_matrix(1, :, :) = 0.5d0 * delta * (                sin_psi * (cos_theta * N_a + sin_theta * M_a + FN_a - FM_a))
+    trans_matrix(2, :, :) = 0.5d0 * delta * (cos_psi * V_b + sin_psi * (cos_theta * N_b + sin_theta * M_b + FN_b - FM_b))
+    trans_matrix(3, :, :) = 0.5d0 * delta * (cos_psi * V_c + sin_psi * (cos_theta * N_c + sin_theta * M_c + FN_c - FM_c))
 
     ! Final angle forces
     fa = df_ang * fa
