@@ -13,7 +13,6 @@ import sys
 from types import ModuleType as moduleobj
 import warnings
 
-
 from hamiltonian import DefaultNoChi, DefaultWithChi
 from field import (
     compute_field_force,
@@ -103,6 +102,12 @@ def configure_runtime(comm):
         default=False,
         action="store_true",
         help="Disable four-particle dihedral forces",
+    )
+    ap.add_argument(
+        "--disable-dipole",
+        default=False,
+        action="store_true",
+        help="Disable BB dipole calculation",
     )
     ap.add_argument(
         "--double-precision",
@@ -391,11 +396,15 @@ if __name__ == "__main__":
     positions = np.mod(positions, config.box_size[None, :])
 
     # Initialize dipoles (for DD), populate them if protein_flag = True
-    dipole_flag = 1  # Only calculate dipole in the outer Respa step
-    dipole_positions = np.zeros(shape=(4, 3))
+    if args.disable_dipole:
+        dipole_flag = 0
+    else:
+        dipole_flag = 1  # Only calculate dipole in the outer Respa step
+    protein_flag = 0
+    dipole_positions = np.zeros(shape=(4, 3), dtype=dtype)
     dipole_forces = np.zeros(shape=(4, 3))
     dipole_charges = np.zeros(shape=4)
-    trans_matrices = np.zeros(shape=(6, 3, 3))
+    trans_matrices = np.zeros(shape=(6, 3, 3), dtype=dtype)
 
     # Initialize energies
     field_energy = 0.0
@@ -614,7 +623,7 @@ if __name__ == "__main__":
 
             # Check if we have a protein
             protein_flag = comm.allreduce(bonds_4_type.any() == 1)
-            if protein_flag:
+            if protein_flag and not args.disable_dipole:
                 # Dipoles only if dih_type == 1
                 n_tors = len(bonds_4_atom1)
                 dipole_positions = np.zeros((n_tors, 4, 3), dtype=dtype)
@@ -622,7 +631,7 @@ if __name__ == "__main__":
                 dipole_charges = np.array(
                     [
                         2 * [0.25, -0.25]
-                        if bonds_4_type[i] == 1 and bonds_4_last[i] == 1
+                        if (bonds_4_type[i], bonds_4_last[i]) == (1, 1)
                         else [0.25, -0.25, 0.0, 0.0]
                         if bonds_4_type[i] == 1
                         else 2 * [0.0, 0.0]
@@ -654,12 +663,14 @@ if __name__ == "__main__":
                     )
                     exec(_cmd_receive_dd)
 
+            # FIXME: Don't really like it here
+            bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
+
         positions = np.asfortranarray(positions)
         velocities = np.asfortranarray(velocities)
         bond_forces = np.asfortranarray(bond_forces)
         angle_forces = np.asfortranarray(angle_forces)
         dihedral_forces = np.asfortranarray(dihedral_forces)
-        bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
         dipole_positions = np.asfortranarray(dipole_positions)
         trans_matrices = np.asfortranarray(trans_matrices)
 
@@ -706,7 +717,7 @@ if __name__ == "__main__":
             )
             dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
-        if protein_flag:
+        if protein_flag and not args.disable_dipole:
             dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3))
             dipole_forces = np.reshape(dipole_forces, (4 * n_tors, 3))
 
@@ -915,7 +926,7 @@ if __name__ == "__main__":
                         bonds_3_stength,
                     )
                 if not args.disable_dihedrals:
-                    if inner == config.respa_inner - 1:
+                    if inner == config.respa_inner - 1 and not args.disable_dipole:
                         dipole_flag = 1
                     else:
                         dipole_flag = 0
@@ -988,7 +999,7 @@ if __name__ == "__main__":
                     comm=comm,
                 )
 
-            if protein_flag:
+            if protein_flag and not args.disable_dipole:
                 dipole_positions = np.reshape(dipole_positions, (4 * n_tors, 3))
                 dipole_forces = np.reshape(dipole_forces, (4 * n_tors, 3))
 
@@ -1033,7 +1044,7 @@ if __name__ == "__main__":
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass, config.time_step
             )
-        if protein_flag:
+        if protein_flag and not args.disable_dipole:
             velocities = integrate_velocity(
                 velocities, reconstructed_forces / config.mass, config.time_step
             )
