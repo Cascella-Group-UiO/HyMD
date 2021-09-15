@@ -239,6 +239,49 @@ def read_config_toml(file_path):
     return toml_content
 
 
+def propensity_potential_coeffs(x: float, comm):
+    alpha_coeffs = np.array(
+        [
+            [7.406, -5.298, -2.570, 1.336, 0.739],
+            [-0.28632126, 1.2099146, 1.18122138, 0.49075168, 0.98495911],
+        ]
+    )
+    beta_coeffs = np.array(
+        [
+            [3.770, 5.929, -4.151, -0.846, 0.190],
+            [-0.2300693, -0.0583289, 0.99342396, 1.03237971, 2.90160988],
+        ]
+    )
+    coil_coeffs = np.array(
+        [
+            [1.416, -0.739, 0.990, -0.397, 0.136],
+            [1.3495933, 0.45649087, 2.30441057, -0.12274901, -0.26179939],
+        ]
+    )
+
+    if x == -1:
+        return alpha_coeffs
+    elif x == 0:
+        return coil_coeffs
+    elif x == 1:
+        return beta_coeffs
+
+    abs_x = np.abs(x)
+    if abs_x > 1:
+        err_str = (
+            f"The provided value of λ = {x} is out of λ definition range, [-1.0, 1.0]."
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+        if comm.Get_rank() == 0:
+            raise ValueError(err_str)
+
+    else:
+        alpha_coeffs[0] *= 0.5 * (abs_x - x)
+        beta_coeffs[0] *= 0.5 * (abs_x + x)
+        coil_coeffs[0] *= 1 - abs_x
+        return np.concatenate(alpha_coeffs, beta_coeffs, coil_coeffs)
+
+
 def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     parsed_toml = toml.loads(toml_content)
     config_dict = {}
@@ -286,7 +329,6 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         if k == "angle_bonds":
             config_dict["angle_bonds"] = [None] * len(v)
             for i, b in enumerate(v):
-
                 config_dict["angle_bonds"][i] = Angle(
                     atom_1=b[0][0],
                     atom_2=b[0][1],
@@ -297,18 +339,44 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         if k == "dihedrals":
             config_dict["dihedrals"] = [None] * len(v)
             for i, b in enumerate(v):
-                type_if = len(b[1]) > 2 or isinstance(type(b[1][0]), float)
+                try:
+                    dih_type = int(b[2][0])
+                except IndexError:
+                    Logger.rank0.log(
+                        logging.WARNING, "Dihedral type not provided, defaulting to 0."
+                    )
+                    dih_type = 0
+
+                    # Probably it's better to move this in check_dihedrals?
+                    wrong_len = len(b[1]) not in (1, 2)
+                    wrong_type_1 = len(b[1]) == 1 and not isinstance(b[1][0], float)
+                    wrong_type_2 = len(b[1]) == 2 and not isinstance(b[1][0], list)
+                    if wrong_len or wrong_type_1 or wrong_type_2:
+                        err_str = (
+                            "The coefficients specified for the type 0 dihedral do not match the correct structure."
+                            + "Either use [lambda] or [[cn_prop], [dn_prop]], or select the correct dihedral type."
+                        )
+                        Logger.rank0.log(logging.ERROR, err_str)
+                        if comm.Get_rank() == 0:
+                            raise RuntimeError(err_str)
+
+                if dih_type == 0 and isinstance(b[1][0], (float, int)):
+                    coeff = propensity_potential_coeffs(b[1][0], comm).tolist()
+                elif dih_type == 1 and len(b[1]) == 3:
+                    coeff = (
+                        propensity_potential_coeffs(b[1][0][0], comm).tolist()
+                        + b[1][1:]
+                    )
+                else:
+                    coeff = b[1]
+
                 config_dict["dihedrals"][i] = Dihedral(
                     atom_1=b[0][0],
                     atom_2=b[0][1],
                     atom_3=b[0][2],
                     atom_4=b[0][3],
-                    coeffs=b[1],
-                    # Can adapt this condition for improper dihedrals
-                    # fourier = [[], []] == len 2
-                    # CBT = [[], [], [], [], [], []] == len 6
-                    # improper = [eq, k] == len 2 but type(eq) == float
-                    dih_type=int(b[2][0]) if type_if else 0,
+                    coeffs=coeff,
+                    dih_type=dih_type,
                 )
         # if k == "improper dihedrals":
         #     config_dict["improper dihedrals"] = [None] * len(v)
