@@ -68,8 +68,20 @@ class Config:
             [
                 (
                     f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
-                    # This might need to be fixed/made prettier
-                    + f"{[c for c in k.coeffs]}, "
+                    # This might need to be fixed/made prettier, probably there's an easier way
+                    + (
+                        "\n\t\t"
+                        + " " * len(f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: ")
+                    ).join(
+                        map(
+                            str,
+                            [[round(num, 3) for num in c_in] for c_in in k.coeffs],
+                        )
+                    )
+                    + (
+                        "\n\t\t"
+                        + " " * len(f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: ")
+                    )
                     + f"dih_type = {k.dih_type}\n"
                 )
                 for k in self.dihedrals
