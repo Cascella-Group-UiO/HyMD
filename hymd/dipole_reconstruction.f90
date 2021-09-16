@@ -34,6 +34,18 @@ function outer_product(vector1, vector2) result(output)
   output(3, :) = vector1(3) * vector2
 end function outer_product
 
+subroutine cosine_series(c_n, d_n, energy, dE_dphi)
+  real(8), dimension(:), intent(in) :: c_n, d_n
+  real(8), intent(in out) :: energy, dE_dphi
+  integer :: i
+
+  do i = 0, size(c_n) - 1
+    energy = energy + c_n(i + 1) * (1.d0 + cos(i * phi - d_n(i + 1)))
+    dE_dphi = dE_dphi - i * c_n(i + 1) * sin(i * phi - d_n(i + 1))
+  end do
+
+end subroutine cosine_series
+
 subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt, df_cbt, fa, fb, fc, dipole, trans_matrix)
   real(8), dimension(3), intent(in)  :: rab, rcb, box
   real(4), dimension(3), intent(in)  :: rb
@@ -78,12 +90,8 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   ! gamma_0 = 0.d0
   ! dg = 0.d0
 
-  do i = 0, 4
-    k = k + c_k(i + 1) * (1.d0 + cos(i * phi - d_k(i + 1)))
-    dk = dk - i * c_k(i + 1) * sin(i * phi - d_k(i + 1))
-    ! gamma_0 = gamma_0 + c_g(i + 1) * (1.d0 + cos(i * phi + d_g(i + 1)))
-    ! dg = dg + i * c_g(i + 1) * sin(i * phi + d_g(i + 1))
-  end do
+  call cosine_series(c_k, d_k, k, dk)
+  ! call cosine_series(c_g, d_g, gamma_0, dg)
 
   norm_a = norm2(rab)
   norm_c = norm2(rcb)
