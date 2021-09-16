@@ -18,6 +18,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
   real(8), intent(out) :: energy
    
   integer :: ind, aa, bb, cc, dd, i
+  integer, dimension(2) :: c_shape
   real(8), dimension(3) :: f, g, h, v, w, sc, fa, fb, fc, fd
   real(8), dimension(5) :: c_v, c_k, d_v, d_k
   ! real(8), dimension(5) :: c_g, d_g
@@ -26,7 +27,6 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
   real(8) :: df_dih, df_ang, cos_phi, sin_phi, phi
 
   energy = 0.d0
-  df_dih = 0.d0
   force = 0.d0
   dipoles = 0.d0
   trans_matrix = 0.d0
@@ -67,23 +67,25 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
 
     ! Get shape of coeff to see how many arrays we have 
     ! and use the shape to select the arrays
-    c_shape = shape(coeff)
+    c_shape = shape(coeff(ind, :, :))
     c_v = coeff(ind, 1, :)
     d_v = coeff(ind, 2, :)
-    call cosine_series(c_v, c_v, energy, gradient)
+    df_dih = 0.d0
+    call cosine_series(c_v, d_v, phi, energy, df_dih)
 
     if (c_shape(1) > 4) then
-      ! c_shape = (8, 5)
-      call cosine_series(coeff(ind, 3, :), coeff(ind, 4, :), energy, gradient)
-      call cosine_series(coeff(ind, 5, :), coeff(ind, 6, :), energy, gradient)
+      ! c_shape = (6, whatever you provide)
+      c_v = coeff(ind, 3, :)
+      d_v = coeff(ind, 4, :)
+      call cosine_series(c_v, d_v, phi, energy, df_dih)
     end if
 
     if (dtype(ind) == 1) then
       ! CBT potential
       ! V = V_prop + k * (gamma - gamma_0)**2      
 
-      c_k = coeff(ind, (c_shape(1) - 1), :)
-      d_k = coeff(ind, c_shape(1), :)
+      c_k = coeff(ind, c_shape(1) - 1, :)
+      d_k = coeff(ind, c_shape(1)    , :)
       ! These are needed if gamma_0 is expressed as cosine series, not implemented
       ! c_g = coeff(ind, 5, :)
       ! d_g = phase(ind, 6, :)
