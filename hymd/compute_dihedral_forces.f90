@@ -26,6 +26,7 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
   real(8) :: df_dih, df_ang, cos_phi, sin_phi, phi
 
   energy = 0.d0
+  df_dih = 0.d0
   force = 0.d0
   dipoles = 0.d0
   trans_matrix = 0.d0
@@ -44,10 +45,6 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     g = g - box * nint(g / box)
     h = h - box * nint(h / box)
 
-!     Improper dihedrals
-!     if (dtype == 2) then
-! 
-!     end if
   
     v = cross(f, g)
     w = cross(h, g)
@@ -60,26 +57,34 @@ subroutine cdf(force, r, dipoles, trans_matrix, box, a, b, c, d, coeff, dtype, b
     sin_phi = dot_product(cross(v, w), g) / g_norm
     phi = -1.d0 * atan2(sin_phi, cos_phi) 
 
+    ! Improper dihedrals
+    ! if (dtype == 2) then
+    ! 
+    ! end if
+
     f_dot_g = dot_product(f, g)
     h_dot_g = dot_product(h, g)
 
+    ! Get shape of coeff to see how many arrays we have 
+    ! and use the shape to select the arrays
+    c_shape = shape(coeff)
     c_v = coeff(ind, 1, :)
     d_v = coeff(ind, 2, :)
+    call cosine_series(c_v, c_v, energy, gradient)
 
-    df_dih = 0.d0
-
-    ! coefficients with different sizes might be problematic
-    do i = 0, size(c_v) - 1
-      energy = energy + c_v(i + 1) * (1.d0 + cos(i * phi - d_v(i + 1)))
-      df_dih = df_dih - i * c_v(i + 1) * sin(i * phi - d_v(i + 1))
-    end do
+    if (c_shape(1) > 4) then
+      ! c_shape = (8, 5)
+      call cosine_series(coeff(ind, 3, :), coeff(ind, 4, :), energy, gradient)
+      call cosine_series(coeff(ind, 5, :), coeff(ind, 6, :), energy, gradient)
+    end if
 
     if (dtype(ind) == 1) then
       ! CBT potential
       ! V = V_prop + k * (gamma - gamma_0)**2      
 
-      c_k = coeff(ind, 3, :)
-      d_k = coeff(ind, 4, :)
+      c_k = coeff(ind, (c_shape(1) - 1), :)
+      d_k = coeff(ind, c_shape(1), :)
+      ! These are needed if gamma_0 is expressed as cosine series, not implemented
       ! c_g = coeff(ind, 5, :)
       ! d_g = phase(ind, 6, :)
 
