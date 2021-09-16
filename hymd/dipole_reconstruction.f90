@@ -34,8 +34,9 @@ function outer_product(vector1, vector2) result(output)
   output(3, :) = vector1(3) * vector2
 end function outer_product
 
-subroutine cosine_series(c_n, d_n, energy, dE_dphi)
+subroutine cosine_series(c_n, d_n, phi, energy, dE_dphi)
   real(8), dimension(:), intent(in) :: c_n, d_n
+  real(8), intent(in) :: phi
   real(8), intent(in out) :: energy, dE_dphi
   integer :: i
 
@@ -90,7 +91,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   ! gamma_0 = 0.d0
   ! dg = 0.d0
 
-  call cosine_series(c_k, d_k, k, dk)
+  call cosine_series(c_k, d_k, phi, k, dk)
   ! call cosine_series(c_g, d_g, gamma_0, dg)
 
   norm_a = norm2(rab)

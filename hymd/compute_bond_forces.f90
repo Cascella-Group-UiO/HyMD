@@ -1,5 +1,4 @@
-
-subroutine cbf(f, r, box, i, j, r0, k, energy)
+subroutine cbf(f, r, box, a, b, r0, k, energy)
 ! ==============================================================================
 ! compute_bond_forces() speedup attempt.
 !
@@ -19,14 +18,14 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
     real(8), dimension(:),   intent(in)     :: k
     real(8),                 intent(out)    :: energy
 
-    integer :: ind, ii, jj
+    integer :: ind, aa, bb
     real(8), dimension(3) :: rab, fa
     real(8) :: df, rab_norm
 
     energy = 0.0d00
     f = 0.0d00
 
-    do ind = 1, size(i)
+    do ind = 1, size(a)
       aa = a(ind) + 1
       bb = b(ind) + 1
 
@@ -37,8 +36,8 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
       df = k(ind) * (rab_norm - r0(ind))
       fa = -df * rab / rab_norm
 
-      f(ii, :) = f(ii, :) - fa
-      f(jj, :) = f(jj, :) + fa
+      f(aa, :) = f(aa, :) - fa
+      f(bb, :) = f(bb, :) + fa
 
       energy = energy + 0.5d00 * k(ind) * (rab_norm - r0(ind))**2
     end do
