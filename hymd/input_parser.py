@@ -276,10 +276,13 @@ def propensity_potential_coeffs(x: float, comm):
             raise ValueError(err_str)
 
     else:
-        alpha_coeffs[0] *= 0.5 * (abs_x - x)
-        beta_coeffs[0] *= 0.5 * (abs_x + x)
         coil_coeffs[0] *= 1 - abs_x
-        return np.concatenate(alpha_coeffs, beta_coeffs, coil_coeffs)
+        if x < 0:
+            alpha_coeffs[0] *= 0.5 * (abs_x - x)
+            return np.concatenate((alpha_coeffs, coil_coeffs))
+        else:
+            beta_coeffs[0] *= 0.5 * (abs_x + x)
+            return np.concatenate((beta_coeffs, coil_coeffs))
 
 
 def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
