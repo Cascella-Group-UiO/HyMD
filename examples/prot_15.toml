@@ -20,10 +20,10 @@ mass = 72.0
 # Number of total time steps in the simulation.
 n_steps = 1000
 # Frequency of trajectory/energy file output in time steps.
-n_print = 50
+n_print = 1
 # Frequency of requesting that the HDF5 library flush the file output buffers
 # to disk after in number of n_print timesteps.
-n_flush = 10000
+n_flush = 10
 # Time step used in the simulation in [picoseconds].
 time_step = 0.3
 # Simulation box size in [nanometers].
@@ -40,13 +40,15 @@ respa_inner = 5
 domain_decomposition = false
 # Remove linear center of mass momentum from the system before integration
 # starts.
-cancel_com_momentum = 51
+cancel_com_momentum = true
 # Starting temperature to generate before simulation begins in [kelvin]. Ommit
 # or set to 'false' to not change the temperature before starting.
 start_temperature = 300
 # Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
 # or set to 'false' to use no thermostat, i.e. a constant energy simulation.
 target_temperature = 300
+# Add nssttcouple?
+#nssttcouple = 10
 # Thermostat collision frequency in [1/picoseconds].
 tau = 1
 # Couple groups of particles species to individual different thermostats.
@@ -59,7 +61,7 @@ thermostat_coupling_groups = [
 #    "DefaultNoChi":   (φ - φ₀)² / 2κφ₀
 #    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
 # Subclass Hamiltonian to create a new energy functional.
-hamiltonian = 'DefaultNoChi'
+hamiltonian = 'DefaultWithChi'
 dielectric_const = 5.0
 
 [field]
@@ -68,20 +70,20 @@ dielectric_const = 5.0
 # and speed in the PFFT routines, the actual mesh grid will be changed to ensure
 # that each dimension of the 2d PFFT process grid divides each dimension of the
 # mesh grid size.
-mesh_size = [40, 40, 40]
+mesh_size = [24, 24, 24]
 # Compressibility used in the relaxed incompressibility term of W(phi) in
 # [mol/kJ].
-kappa = 0.03
+kappa = 0.05
 # Standard deviation in the Gaussian filter (window function) in [nanometers].
 # This value is a characteristic length scale for the size of the particles in
 # the simulation.
-sigma = 0.5
+sigma = 0.4
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
 chi = [
     [["BB", "SC"], [0]],
     [["BB", "W"], [0]],
-    [["SC", "W"], [0]],
+    [["SC", "W"], [20]],
 ]
 
 [bonds]
@@ -90,35 +92,72 @@ chi = [
 # Same for the angles since he used the combined angle-torsion potential.
 # IMPORTANT: numbers in arrays must have the same type!
 bonds = [
-  [["BB", "BB"], [0.38, 1000.0]],
-  [["BB", "SC"], [0.15, 1000.0]],
+  [["BB", "BB"], [0.38, 12500.0]],
+  [["BB", "SC"], [0.18, 12500.0]],
 ]
 # Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
 # (equilibrium angle in [degrees], bond strength in [kJ/mol])
 angle_bonds = [
-  [["BB", "BB", "SC"], [100.0, 100.0]],
+  # [["BB", "BB", "SC"], [120.0, 25.0]], # β sheet
+  [["BB", "BB", "SC"], [108.0, 25.0]],  # α helix
 ]
-# Four-particles torsion angles defined with a fourier series potential.
+# Four-particles torsion angles, the definition is as follows:
 # ((atom name 1, atom name 2, atom name 3, atom name 4),
 #  (coefficients), 
 #  (dihedral type))
+# Here are some possible ways the coefficients can be defined:
+#
+# 1) Cosine series, dih_type == 0
+# V_prop(φ) = ∑ c_prop[n] * (1 + cos(n * φ - d_prop[n]))
+# lambda (λ) is a float in the range [-1.0, 1.0], which determines the
+# secondary structure propensity (i.e. the values of c_prop and d_prop). 
+# λ = -1.0 => alpha, λ = 1.0 => beta, λ = 0.0 => coil 
+# In the above thres cases two lists of 5 coefficients will be returned,
+# otherewise 4 lists will be returned to account for the mixed propensity.
+# 
+# dihedrals = [
+#         ["A", "B", "C", "D"],
+#         [lambda],
+#         [dih_type] 
+# ]
+# or you can directly provide two lists (5 elements long), one for the
+# coefficients and one for the phases.
+# dihedrals = [
+#         ["A", "B", "C", "D"],
+#         [[c_prop], [d_prop]],
+#         [dih_type]
+# ]
+# In both cases dih_type can be omitted, since 0 is the default.
+#
+# 2) CBT, dih_type == 1
+# V(φ, γ) = V_prop(φ) + 0.5 * K(φ) * (γ - γ0)²
+# Here K(φ), the force constant of the harmonic angle potential, has the same
+# functional form as V_prop(φ), so 2 more lists are needed.
+# dihedrals = [
+#         ["A", "B", "C", "D"],
+#         [[lambda], [c_k], [d_k]],
+#         [dih_type] # dih_type == 1
+# ]
+# or
+# dihedrals = [
+#         ["A", "B", "C", "D"],
+#         [[c_prop], [d_prop], [c_k], [d_k]],
+#         [dih_type]
+# ]
+# 3) Improper dihedral, dih_type == 2 (not yet implemented)
+# dihedrals = [
+#         ["A", "B", "C", "D"],
+#         [eq, strenght],
+#         [dih_type]
+# ]
 dihedrals = [
   [
-        ["BB", "BB", "BB", "BB"],
-        [
-          # Move this out and provide propensity instead?
-          # α propensity (λ = -1)
-          [7.406, -5.298, -2.570, 1.336, 0.739], # c_v (kJ/mol)
-          [-0.28632126, 1.2099146, 1.18122138, 0.49075168, 0.98495911], # d_v (rad)
-          # β propensity (λ = 1) 
-          # [3.770, 5.929, -4.151, -0.846, 0.190], # c_v
-          # [-0.2300693, -0.0583289 , 0.99342396, 1.03237971, 2.90160988]
-          # No propensity (λ = 0)
-          # [1.416, -0.739, 0.990, -0.397, 0.136], # c_v
-          # [77.326, 26.155, 132.033, -7.033, -15.000], # d_v
-          # [0.13680, 0.18589, -0.16586, 0.07664, -0.02589], # c_k (kJ/mol deg-2)
-          [4.16716630e-05, 5.66253322e-05, -5.05238452e-05, 2.33458791e-05, -7.88654500e-06], # kJ/mol rad-2
-          [0.07700393, 0.46230281, 1.65322823, -0.9600009, 0.37807322], # d_k (rad)
-        ],
-        [1.0] # Type
-]]
+    ["BB", "BB", "BB", "BB"],
+    [
+      [-0.5],
+      [44.90879087, 61.02408724, -54.44862612, 25.15942787, -8.49918564], 
+      [0.07700393, 0.46230281, 1.65322823, -0.9600009, 0.37807322],
+    ],
+    [1.0]
+  ]
+]
