@@ -11,24 +11,6 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
 
 
-# def compute_field_energy_q(
-#    phi_q_fourier,
-#    elec_energy_field, #for energy calculation
-#    field_q_energy,
-#    comm=MPI.COMM_WORLD,
-# ):
-#
-#    COULK_GMX = 138.935458
-#
-#    def transfer_energy(k,v):  ### potential field is electric field / (-ik)  --> potential field * q -->
-#        return 4.0 * np.pi * COULK_GMX * np.abs(v)**2  / k.normp(p=2,zeromode=1) ## zeromode = 1 needed here?
-#
-#    phi_q_fourier.apply(transfer_energy,  kind='wavenumber', out=elec_energy_field)
-#    field_q_energy = 0.5 * comm.allreduce(np.sum(elec_energy_field.value))
-#
-#    return field_q_energy.real
-
-
 def compute_field_energy_q(
     config,
     phi_q_fourier,
@@ -91,6 +73,11 @@ def update_field_force_q(
     phi_q /= volume_per_cell
     phi_q.r2c(out=phi_q_fourier)
 
+    # Provide different sigma value if using dipoles
+    # if dipole_flag:
+    #     sigma = 0.1
+    # else:
+    #     sigma = config.sigma
     def phi_transfer_function(k, v):
         return v * np.exp(-0.5 * config.sigma ** 2 * k.normp(p=2, zeromode=1))
 
@@ -164,6 +151,11 @@ def update_field_force_energy_q(
     phi_q /= volume_per_cell
     phi_q.r2c(out=phi_q_fourier)
 
+    # IDEA: Provide different sigma value if using dipoles
+    # if dipole_flag:
+    #     sigma = 0.1
+    # else:
+    #     sigma = config.sigma
     def phi_transfer_function(k, v):
         return v * np.exp(-0.5 * config.sigma ** 2 * k.normp(p=2, zeromode=1))
 
