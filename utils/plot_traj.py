@@ -112,6 +112,7 @@ def extract_property(h5md_file, property, args):
         "DE": "dihedral_energy",
         "FE": "field_energy",
         "P": "total_momentum",
+        "EE": "field_q_energy",
     }
     name = keyword_to_group_name[property]
     property_group = observables_group[name]
