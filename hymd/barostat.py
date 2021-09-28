@@ -7,13 +7,14 @@ from field import initialize_pm
 def isotropic(
         pmesh,
         phi,
+        phi_gradient,
         hamiltonian,
         positions,
         velocities,
         config,
         phi_fft,
         phi_laplacian,
-        lap_transfer,
+        phi_transfer,
         bond_forces,
         angle_forces,
         args,
@@ -22,16 +23,18 @@ def isotropic(
         comm=MPI.COMM_WORLD
     ):
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
+    rank = comm.Get_rank()
 
     #compute pressure
     pressure = comp_pressure(
             phi,
+            phi_gradient,
             hamiltonian,
             velocities,
             config,
             phi_fft,
             phi_laplacian,
-            lap_transfer,
+            phi_transfer,
             args,
             bond_forces,
             angle_forces,
@@ -56,11 +59,11 @@ def isotropic(
     config.box_size[2] = L2
 
     #position coordinates scaling
-    positions = alpha**(1/3) * positions
+    positions[:] = alpha**(1/3) * positions
 
     #pmesh re-initialize
     pm_stuff  = initialize_pm(pmesh, config, comm)
-    #(pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
+    #(pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_laplacian,
     #field_list) = pm_stuff
     return pm_stuff
 
@@ -68,13 +71,14 @@ def semiisotropic(
         pmesh,
         pm_stuff,
         phi,
+        phi_gradient,
         hamiltonian,
         positions,
         velocities,
         config,
         phi_fft,
         phi_laplacian,
-        lap_transfer,
+        phi_transfer,
         bond_forces,
         angle_forces,
         args,
@@ -89,12 +93,13 @@ def semiisotropic(
     #compute pressure
     pressure = comp_pressure(
             phi,
+            phi_gradient,
             hamiltonian,
             velocities,
             config,
             phi_fft,
             phi_laplacian,
-            lap_transfer,
+            phi_transfer,
             args,
             bond_forces,
             angle_forces,
@@ -129,6 +134,6 @@ def semiisotropic(
     
         #pmesh re-initialize
         pm_stuff  = initialize_pm(pmesh, config, comm)
-        #(pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
+        #(pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_laplacian,
         #field_list) = pm_stuff
     return pm_stuff

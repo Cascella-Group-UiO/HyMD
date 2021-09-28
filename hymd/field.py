@@ -29,14 +29,21 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
-    lap_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
+    phi_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
+
+    phi_gradient = [
+        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+    ]
     phi_laplacian = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
-    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
-            phi_laplacian]
-    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
-            phi_laplacian, field_list)
+    phi_lap_filtered_fourier = [ pm.create("complex", value=0.0) for _ in range(config.n_types) ]
+    phi_lap_filtered = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+    v_ext1 = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+    field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
+            phi_laplacian, phi_lap_filtered, v_ext1]
+    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
+            phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered, v_ext1, field_list)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     for t in range(n_types):
@@ -45,8 +52,64 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
 
 
+def comp_gradient(phi_fourier, phi_transfer, phi_gradient, config,):
+    for t in range(config.n_types):
+        np.copyto(
+            phi_transfer[0].value, phi_fourier[t].value, casting="no", where=True
+        )
+        np.copyto(
+            phi_transfer[1].value, phi_fourier[t].value, casting="no", where=True
+        )
+        np.copyto(
+            phi_transfer[2].value, phi_fourier[t].value, casting="no", where=True
+        )
+
+        # Evaluate laplacian of phi in fourier space
+        for d in range(3):
+
+            def gradient_transfer(k, v, d=d):
+                return 1j * k[d] * v
+
+            phi_transfer[d].apply(gradient_transfer, out=Ellipsis)
+            phi_transfer[d].c2r(out=phi_gradient[t][d])
+
+def comp_laplacian(
+        phi_fourier,
+        phi_transfer,
+        phi_laplacian,
+        hamiltonian,
+        config,
+        phi_lap_filtered_fourier = None,
+):
+    for t in range(config.n_types):
+        np.copyto(
+            phi_transfer[0].value, phi_fourier[t].value, casting="no", where=True
+        )
+        np.copyto(
+            phi_transfer[1].value, phi_fourier[t].value, casting="no", where=True
+        )
+        np.copyto(
+            phi_transfer[2].value, phi_fourier[t].value, casting="no", where=True
+        )
+
+        # Evaluate laplacian of phi in fourier space
+        for d in range(3):
+
+            def laplacian_transfer(k, v, d=d):
+                return -k[d]**2 * v
+
+            phi_transfer[d].apply(laplacian_transfer, out=Ellipsis)
+            phi_transfer[d].c2r(out=phi_laplacian[t][d])
+
+        # filter laplacian of phi
+        if config.squaregradient and phi_lap_filtered_fourier:
+            (phi_transfer[0] + phi_transfer[1] + phi_transfer[2]).apply(hamiltonian.H, out=phi_lap_filtered_fourier[t])
+
 def update_field(
     phi,
+    phi_gradient,
+    phi_laplacian,
+    phi_transfer,
     layouts,
     force_mesh,
     hamiltonian,
@@ -56,10 +119,14 @@ def update_field(
     config,
     v_ext,
     phi_fourier,
+    phi_lap_filtered_fourier,
     v_ext_fourier,
+    phi_lap_filtered,
+    v_ext1,
     m,
     compute_potential=False,
 ):
+
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
@@ -70,9 +137,27 @@ def update_field(
         phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)
         phi_fourier[t].c2r(out=phi[t])
 
+    if config.squaregradient:
+        # gradient
+        comp_gradient(phi_fourier, phi_transfer, phi_gradient, config)
+        # laplacian        
+        comp_laplacian(phi_fourier, phi_transfer, phi_laplacian, hamiltonian, config, phi_lap_filtered_fourier)
+
+    
+
     # External potential
+    if config.squaregradient:
+        for t in range(config.n_types):
+            phi_lap_filtered_fourier[t].c2r(out=phi_lap_filtered[t])
+        hamiltonian.v_ext1(phi_lap_filtered, v_ext1)
+    
     for t in range(config.n_types):
-        hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
+        if config.squaregradient:
+            v = hamiltonian.v_ext[t](phi) + v_ext1[t]
+        else:
+            v = hamiltonian.v_ext[t](phi)
+
+        v.r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
         np.copyto(
             v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True
@@ -100,6 +185,7 @@ def update_field(
 
 def compute_field_and_kinetic_energy(
     phi,
+    phi_gradient,
     velocity,
     hamiltonian,
     positions,
@@ -114,7 +200,10 @@ def compute_field_and_kinetic_energy(
     volume_per_cell = V / n_mesh__cells
 
     w = hamiltonian.w(phi) * volume_per_cell
-    field_energy = w.csum() #w to W
+    w1 = 0.0
+    if config.squaregradient:
+        w1 = hamiltonian.w1(phi_gradient) * volume_per_cell
+    field_energy = (w + w1).csum() #w to W
     kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocity ** 2))
     return field_energy, kinetic_energy
 

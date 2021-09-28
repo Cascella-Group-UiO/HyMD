@@ -7,7 +7,7 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
-from force import Bond, Angle, Chi
+from force import Bond, Angle, Chi, K_Coupl
 from logger import Logger
 
 
@@ -41,6 +41,7 @@ class Config:
     chi: List[Chi] = field(default_factory=list)
     angle_bonds: List[Angle] = field(default_factory=list)
     bonds: List[Bond] = field(default_factory=list)
+    K_coupl: List[K_Coupl] = field(default_factory=list)
     n_particles: int = None
     max_molecule_size: int = None
     n_flush: int = None
@@ -48,6 +49,7 @@ class Config:
     thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: bool = False
+    squaregradient: bool = False
 
     #For NPT runs
     barostat: str = None
@@ -78,6 +80,12 @@ class Config:
                 for k in self.chi
             ]
         )
+        K_coupl_str = "\tK_coupl:\n" + "".join(
+            [
+                (f"\t\t{k.atom_1} {k.atom_2}: " + f"{k.squaregradient_energy}\n")
+                for k in self.K_coupl
+            ]
+        )
         thermostat_coupling_groups_str = ""
         if any(self.thermostat_coupling_groups):
             thermostat_coupling_groups_str = "\tthermostat_coupling_groups:\n" + "".join(
@@ -90,9 +98,9 @@ class Config:
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            if k not in ("bonds", "angle_bonds", "chi", "thermostat_coupling_groups"):
+            if k not in ("bonds", "angle_bonds", "chi", "K_coupl", "thermostat_coupling_groups"):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += bonds_str + angle_str + chi_str + thermostat_coupling_groups_str
+        ret_str += bonds_str + angle_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
         return ret_str
 
 
@@ -233,7 +241,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "chi", "tags","m"):
+    for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags","m"):
         config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
@@ -270,6 +278,13 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                 c_ = sorted([c[0][0], c[0][1]])
                 config_dict["chi"][i] = Chi(
                     atom_1=c_[0], atom_2=c_[1], interaction_energy=c[1][0]
+                )
+        if k == "K_coupl":
+            config_dict["K_coupl"] = [None] * len(v)
+            for i, c in enumerate(v):
+                c_ = sorted([c[0][0], c[0][1]])
+                config_dict["K_coupl"][i] = K_Coupl(
+                    atom_1=c_[0], atom_2=c_[1], squaregradient_energy=c[1][0]
                 )
 
     if file_path is not None:
@@ -490,6 +505,12 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
                     warnings.warn(warn_str)
     return config
 
+def check_K_coupl(config, names, comm=MPI.COMM_WORLD):
+    if not hasattr(config, "unique_names"):
+        config = _find_unique_names(config, names)
+    unique_names = config.unique_names
+    #add warnings and error remarks here
+    return config
 
 def check_box_size(config, comm=MPI.COMM_WORLD):
     for b in config.box_size:
@@ -770,6 +791,7 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_name(config, comm=comm)
     config = check_n_particles(config, indices, comm=comm)
     config = check_chi(config, names, comm=comm)
+    config = check_K_coupl(config, names, comm=comm)
     config = check_angles(config, names, comm=comm)
     config = check_bonds(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)

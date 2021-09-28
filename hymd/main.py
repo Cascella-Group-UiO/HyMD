@@ -357,8 +357,8 @@ if __name__ == "__main__":
             raise NotImplementedError(err_str)
 
     pm_stuff  = initialize_pm(pmesh, config, comm)
-    (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
-    field_list) = pm_stuff
+    (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
+    phi_lap_filtered_fourier, phi_lap_filtered, v_ext1, field_list) = pm_stuff
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
     if config.domain_decomposition:
@@ -410,6 +410,9 @@ if __name__ == "__main__":
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
         update_field(
             phi,
+            phi_gradient,
+            phi_laplacian,
+            phi_transfer,
             layouts,
             force_on_grid,
             hamiltonian,
@@ -419,15 +422,17 @@ if __name__ == "__main__":
             config,
             v_ext,
             phi_fourier,
+            phi_lap_filtered_fourier,
             v_ext_fourier,
+            phi_lap_filtered,
+            v_ext1,
             config.m,
             compute_potential=True,
         )
-        #print('Updating phi_fourier for t=0',phi_fourier[0].value[0][0][0:2])
-        #print('Updating phi_fourier for t=1',phi_fourier[1].value[0][0][0:2])
 
         field_energy, kinetic_energy = compute_field_and_kinetic_energy(
             phi,
+            phi_gradient,
             velocities,
             hamiltonian,
             positions,
@@ -487,11 +492,6 @@ if __name__ == "__main__":
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
             angle_pr = comm.allreduce(angle_pr_, MPI.SUM)
-            #if(rank == 0):
-            #    print('angle_energy:',angle_energy)
-            #    print('angle_pr in x:', angle_pr[0])
-            #    print('angle_pr in y:', angle_pr[1])
-            #    print('angle_pr in z:', angle_pr[2])
         else:
             bonds_2_atom1, bonds_2_atom2 = [], []
     else:
@@ -522,6 +522,7 @@ if __name__ == "__main__":
         if not args.disable_field:
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(
                 phi,
+                phi_gradient,
                 velocities,
                 hamiltonian,
                 positions,
@@ -537,12 +538,13 @@ if __name__ == "__main__":
         if config.pressure:
             pressure = comp_pressure(
                     phi,
+                    phi_gradient,
                     hamiltonian,
                     velocities,
                     config,
                     phi_fourier,
                     phi_laplacian,
-                    lap_transfer,
+                    phi_transfer,
                     args,
                     bond_forces,
                     angle_forces,
@@ -680,6 +682,9 @@ if __name__ == "__main__":
             ]
             update_field(
                 phi,
+                phi_gradient,
+                phi_laplacian,
+                phi_transfer,
                 layouts,
                 force_on_grid,
                 hamiltonian,
@@ -689,7 +694,10 @@ if __name__ == "__main__":
                 config,
                 v_ext,
                 phi_fourier,
+                phi_lap_filtered_fourier,
                 v_ext_fourier,
+                phi_lap_filtered,
+                v_ext1,
                 config.m,
             )
             compute_field_force(
@@ -796,13 +804,14 @@ if __name__ == "__main__":
                 pm_stuff = isotropic(
                      pmesh,
                      phi,
+                     phi_gradient,
                      hamiltonian,
                      positions,
                      velocities,
                      config,
                      phi_fourier,
                      phi_laplacian,
-                     lap_transfer,
+                     phi_transfer,
                      bond_forces,
                      angle_forces,
                      args,
@@ -816,13 +825,14 @@ if __name__ == "__main__":
                      pmesh,
                      pm_stuff,
                      phi,
+                     phi_gradient,
                      hamiltonian,
                      positions,
                      velocities,
                      config,
                      phi_fourier,
                      phi_laplacian,
-                     lap_transfer,
+                     phi_transfer,
                      bond_forces,
                      angle_forces,
                      args,
@@ -831,8 +841,8 @@ if __name__ == "__main__":
                      comm=comm
                 )
 
-            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
-            field_list) = pm_stuff
+            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
+            phi_lap_filtered_fourier, phi_lap_filtered, v_ext1, field_list) = pm_stuff
             if (rank==0):
                 #print('pmesh box:',pm.BoxSize,'\n',
                 #'box:',config.box_size
@@ -843,6 +853,9 @@ if __name__ == "__main__":
                 layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
                 update_field(
                     phi,
+                    phi_gradient,
+                    phi_laplacian,
+                    phi_transfer,
                     layouts,
                     force_on_grid,
                     hamiltonian,
@@ -852,12 +865,16 @@ if __name__ == "__main__":
                     config,
                     v_ext,
                     phi_fourier,
+                    phi_lap_filtered_fourier,
                     v_ext_fourier,
+                    phi_lap_filtered,
+                    v_ext1,
                     config.m,
                     compute_potential=True,
                 )
                 field_energy, kinetic_energy = compute_field_and_kinetic_energy(
                     phi,
+                    phi_gradient,
                     velocities,
                     hamiltonian,
                     positions,
@@ -883,6 +900,7 @@ if __name__ == "__main__":
                         kinetic_energy,
                     ) = compute_field_and_kinetic_energy(  # noqa: E501
                         phi,
+                        phi_gradient,
                         velocities,
                         hamiltonian,
                         positions,
@@ -904,12 +922,13 @@ if __name__ == "__main__":
                 if config.pressure:
                     pressure = comp_pressure(
                             phi,
+                            phi_gradient,
                             hamiltonian,
                             velocities,
                             config,
                             phi_fourier,
                             phi_laplacian,
-                            lap_transfer,
+                            phi_transfer,
                             args,
                             bond_forces,
                             angle_forces,
@@ -966,6 +985,9 @@ if __name__ == "__main__":
         if not args.disable_field:
             update_field(
                 phi,
+                phi_gradient,
+                phi_laplacian,
+                phi_transfer,
                 layouts,
                 force_on_grid,
                 hamiltonian,
@@ -975,12 +997,16 @@ if __name__ == "__main__":
                 config,
                 v_ext,
                 phi_fourier,
+                phi_lap_filtered_fourier,
                 v_ext_fourier,
+                phi_lap_filtered,
+                v_ext1,
                 config.m,
                 compute_potential=True,
             )
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(
                 phi,
+                phi_gradient,
                 velocities,
                 hamiltonian,
                 positions,
@@ -999,12 +1025,13 @@ if __name__ == "__main__":
         if config.pressure:
             pressure = comp_pressure(
                     phi,
+                    phi_gradient,
                     hamiltonian,
                     velocities,
                     config,
                     phi_fourier,
                     phi_laplacian,
-                    lap_transfer,
+                    phi_transfer,
                     args,
                     bond_forces,
                     angle_forces,
