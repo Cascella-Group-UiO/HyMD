@@ -39,11 +39,15 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     ]
     phi_lap_filtered_fourier = [ pm.create("complex", value=0.0) for _ in range(config.n_types) ]
     phi_lap_filtered = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+    phi_grad_lap_fourier = [pm.create("complex", value=0.0) for _ in range(3)]
+    phi_grad_lap = [
+        [ [pm.create("real", value=0.0) for d_grad in range(3)] for d_lap in range(3) ] for _ in range(config.n_types)
+    ]
     v_ext1 = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
             phi_laplacian, phi_lap_filtered, v_ext1]
     return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
-            phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered, v_ext1, field_list)
+            phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     for t in range(n_types):
@@ -77,6 +81,8 @@ def comp_laplacian(
         phi_fourier,
         phi_transfer,
         phi_laplacian,
+        phi_grad_lap_fourier,
+        phi_grad_lap,
         hamiltonian,
         config,
         phi_lap_filtered_fourier = None,
@@ -105,11 +111,33 @@ def comp_laplacian(
         if config.squaregradient and phi_lap_filtered_fourier:
             (phi_transfer[0] + phi_transfer[1] + phi_transfer[2]).apply(hamiltonian.H, out=phi_lap_filtered_fourier[t])
 
+        # gradient of laplacian
+        if config.squaregradient:
+            for d_lap in range(3):
+                #make copies of phi_transfer[d_lap] into phi_grad_lap_fourier[0:3]
+                np.copyto(
+                    phi_grad_lap_fourier[0].value, phi_transfer[d_lap].value, casting="no", where=True
+                )
+                np.copyto(
+                    phi_grad_lap_fourier[1].value, phi_transfer[d_lap].value, casting="no", where=True
+                )
+                np.copyto(
+                    phi_grad_lap_fourier[2].value, phi_transfer[d_lap].value, casting="no", where=True
+                )
+                for d_grad in range(3):
+                    def gradient_transfer(k, v, d=d_grad):
+                        return 1j * k[d] * v
+                    phi_grad_lap_fourier[d_grad].apply(gradient_transfer, out = Ellipsis)
+                    phi_grad_lap_fourier[d_grad].c2r(out = phi_grad_lap[t][d_lap][d_grad])
+
+
 def update_field(
     phi,
     phi_gradient,
     phi_laplacian,
     phi_transfer,
+    phi_grad_lap_fourier,
+    phi_grad_lap,
     layouts,
     force_mesh,
     hamiltonian,
@@ -141,7 +169,7 @@ def update_field(
         # gradient
         comp_gradient(phi_fourier, phi_transfer, phi_gradient, config)
         # laplacian        
-        comp_laplacian(phi_fourier, phi_transfer, phi_laplacian, hamiltonian, config, phi_lap_filtered_fourier)
+        comp_laplacian(phi_fourier, phi_transfer, phi_laplacian, phi_grad_lap_fourier, phi_grad_lap, hamiltonian, config, phi_lap_filtered_fourier)
 
     
 

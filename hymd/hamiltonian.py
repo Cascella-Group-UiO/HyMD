@@ -157,7 +157,7 @@ class DefaultWithChi(Hamiltonian):
             V_incompressibility = 1/(kappa*rho0)*(sum(phi) - a)
 
             V_interaction = 0
-            V_squaregradient = 0
+            #V_squaregradient = 0
             nk = type_to_name_map[k]
             for i in range(self.config.n_types):
                 ni = type_to_name_map[i]
@@ -170,19 +170,19 @@ class DefaultWithChi(Hamiltonian):
                 #c = chi_type_dictionary[tuple(names)]
                 V_interaction += c * phi[i] / rho0
 
-            if self.config.squaregradient:
-                for i in range(self.config.n_types):
-                    ni = type_to_name_map[i]
-                    names = sorted([nk, ni])
-                    if ni!=nk:
-                        c = K_coupl_type_dictionary[tuple(names)] 
-                    else:
-                        c = 0
-                    #uncomment to include diagonal K_coupl terms:
-                    #c = K_coupl_type_dictionary[tuple(names)]
-                    V_squaregradient += -1.0 * c * (phi_laplacian[i][0] + phi_laplacian[i][1] + phi_laplacian[i][2]) / rho0
+            #if self.config.squaregradient:
+            #    for i in range(self.config.n_types):
+            #        ni = type_to_name_map[i]
+            #        names = sorted([nk, ni])
+            #        if ni!=nk:
+            #            c = K_coupl_type_dictionary[tuple(names)] 
+            #        else:
+            #            c = 0
+            #        #uncomment to include diagonal K_coupl terms:
+            #        #c = K_coupl_type_dictionary[tuple(names)]
+            #        V_squaregradient += -1.0 * c * (phi_laplacian[i][0] + phi_laplacian[i][1] + phi_laplacian[i][2]) / rho0
                 
-            return (V_interaction, V_incompressibility, V_squaregradient)
+            return (V_interaction, V_incompressibility)#, V_squaregradient)
 
         self.V_bar = [
             sympy.lambdify([self.phi, self.phi_laplacian], V_bar(self.phi, self.phi_laplacian, k))

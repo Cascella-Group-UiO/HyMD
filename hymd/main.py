@@ -358,7 +358,7 @@ if __name__ == "__main__":
 
     pm_stuff  = initialize_pm(pmesh, config, comm)
     (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
-    phi_lap_filtered_fourier, phi_lap_filtered, v_ext1, field_list) = pm_stuff
+    phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
     if config.domain_decomposition:
@@ -413,6 +413,8 @@ if __name__ == "__main__":
             phi_gradient,
             phi_laplacian,
             phi_transfer,
+            phi_grad_lap_fourier,
+            phi_grad_lap,
             layouts,
             force_on_grid,
             hamiltonian,
@@ -545,6 +547,8 @@ if __name__ == "__main__":
                     phi_fourier,
                     phi_laplacian,
                     phi_transfer,
+                    phi_grad_lap_fourier,
+                    phi_grad_lap,
                     args,
                     bond_forces,
                     angle_forces,
@@ -685,6 +689,8 @@ if __name__ == "__main__":
                 phi_gradient,
                 phi_laplacian,
                 phi_transfer,
+                phi_grad_lap_fourier,
+                phi_grad_lap,
                 layouts,
                 force_on_grid,
                 hamiltonian,
@@ -812,6 +818,8 @@ if __name__ == "__main__":
                      phi_fourier,
                      phi_laplacian,
                      phi_transfer,
+                     phi_grad_lap_fourier,
+                     phi_grad_lap,
                      bond_forces,
                      angle_forces,
                      args,
@@ -833,6 +841,8 @@ if __name__ == "__main__":
                      phi_fourier,
                      phi_laplacian,
                      phi_transfer,
+                     phi_grad_lap_fourier,
+                     phi_grad_lap,
                      bond_forces,
                      angle_forces,
                      args,
@@ -842,7 +852,7 @@ if __name__ == "__main__":
                 )
 
             (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
-            phi_lap_filtered_fourier, phi_lap_filtered, v_ext1, field_list) = pm_stuff
+            phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
             if (rank==0):
                 #print('pmesh box:',pm.BoxSize,'\n',
                 #'box:',config.box_size
@@ -856,6 +866,8 @@ if __name__ == "__main__":
                     phi_gradient,
                     phi_laplacian,
                     phi_transfer,
+                    phi_grad_lap_fourier,
+                    phi_grad_lap,
                     layouts,
                     force_on_grid,
                     hamiltonian,
@@ -929,6 +941,8 @@ if __name__ == "__main__":
                             phi_fourier,
                             phi_laplacian,
                             phi_transfer,
+                            phi_grad_lap_fourier,
+                            phi_grad_lap,
                             args,
                             bond_forces,
                             angle_forces,
@@ -988,6 +1002,8 @@ if __name__ == "__main__":
                 phi_gradient,
                 phi_laplacian,
                 phi_transfer,
+                phi_grad_lap_fourier,
+                phi_grad_lap,
                 layouts,
                 force_on_grid,
                 hamiltonian,
@@ -1032,6 +1048,8 @@ if __name__ == "__main__":
                     phi_fourier,
                     phi_laplacian,
                     phi_transfer,
+                    phi_grad_lap_fourier,
+                    phi_grad_lap,
                     args,
                     bond_forces,
                     angle_forces,

@@ -253,7 +253,7 @@ def store_static(
         h5md.pressure_time,
         h5md.pressure,
     ) = setup_time_dependent_element(
-        "pressure", h5md.observables, n_frames, (18,), "float32", units="Bar"
+        "pressure", h5md.observables, n_frames, (22,), "float32", units="Bar"
     )
     (
         _,
