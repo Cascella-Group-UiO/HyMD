@@ -395,7 +395,7 @@ if __name__ == "__main__":
     # TODO: Get box_size from h5, not from toml?
     positions = np.mod(positions, config.box_size[None, :])
 
-    # Initialize dipoles (for DD), populate them if protein_flag = True
+    # Initialize dipoles, populate them if protein_flag = True
     if args.disable_dipole:
         dipole_flag = 0
     else:
@@ -475,26 +475,19 @@ if __name__ == "__main__":
         bond_forces,
         angle_forces,
         dihedral_forces,
-        trans_matrices,
         reconstructed_forces,
-        dipole_positions,
-        dipole_charges,
-        dipole_forces,
         field_forces,
         names,
         types,
     ]
     args_recv = [
+        "positions",
         "velocities",
         "indices",
         "bond_forces",
         "angle_forces",
         "dihedral_forces",
-        "trans_matrices",
         "reconstructed_forces",
-        "dipole_positions",
-        "dipole_charges",
-        "dipole_forces",
         "field_forces",
         "names",
         "types",
@@ -506,12 +499,8 @@ if __name__ == "__main__":
         args_recv.append("charges")
         args_recv.append("elec_forces")
     if molecules_flag:
-        args_recv.append("molecules")
         args_recv.append("bonds")
-
-    ## convert to tuple
-    # Why?
-    args_in = tuple(args_in)
+        args_recv.append("molecules")
 
     ## cmd string to excecut the (...) = dd
     _str_receive_dd = ",".join(args_recv)
@@ -522,7 +511,7 @@ if __name__ == "__main__":
         dd = domain_decomposition(
             positions,
             pm,
-            *args_in,
+            *tuple(args_in),
             molecules=molecules if molecules_flag else None,
             bonds=bonds if molecules_flag else None,
             verbose=args.verbose,
@@ -613,6 +602,8 @@ if __name__ == "__main__":
                 bonds_4_last,
             ) = bonds_prep
 
+            bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
+
             if bonds_4_type.any() > 1:
                 err_str = (
                     "0 and 1 are the only currently supported dihedral angle types."
@@ -624,7 +615,7 @@ if __name__ == "__main__":
             # Check if we have a protein
             protein_flag = comm.allreduce(bonds_4_type.any() == 1)
             if protein_flag and not args.disable_dipole:
-                # Dipoles only if dih_type == 1
+                # each rank will have different n_tors, don't need to domain decompose dipoles
                 n_tors = len(bonds_4_atom1)
                 dipole_positions = np.zeros((n_tors, 4, 3), dtype=dtype)
                 # 4 cause we need to take into account the last angle in the molecule
@@ -650,21 +641,6 @@ if __name__ == "__main__":
                 dipoles_field = [
                     pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
                 ]
-
-                if config.domain_decomposition:
-                    dd = domain_decomposition(
-                        positions,
-                        pm,
-                        *args_in,
-                        molecules=molecules if molecules_flag else None,
-                        bonds=bonds if molecules_flag else None,
-                        verbose=args.verbose,
-                        comm=comm,
-                    )
-                    exec(_cmd_receive_dd)
-
-            # FIXME: Don't really like it here
-            bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
 
         positions = np.asfortranarray(positions)
         velocities = np.asfortranarray(velocities)
@@ -1065,8 +1041,18 @@ if __name__ == "__main__":
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
                 dihedral_forces = np.ascontiguousarray(dihedral_forces)
-                dipole_positions = np.ascontiguousarray(dipole_positions)
-                trans_matrices = np.ascontiguousarray(trans_matrices)
+
+                args_in = [
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    dihedral_forces,
+                    reconstructed_forces,
+                    field_forces,
+                    names,
+                    types,
+                ]
 
                 dd = domain_decomposition(
                     positions,
@@ -1084,9 +1070,8 @@ if __name__ == "__main__":
                 bond_forces = np.asfortranarray(bond_forces)
                 angle_forces = np.asfortranarray(angle_forces)
                 dihedral_forces = np.asfortranarray(dihedral_forces)
-                dipole_positions = np.asfortranarray(dipole_positions)
-                trans_matrices = np.asfortranarray(trans_matrices)
 
+                # Why are we creating new layouts here?
                 layouts = [
                     pm.decompose(positions[types == t]) for t in range(config.n_types)
                 ]
@@ -1114,7 +1099,28 @@ if __name__ == "__main__":
                     ) = bonds_prep
 
                     bonds_4_coeff = np.asfortranarray(bonds_4_coeff)
-                    # if protein_flag: Initialize dipole positions again or not?
+
+                    # Reinitialize dipoles so each rank has the right amount
+                    if protein_flag and not args.disable_dipole:
+                        # each rank will have different n_tors, don't need to domain decompose dipoles
+                        n_tors = len(bonds_4_atom1)
+                        dipole_positions = np.zeros((n_tors, 4, 3), dtype=dtype)
+                        # 4 cause we need to take into account the last angle in the molecule
+                        dipole_charges = np.array(
+                            [
+                                2 * [0.25, -0.25]
+                                if (bonds_4_type[i], bonds_4_last[i]) == (1, 1)
+                                else [0.25, -0.25, 0.0, 0.0]
+                                if bonds_4_type[i] == 1
+                                else 2 * [0.0, 0.0]
+                                for i in range(n_tors)
+                            ],
+                            dtype=dtype,
+                        ).flatten()
+                        dipole_forces = np.zeros_like(dipole_positions)
+                        trans_matrices = np.zeros(shape=(n_tors, 6, 3, 3), dtype=dtype)
+                        dipole_positions = np.asfortranarray(dipole_positions)
+                        trans_matrices = np.asfortranarray(trans_matrices)
 
         for t in range(config.n_types):
             if args.verbose > 2:
