@@ -47,7 +47,7 @@ subroutine cosine_series(c_n, d_n, phi, energy, dE_dphi)
 
 end subroutine cosine_series
 
-subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt, df_cbt, fa, fb, fc, dipole, trans_matrix)
+subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt, df_cbt, fa, fb, fc, dipole, transfer_matrix)
   real(8), dimension(3), intent(in)  :: rab, rcb, box
   real(4), dimension(3), intent(in)  :: rb
   real(8), dimension(:), intent(in)  :: c_k, d_k
@@ -57,7 +57,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   real(8),               intent(out) :: energy_cbt, df_cbt
   real(8), dimension(3), intent(out) :: fa, fb, fc
   real(4), dimension(2, 3), intent(in out) :: dipole
-  real(4), dimension(3, 3, 3), intent(in out) :: trans_matrix
+  real(4), dimension(3, 3, 3), intent(in out) :: transfer_matrix
 
   integer :: i, j
   real(8) :: k, gamma_0, dk, dg, norm_a, norm_c, df_ang, var_sq
@@ -201,9 +201,9 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     ! Final transfer matrices D_i
     ! 0.5 cause we have two equally distant points
-    trans_matrix(1, :, :) = 0.5d0 * delta * (                sin_psi * (cos_theta * N_a + sin_theta * M_a + FN_a - FM_a))
-    trans_matrix(2, :, :) = 0.5d0 * delta * (cos_psi * V_b + sin_psi * (cos_theta * N_b + sin_theta * M_b + FN_b - FM_b))
-    trans_matrix(3, :, :) = 0.5d0 * delta * (cos_psi * V_c + sin_psi * (cos_theta * N_c + sin_theta * M_c + FN_c - FM_c))
+    transfer_matrix(1, :, :) = 0.5d0 * delta * (                sin_psi * (cos_theta * N_a + sin_theta * M_a + FN_a - FM_a))
+    transfer_matrix(2, :, :) = 0.5d0 * delta * (cos_psi * V_b + sin_psi * (cos_theta * N_b + sin_theta * M_b + FN_b - FM_b))
+    transfer_matrix(3, :, :) = 0.5d0 * delta * (cos_psi * V_c + sin_psi * (cos_theta * N_c + sin_theta * M_c + FN_c - FM_c))
 
     ! Final angle forces
     fa = df_ang * fa
