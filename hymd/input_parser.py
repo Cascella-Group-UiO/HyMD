@@ -75,7 +75,12 @@ class Config:
                     ).join(
                         map(
                             str,
-                            [[round(num, 3) for num in c_in] for c_in in k.coeffs],
+                            [
+                                [round(num, 3) for num in c_in]
+                                if isinstance(c_in, list)
+                                else c_in
+                                for c_in in k.coeffs
+                            ],
                         )
                     )
                     + (
