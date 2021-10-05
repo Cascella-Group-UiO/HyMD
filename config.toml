@@ -1,0 +1,212 @@
+# [meta]
+# Name of the simulation. May be ommitted.
+# name = "Alanine octa-peptide in vacuum"
+# Tags classifying the simulation. May be ommitted.
+# tags = ["peptide", "ALA"]
+
+[particles]
+# Number of total particles in the simulation. If an input .hdf5 format file is
+# specified, the number of particles will be inferred from this and *may* be
+# ommited here.
+# n_particles = 
+# specify number of ghost particles, used for dipole point charges in the CBT dihedral potential (default = 0)
+# n_ghots = 0
+# Mass of the particles in [g/mol]. All masses are assumed equal.
+mass = 72.0
+# Maximum number of particles per molecules present in the system. A default of
+# 200 is assumed, and this keyword may be ommitted for any system with smaller
+# molecules.
+# max_molecule_size = 15
+
+[simulation]
+# Number of total time steps in the simulation.
+n_steps = 1000 # 6 ns
+# Frequency of trajectory/energy file output in time steps.
+n_print = 10 # 300 ps
+# Frequency of requesting that the HDF5 library flush the file output buffers
+# to disk after in number of n_print timesteps.
+n_flush = 10
+# Time step used in the simulation in [picoseconds].
+time_step = 0.3
+# Simulation box size in [nanometers].
+box_size = [10.73911, 10.76184, 11.30546]
+# Time integrator used in the simulation. Either "velocity-verlet" or "respa".
+# If "respa", specify also the number of small rRESPA time steps per large
+# time_step with the 'respa_inner' keyword.
+integrator = "respa"
+respa_inner = 5
+# Perform MPI rank domain decomposition every x time steps to (hopefully)
+# reduce the amount of neccessary communication between ranks in the pmesh
+# procedures. Ommit or set to 'false' or '0' to not perform any domain
+# decomposition.
+# domain_decomposition = 100
+domain_decomposition = 100
+# Remove linear center of mass momentum from the system before integration
+# starts.
+cancel_com_momentum = true
+# Starting temperature to generate before simulation begins in [kelvin]. Ommit
+# or set to 'false' to not change the temperature before starting.
+start_temperature = 330
+# Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
+# or set to 'false' to use no thermostat, i.e. a constant energy simulation.
+target_temperature = 330
+# Thermostat collision frequency in [1/picoseconds].
+tau = 1
+# Couple groups of particles species to individual different thermostats.
+thermostat_coupling_groups = [
+  ["PBB", "PSC", "RBB", "RSC", "WBB", "WSC1", "WSC2", "WSC3", "WSC4", "GBB", "C"], 
+  ["W", "CL"]
+]
+# The energy functional W[phi] to use. Options:
+#    "SquaredPhi":      φ² / 2κφ₀,
+#    "DefaultNoChi":   (φ - φ₀)² / 2κφ₀
+#    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
+# Subclass Hamiltonian to create a new energy functional.
+hamiltonian = 'DefaultWithChi'
+coulombtype = 'PIC_Spectral'
+dielectric_const = 80.0
+
+[field]
+# Particle-mesh grid size, either a single integer or an array of 3 integers
+# (number of grid points in each dimension). In order to guarantee consistency
+# and speed in the PFFT routines, the actual mesh grid will be changed to ensure
+# that each dimension of the 2d PFFT process grid divides each dimension of the
+# mesh grid size.
+mesh_size = [24, 24, 24]
+# Compressibility used in the relaxed incompressibility term of W(phi) in
+# [mol/kJ].
+kappa = 0.05
+# Standard deviation in the Gaussian filter (window function) in [nanometers].
+# This value is a characteristic length scale for the size of the particles in
+# the simulation.
+sigma = 0.5
+# Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
+# [kJ/mol])).
+chi = [
+    # Don't need to specify 0 terms
+    # [["PBB", "W"], [0.0]],
+    # [["RBB", "W"], [0.0]],
+    # [["WBB", "W"], [0.0]],
+    # [["GBB", "W"], [0.0]],
+    # water
+    [["PSC", "W"], [-1.0]],
+    [["RSC", "W"], [-2.2]],
+    [["WSC1", "W"], [23.1]],
+    [["WSC2", "W"], [23.1]],
+    [["WSC3", "W"], [23.1]],
+    [["WSC4", "W"], [23.1]],
+    [["C", "W"], [42.24]], # Taken from DPPC
+    # CL == water
+    [["PSC", "CL"], [-1.0]],
+    [["RSC", "CL"], [-2.2]],
+    [["WSC1", "CL"], [23.1]],
+    [["WSC2", "CL"], [23.1]],
+    [["WSC3", "CL"], [23.1]],
+    [["WSC4", "CL"], [23.1]],
+    [["C", "CL"], [42.24]], # Taken from DPPC
+    # inter BB-BB
+    #
+    #
+    # inter side-side
+    [["PSC", "RSC"], [-3.4]],
+    [["PSC", "WSC1"], [-7.9]],
+    [["PSC", "WSC2"], [-7.9]],
+    [["PSC", "WSC3"], [-7.9]],
+    [["PSC", "WSC4"], [-7.9]],
+    [["RSC", "WSC1"], [-1.8]],
+    [["RSC", "WSC2"], [-1.8]],
+    [["RSC", "WSC3"], [-1.8]],
+    [["RSC", "WSC4"], [-1.8]],
+    # inter side-BB
+    [["PSC", "RBB"], [-3.4]],
+    [["PSC", "WBB"], [-7.9]],
+    [["PSC", "GBB"], [-2.6]],
+    [["RSC", "PBB"], [-3.4]],
+    [["RSC", "WBB"], [-1.8]],
+    [["RSC", "GBB"], [-3.9]],
+    [["WSC1", "PBB"], [-7.9]],
+    [["WSC1", "RBB"], [-1.8]],
+    [["WSC1", "GBB"], [-5.0]],
+    [["WSC2", "PBB"], [-7.9]],
+    [["WSC2", "RBB"], [-1.8]],
+    [["WSC2", "GBB"], [-5.0]],
+    [["WSC3", "PBB"], [-7.9]],
+    [["WSC3", "RBB"], [-1.8]],
+    [["WSC3", "GBB"], [-5.0]],
+    [["WSC4", "PBB"], [-7.9]],
+    [["WSC4", "RBB"], [-1.8]],
+    [["WSC4", "GBB"], [-5.0]],
+    # inter head-tail
+    [["PBB", "C"], [15.0]],
+    [["RBB", "C"], [4.0]],
+    [["WBB", "C"], [4.0]],
+    [["GBB", "C"], [4.0]],
+    [["PSC", "C"], [15.0]],
+    [["RSC", "C"], [15.0]],
+    [["WSC1", "C"], [1.0]],
+    [["WSC2", "C"], [1.0]],
+    [["WSC3", "C"], [1.0]],
+    [["WSC4", "C"], [1.0]],
+]
+
+[bonds]
+# Two-particle bonds, ((atom name 1, atom name 2), (equilibrium length in
+# [nanometers], bond strength in [kJ/mol])). Note the two
+# Same for the angles since he used the combined angle-torsion potential.
+# IMPORTANT: numbers in arrays must have the same type!
+bonds = [
+  # Backbone
+  [["PBB", "RBB"], [0.35, 1250.0]],
+  [["RBB", "WBB"], [0.35, 1250.0]],
+  [["WBB", "GBB"], [0.35, 1250.0]],
+  [["GBB", "C"], [0.35, 1250.0]],
+  # [["GBB", "C"], [0.47, 1250.0]],
+  # Sidechain
+  [["PBB", "PSC"], [0.30, 7500.0]],
+  [["RBB", "RSC"], [0.33, 5000.0]],
+  [["RSC", "RSC"], [0.34, 5000.0]],
+  [["WBB", "WSC1"], [0.30, 5000.0]],
+  # Check if this works, substituting elastic network
+  [["WSC1", "WSC2"], [0.27, 5000.0]],
+  [["WSC1", "WSC4"], [0.27, 5000.0]],
+  [["WSC2", "WSC3"], [0.27, 5000.0]],
+  [["WSC3", "WSC4"], [0.27, 5000.0]],
+  # Tails
+  [["C", "C"], [0.47, 1250.0]],
+]
+# Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
+# (equilibrium angle in [degrees], bond strength in [kJ/mol])
+angle_bonds = [
+  # Backbone - Sidechain
+  [["PSC", "PBB", "RBB"], [100.0, 25.0]],
+  [["PBB", "RBB", "RSC"], [100.0, 25.0]],
+  [["RBB", "WBB", "WSC1"], [100.0, 25.0]],
+  # Sidechain
+  [["RBB", "RSC", "RSC"], [180.0, 25.0]],
+  [["WBB", "WSC1", "WSC4"], [90.0, 50.0]],
+  [["WBB", "WSC1", "WSC2"], [150.0, 50.0]],
+  # [["WSC2", "WSC3", "WSC4"], [60.0, 50.0]],
+  # Tails
+  [["GBB", "C", "C"], [180.0, 25.0]],
+  [["C", "C", "C"], [180.0, 25.0]],
+
+]
+# Four-particles torsion angles, the definition is as follows:
+# ((atom name 1, atom name 2, atom name 3, atom name 4),
+#  (coefficients), 
+#  (dihedral type))
+dihedrals = [
+  [
+    ["PBB", "RBB", "WBB", "GBB"],
+    [
+      [0], # λ = 0 ==> random coil
+      # [44.91, 61.02, -54.45, 25.16, -8.50], # c_k, might need to scale this by 0.5 
+      [22.45439543,  30.51204362, -27.22431306, 12.57971393, -4.24959282],
+      [0.08, 0.46, 1.65, -0.96, 0.38], # d_k
+    ],
+    [1.0]
+  ],
+  # Impropers
+  [["WBB", "WSC2", "WSC4", "WSC1"], [0.0, 50.0], [2.0]],
+  [["WSC1", "WSC2", "WSC3", "WSC4"], [0.0, 200.0], [2.0]]
+]
