@@ -33,7 +33,6 @@ class Angle(Bond):
     atom_3: str
 
 
-# 2- Harmonic potential for impropers
 # 1- Fourier series
 @dataclass
 class Dihedral:
@@ -47,11 +46,17 @@ class Dihedral:
     dih_type: int
 
 
-# 3- Combined bending-torsional potential
+# 2- Combined bending-torsional potential
 # @dataclass
 # class CBT_potential(Dihedral):
 #     coeff_k: list
 #     phase_k: list
+
+# 3- Harmonic potential for impropers
+# @dataclass
+# class improper(Dihedral):
+#     equilibrium: float
+#     strength: float
 
 
 @dataclass
@@ -59,6 +64,17 @@ class Chi:
     atom_1: str
     atom_2: str
     interaction_energy: float
+
+
+def findPathsNoLC(G, u, n):
+    if n == 0:
+        return [[u]]
+    paths = []
+    for neighbor in G.neighbors(u):
+        for path in findPathsNoLC(G, neighbor, n - 1):
+            if u not in path:
+                paths.append([u] + path)
+    return paths
 
 
 def prepare_bonds_old(molecules, names, bonds, indices, config):
@@ -133,38 +149,34 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                 ]
                             )
 
-                if len(path) == 4 and path[-1] > path[0]:
-                    name_i = bond_graph.nodes()[i]["name"]
-                    name_mid_1 = bond_graph.nodes()[path[1]]["name"]
-                    name_mid_2 = bond_graph.nodes()[path[2]]["name"]
-                    name_j = bond_graph.nodes()[j]["name"]
+            all_paths_len_four = findPathsNoLC(bond_graph, i, 3)
+            for p in all_paths_len_four:
+                name_i = bond_graph.nodes()[i]["name"]
+                name_mid_1 = bond_graph.nodes()[p[1]]["name"]
+                name_mid_2 = bond_graph.nodes()[p[2]]["name"]
+                name_j = bond_graph.nodes()[p[3]]["name"]
 
-                    for a in config.dihedrals:
-                        match_forward = (
-                            name_i == a.atom_1
-                            and name_mid_1 == a.atom_2
-                            and name_mid_2 == a.atom_3
-                            and name_j == a.atom_4
+                for a in config.dihedrals:
+                    match_forward = (
+                        name_i == a.atom_1
+                        and name_mid_1 == a.atom_2
+                        and name_mid_2 == a.atom_3
+                        and name_j == a.atom_4
+                    )
+                    if match_forward:
+                        bonds_4.append(
+                            [
+                                bond_graph.nodes()[i]["local_index"],
+                                bond_graph.nodes()[p[1]]["local_index"],
+                                bond_graph.nodes()[p[2]]["local_index"],
+                                bond_graph.nodes()[p[3]]["local_index"],
+                                a.coeffs,
+                                a.dih_type,
+                            ]
                         )
-                        match_backward = (
-                            name_i == a.atom_4
-                            and name_mid_1 == a.atom_3
-                            and name_mid_2 == a.atom_2
-                            and name_j == a.atom_1
-                        )
-                        if match_forward or match_backward:
-                            bonds_4.append(
-                                [
-                                    bond_graph.nodes()[i]["local_index"],
-                                    bond_graph.nodes()[path[1]]["local_index"],
-                                    bond_graph.nodes()[path[2]]["local_index"],
-                                    bond_graph.nodes()[j]["local_index"],
-                                    a.coeffs,
-                                    a.dih_type,
-                                ]
-                            )
-                            if a.dih_type == 1:
-                                bb_dihedral = len(bonds_4)
+                        # This works for protein inside molecule, but not for block peptides
+                        if a.dih_type == 1:
+                            bb_dihedral = len(bonds_4)
 
         if bb_dihedral:
             bb_index.append(bb_dihedral - 1)
