@@ -639,6 +639,7 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
                 ):
                     found = True
             if not found:
+                config.chi.append(Chi(atom_1=n, atom_2=m, interaction_energy=0.0))
                 warn_str = (
                     f"Atom types {n} and {m} found in the "
                     f"system, but no chi interaction {n}--{m} "
