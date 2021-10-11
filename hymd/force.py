@@ -111,7 +111,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
 
                     for b in config.bonds:
                         match_forward = name_i == b.atom_1 and name_j == b.atom_2
-                        match_backward = name_j == b.atom_2 and name_i == b.atom_1
+                        match_backward = name_i == b.atom_2 and name_j == b.atom_1
                         if match_forward or match_backward:
                             bonds_2.append(
                                 [
