@@ -107,7 +107,13 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
   ! This prevents sin_gamma == 0
   if (cos2 < 1.0) then
     gamm = acos(cos_gamma)
-    sin_gamma = sin(gamm)
+    sin_gamma = sqrt(1 - cos2)
+
+    if (sin_gamma < 0.1) then
+      print '(f5.2)', "WARNING: The angle gamma = ", gamm, " is too close to 0 or π."
+      print *, "There's probably something wrong with the simulation. Setting sin(γ) = 0.1"
+      sin_gamma = 0.1
+    end if
     
     ! Bending "forces" == f_gamma_i in the paper
     ! 1/sin(γ) ∂cos(γ)/∂γ
