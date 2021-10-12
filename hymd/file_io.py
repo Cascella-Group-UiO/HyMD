@@ -66,7 +66,7 @@ def store_static(
     bonds_2_atom2,
     velocity_out=False,
     force_out=False,
-    charge_out=False,  # Provide charge array here
+    charges=False,  # Provide charge array here
     comm=MPI.COMM_WORLD,
 ):
     dtype = h5md.float_dtype
@@ -117,7 +117,7 @@ def store_static(
     ### TBF, ok for now
 
     ### add  charge
-    if charge_out:
+    if charges is not False:
         charge = h5md.all_particles.create_dataset(
             "charge", (config.n_particles,), dtype="float32"
         )  # charges.shape
@@ -247,7 +247,7 @@ def store_static(
     ) = setup_time_dependent_element(
         "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"
     )
-    if charge_out:
+    if charges is not False:
         (
             _,
             h5md.field_q_energy_step,
