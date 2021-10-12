@@ -110,7 +110,8 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     sin_gamma = sqrt(1 - cos2)
 
     if (sin_gamma < 0.1) then
-      print '(f5.2)', "WARNING: The angle gamma = ", gamm, " is too close to 0 or π."
+      print *, "DIHEDRAL ROUTINE WARNING (bending potential):"
+      print '(a, f5.2, a)', "The angle γ =", gamm, " is too close to 0 or π."
       print *, "There's probably something wrong with the simulation. Setting sin(γ) = 0.1"
       sin_gamma = 0.1
     end if
