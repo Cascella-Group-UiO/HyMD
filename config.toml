@@ -1,14 +1,25 @@
 # [meta]
 # Name of the simulation. May be ommitted.
-# name = "Alanine octa-peptide in vacuum"
+# name = "PRWG lipopeptide micelle in water"
 # Tags classifying the simulation. May be ommitted.
-# tags = ["peptide", "ALA"]
+# tags = ["lipopeptides", "PRWG"]
+
+# Here's the topology of a PRWG molecule
+#
+#                   WSC2 -- WSC3
+#                   |       |
+#    PSC(+)        WSC1 -- WSC4
+#    |             |
+#    PBB -- RBB -- WBB -- GBB -- C -- C -- C -- C 
+#           |
+#           RSC -- RSC(+)
+#
 
 [particles]
 # Number of total particles in the simulation. If an input .hdf5 format file is
 # specified, the number of particles will be inferred from this and *may* be
 # ommited here.
-# n_particles = 
+n_particles = 11876
 # specify number of ghost particles, used for dipole point charges in the CBT dihedral potential (default = 0)
 # n_ghots = 0
 # Mass of the particles in [g/mol]. All masses are assumed equal.
@@ -20,16 +31,17 @@ mass = 72.0
 
 [simulation]
 # Number of total time steps in the simulation.
-n_steps = 1000 # 6 ns
+n_steps = 200
 # Frequency of trajectory/energy file output in time steps.
-n_print = 10 # 300 ps
+n_print = 1
 # Frequency of requesting that the HDF5 library flush the file output buffers
 # to disk after in number of n_print timesteps.
 n_flush = 10
 # Time step used in the simulation in [picoseconds].
-time_step = 0.3
+time_step = 0.03
 # Simulation box size in [nanometers].
 box_size = [10.73911, 10.76184, 11.30546]
+# box_size = [5.0, 5.0, 5.0] # for single PRWG molecule test
 # Time integrator used in the simulation. Either "velocity-verlet" or "respa".
 # If "respa", specify also the number of small rRESPA time steps per large
 # time_step with the 'respa_inner' keyword.
@@ -39,17 +51,17 @@ respa_inner = 5
 # reduce the amount of neccessary communication between ranks in the pmesh
 # procedures. Ommit or set to 'false' or '0' to not perform any domain
 # decomposition.
-# domain_decomposition = 100
-domain_decomposition = 100
+domain_decomposition = 1000
+# domain_decomposition = false
 # Remove linear center of mass momentum from the system before integration
 # starts.
 cancel_com_momentum = true
 # Starting temperature to generate before simulation begins in [kelvin]. Ommit
 # or set to 'false' to not change the temperature before starting.
-start_temperature = 330
+start_temperature = 300
 # Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
 # or set to 'false' to use no thermostat, i.e. a constant energy simulation.
-target_temperature = 330
+target_temperature = 300
 # Thermostat collision frequency in [1/picoseconds].
 tau = 1
 # Couple groups of particles species to individual different thermostats.
@@ -83,31 +95,34 @@ sigma = 0.5
 # Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
 # [kJ/mol])).
 chi = [
-    # Don't need to specify 0 terms
-    # [["PBB", "W"], [0.0]],
-    # [["RBB", "W"], [0.0]],
-    # [["WBB", "W"], [0.0]],
-    # [["GBB", "W"], [0.0]],
-    # water
+    # Don't need to specify 0 value interactions
+    # Here I assume all BB beads to be glycines
+    # inter BB-BB, set to zero
+    # BB - water
+    [["PBB", "W"], [-1.1]],
+    [["RBB", "W"], [-1.1]],
+    [["WBB", "W"], [-1.1]],
+    [["GBB", "W"], [-1.1]],
+    [["C", "W"], [42.24]], # Taken from DPPC
+    [["PBB", "CL"], [-1.1]],
+    [["RBB", "CL"], [-1.1]],
+    [["WBB", "CL"], [-1.1]],
+    [["GBB", "CL"], [-1.1]],
+    [["C", "CL"], [42.24]], # Taken from DPPC
+    # SC - water 
     [["PSC", "W"], [-1.0]],
     [["RSC", "W"], [-2.2]],
     [["WSC1", "W"], [23.1]],
     [["WSC2", "W"], [23.1]],
     [["WSC3", "W"], [23.1]],
     [["WSC4", "W"], [23.1]],
-    [["C", "W"], [42.24]], # Taken from DPPC
-    # CL == water
     [["PSC", "CL"], [-1.0]],
     [["RSC", "CL"], [-2.2]],
     [["WSC1", "CL"], [23.1]],
     [["WSC2", "CL"], [23.1]],
     [["WSC3", "CL"], [23.1]],
     [["WSC4", "CL"], [23.1]],
-    [["C", "CL"], [42.24]], # Taken from DPPC
-    # inter BB-BB
-    #
-    #
-    # inter side-side
+    # SC - SC
     [["PSC", "RSC"], [-3.4]],
     [["PSC", "WSC1"], [-7.9]],
     [["PSC", "WSC2"], [-7.9]],
@@ -117,36 +132,36 @@ chi = [
     [["RSC", "WSC2"], [-1.8]],
     [["RSC", "WSC3"], [-1.8]],
     [["RSC", "WSC4"], [-1.8]],
-    # inter side-BB
-    [["PSC", "RBB"], [-3.4]],
-    [["PSC", "WBB"], [-7.9]],
+    # SC - BB
+    [["PSC", "RBB"], [-2.6]],
+    [["PSC", "WBB"], [-2.6]],
     [["PSC", "GBB"], [-2.6]],
-    [["RSC", "PBB"], [-3.4]],
-    [["RSC", "WBB"], [-1.8]],
+    [["RSC", "PBB"], [-3.9]],
+    [["RSC", "WBB"], [-3.9]],
     [["RSC", "GBB"], [-3.9]],
-    [["WSC1", "PBB"], [-7.9]],
-    [["WSC1", "RBB"], [-1.8]],
+    [["WSC1", "PBB"], [-5.0]],
+    [["WSC1", "RBB"], [-5.0]],
     [["WSC1", "GBB"], [-5.0]],
-    [["WSC2", "PBB"], [-7.9]],
-    [["WSC2", "RBB"], [-1.8]],
+    [["WSC2", "PBB"], [-5.0]],
+    [["WSC2", "RBB"], [-5.0]],
     [["WSC2", "GBB"], [-5.0]],
-    [["WSC3", "PBB"], [-7.9]],
-    [["WSC3", "RBB"], [-1.8]],
+    [["WSC3", "PBB"], [-5.0]],
+    [["WSC3", "RBB"], [-5.0]],
     [["WSC3", "GBB"], [-5.0]],
-    [["WSC4", "PBB"], [-7.9]],
-    [["WSC4", "RBB"], [-1.8]],
+    [["WSC4", "PBB"], [-5.0]],
+    [["WSC4", "RBB"], [-5.0]],
     [["WSC4", "GBB"], [-5.0]],
-    # inter head-tail
-    [["PBB", "C"], [15.0]],
-    [["RBB", "C"], [4.0]],
-    [["WBB", "C"], [4.0]],
-    [["GBB", "C"], [4.0]],
-    [["PSC", "C"], [15.0]],
-    [["RSC", "C"], [15.0]],
-    [["WSC1", "C"], [1.0]],
-    [["WSC2", "C"], [1.0]],
-    [["WSC3", "C"], [1.0]],
-    [["WSC4", "C"], [1.0]],
+    # Head - Tail
+    [["PBB", "C"], [5.0]],
+    [["RBB", "C"], [5.0]],
+    [["WBB", "C"], [5.0]],
+    [["GBB", "C"], [5.0]],
+    [["PSC", "C"], [5.0]],
+    [["RSC", "C"], [5.0]],
+    [["WSC1", "C"], [5.0]],
+    [["WSC2", "C"], [5.0]],
+    [["WSC3", "C"], [5.0]],
+    [["WSC4", "C"], [5.0]],
 ]
 
 [bonds]
@@ -156,23 +171,24 @@ chi = [
 # IMPORTANT: numbers in arrays must have the same type!
 bonds = [
   # Backbone
-  [["PBB", "RBB"], [0.35, 1250.0]],
-  [["RBB", "WBB"], [0.35, 1250.0]],
-  [["WBB", "GBB"], [0.35, 1250.0]],
-  [["GBB", "C"], [0.35, 1250.0]],
-  # [["GBB", "C"], [0.47, 1250.0]],
+  [["PBB", "RBB"], [0.35, 12500.0]],
+  [["RBB", "WBB"], [0.35, 12500.0]],
+  [["WBB", "GBB"], [0.35, 12500.0]],
+  [["GBB", "C"], [0.35, 12500.0]],
+  # [["GBB", "C"], [0.47, 1250.0]], # don't know which one is used from the itp
+  [["C", "C"], [0.47, 12500.0]],
   # Sidechain
-  [["PBB", "PSC"], [0.30, 7500.0]],
-  [["RBB", "RSC"], [0.33, 5000.0]],
-  [["RSC", "RSC"], [0.34, 5000.0]],
-  [["WBB", "WSC1"], [0.30, 5000.0]],
-  # Check if this works, substituting elastic network
-  [["WSC1", "WSC2"], [0.27, 5000.0]],
-  [["WSC1", "WSC4"], [0.27, 5000.0]],
-  [["WSC2", "WSC3"], [0.27, 5000.0]],
-  [["WSC3", "WSC4"], [0.27, 5000.0]],
-  # Tails
-  [["C", "C"], [0.47, 1250.0]],
+  [["PBB", "PSC"], [0.30, 75000.0]],
+  [["RBB", "RSC"], [0.33, 50000.0]],
+  [["RSC", "RSC"], [0.34, 50000.0]],
+  [["WBB", "WSC1"], [0.30, 50000.0]],
+  # Check if this works, replacing elastic network
+  [["WSC1", "WSC2"], [0.27, 50000.0]],
+  [["WSC1", "WSC4"], [0.27, 50000.0]],
+  [["WSC2", "WSC3"], [0.27, 50000.0]],
+  [["WSC2", "WSC4"], [0.27, 50000.0]],
+  [["WSC3", "WSC4"], [0.27, 50000.0]],
+  [["WSC1", "WSC3"], [0.47, 50000.0]], # long diagonal, √3 * 0.27
 ]
 # Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
 # (equilibrium angle in [degrees], bond strength in [kJ/mol])
@@ -181,15 +197,23 @@ angle_bonds = [
   [["PSC", "PBB", "RBB"], [100.0, 25.0]],
   [["PBB", "RBB", "RSC"], [100.0, 25.0]],
   [["RBB", "WBB", "WSC1"], [100.0, 25.0]],
+  # [["RBB", "WBB", "WSC1"], [120.0, 25.0]],
   # Sidechain
   [["RBB", "RSC", "RSC"], [180.0, 25.0]],
   [["WBB", "WSC1", "WSC4"], [90.0, 50.0]],
-  [["WBB", "WSC1", "WSC2"], [150.0, 50.0]],
+  # [["WBB", "WSC1", "WSC2"], [210.0, 50.0]], # this one looks weird, why > 180?
+  [["WBB", "WSC1", "WSC2"], [150.0, 50.0]], # replaced the above one with this one
+  # Angles missing in martini topology, fixed by the elastic network
   # [["WSC2", "WSC3", "WSC4"], [60.0, 50.0]],
+  # [["WSC2", "WSC1", "WSC4"], [60.0, 50.0]],
+  # [["WSC1", "WSC2", "WSC3"], [120.0, 50.0]],
+  # [["WSC2", "WSC4", "WSC3"], [120.0, 50.0]],
+  [["RSC", "RBB", "WBB"], [100.0, 25.0]],
+  [["WSC1", "WBB", "GBB"], [120.0, 25.0]],
   # Tails
+  [["WBB", "GBB", "C"], [127.0, 20.0]],
   [["GBB", "C", "C"], [180.0, 25.0]],
   [["C", "C", "C"], [180.0, 25.0]],
-
 ]
 # Four-particles torsion angles, the definition is as follows:
 # ((atom name 1, atom name 2, atom name 3, atom name 4),
@@ -199,9 +223,10 @@ dihedrals = [
   [
     ["PBB", "RBB", "WBB", "GBB"],
     [
-      [0], # λ = 0 ==> random coil
-      # [44.91, 61.02, -54.45, 25.16, -8.50], # c_k, might need to scale this by 0.5 
-      [22.45439543,  30.51204362, -27.22431306, 12.57971393, -4.24959282],
+      [0],
+      [449.08790868, 610.2408724, -544.48626121, 251.59427866, -84.9918564], # c_k, kJ mol⁻¹ rad⁻²
+      # [224.54395434, 305.1204362, -272.24313061,  125.79713933, -42.4959282], # 50%
+      # [44.90879087, 61.02408724, -54.44862612, 25.15942787, -8.49918564], # 10%
       [0.08, 0.46, 1.65, -0.96, 0.38], # d_k
     ],
     [1.0]
@@ -209,4 +234,6 @@ dihedrals = [
   # Impropers
   [["WBB", "WSC2", "WSC4", "WSC1"], [0.0, 50.0], [2.0]],
   [["WSC1", "WSC2", "WSC3", "WSC4"], [0.0, 200.0], [2.0]]
+  # Add improper dihedral for fixing W sidechain, the correct angle is needed
+  # "GBB", "RBB", "WBB", "WSC1"
 ]
