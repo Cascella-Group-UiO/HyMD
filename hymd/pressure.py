@@ -91,7 +91,7 @@ def comp_pressure(
         type_to_name_map=config.type_to_name_map
         for d in range(3):
             for i in range(config.n_types):
-                for j in range(i, config.n_types):
+                for j in range(config.n_types):
                     ni = type_to_name_map[i]
                     nj = type_to_name_map[j]
                     names = sorted([ni, nj])
@@ -100,11 +100,11 @@ def comp_pressure(
                     else:
                         c = 0
 
-                    p_w1_1[d] += 2/V * c / config.rho_0   \
+                    p_w1_1[d] += 1/V * c / config.rho_0   \
                                  * phi_gradient[i][d] * phi_gradient[j][d] * volume_per_cell
                     for d_dot in range(3):
                         #This contains a gradient of the laplacian <- anisotropic also
-                        p_w1_2[d] += 2/V * config.sigma**2 * c / config.rho_0    \
+                        p_w1_2[d] += 1/V * config.sigma**2 * c / config.rho_0    \
                                      * phi_gradient[i][d_dot] * phi_grad_lap[j][d][d_dot] * volume_per_cell
         for d in range(3):
             p_w1_1[d] = np.sum(p_w1_1[d])
