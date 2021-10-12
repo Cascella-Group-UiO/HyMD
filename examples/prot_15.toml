@@ -18,7 +18,7 @@ mass = 72.0
 
 [simulation]
 # Number of total time steps in the simulation.
-n_steps = 1000
+n_steps = 2000
 # Frequency of trajectory/energy file output in time steps.
 n_print = 1
 # Frequency of requesting that the HDF5 library flush the file output buffers
@@ -32,12 +32,12 @@ box_size = [6.25, 6.25, 6.25]
 # If "respa", specify also the number of small rRESPA time steps per large
 # time_step with the 'respa_inner' keyword.
 integrator = "respa"
-respa_inner = 5
+respa_inner = 10
 # Perform MPI rank domain decomposition every x time steps to (hopefully)
 # reduce the amount of neccessary communication between ranks in the pmesh
 # procedures. Ommit or set to 'false' or '0' to not perform any domain
 # decomposition.
-domain_decomposition = false
+domain_decomposition = 1000
 # Remove linear center of mass momentum from the system before integration
 # starts.
 cancel_com_momentum = true
@@ -92,13 +92,14 @@ chi = [
 # Same for the angles since he used the combined angle-torsion potential.
 # IMPORTANT: numbers in arrays must have the same type!
 bonds = [
-  [["BB", "BB"], [0.38, 12500.0]],
-  [["BB", "SC"], [0.18, 12500.0]],
+  [["BB", "BB"], [0.38, 1250.0]],
+  [["BB", "SC"], [0.18, 5000.0]],
 ]
 # Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
 # (equilibrium angle in [degrees], bond strength in [kJ/mol])
 angle_bonds = [
-  # [["BB", "BB", "SC"], [120.0, 25.0]], # β sheet
+  [["BB", "BB", "SC"], [120.0, 25.0]], # β sheet
+  [["BB", "BB", "SC"], [108.0, 25.0]],  # α helix
   [["BB", "BB", "SC"], [108.0, 25.0]],  # α helix
 ]
 # Four-particles torsion angles, the definition is as follows:
@@ -154,8 +155,10 @@ dihedrals = [
   [
     ["BB", "BB", "BB", "BB"],
     [
-      [-0.5],
-      [44.90879087, 61.02408724, -54.44862612, 25.15942787, -8.49918564], 
+      [1],
+      # [0.13680, 0.18589, -0.16586, 0.07664, -0.02589],  # c_k, kJ mol⁻¹ deg⁻²
+      [449.08790868, 610.2408724, -544.48626121, 251.59427866, -84.9918564], # c_k, kJ mol⁻¹ rad⁻²
+      # [44.90879087, 61.02408724, -54.44862612, 25.15942787, -8.49918564], 
       [0.07700393, 0.46230281, 1.65322823, -0.9600009, 0.37807322],
     ],
     [1.0]
