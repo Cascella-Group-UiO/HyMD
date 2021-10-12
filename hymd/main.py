@@ -404,7 +404,7 @@ if __name__ == "__main__":
     dipole_positions = np.zeros(shape=(4, 3), dtype=dtype)
     dipole_forces = np.zeros(shape=(4, 3))
     dipole_charges = np.zeros(shape=4)
-    trans_matrices = np.zeros(shape=(6, 3, 3), dtype=dtype)
+    transfer_matrices = np.zeros(shape=(6, 3, 3), dtype=dtype)
 
     # Initialize energies
     field_energy = 0.0
@@ -631,7 +631,7 @@ if __name__ == "__main__":
                     dtype=dtype,
                 ).flatten()
                 dipole_forces = np.zeros_like(dipole_positions)
-                trans_matrices = np.zeros(shape=(n_tors, 6, 3, 3), dtype=dtype)
+                transfer_matrices = np.zeros(shape=(n_tors, 6, 3, 3), dtype=dtype)
                 # Fields
                 phi_dipoles = pm.create("real", value=0.0)
                 phi_dipoles_fourier = pm.create("complex", value=0.0)
@@ -648,7 +648,7 @@ if __name__ == "__main__":
         angle_forces = np.asfortranarray(angle_forces)
         dihedral_forces = np.asfortranarray(dihedral_forces)
         dipole_positions = np.asfortranarray(dipole_positions)
-        trans_matrices = np.asfortranarray(trans_matrices)
+        transfer_matrices = np.asfortranarray(transfer_matrices)
 
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
@@ -680,7 +680,7 @@ if __name__ == "__main__":
                 dihedral_forces,
                 positions,
                 dipole_positions,
-                trans_matrices,
+                transfer_matrices,
                 config.box_size,
                 bonds_4_atom1,
                 bonds_4_atom2,
@@ -718,7 +718,7 @@ if __name__ == "__main__":
             dipole_forces_redistribution(
                 reconstructed_forces,
                 dipole_forces,
-                trans_matrices,
+                transfer_matrices,
                 bonds_4_atom1,
                 bonds_4_atom2,
                 bonds_4_atom3,
@@ -752,7 +752,7 @@ if __name__ == "__main__":
         bonds_2_atom2,
         velocity_out=args.velocity_output,
         force_out=args.force_output,
-        charge_out=charges_flag,
+        charges=charges if charges_flag else False,
         comm=comm,
     )
 
@@ -910,7 +910,7 @@ if __name__ == "__main__":
                         dihedral_forces,
                         positions,
                         dipole_positions,
-                        trans_matrices,
+                        transfer_matrices,
                         config.box_size,
                         bonds_4_atom1,
                         bonds_4_atom2,
@@ -951,7 +951,7 @@ if __name__ == "__main__":
             )
 
             ## add q related
-            if charges_flag:
+            if charges_flag and config.coulombtype == "PIC_Spectral":
                 layout_q = pm.decompose(positions)
                 ### split
                 update_field_force_q(
@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
                 dipole_forces_redistribution(
                     reconstructed_forces,
                     dipole_forces,
-                    trans_matrices,
+                    transfer_matrices,
                     bonds_4_atom1,
                     bonds_4_atom2,
                     bonds_4_atom3,
@@ -1054,10 +1054,14 @@ if __name__ == "__main__":
                     types,
                 ]
 
+                if charges_flag:  ## add charge related
+                    args_in.append(charges)
+                    args_in.append(elec_forces)
+
                 dd = domain_decomposition(
                     positions,
                     pm,
-                    *args_in,
+                    *tuple(args_in),
                     molecules=molecules if molecules_flag else None,
                     bonds=bonds if molecules_flag else None,
                     verbose=args.verbose,
@@ -1118,9 +1122,11 @@ if __name__ == "__main__":
                             dtype=dtype,
                         ).flatten()
                         dipole_forces = np.zeros_like(dipole_positions)
-                        trans_matrices = np.zeros(shape=(n_tors, 6, 3, 3), dtype=dtype)
+                        transfer_matrices = np.zeros(
+                            shape=(n_tors, 6, 3, 3), dtype=dtype
+                        )
                         dipole_positions = np.asfortranarray(dipole_positions)
-                        trans_matrices = np.asfortranarray(trans_matrices)
+                        transfer_matrices = np.asfortranarray(transfer_matrices)
 
         for t in range(config.n_types):
             if args.verbose > 2:
@@ -1165,7 +1171,7 @@ if __name__ == "__main__":
                         comm=comm,
                     )
 
-                    if charges_flag:
+                    if charges_flag and config.coulombtype == "PIC_Spectral":
                         field_q_energy = compute_field_energy_q(
                             config,
                             phi_q_fourier,
@@ -1252,7 +1258,7 @@ if __name__ == "__main__":
             )
 
             ## add q related
-            if charges_flag:
+            if charges_flag and config.coulombtype == "PIC_Spectral":
                 layout_q = pm.decompose(positions)
                 ### split
                 update_field_force_q(
@@ -1276,42 +1282,6 @@ if __name__ == "__main__":
                     comm=comm,
                 )
 
-        #             Does this part also need to be here?
-        #             if protein_flag:
-        #                 dipole_positions = np.reshape(
-        #                     dipole_positions, (4 * n_tors, 3), order="C"
-        #                 )
-        #                 dipole_forces = np.reshape(dipole_forces, (4 * n_tors, 3))
-        #
-        #                 layout_dipoles = pm.decompose(dipole_positions)
-        #                 update_field_force_q(
-        #                     dipole_charges,
-        #                     phi_dipoles,
-        #                     phi_dipoles_fourier,
-        #                     dipoles_field_fourier,
-        #                     dipoles_field,
-        #                     dipole_forces,
-        #                     layout_dipoles,
-        #                     pm,
-        #                     dipole_positions,
-        #                     config,
-        #                 )
-        #
-        #                 dipole_positions = np.reshape(
-        #                     dipole_positions, (n_tors, 4, 3), order="F"
-        #                 )
-        #                 dipole_forces = np.reshape(dipole_forces, (n_tors, 4, 3))
-        #                 dipole_forces_redistribution(
-        #                     reconstructed_forces,
-        #                     dipole_forces,
-        #                     trans_matrices,
-        #                     bonds_4_atom1,
-        #                     bonds_4_atom2,
-        #                     bonds_4_atom3,
-        #                     bonds_4_atom4,
-        #                     bonds_4_type,
-        #                     bonds_4_last,
-        #                 )
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         frame = (step + 1) // config.n_print
