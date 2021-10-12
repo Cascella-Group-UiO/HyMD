@@ -45,7 +45,6 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
     f = f - box * nint(f / box)
     g = g - box * nint(g / box)
     h = h - box * nint(h / box)
-
   
     v = cross(f, g)
     w = cross(h, g)
@@ -54,37 +53,38 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
     g_norm = norm2(g)
     
     cos_phi = dot_product(v, w)
+    sin_phi = dot_product(w, f) * g_norm
+    phi = atan2(sin_phi, cos_phi) 
 
-    sin_phi = dot_product(cross(v, w), g) / g_norm
-    phi = -1.d0 * atan2(sin_phi, cos_phi) 
-
-    df_dih = 0.d0
     f_dot_g = dot_product(f, g)
     h_dot_g = dot_product(h, g)
 
-    ! Cosine series
+    ! Cosine series, V_prop
     if (dtype(ind) == 0 .or. dtype(ind) == 1) then
+      df_dih = 0.d0
       ! Get shape of coeff to see how many arrays we have 
       ! and use the shape to select the arrays
-      c_shape = shape(coeff(ind, :, :))
+      ! c_shape = shape(coeff(ind, :, :))
       c_v = coeff(ind, 1, :)
       d_v = coeff(ind, 2, :)
       call cosine_series(c_v, d_v, phi, energy, df_dih)
 
-      if (c_shape(1) > 4) then
-        ! c_shape = (6, whatever you provide)
-        c_v = coeff(ind, 3, :)
-        d_v = coeff(ind, 4, :)
-        call cosine_series(c_v, d_v, phi, energy, df_dih)
-      end if
+      ! if (c_shape(1) > 4) then
+      !   print *, "Never for now"
+      !   ! c_shape = (6, whatever you provide)
+      !   c_v = coeff(ind, 3, :)
+      !   d_v = coeff(ind, 4, :)
+      !   call cosine_series(c_v, d_v, phi, energy, df_dih)
+      ! end if
     end if
 
     ! CBT potential
     if (dtype(ind) == 1) then
       ! V = V_prop + k * (gamma - gamma_0)**2      
 
-      c_k = coeff(ind, c_shape(1) - 1, :)
-      d_k = coeff(ind, c_shape(1)    , :)
+      c_k = coeff(ind, 3, :)
+      d_k = coeff(ind, 4, :)
+
       ! These are needed if gamma_0 is expressed as cosine series, not implemented
       ! c_g = coeff(ind, 5, :)
       ! d_g = phase(ind, 6, :)
@@ -122,7 +122,7 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
       eq_value = coeff(ind, 1, 1)
       force_const = coeff(ind, 1, 2)
       df_dih = force_const * (phi - eq_value)
-      energy = energy + force_const * (phi - eq_value) ** 2
+      energy = energy + 0.5 * force_const * (phi - eq_value) ** 2
     end if
     
     ! Dihedral forces
@@ -130,14 +130,27 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
 
     fa = -df_dih * g_norm * v / v_sq
     fd =  df_dih * g_norm * w / w_sq
-
     fb =  df_dih * sc - fa
     fc = -df_dih * sc - fd
     
     ! Subtract negative gradient
-    force(aa, :) = force(aa, :) - fa
-    force(bb, :) = force(bb, :) - fb
-    force(cc, :) = force(cc, :) - fc
-    force(dd, :) = force(dd, :) - fd
+    force(aa, :) = force(aa, :) + fa
+    force(bb, :) = force(bb, :) + fb
+    force(cc, :) = force(cc, :) + fc
+    force(dd, :) = force(dd, :) + fd
+
+    ! For debugging forces
+    ! if (ind == 1 .or. ind == 2) then
+    ! print *, "coords"
+    ! print *, ind, r(aa, :)
+    ! print *, ind, r(bb, :)
+    ! print *, ind, r(cc, :)
+    ! print *, ind, r(dd, :)
+    ! print *, "tot_forces"
+    ! print *, ind, force(aa, :)
+    ! print *, ind, force(bb, :)
+    ! print *, ind, force(cc, :)
+    ! print *, ind, force(dd, :)
+    ! end if
   end do
 end subroutine cdf
