@@ -40,7 +40,7 @@ class Dihedral:
     atom_2: str
     atom_3: str
     atom_4: str
-    coeffs: list
+    coeffs: np.ndarray
     # type: (0) Fourier or (1) CBT
     # Impropers to be specified in the toml?
     dih_type: int
@@ -216,10 +216,8 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
     # 4 => 2 sets of 2 parameters
-    # Might it be useful to decouple dihedral types to prevent having lots of zeros/empty slots?
-    # number_of_coeff = len(max([b[4] for b in bonds_4], key=len))
-    # len_of_coeff = len(max([cf for b in bonds_4 for cf in b[4]], key=len))
-    number_of_coeff = 4
+    # Might it be useful to decouple dihedral types to prevent having lots of zeros/empty arrays?
+    number_of_coeff = 6
     len_of_coeff = 5
     bonds_4_coeff = np.empty(
         (len(bonds_4), number_of_coeff, len_of_coeff), dtype=np.float64

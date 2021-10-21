@@ -2,25 +2,19 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
   use dipole_reconstruction
   implicit none
 
-  real(4), dimension(:,:), intent(in out) :: force
-  real(4), dimension(:,:), intent(in) :: r
-  real(4), dimension(:,:,:), intent(in out) :: dipoles
-  real(4), dimension(:,:,:,:), intent(in out) :: transfer_matrix
-  real(8), dimension(:), intent(in) :: box
-  integer, dimension(:), intent(in) :: a
-  integer, dimension(:), intent(in) :: b
-  integer, dimension(:), intent(in) :: c
-  integer, dimension(:), intent(in) :: d
-  real(4), dimension(:,:,:), intent(in) :: coeff 
-  integer, dimension(:), intent(in) :: dtype
-  integer, dimension(:), intent(in) :: bb_index
-  integer, intent(in) :: dipole_flag
+  real(4), intent(in out) :: force(:,:)
+  real(4), intent(in) :: r(:,:)
+  real(4), intent(in out) :: dipoles(:,:,:)
+  real(4), intent(in out) :: transfer_matrix(:,:,:,:)
+  real(8), intent(in) :: box(:)
+  integer, intent(in) :: a(:), b(:), c(:), d(:), dtype(:), bb_index(:), dipole_flag
+  real(4), intent(in) :: coeff(:,:,:)
   real(8), intent(out) :: energy
    
   integer :: ind, aa, bb, cc, dd, i
   integer, dimension(2) :: c_shape
   real(8), dimension(3) :: f, g, h, v, w, sc, fa, fb, fc, fd
-  real(8), dimension(5) :: c_v, c_k, d_v, d_k
+  real(8), dimension(5) :: c_v, c_k, c_coil, d_coil, d_v, d_k
   ! real(8), dimension(5) :: c_g, d_g
   real(8) :: energy_cbt, df_cbt
   real(8) :: force_const, eq_value
@@ -62,32 +56,28 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
     ! Cosine series, V_prop
     if (dtype(ind) == 0 .or. dtype(ind) == 1) then
       df_dih = 0.d0
-      ! Get shape of coeff to see how many arrays we have 
-      ! and use the shape to select the arrays
-      ! c_shape = shape(coeff(ind, :, :))
       c_v = coeff(ind, 1, :)
       d_v = coeff(ind, 2, :)
       call cosine_series(c_v, d_v, phi, energy, df_dih)
 
-      ! if (c_shape(1) > 4) then
-      !   print *, "Never for now"
-      !   ! c_shape = (6, whatever you provide)
-      !   c_v = coeff(ind, 3, :)
-      !   d_v = coeff(ind, 4, :)
-      !   call cosine_series(c_v, d_v, phi, energy, df_dih)
-      ! end if
+      c_coil = coeff(ind, 3, :)
+      d_coil = coeff(ind, 4, :)
+      if (count(c_coil == 0) /= size(c_coil) .and. &
+          count(d_coil == 0) /= size(d_coil)) then
+        call cosine_series(c_coil, d_coil, phi, energy, df_dih)
+      end if
     end if
 
     ! CBT potential
     if (dtype(ind) == 1) then
       ! V = V_prop + k * (gamma - gamma_0)**2      
 
-      c_k = coeff(ind, 3, :)
-      d_k = coeff(ind, 4, :)
+      c_k = coeff(ind, 5, :)
+      d_k = coeff(ind, 6, :)
 
       ! These are needed if gamma_0 is expressed as cosine series, not implemented
-      ! c_g = coeff(ind, 5, :)
-      ! d_g = phase(ind, 6, :)
+      ! c_g = coeff(ind, 7, :)
+      ! d_g = phase(ind, 8, :)
 
       call reconstruct( &
         f, r(bb, :), -g, box, c_k, d_k, phi, dipole_flag, &

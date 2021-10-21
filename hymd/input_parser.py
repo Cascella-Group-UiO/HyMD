@@ -264,12 +264,13 @@ def propensity_potential_coeffs(x: float, comm):
         ]
     )
 
+    zero_add = np.zeros((2, 5))
     if x == -1:
-        return alpha_coeffs
+        return np.concatenate((alpha_coeffs, zero_add))
     elif x == 0:
-        return coil_coeffs
+        return np.concatenate((coil_coeffs, zero_add))
     elif x == 1:
-        return beta_coeffs
+        return np.concatenate((beta_coeffs, zero_add))
 
     abs_x = np.abs(x)
     if abs_x > 1:
@@ -361,22 +362,25 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     wrong_type_2 = len(b[1]) == 2 and not isinstance(b[1][0], list)
                     if wrong_len or wrong_type_1 or wrong_type_2:
                         err_str = (
-                            "The coefficients specified for the type 0 dihedral do not match the correct structure."
+                            "The coefficients specified for the dihedral type (0) do not match the correct structure."
                             + "Either use [lambda] or [[cn_prop], [dn_prop]], or select the correct dihedral type."
                         )
                         Logger.rank0.log(logging.ERROR, err_str)
                         if comm.Get_rank() == 0:
                             raise RuntimeError(err_str)
 
+                # FIXME: this is messy af, I don't like it
                 if dih_type == 0 and isinstance(b[1][0], (float, int)):
-                    coeff = propensity_potential_coeffs(b[1][0], comm).tolist()
+                    coeff = propensity_potential_coeffs(b[1][0], comm)
                 elif dih_type == 1 and len(b[1]) == 3:
-                    coeff = (
+                    coeff = np.array(
                         propensity_potential_coeffs(b[1][0][0], comm).tolist()
                         + b[1][1:]
                     )
+                elif dih_type == 2:
+                    coeff = np.array(b[1])
                 else:
-                    coeff = b[1]
+                    coeff = np.insert(np.array(b[1]), 2, np.zeros((2, 5)), axis=0)
 
                 config_dict["dihedrals"][i] = Dihedral(
                     atom_1=b[0][0],
