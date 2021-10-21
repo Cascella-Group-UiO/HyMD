@@ -167,15 +167,15 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     dipole(2, :) = dipole(2, :) - box * nint(dipole(2, :) / box)
 
     ! Set up transfer matrices
-    do i = 1, 3
-        do j = 1, 3
-            V_b(i, j) = v(i) * v(j)
-            W_b(i, j) = w(i) * w(j)
-            if (i == j) then
-                V_b(i, j) = V_b(i, j) - 1.d0
-                W_b(i, j) = W_b(i, j) - 1.d0
-            end if
-        end do 
+    do j = 1, 3
+      do i = 1, 3
+        V_b(i, j) = v(i) * v(j)
+        W_b(i, j) = w(i) * w(j)
+        if (i == j) then
+          V_b(i, j) = V_b(i, j) - 1.d0
+          W_b(i, j) = W_b(i, j) - 1.d0
+        end if
+      end do 
     end do
 
     V_b = V_b / norm_c
