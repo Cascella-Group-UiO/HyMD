@@ -1,0 +1,48 @@
+[meta]
+#name = "Biphasic system"
+tags = ["biphase", "AB", "monoatomic"]
+
+[particles]
+n_particles = 10555
+mass = 18.0
+max_molecule_size = 1 
+
+[simulation]
+n_steps = 1 
+n_print = 1
+n_flush = 1
+time_step = 0.3
+box_size = [10.6, 10.6, 10.6]
+integrator = "respa"
+respa_inner = 10
+domain_decomposition = 25
+start_temperature = 300
+cancel_com_momentum = true
+target_temperature = 300
+tau = 0.7
+tau_p = 0.1 #ps #usual order ~1
+hamiltonian = 'DefaultWithChi'
+pressure = true
+plot = false
+barostat = 'semiisotropic'
+target_pressure = 1 #bar
+squaregradient = true
+
+
+[field]
+mesh_size = [24, 24, 24]
+kappa = 0.05
+sigma = 0.238
+rho_0 = 8.86
+a = 10.67
+m = [1.0, 1.0]
+chi = [
+  [["A", "A"], [0]],
+  [["A", "B"], [36]],
+  [["B", "B"], [0]],
+]
+K_coupl = [
+  [["A", "A"], [0.0]],
+  [["A", "B"], [2.0]],
+  [["B", "B"], [0.0]],
+]
