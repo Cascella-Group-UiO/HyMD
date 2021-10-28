@@ -773,9 +773,9 @@ def check_n_b(config, comm = MPI.COMM_WORLD):
     if config.n_b is None:
         warn_str = (
         f"config.n_b not specified."
-        "Defaulting to config.n_steps = %s"%(str(config.n_steps))
+        "Defaulting to 1" 
         )
-        config.n_b = config.n_steps
+        config.n_b = 1
         Logger.rank0.log(logging.WARNING, warn_str)
         if comm.Get_rank() == 0: warnings.warn(warn_str)
     return config
