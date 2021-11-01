@@ -314,8 +314,12 @@ if __name__ == "__main__":
         if molecules_flag:
             molecules = in_file["molecules"][rank_range]
             bonds = in_file["bonds"][rank_range]
+        if "box" in in_file:
+            input_box = in_file["box"][:]
+        else:
+            input_box = np.array( [None, None, None] )
 
-    config = check_config(config, indices, names, types, comm=comm)
+    config = check_config(config, indices, names, types, input_box, comm=comm)
     if config.n_print:
         if config.n_flush is None:
             config.n_flush = 10000 // config.n_print

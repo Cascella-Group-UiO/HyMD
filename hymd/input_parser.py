@@ -229,7 +229,8 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "n_particles",
         "max_molecule_size",
         "alpha_0",
-        "n_b"
+        "n_b",
+        "box_size"
     ):
         config_dict[n] = None
 
@@ -279,7 +280,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     if file_path is not None:
         config_dict["file_name"] = file_path
 
-    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a",
+    for n in ("n_steps", "time_step", "mesh_size", "sigma", "kappa", "rho_0", "a",
         ):
         if n not in config_dict:
             err_str = (
@@ -495,7 +496,29 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
     return config
 
 
-def check_box_size(config, comm=MPI.COMM_WORLD):
+def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
+    if config.box_size:
+        config.box_size = np.array(config.box_size, dtype=np.float32)
+        if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
+            err_str = (
+                f"Box size specified in {config.file_name}: "
+                f"{config.box_size} does not match input box:"
+                f"{input_box}"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+    else:
+        if input_box.all():
+            config.box_size = input_box
+        else:
+            err_str = (
+                f"No box information found"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+
     for b in config.box_size:
         if b <= 0.0:
             err_str = (
@@ -505,7 +528,6 @@ def check_box_size(config, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
                 raise ValueError(err_str)
-    config.box_size = np.array(config.box_size, dtype=np.float64)
     return config
 
 
@@ -780,12 +802,11 @@ def check_n_b(config, comm = MPI.COMM_WORLD):
         if comm.Get_rank() == 0: warnings.warn(warn_str)
     return config
 
-def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
-    config.box_size = np.array(config.box_size)
+def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
         config = _setup_type_to_name_map(config, names, types, comm=comm)
-    config = check_box_size(config, comm=comm)
+    config = check_box_size(config, input_box, comm=comm)
     config = check_integrator(config, comm=comm)
     config = check_max_molecule_size(config, comm=comm)
     config = check_tau(config, comm=comm)
