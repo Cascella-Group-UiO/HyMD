@@ -1,0 +1,118 @@
+[meta]
+# Name of the simulation. May be ommitted.
+name = "LipidA with Ca2+ in solution"
+# Tags classifying the simulation. May be ommitted.
+tags = ["vesicle", "solvent", "LipidA"]
+
+[particles]
+# Number of total particles in the simulation. If an input .hdf5 format file is
+# specified, the number of particles will be inferred from this and *may* be
+# ommited.
+n_particles = 71318
+# Mass of the particles in [g/mol]. All masses are assumed equal.
+mass = 72.0
+# Maximum number of particles per molecules present in the system. A default of
+# 200 is assumed, and this keyword may be ommitted for any system with smaller
+# molecules.
+max_molecule_size = 30
+
+[simulation]
+# Number of total time steps in the simulation.
+n_steps = 3
+# Frequency of trajectory/energy file output in time steps.
+n_print = 1
+# Frequency of requesting that the HDF5 library flush the file output buffers
+# to disk after in number of n_print timesteps.
+n_flush = 1
+# Time step used in the simulation in [picoseconds].
+time_step = 0.3
+# Simulation box size in [nanometers].
+box_size = [20.0, 20.0, 20.0]
+# Time integrator used in the simulation. Either "velocity-verlet" or "respa".
+# If "respa", specify also the number of small rRESPA time steps per large
+# time_step with the 'respa_inner' keyword.
+integrator = "respa"
+respa_inner = 10
+# Perform MPI rank domain decomposition every x time steps to (hopefully)
+# reduce the amount of neccessary communication between ranks in the pmesh
+# procedures. Ommit or set to 'false' or '0' to not perform any domain
+# decomposition.
+domain_decomposition = 50000
+# Remove linear center of mass momentum from the system before integration
+# starts and at every x steps subsequently. If 'true', the linear momentum is
+# removed before starting. Ommit or set to 'false' or 0 to never remove the
+# center of mass momentum.
+cancel_com_momentum = 20
+# Starting temperature to generate before simulation begins in [kelvin]. Ommit
+# or set to 'false' to not change the temperature before starting.
+start_temperature = 323
+# Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
+# or set to 'false' to use no thermostat, i.e. a constant energy simulation.
+target_temperature = 323
+# Thermostat collision frequency in [1/picoseconds].
+tau = 0.7
+# Couple groups of particles species to individual different thermostats.
+thermostat_coupling_groups = [
+  ["P", "G", "L", "C"],
+  ["W"],
+  ["CA"]
+]
+# The energy functional W[phi] to use. Options:
+#    "SquaredPhi":      φ² / 2κφ₀,
+#    "DefaultNoChi":   (φ - φ₀)² / 2κφ₀
+#    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
+# Subclass Hamiltonian to create a new energy functional.
+hamiltonian = 'DefaultNoChi'
+
+
+[field]
+# Particle-mesh grid size, either a single integer or an array of 3 integers
+# (number of grid points in each dimension). In order to guarantee consistency
+# and speed in the PFFT routines, the actual mesh grid will be changed to ensure
+# that each dimension of the 2d PFFT process grid divides each dimension of the
+# mesh grid size.
+mesh_size = [24, 24, 24]
+# Compressibility used in the relaxed incompressibility term of W(phi) in
+# [mol/kJ].
+kappa = 0.05
+# Standard deviation in the Gaussian filter (window function) in [nanometers].
+# This value is a characteristic length scale for the size of the particles in
+# the simulation.
+sigma = 0.5
+# Electrostatics
+coulombtype = 'PIC_Spectral'
+dielectric_const = 20.0 
+# Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
+# [kJ/mol])).
+chi = [
+  [["L", "G"], [4.5]],
+  [["L", "C"], [13.25]],
+  [["P", "G"], [4.5]],
+  [["P", "C"],  [20]],
+  [["P", "CA"], [-7.2]],
+  [["P", "W"],  [-3.6]],
+  [["G", "C"], [8.3]],
+  [["G", "W"], [4.5]],
+  [["C", "CA"], [13.25]],
+  [["C", "W"], [33.75]],
+]
+
+[bonds]
+# Two-particle bonds, ((atom name 1, atom name 2), (equilibrium length in
+# [nanometers], bond strength in [kJ/mol])). Note the two
+bonds = [
+  [["L", "G"], [0.47, 1250.0]],
+  [["L", "C"], [0.47, 1250.0]],
+  [["G", "P"], [0.37, 1250.0]],
+  [["G", "G"], [0.47, 1000.0]],
+  [["G", "C"], [0.47, 1250.0]],
+  [["C", "C"], [0.47, 1250.0]],
+]
+# Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
+# (equilibrium angle in [degrees], bond strength in [kJ/mol])).
+angle_bonds = [
+  [["G", "G", "G"], [120.0, 850.0]],
+  [["G", "G", "L"], [120.0, 25.0]],
+  [["L", "C", "C"], [180.0, 25.0]],
+  [["C", "C", "C"], [180.0, 25.0]],
+]
