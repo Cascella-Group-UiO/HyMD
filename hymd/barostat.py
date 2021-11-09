@@ -3,7 +3,6 @@ import numpy as np
 from mpi4py import MPI
 from pressure import comp_pressure
 from field import initialize_pm
-from decimal import Decimal
 
 def isotropic(
         pmesh,
@@ -21,16 +20,14 @@ def isotropic(
         args,
         bond_pr,
         angle_pr,
-        eps,
         step,
         comm=MPI.COMM_WORLD
     ):
     rank = comm.Get_rank()
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
-    eps_alpha = Decimal('%.0E'%abs(1 - config.alpha_0))
     change = False
 
-    if(eps[0]>eps_alpha or np.mod(step, config.n_b)==0):
+    if(np.mod(step, config.n_b)==0):
         change = True
         #compute pressure
         pressure = comp_pressure(
@@ -47,7 +44,6 @@ def isotropic(
                 positions,
                 bond_pr,
                 angle_pr,
-                eps,
                 comm=comm
         )
 
@@ -57,7 +53,6 @@ def isotropic(
         #scaling factor                                                                                        
         alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - P)
 
-        eps[0] = abs(1-alpha)
         #length scaling
         L0 = alpha**(1/3) * config.box_size[0]
         L1 = alpha**(1/3) * config.box_size[1]
@@ -67,11 +62,10 @@ def isotropic(
         config.box_size[2] = L2
 
         #position coordinates scaling
-        positions[:] = alpha**(1/3) * positions[:]
+        positions[:] = alpha**(1/3) * positions
 
         #pmesh re-initialize
         pm_stuff  = initialize_pm(pmesh, config, comm)
-
     return (pm_stuff, False)
 
 def semiisotropic(
@@ -90,15 +84,13 @@ def semiisotropic(
         args,
         bond_pr,
         angle_pr,
-        eps,
         step,
         comm=MPI.COMM_WORLD
     ):
     rank = comm.Get_rank()
     beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
-    eps_alpha = Decimal('%.0E'%abs(1 - config.alpha_0))
     change = False
-    if(eps[0]>eps_alpha or eps[1]>eps_alpha or np.mod(step, config.n_b)==0):
+    if(np.mod(step, config.n_b)==0):
         change = True
         #compute pressure
         pressure = comp_pressure(
@@ -115,7 +107,6 @@ def semiisotropic(
                 positions,
                 bond_pr,
                 angle_pr,
-                eps,
                 comm=comm
         )
 
@@ -128,7 +119,6 @@ def semiisotropic(
         #scaling factor                                                                                        
         alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
         alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
-        eps[0] = abs(1-alphaL); eps[1] = abs(1-alphaN)
         #length scaling
         L0 = alphaL**(1/3) * config.box_size[0]
         L1 = alphaL**(1/3) * config.box_size[1]

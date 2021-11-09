@@ -112,7 +112,6 @@ def store_static(
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    #box_edges = box.create_group("edges")
 
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
@@ -257,8 +256,6 @@ def store_static(
     ) = setup_time_dependent_element(
         "edges", box, n_frames, (3,3), "float32", units="nm"
     )
-    #h5md.box_value = box_edges.create_dataset("value", (n_frames, 3, 3), "float32")
-
 
     ind_sort = np.argsort(indices)
     for i in ind_sort:
@@ -383,7 +380,6 @@ def store_data(
     h5md.pressure[frame] = pressure
     for d in range(3):
         h5md.box_value[frame,d,d] = box_size[d]
-
     h5md.thermostat_work[frame] = config.thermostat_work
 
     header_ = 13 * "{:>15}"

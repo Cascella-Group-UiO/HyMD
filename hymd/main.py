@@ -338,7 +338,6 @@ if __name__ == "__main__":
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
-    eps = []
     field_energy = 0.0
     bond_energy = 0.0
     angle_energy = 0.0
@@ -540,10 +539,6 @@ if __name__ == "__main__":
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
         if config.pressure or config.barostat:
-            if config.barostat == 'isotropic':
-                eps.extend([0])
-            else:
-                eps.extend([0,0])
             pressure = comp_pressure(
                     phi,
                     hamiltonian,
@@ -558,7 +553,6 @@ if __name__ == "__main__":
                     positions,
                     bond_pr_,
                     angle_pr_,
-                    eps,
                     comm=comm
             )
 
@@ -819,7 +813,6 @@ if __name__ == "__main__":
                      args,
                      bond_pr_,
                      angle_pr_,
-                     eps,
                      step,
                      comm=comm
                 )
@@ -841,7 +834,6 @@ if __name__ == "__main__":
                      args,
                      bond_pr_,
                      angle_pr_,
-                     eps,
                      step,
                      comm=comm
                 )
@@ -927,7 +919,6 @@ if __name__ == "__main__":
                             positions,
                             bond_pr_,
                             angle_pr_,
-                            eps,
                             comm=comm
                     )
                 else:
@@ -1022,7 +1013,6 @@ if __name__ == "__main__":
                     positions,
                     bond_pr_,
                     angle_pr_,
-                    eps,
                     comm=comm
             )
         else:
