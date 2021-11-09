@@ -79,11 +79,12 @@ def comp_pressure(
     ]
 
     #square gradient
+    p_w1_0 = 0.0
+    p_w1_1 = [0.0, 0.0, 0.0]
+    p_w1_2 = [0.0, 0.0, 0.0]
     if config.squaregradient:
         p_w1_0 = 1/V * np.sum(w1)
         #p_w1_1 and p_w1_2
-        p_w1_1 = [0.0, 0.0, 0.0]
-        p_w1_2 = [0.0, 0.0, 0.0]
         config.K_coupl_type_dictionary = {
             tuple(sorted([c.atom_1, c.atom_2])): c.squaregradient_energy
             for c in config.K_coupl
@@ -160,7 +161,6 @@ def comp_pressure(
         'y': p_kin + p0 + p1 + p2y + p_w1_0 + p_w1_1[1] + p_w1_2[1] + p_bond['y'] + p_angle['y'] + p_dihedral['y'],
         'z': p_kin + p0 + p1 + p2z + p_w1_0 + p_w1_1[2] + p_w1_2[2] + p_bond['z'] + p_angle['z'] + p_dihedral['z']
             }
-
 
     return_value = [
                 p_kin,p0,p1,                                                  #0-2

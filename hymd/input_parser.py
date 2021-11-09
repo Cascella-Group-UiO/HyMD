@@ -56,7 +56,7 @@ class Config:
     tau_p: float = None
     target_pressure: float = None
     alpha_0: float = None
-    m: List[float] = None
+    m: List[float] = field(default_factory=list)
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -241,7 +241,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags","m"):
+    for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags", "m"):
         config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
@@ -775,6 +775,10 @@ def check_alpha_0(config, comm = MPI.COMM_WORLD):
         config.alpha_0 = 0.9999999
     return config
 
+def check_m(config, comm = MPI.COMM_WORLD):
+    if config.m==[]:
+        config.m = [1.0 for t in range(config.n_types)]
+    return config
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config.box_size = np.array(config.box_size)
@@ -798,5 +802,6 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_barostat(config, comm=comm)
     #config = check_tau_p(config, comm=comm)
     config = check_alpha_0(config, comm=comm)
+    config = check_m(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     return config

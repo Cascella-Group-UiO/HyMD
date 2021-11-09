@@ -18,7 +18,6 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         pm = pmesh.ParticleMesh(
             config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
         )
-
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
@@ -31,23 +30,27 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
 
     phi_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
 
-    phi_gradient = [
-        [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
-    ]
+    phi_gradient = None; phi_lap_filtered_fourier = None; phi_lap_filtered = None
+    phi_grad_lap_fourier = None; phi_grad_lap = None; v_ext1 = None
+    if config.squaregradient:
+        phi_gradient = [
+            [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+        ]
+        phi_lap_filtered_fourier = [ pm.create("complex", value=0.0) for _ in range(config.n_types) ]
+        phi_lap_filtered = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+        phi_grad_lap_fourier = [pm.create("complex", value=0.0) for _ in range(3)]
+        phi_grad_lap = [
+            [ [pm.create("real", value=0.0) for d_grad in range(3)] for d_lap in range(3) ] for _ in range(config.n_types)
+        ]
+        v_ext1 = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     phi_laplacian = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
-    phi_lap_filtered_fourier = [ pm.create("complex", value=0.0) for _ in range(config.n_types) ]
-    phi_lap_filtered = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-    phi_grad_lap_fourier = [pm.create("complex", value=0.0) for _ in range(3)]
-    phi_grad_lap = [
-        [ [pm.create("real", value=0.0) for d_grad in range(3)] for d_lap in range(3) ] for _ in range(config.n_types)
-    ]
-    v_ext1 = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
             phi_laplacian, phi_lap_filtered, v_ext1]
     return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
-            phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list)
+            phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
+            phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     for t in range(n_types):

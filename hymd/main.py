@@ -607,7 +607,7 @@ if __name__ == "__main__":
                 or np.mod(step, config.n_print) == 0
             ):
                 log_step = True
-            if rank == 0 and log_step and args.verbose > 2:
+            if rank == 0 and log_step and args.verbose > 1:
                 step_t = current_step_time - last_step_time
                 tot_t = current_step_time - loop_start_time
                 avg_t = (current_step_time - loop_start_time) / (step + 1)
@@ -853,11 +853,11 @@ if __name__ == "__main__":
 
             (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
             phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
-            if (rank==0):
-                #print('pmesh box:',pm.BoxSize,'\n',
-                #'box:',config.box_size
-                #'positions[-1]:',positions[-1])
-                pass
+            #if (rank==0):
+            #    print('pmesh box:',pm.BoxSize,'\n',
+            #    'box:',config.box_size
+            #    'positions[-1]:',positions[-1])
+            #    pass
 
             if not args.disable_field:
                 layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
@@ -907,6 +907,30 @@ if __name__ == "__main__":
             if np.mod(step, config.n_print) == 0 and step != 0:
                 frame = step // config.n_print
                 if not args.disable_field:
+                    layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
+                    update_field(
+                        phi,
+                        phi_gradient,
+                        phi_laplacian,
+                        phi_transfer,
+                        phi_grad_lap_fourier,
+                        phi_grad_lap,
+                        layouts,
+                        force_on_grid,
+                        hamiltonian,
+                        pm,
+                        positions,
+                        types,
+                        config,
+                        v_ext,
+                        phi_fourier,
+                        phi_lap_filtered_fourier,
+                        v_ext_fourier,
+                        phi_lap_filtered,
+                        v_ext1,
+                        config.m,
+                        compute_potential=True,
+                    )
                     (
                         field_energy,
                         kinetic_energy,

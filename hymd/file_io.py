@@ -112,19 +112,12 @@ def store_static(
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    #h5md.edges = box.create_dataset("edges", (3,), dtype)
-    #h5md.edges[:] = np.array(config.box_size)
 
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
         n_frames += 1
     if np.mod(config.n_steps, config.n_print) == 1:
         n_frames += 1
-
-    # Time dependent box: changes inside edges only.
-    # h5md.box_step = h5md.edges.create_dataset('step', (n_frames,), 'i')
-    # h5md.box_time = h5md.edges.create_dataset('time', (n_frames,), 'float32')
-    # h5md.box_value = h5md.edges.create_dataset('value', (n_frames, 3), 'float32')  # noqa: E501
 
     species = h5md.all_particles.create_dataset(
         "species", (config.n_particles,), dtype="i"  # noqa: E501
@@ -259,9 +252,9 @@ def store_static(
         _,
         h5md.box_step,
         h5md.box_time,
-        h5md.box,
+        h5md.box_value,
     ) = setup_time_dependent_element(
-        "edges", box, n_frames, (3,), "float32", units="nm"
+        "edges", box, n_frames, (3,3), "float32", units="nm"
     )
 
     ind_sort = np.argsort(indices)
@@ -366,11 +359,6 @@ def store_data(
         h5md.forces_step[frame] = step
         h5md.forces_time[frame] = step * time_step
 
-    # Time dependent box, fix this later.
-    # h5md.box_step[frame] = step
-    # h5md.box_time[frame] = step * time_step
-    # h5md.box_value[frame, ...] = np.array(box_size)
-
     ind_sort = np.argsort(indices)
     h5md.positions[frame, indices[ind_sort]] = positions[ind_sort]
 
@@ -390,7 +378,8 @@ def store_data(
     h5md.total_momentum[frame, :] = total_momentum
     h5md.temperature[frame] = temperature
     h5md.pressure[frame] = pressure
-    h5md.box[frame] = np.array(config.box_size)
+    for d in range(3):
+        h5md.box_value[frame,d,d] = box_size[d]
     h5md.thermostat_work[frame] = config.thermostat_work
 
     header_ = 13 * "{:>15}"
