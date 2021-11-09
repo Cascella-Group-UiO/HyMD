@@ -1,0 +1,45 @@
+[meta]
+name = "Water"
+tags = ["water", "solvent", "monoatomic"]
+
+[particles]
+n_particles = 1171
+mass = 72.0
+max_molecule_size = 1
+
+[simulation]
+n_steps = 1
+n_print = 1 
+n_flush = 1
+time_step = 0.3
+box_size = [5.2, 5.2, 5.2]
+#integrator = "velocity-verlet"
+integrator = "respa"
+respa_inner = 10
+domain_decomposition = 3000
+start_temperature = 300
+cancel_com_momentum = true
+target_temperature = 300
+tau = 0.01
+tau_p = 1 #ps #usual order ~1
+hamiltonian = 'DefaultWithChi'
+pressure = true 
+plot = false
+barostat = 'isotropic'
+target_pressure = 1 #bar
+squaregradient = true
+
+
+[field]
+mesh_size = [24, 24, 24]
+kappa = 0.05
+sigma = 0.238
+rho_0 = 8.33
+a = 9.21
+m = [1]
+chi = [
+  [["W", "W"], [0]],
+]
+K_coupl = [
+  [["W", "W"], [1.0]],
+]

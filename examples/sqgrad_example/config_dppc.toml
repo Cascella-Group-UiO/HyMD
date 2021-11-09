@@ -1,0 +1,77 @@
+[meta]
+name = "DPPC bilayer with ML interaction parameters"
+tags = ["bilayer", "solvent", "DPPC"]
+
+[particles]
+n_particles = 20336
+mass = 72.0
+max_molecule_size = 15
+
+[simulation]
+n_steps = 2
+n_print = 1
+n_flush = 1
+time_step = 0.3
+box_size = [13, 13, 14]
+integrator = "respa"
+respa_inner = 10
+domain_decomposition = 5000
+start_temperature = 323
+target_temperature = 323
+cancel_com_momentum = true
+target_pressure = 1
+tau = 0.1
+tau_p = 1
+hamiltonian = 'DefaultWithChi'
+pressure = true
+barostat = 'semiisotropic'
+plot = false
+squaregradient = true
+
+
+[field]
+mesh_size = [50, 50, 50]
+kappa = 0.05
+sigma = 0.5
+rho_0 = 8.86
+a = 9.21
+m = [1.0, 1.0, 1.0, 1.00, 1.00]
+chi = [
+  [["C", "W"], [42.24]],
+  [["G", "C"], [10.47]],
+  [["N", "W"], [-3.77]],
+  [["G", "W"],  [4.53]],
+  [["N", "P"], [-9.34]],
+  [["P", "G"],  [8.04]],
+  [["N", "G"],  [1.97]],
+  [["P", "C"], [14.72]],
+  [["P", "W"], [-1.51]],
+  [["N", "C"], [13.56]],
+]
+K_coupl = [
+  [["C", "W"], [0.1]],
+  [["G", "C"], [0.0]],
+  [["N", "W"], [0.0]],
+  [["G", "W"],  [0.0]],
+  [["N", "P"], [0.0]],
+  [["P", "G"],  [0.0]],
+  [["N", "G"],  [0.0]],
+  [["P", "C"], [0.0]],
+  [["P", "W"], [0.0]],
+  [["N", "C"], [0.0]],
+]
+
+[bonds]
+bonds = [
+  [["N", "P"], [0.47, 1250.0]],
+  [["P", "G"], [0.47, 1250.0]],
+  [["G", "G"], [0.37, 1250.0]],
+  [["G", "C"], [0.47, 1250.0]],
+  [["C", "C"], [0.47, 1250.0]],
+]
+angle_bonds = [
+  [["P", "G", "G"], [120.0, 25.0]],
+  [["P", "G", "C"], [180.0, 25.0]],
+  [["G", "C", "C"], [180.0, 25.0]],
+  [["C", "C", "C"], [180.0, 25.0]],
+]
