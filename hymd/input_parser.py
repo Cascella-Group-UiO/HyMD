@@ -512,7 +512,29 @@ def check_K_coupl(config, names, comm=MPI.COMM_WORLD):
     #add warnings and error remarks here
     return config
 
-def check_box_size(config, comm=MPI.COMM_WORLD):
+def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
+    if config.box_size:
+        config.box_size = np.array(config.box_size, dtype=np.float32)
+        if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
+            err_str = (
+                f"Box size specified in {config.file_name}: "
+                f"{config.box_size} does not match input box:"
+                f"{input_box}"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+    else:
+        if input_box.all():
+            config.box_size = input_box
+        else:
+            err_str = (
+                f"No box information found"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+
     for b in config.box_size:
         if b <= 0.0:
             err_str = (
@@ -522,7 +544,6 @@ def check_box_size(config, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
                 raise ValueError(err_str)
-    config.box_size = np.array(config.box_size, dtype=np.float64)
     return config
 
 
@@ -720,8 +741,27 @@ def check_barostat(config, comm=MPI.COMM_WORLD):
         Logger.rank0.log(logging.ERROR, err_str)
         if comm.Get_rank() == 0:
             raise TypeError(err_str)
-    return config
+    if config.barostat is not None:
+        if (config.barostat != 'isotropic' and config.barostat != 'semiisotropic'):
+            err_str = "barostat option not recognised. Valid options: isotropic, semiisotropic"
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise TypeError(err_str)
+        if config.target_pressure is None:
+            config.target_pressure = 1.0 #bar
+            warn_str = "barostat specified but no target_pressure, defaulting to 1.0 bar"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+        if config.tau_p is None:
+            if config.tau <= 0.1:
+                config.tau_p = config.tau * 10.0
+            else:
+                config.tau_p = 1.0
+            warn_str = "barostat specified but no tau_p, defaulting to "+str(config.tau_p)
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
 
+    return config
 
 def check_tau_p(config, comm=MPI.COMM_WORLD):
     if config.tau_p is None:
@@ -780,12 +820,11 @@ def check_m(config, comm = MPI.COMM_WORLD):
         config.m = [1.0 for t in range(config.n_types)]
     return config
 
-def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
-    config.box_size = np.array(config.box_size)
+def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
         config = _setup_type_to_name_map(config, names, types, comm=comm)
-    config = check_box_size(config, comm=comm)
+    config = check_box_size(config, input_box, comm=comm)
     config = check_integrator(config, comm=comm)
     config = check_max_molecule_size(config, comm=comm)
     config = check_tau(config, comm=comm)
