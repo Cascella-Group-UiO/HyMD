@@ -29,11 +29,11 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
 
-    lap_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
+    phi_transfer = [pm.create("complex", value=0.0) for _ in range(3)]
     phi_laplacian = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
-    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer,
+    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
             phi_laplacian)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
@@ -41,6 +41,34 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
         ind = types == t
         for d in range(3):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
+
+
+def comp_laplacian(
+        phi_fourier,
+        phi_transfer,
+        phi_laplacian,
+        config,
+):
+    for t in range(config.n_types):
+        np.copyto(
+            phi_transfer[0].value, phi_fourier[t].value, casting="no", where=True
+        )
+        np.copyto(
+            phi_transfer[1].value, phi_fourier[t].value, casting="no", where=True
+        )
+        np.copyto(
+            phi_transfer[2].value, phi_fourier[t].value, casting="no", where=True
+        )
+
+        # Evaluate laplacian of phi in fourier space
+        for d in range(3):
+
+            def laplacian_transfer(k, v, d=d):
+                return -k[d]**2 * v
+
+            phi_transfer[d].apply(laplacian_transfer, out=Ellipsis)
+            phi_transfer[d].c2r(out=phi_laplacian[t][d])
+
 
 
 def update_field(

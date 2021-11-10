@@ -360,7 +360,7 @@ if __name__ == "__main__":
             raise NotImplementedError(err_str)
 
     pm_stuff  = initialize_pm(pmesh, config, comm)
-    (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian,
+    (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_laplacian,
     ) = pm_stuff
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
     #print('Creating phi_fourier ',phi_fourier[0].value[0][0][0:2])
@@ -546,7 +546,7 @@ if __name__ == "__main__":
                     config,
                     phi_fourier,
                     phi_laplacian,
-                    lap_transfer,
+                    phi_transfer,
                     args,
                     bond_forces,
                     angle_forces,
@@ -807,7 +807,7 @@ if __name__ == "__main__":
                      config,
                      phi_fourier,
                      phi_laplacian,
-                     lap_transfer,
+                     phi_transfer,
                      bond_forces,
                      angle_forces,
                      args,
@@ -828,7 +828,7 @@ if __name__ == "__main__":
                      config,
                      phi_fourier,
                      phi_laplacian,
-                     lap_transfer,
+                     phi_transfer,
                      bond_forces,
                      angle_forces,
                      args,
@@ -837,7 +837,7 @@ if __name__ == "__main__":
                      step,
                      comm=comm
                 )
-            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, lap_transfer, phi_laplacian
+            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_laplacian
                    ) = pm_stuff
             if (change and not args.disable_field):
                 layouts = [
@@ -911,7 +911,7 @@ if __name__ == "__main__":
                             config,
                             phi_fourier,
                             phi_laplacian,
-                            lap_transfer,
+                            phi_transfer,
                             args,
                             bond_forces,
                             angle_forces,
@@ -1005,7 +1005,7 @@ if __name__ == "__main__":
                     config,
                     phi_fourier,
                     phi_laplacian,
-                    lap_transfer,
+                    phi_transfer,
                     args,
                     bond_forces,
                     angle_forces,
