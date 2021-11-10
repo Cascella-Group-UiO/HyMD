@@ -112,7 +112,7 @@ def semiisotropic(
 
         #Total pressure across all ranks
         #L: Lateral; N: Normal
-        #[PL, PN] = [0, 0]
+        [PL, PN] = [0, 0]
         PL = (pressure[-3] + pressure[-2])/2
         PN = pressure[-1]
 
@@ -126,11 +126,9 @@ def semiisotropic(
         config.box_size[0] = L0
         config.box_size[1] = L1
         config.box_size[2] = L2
-        
         for i in range(len(positions)):
             positions[i][0:2] = alphaL**(1/3) * positions[i][0:2]
             positions[i][2] = alphaN**(1/3) * positions[i][2]
-        
         #pmesh re-initialize
         pm_stuff  = initialize_pm(pmesh, config, comm)
     return (pm_stuff, change)

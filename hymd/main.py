@@ -859,7 +859,6 @@ if __name__ == "__main__":
                 compute_field_force(
                     layouts, positions, force_on_grid, field_forces, types, config.n_types
                 )
-
         
         # Print trajectory
         if config.n_print > 0:

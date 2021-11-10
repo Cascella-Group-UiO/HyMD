@@ -3,7 +3,6 @@ import numpy as np
 from mpi4py import MPI
 from logger import Logger
 import sympy
-from decimal import Decimal
 
 def comp_pressure(
         phi,
@@ -90,6 +89,10 @@ def comp_pressure(
         1/V * config.sigma**2 * V_bar[i] * phi_laplacian[i][2] * volume_per_cell for i in range(config.n_types)
     ]
 
+    #square gradient
+    p_w1_0 = 0.0
+    p_w1_1 = [0.0, 0.0, 0.0]
+    p_w1_2 = [0.0, 0.0, 0.0]
     p2x = [np.sum(p2x[i].value) for i in range(config.n_types)]
     p2y = [np.sum(p2y[i].value) for i in range(config.n_types)]
     p2z = [np.sum(p2z[i].value) for i in range(config.n_types)]
@@ -98,17 +101,6 @@ def comp_pressure(
     p2z = np.sum(p2z)
 
     #Bonded force term: linking 2 particles
-    #forces = {
-    #        'x': bond_forces[:,0],
-    #        'y': bond_forces[:,1],
-    #        'z': bond_forces[:,2]
-    #         }
-
-    #p_bond = {
-    #        'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
-    #        'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
-    #        'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
-    #          }
     p_bond  = {
              'x': bond_pr[0]/V,
              'y': bond_pr[1]/V,
@@ -116,17 +108,6 @@ def comp_pressure(
              }
 
     #Angle force term: linking 3 particles
-    #forces = {
-    #        'x': angle_forces[:,0],
-    #        'y': angle_forces[:,1],
-    #        'z': angle_forces[:,2]
-    #         }
-
-    #p_angle = {
-    #        'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
-    #        'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
-    #        'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
-    #           }
     p_angle =  {
              'x': angle_pr[0]/V,
              'y': angle_pr[1]/V,
@@ -156,38 +137,23 @@ def comp_pressure(
 
 
 
-    #PLOTS
-    if(config.plot):
-        plot(
-                'phi',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh',
-                'x','y'
-        ) 
-        plot(
-              'V_bar*lap',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh',
-              'x','y'
-        )
-        #plot(
-        #    'V_bar',phi, hamiltonian, config, phi_laplacian, V_bar_tuple, 'pmesh',
-        #    'x','y'
-        #)
-
     #Total pressure in x, y, z
     p_tot = {
-        'x': p_kin + p0 + p1 + p2x + p_bond['x'] + p_angle['x'] + p_dihedral['x'],
-        'y': p_kin + p0 + p1 + p2y + p_bond['y'] + p_angle['y'] + p_dihedral['y'],
-        'z': p_kin + p0 + p1 + p2z + p_bond['z'] + p_angle['z'] + p_dihedral['z']
+        'x': p_kin + p0 + p1 + p2x + p_w1_0 + p_w1_1[0] + p_w1_2[0] + p_bond['x'] + p_angle['x'] + p_dihedral['x'],
+        'y': p_kin + p0 + p1 + p2y + p_w1_0 + p_w1_1[1] + p_w1_2[1] + p_bond['y'] + p_angle['y'] + p_dihedral['y'],
+        'z': p_kin + p0 + p1 + p2z + p_w1_0 + p_w1_1[2] + p_w1_2[2] + p_bond['z'] + p_angle['z'] + p_dihedral['z']
             }
 
-
     return_value = [
-                p_kin,p0,p1,
-                p2x,p2y,p2z,
-                p_bond['x'], p_bond['y'], p_bond['z'],
-                p_angle['x'], p_angle['y'], p_angle['z'],
-                p_dihedral['x'], p_dihedral['y'], p_dihedral['z'],
-                p_tot['x'], p_tot['y'], p_tot['z']
+                p_kin,p0,p1,                                                  #0-2
+                p2x,p2y,p2z,                                                  #3-5
+                p_w1_0,                                                       #6
+                p_w1_1[0], p_w1_2[0], p_w1_1[1], p_w1_2[1], p_w1_1[2], p_w1_2[2],#7-12
+                p_bond['x'], p_bond['y'], p_bond['z'],                        #13-15
+                p_angle['x'], p_angle['y'], p_angle['z'],                     #16-18
+                p_dihedral['x'], p_dihedral['y'], p_dihedral['z'],            #19-21
+                p_tot['x'], p_tot['y'], p_tot['z']                            #22-24
     ]
-
     return_value = [comm.allreduce(_, MPI.SUM) for _ in return_value]
     #Total pressure across all ranks
 
