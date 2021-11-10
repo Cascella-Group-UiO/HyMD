@@ -56,6 +56,7 @@ class Config:
     tau_p: float = None
     target_pressure: float = None
     alpha_0: float = None
+    n_b: int = None
     m: List[float] = field(default_factory=list)
 
     def __str__(self):
@@ -236,7 +237,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "name",
         "n_particles",
         "max_molecule_size",
-        "alpha_0"
+        "alpha_0",
     ):
         config_dict[n] = None
 
@@ -290,7 +291,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     if file_path is not None:
         config_dict["file_name"] = file_path
 
-    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure",
+    for n in ("n_steps", "time_step", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure",
         ):
         if n not in config_dict:
             err_str = (
@@ -820,6 +821,17 @@ def check_m(config, comm = MPI.COMM_WORLD):
         config.m = [1.0 for t in range(config.n_types)]
     return config
 
+def check_n_b(config, comm = MPI.COMM_WORLD):
+    if config.n_b is None:
+        warn_str = (
+        f"config.n_b not specified."
+        "Defaulting to 1" 
+        )
+        config.n_b = 1
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0: warnings.warn(warn_str)
+    return config
+
 def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
@@ -841,6 +853,7 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = check_barostat(config, comm=comm)
     #config = check_tau_p(config, comm=comm)
     config = check_alpha_0(config, comm=comm)
+    config = check_n_b(config, comm=comm)
     config = check_m(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     return config

@@ -805,13 +805,13 @@ if __name__ == "__main__":
                 )
 
         # Thermostat
-        if config.target_temperature:
+        if config.target_temperature and np.mod(step, config.n_b)==0:
             csvr_thermostat(velocities, names, config, comm=comm)
 
         # Berendsen Barostat
         if config.barostat:
             if config.barostat.lower() == 'isotropic':
-                pm_stuff = isotropic(
+                pm_stuff, change = isotropic(
                      pmesh,
                      phi,
                      phi_gradient,
@@ -829,11 +829,12 @@ if __name__ == "__main__":
                      args,
                      bond_pr_,
                      angle_pr_,
+                     step,
                      comm=comm
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
-                pm_stuff = semiisotropic(
+                pm_stuff, change = semiisotropic(
                      pmesh,
                      pm_stuff,
                      phi,
@@ -852,19 +853,16 @@ if __name__ == "__main__":
                      args,
                      bond_pr_,
                      angle_pr_,
+                     step,
                      comm=comm
                 )
 
             (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
             phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
-            #if (rank==0):
-            #    print('pmesh box:',pm.BoxSize,'\n',
-            #    'box:',config.box_size
-            #    'positions[-1]:',positions[-1])
-            #    pass
-
-            if not args.disable_field:
-                layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
+            if (change and not args.disable_field):
+                layouts = [
+                    pm.decompose(positions[types == t]) for t in range(config.n_types)
+                ]
                 update_field(
                     phi,
                     phi_gradient,
@@ -903,8 +901,6 @@ if __name__ == "__main__":
                 compute_field_force(
                     layouts, positions, force_on_grid, field_forces, types, config.n_types
                 )
-            else:
-                kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         
         # Print trajectory
         if config.n_print > 0:
