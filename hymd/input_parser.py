@@ -764,15 +764,6 @@ def check_barostat(config, comm=MPI.COMM_WORLD):
 
     return config
 
-def check_tau_p(config, comm=MPI.COMM_WORLD):
-    if config.tau_p is None:
-       warn_str = "target_pressure specified but no tau_p, defaulting to 1.0"
-       config.tau_p = 1.0
-       Logger.rank0.log(logging.WARNING, warn_str)
-       if comm.Get_rank() == 0:
-           warnings.warn(warn_str)
-    return config
-
 def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
     if any(config.thermostat_coupling_groups):
         found = [0 for _ in config.unique_names]
@@ -851,7 +842,6 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = check_bonds(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
     config = check_barostat(config, comm=comm)
-    #config = check_tau_p(config, comm=comm)
     config = check_alpha_0(config, comm=comm)
     config = check_n_b(config, comm=comm)
     config = check_m(config, comm=comm)

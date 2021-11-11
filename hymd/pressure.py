@@ -41,11 +41,11 @@ def comp_pressure(
     p_kin = 2/(3*V)*kinetic_energy
 
     #Term 1
-    p0 = -1/V * np.sum(w)# + w1)
+    p0 = -1/V * np.sum(w)
   
     #Term 2
     V_bar_tuple = [
-        hamiltonian.V_bar[k](phi, phi_laplacian) for k in range(config.n_types)
+        hamiltonian.V_bar[k](phi) for k in range(config.n_types)
     ]
     V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
 
@@ -166,18 +166,11 @@ def comp_pressure(
                 p_kin,p0,p1,                                                  #0-2
                 p2x,p2y,p2z,                                                  #3-5
                 p_w1_0,                                                       #6
-
                 p_w1_1[0], p_w1_2[0], p_w1_1[1], p_w1_2[1], p_w1_1[2], p_w1_2[2],#7-12
                 p_bond['x'], p_bond['y'], p_bond['z'],                        #13-15
                 p_angle['x'], p_angle['y'], p_angle['z'],                     #16-18
                 p_dihedral['x'], p_dihedral['y'], p_dihedral['z'],            #19-21
                 p_tot['x'], p_tot['y'], p_tot['z']                            #22-24
-                
-                #p_w1_1[0]+p_w1_2[0], p_w1_1[1]+p_w1_2[1], p_w1_1[2]+p_w1_2[2],#7-9
-                #p_bond['x'], p_bond['y'], p_bond['z'],                        #10-12
-                #p_angle['x'], p_angle['y'], p_angle['z'],                     #13-15
-                #p_dihedral['x'], p_dihedral['y'], p_dihedral['z'],            #16-18
-                #p_tot['x'], p_tot['y'], p_tot['z']                            #19-21
     ]
     return_value = [comm.allreduce(_, MPI.SUM) for _ in return_value]
     return return_value
