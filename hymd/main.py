@@ -425,6 +425,7 @@ if __name__ == "__main__":
             v_ext,
             phi_fourier,
             v_ext_fourier,
+            config.m,
             compute_potential=True,
         )
         #print('Updating phi_fourier for t=0',phi_fourier[0].value[0][0][0:2])
@@ -695,6 +696,7 @@ if __name__ == "__main__":
                 v_ext,
                 phi_fourier,
                 v_ext_fourier,
+                config.m,
             )
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
@@ -855,6 +857,7 @@ if __name__ == "__main__":
                     v_ext,
                     phi_fourier,
                     v_ext_fourier,
+                    config.m,
                 )
                 compute_field_force(
                     layouts, positions, force_on_grid, field_forces, types, config.n_types
@@ -878,6 +881,7 @@ if __name__ == "__main__":
                         v_ext,
                         phi_fourier,
                         v_ext_fourier,
+                        config.m,
                         compute_potential=True,
                     )
                     (
@@ -978,6 +982,7 @@ if __name__ == "__main__":
                 v_ext,
                 phi_fourier,
                 v_ext_fourier,
+                config.m,
                 compute_potential=True,
             )
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(

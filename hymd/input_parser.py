@@ -55,6 +55,7 @@ class Config:
     target_pressure: float = None
     alpha_0: float = None
     n_b: int = None
+    m: List[float] = field(default_factory=list)
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -785,10 +786,14 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                     raise ValueError(err_str)
     return config
 
-
 def check_alpha_0(config, comm = MPI.COMM_WORLD):
     if config.alpha_0 is None:
         config.alpha_0 = 0.9999999
+    return config
+
+def check_m(config, comm = MPI.COMM_WORLD):
+    if config.m==[]:
+        config.m = [1.0 for t in range(config.n_types)]
     return config
 
 def check_n_b(config, comm = MPI.COMM_WORLD):
@@ -822,5 +827,6 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = check_barostat(config, comm=comm)
     config = check_alpha_0(config, comm=comm)
     config = check_n_b(config, comm=comm)
+    config = check_m(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     return config

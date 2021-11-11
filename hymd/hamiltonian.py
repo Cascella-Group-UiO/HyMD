@@ -151,7 +151,12 @@ class DefaultWithChi(Hamiltonian):
             for i in range(self.config.n_types):
                 ni = type_to_name_map[i]
                 names = sorted([nk, ni])
-                c = chi_type_dictionary[tuple(names)] if ni!=nk else 0
+                if ni!=nk:
+                    c = chi_type_dictionary[tuple(names)] 
+                else:
+                    c = 0
+                #uncomment to count diagonal chi terms:
+                #c = chi_type_dictionary[tuple(names)]
                 V_interaction += c * phi[i] / rho0
             return (V_interaction,V_incompressibility)
 
