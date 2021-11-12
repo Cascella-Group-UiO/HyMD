@@ -214,7 +214,16 @@ def update_field(
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
     for t in range(config.n_types):
+        
+        ###### !!!!! 
+        #if t == 11:
+        #    #pm.paint(positions[types == t], mass=np.zeros(len(positions[types == t])), layout=layouts[t], out=phi[t])
+        #    pm.paint(positions[types == t], mass=np.zeros(len(positions[types == t])), layout=layouts[t], out=phi[t])
+        #else:
+        #    pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
+        
         pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
+        
         phi[t] /= volume_per_cell
         phi[t].r2c(out=phi_fourier[t])
         phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)

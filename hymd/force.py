@@ -35,7 +35,7 @@ class Chi:
     interaction_energy: float
 
 
-def prepare_bonds_old(molecules, names, bonds, indices, config):
+def OLD_prepare_bonds_old(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
     different_molecules = np.unique(molecules)
@@ -120,10 +120,446 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     a.strength,
                                 ]
                             )
+    ## print('here', bonds_2)
+    ## this will return the global index based pairs; with mpi ranks deal with different parts 
+    ## e.g. here [[2738, 2739, 0.47, 1250.0], ...  
+    
+    ## print('here', bonds_3)
+    ## here [[358, 359, 360, 2.0943951023931953, 25.0] ..  
+    ## 
+
     return bonds_2, bonds_3
 
 
-def prepare_bonds(molecules, names, bonds, indices, config):
+def BK_prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj):
+
+    #print('xxxxxx', tomlobj)
+    
+    bonds_2 = []
+    bonds_3 = []
+    bonds_2_new = []
+    bonds_3_new = []
+    
+    different_molecules = np.unique(molecules)
+    #print('different_molecules', different_molecules, len(different_molecules))
+    #print('molecules', molecules, len(molecules))
+    #print('indices', indices, len(indices) )
+    
+    ### in domain decomposion
+    ### order of the different_molecules may be not guaranteed ?
+    ### [2,3,5] could be [3,2,5]
+
+    
+    _local_index_accu = 0 
+    
+    ##### np.unique with order the molecules .... 
+    ### found the problem 
+    ###>>> import numpy as np
+    ###>>> a = [1,1,1,3,3,2,2,5]
+    ###>>> b = np.unique(a)
+    ###>>> b
+    ###array([1, 2, 3, 5])
+    #######
+    ########################################## 
+    
+    #if(list(different_molecules) == sorted(list(different_molecules)) ):
+    #    print('ordered')
+    #else:
+    #    print('not ordered')
+    #    exit()
+    ##########
+    
+    for mol in different_molecules:
+        
+        ## determine what type of molecule
+        resid  = mol + 1 # mol starts from 0 
+        top_summary = tomlobj['gmx']['molecules']
+        resname = None
+        for _item in top_summary:
+            #print(f'molname:     {_item[0][0]}')
+            #print(f'molid_start: {_item[1][0]}') # the molid starts from 1 instead of 0, lile the resid in the gmx and vmd 
+            #print(f'molid_end:   {_item[1][1]}') 
+            if resid >= _item[1][0] and  resid <= _item[1][1]:
+                resname = _item[0][0]
+                break 
+
+        if not resname:
+            print('resname not found', resid)
+            exit()
+        
+        ## pull the bonds 
+        try:
+            tomlobj['gmx'][resname]['bonds']
+            
+            for _bond in tomlobj['gmx'][resname]['bonds']:
+                #print(resname)
+                index_i = _bond[0][0] -1 + _local_index_accu 
+                index_j = _bond[1][0] -1 + _local_index_accu 
+                equilibrium = _bond[3][0]   
+                strength = _bond[4][0]
+        
+                bonds_2_new.append([ index_i, index_j, equilibrium, strength])
+
+        except:
+            #print('xxx', resname)
+            pass
+
+        
+        ## pull the angles 
+        try:
+            tomlobj['gmx'][resname]['angles']
+            for _angle in tomlobj['gmx'][resname]['angles']:
+                index_i = _angle[0][0] -1 + _local_index_accu 
+                index_j = _angle[1][0] -1 + _local_index_accu 
+                index_k = _angle[2][0] -1 + _local_index_accu 
+                equilibrium = np.radians(_angle[4][0])
+                strength = _angle[5][0]
+        
+                bonds_3_new.append([ index_i, index_j, index_k, equilibrium, strength])
+        except:
+            pass
+        
+        ## update the local index   
+        resid_numatom = tomlobj['gmx'][resname]['atomnum']
+        _local_index_accu += resid_numatom
+       
+        
+    for mol in different_molecules:   
+        
+        bond_graph = nx.Graph()
+        for local_index, global_index in enumerate(indices):
+            if molecules[local_index] != mol:
+                continue
+
+            bond_graph.add_node(
+                global_index,
+                name=names[local_index].decode("UTF-8"),
+                local_index=local_index,
+            )
+            for bond in [b for b in bonds[local_index] if b != -1]:
+                bond_graph.add_edge(global_index, bond)
+        
+        #nx.draw(bond_graph)
+        #plt.show()
+        
+        connectivity = nx.all_pairs_shortest_path(bond_graph)
+        #print(dict(connectivity))
+        for c in connectivity:
+            i = c[0]
+            connected = c[1]
+            for j, path in connected.items():
+                if len(path) == 2 and path[-1] > path[0]:
+                    #print(path)
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
+
+                    for b in config.bonds:
+                        #### majesty thanks manuel 
+                        #match_forward = name_i == b.atom_1 and name_j == b.atom_2
+                        #match_backward = name_j == b.atom_2 and name_i == b.atom_1
+                        #### 2021-06-14
+                        match_forward = name_i == b.atom_1 and name_j == b.atom_2
+                        match_backward = name_j == b.atom_1 and name_i == b.atom_2
+                        #### 
+                        if match_forward or match_backward:
+                            bonds_2.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    b.equilibrium,
+                                    b.strength,
+                                ]
+                            )
+                            #print('FOUND!!!', mol, name_i, name_j)
+                            #print([
+                            #        bond_graph.nodes()[i]["local_index"],
+                            #        bond_graph.nodes()[j]["local_index"],
+                            #        b.equilibrium,
+                            #        b.strength,
+                            #    ])
+                        #else:
+                            #print('NOT FOUND!!!',mol, name_i, name_j)
+                    
+                if len(path) == 3 and path[-1] > path[0]:
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_mid = bond_graph.nodes()[path[1]]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
+
+                    for a in config.angle_bonds:
+                        match_forward = (
+                            name_i == a.atom_1
+                            and name_mid == a.atom_2
+                            and name_j == a.atom_3
+                        )
+                        match_backward = (
+                            name_i == a.atom_3
+                            and name_mid == a.atom_2
+                            and name_j == a.atom_1
+                        )
+                        if match_forward or match_backward:
+                            bonds_3.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[path[1]]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    np.radians(a.equilibrium),
+                                    a.strength,
+                                ]
+                            )
+    #print('here', bonds_2_new)
+    
+    ## this will return the global index based pairs; with mpi ranks deal with different parts 
+    ## e.g. here [[2738, 2739, 0.47, 1250.0], ...  
+    #for (a, b) in zip(bonds_2, bonds_2_new):
+    #    print(a, b)
+    
+    ## print('here', bonds_3)
+    ## here [[358, 359, 360, 2.0943951023931953, 25.0] ..  
+    ## 
+    print('bonds---')
+    #print('bonds_2 ', len(bonds_2), bonds_2)
+    #print('bonds_2_new ', len(bonds_2_new),  bonds_2_new)
+    print('bonds_2 ', len(bonds_2) )
+    print('bonds_2_new ', len(bonds_2_new))
+    
+    check_1 = []
+    check_2 = []
+    check_k = []
+    check_b = [] 
+    for i, b in enumerate(bonds_2):
+        check_1.append(b[0])
+        check_2.append(b[1])
+        check_k.append(b[2])
+        check_b.append(b[3])
+    check_1_new = []
+    check_2_new = []
+    check_k_new = []
+    check_b_new = [] 
+    for i, b in enumerate(bonds_2_new):
+        check_1_new.append(b[0])
+        check_2_new.append(b[1])
+        check_k_new.append(b[2])
+        check_b_new.append(b[3])
+    
+    ### may got 3596 3599 ...
+    #print(np.max(check_1), np.max(check_2))
+    if len(check_1) > 0 and len(check_1_new) > 0:
+        print(np.max(check_1), np.max(check_1_new))
+        if np.max(check_1) > 1000:
+            print(different_molecules)
+            np.savetxt('different_molecules.txt',different_molecules)
+            print(molecules)
+            np.savetxt('molecules.txt',molecules)
+            print(indices)
+            np.savetxt('indices.txt',indices)
+            print(names)
+            np.savetxt('names.txt',indices)
+            exit()
+
+
+    return bonds_2_new, bonds_3_new
+    #return bonds_2, bonds_3
+
+
+
+def prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj):
+
+    #print('xxxxxx', tomlobj)
+    
+    bonds_2 = []
+    bonds_3 = []
+    bonds_2_new = []
+    bonds_3_new = []
+    
+    different_molecules = np.unique(molecules)
+    #print('different_molecules', different_molecules, len(different_molecules))
+    #print('molecules', molecules, len(molecules))
+    #print('indices', indices, len(indices) )
+    
+    ### in domain decomposion
+    ### order of the different_molecules may be not guaranteed ?
+    ### [2,3,5] could be [3,2,5]
+    
+    #_local_index_accu = 0 
+    
+    ##### np.unique with order the molecules .... 
+    ### found the problem 
+    ###>>> import numpy as np
+    ###>>> a = [1,1,1,3,3,2,2,5]
+    ###>>> b = np.unique(a)
+    ###>>> b
+    ###array([1, 2, 3, 5])
+    #######
+    ########################################## 
+    
+    #if(list(different_molecules) == sorted(list(different_molecules)) ):
+    #    print('ordered')
+    #else:
+    #    print('not ordered')
+    #    exit()
+    ##########
+    
+    for mol in different_molecules:
+        
+        ## determine what type of molecule
+        resid  = mol + 1 # mol starts from 0 
+        top_summary = tomlobj['gmx']['molecules']
+        resname = None
+        for _item in top_summary:
+            #print(f'molname:     {_item[0][0]}')
+            #print(f'molid_start: {_item[1][0]}') # the molid starts from 1 instead of 0, lile the resid in the gmx and vmd 
+            #print(f'molid_end:   {_item[1][1]}') 
+            if resid >= _item[1][0] and  resid <= _item[1][1]:
+                resname = _item[0][0]
+                break 
+
+        if not resname:
+            print('resname not found', resid)
+            exit()
+        
+        ## pull the bonds 
+        try:
+            tomlobj['gmx'][resname]['bonds']
+
+            _first_id = np.where(molecules == mol)[0][0]
+            #print('here', _first_id)
+            
+            for _bond in tomlobj['gmx'][resname]['bonds']:
+                #print(resname)
+                index_i = _bond[0][0] -1 + _first_id 
+                index_j = _bond[1][0] -1 + _first_id
+                equilibrium = _bond[3][0]   
+                strength = _bond[4][0]
+        
+                bonds_2_new.append([ index_i, index_j, equilibrium, strength])
+
+        except:
+            #print('xxx', resname)
+            pass
+
+        
+        ## pull the angles 
+        try:
+            tomlobj['gmx'][resname]['angles']
+
+            _first_id = np.where(molecules == mol)[0][0]
+            #print('here', _first_id)
+
+            for _angle in tomlobj['gmx'][resname]['angles']:
+                index_i = _angle[0][0] -1 + _first_id  
+                index_j = _angle[1][0] -1 + _first_id 
+                index_k = _angle[2][0] -1 + _first_id 
+                equilibrium = np.radians(_angle[4][0])
+                strength = _angle[5][0]
+        
+                bonds_3_new.append([ index_i, index_j, index_k, equilibrium, strength])
+        except:
+            pass
+        
+        ## update the local index   
+        #resid_numatom = tomlobj['gmx'][resname]['atomnum']
+        #_local_index_accu += resid_numatom
+       
+    """    
+    for mol in different_molecules:   
+        
+        bond_graph = nx.Graph()
+        for local_index, global_index in enumerate(indices):
+            if molecules[local_index] != mol:
+                continue
+
+            bond_graph.add_node(
+                global_index,
+                name=names[local_index].decode("UTF-8"),
+                local_index=local_index,
+            )
+            for bond in [b for b in bonds[local_index] if b != -1]:
+                bond_graph.add_edge(global_index, bond)
+        
+        #nx.draw(bond_graph)
+        #plt.show()
+        
+        connectivity = nx.all_pairs_shortest_path(bond_graph)
+        #print(dict(connectivity))
+        for c in connectivity:
+            i = c[0]
+            connected = c[1]
+            for j, path in connected.items():
+                if len(path) == 2 and path[-1] > path[0]:
+                    #print(path)
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
+
+                    for b in config.bonds:
+                        #### majesty thanks manuel 
+                        #match_forward = name_i == b.atom_1 and name_j == b.atom_2
+                        #match_backward = name_j == b.atom_2 and name_i == b.atom_1
+                        #### 2021-06-14
+                        match_forward = name_i == b.atom_1 and name_j == b.atom_2
+                        match_backward = name_j == b.atom_1 and name_i == b.atom_2
+                        #### 
+                        if match_forward or match_backward:
+                            bonds_2.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    b.equilibrium,
+                                    b.strength,
+                                ]
+                            )
+                            #print('FOUND!!!', mol, name_i, name_j)
+                            #print([
+                            #        bond_graph.nodes()[i]["local_index"],
+                            #        bond_graph.nodes()[j]["local_index"],
+                            #        b.equilibrium,
+                            #        b.strength,
+                            #    ])
+                        #else:
+                            #print('NOT FOUND!!!',mol, name_i, name_j)
+                    
+                if len(path) == 3 and path[-1] > path[0]:
+                    name_i = bond_graph.nodes()[i]["name"]
+                    name_mid = bond_graph.nodes()[path[1]]["name"]
+                    name_j = bond_graph.nodes()[j]["name"]
+
+                    for a in config.angle_bonds:
+                        match_forward = (
+                            name_i == a.atom_1
+                            and name_mid == a.atom_2
+                            and name_j == a.atom_3
+                        )
+                        match_backward = (
+                            name_i == a.atom_3
+                            and name_mid == a.atom_2
+                            and name_j == a.atom_1
+                        )
+                        if match_forward or match_backward:
+                            bonds_3.append(
+                                [
+                                    bond_graph.nodes()[i]["local_index"],
+                                    bond_graph.nodes()[path[1]]["local_index"],
+                                    bond_graph.nodes()[j]["local_index"],
+                                    np.radians(a.equilibrium),
+                                    a.strength,
+                                ]
+                            )
+    #print('here', bonds_2_new)
+    
+    ## this will return the global index based pairs; with mpi ranks deal with different parts 
+    ## e.g. here [[2738, 2739, 0.47, 1250.0], ...  
+    #for (a, b) in zip(bonds_2, bonds_2_new):
+    #    print(a, b)
+    
+    ## print('here', bonds_3)
+    ## here [[358, 359, 360, 2.0943951023931953, 25.0] ..  
+    """
+
+    return bonds_2_new, bonds_3_new
+    #return bonds_2, bonds_3
+
+
+
+def OLD_prepare_bonds(molecules, names, bonds, indices, config):
     bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices, config)
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
@@ -134,6 +570,42 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_2_atom2[i] = b[1]
         bonds_2_equilibrium[i] = b[2]
         bonds_2_stength[i] = b[3]
+    
+    bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
+    bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
+    bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
+    bonds_3_equilibrium = np.empty(len(bonds_3), dtype=np.float64)
+    bonds_3_stength = np.empty(len(bonds_3), dtype=np.float64)
+    for i, b in enumerate(bonds_3):
+        bonds_3_atom1[i] = b[0]
+        bonds_3_atom2[i] = b[1]
+        bonds_3_atom3[i] = b[2]
+        bonds_3_equilibrium[i] = b[3]
+        bonds_3_stength[i] = b[4]
+    return (
+        bonds_2_atom1,
+        bonds_2_atom2,
+        bonds_2_equilibrium,
+        bonds_2_stength,
+        bonds_3_atom1,
+        bonds_3_atom2,
+        bonds_3_atom3,
+        bonds_3_equilibrium,
+        bonds_3_stength,
+    )
+
+def prepare_bonds(molecules, names, bonds, indices, config, tomlobj):
+    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj)
+    bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
+    bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
+    bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
+    bonds_2_stength = np.empty(len(bonds_2), dtype=np.float64)
+    for i, b in enumerate(bonds_2):
+        bonds_2_atom1[i] = b[0]
+        bonds_2_atom2[i] = b[1]
+        bonds_2_equilibrium[i] = b[2]
+        bonds_2_stength[i] = b[3]
+    
     bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)

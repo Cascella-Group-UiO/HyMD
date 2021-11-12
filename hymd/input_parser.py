@@ -43,7 +43,17 @@ class Config:
     cancel_com_momentum: bool = False
     coulombtype: str = None
     dielectric_const: float = None
-    
+
+    ## xinmeng
+    molecules: int = None
+    RAMP: int = None
+    PW: int = None
+    CA: int = None
+    NA: int = None
+    CL: int = None
+    AZT: int = None
+    W: int = None
+
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
             [
@@ -675,6 +685,9 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config.box_size = np.array(config.box_size)  ######## <<<<< FIX ME
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
+        #print(names, len(names))
+        #print(types, len(types))
+        #exit()
         config = _setup_type_to_name_map(config, names, types, comm=comm)
     config = check_box_size(config, comm=comm)
     config = check_integrator(config, comm=comm)

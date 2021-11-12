@@ -12,7 +12,7 @@ import pstats
 import sys
 from types import ModuleType as moduleobj
 import warnings
-
+import toml
 
 from hamiltonian import DefaultNoChi, DefaultWithChi
 from field import (
@@ -186,6 +186,10 @@ def configure_runtime(comm):
         config = parse_config_toml(
             toml_config, file_path=os.path.abspath(args.config), comm=comm
         )
+        ### 2021-11-10 xinmeng 
+        #tomlobj = toml.loads(toml_config) 
+        tomlobj = toml.load(args.config)
+        ###
         Logger.rank0.log(
             logging.INFO, f"Successfully parsed {args.config} as .toml file"
         )
@@ -225,8 +229,8 @@ def configure_runtime(comm):
                 + "\n\npython parse traceback:"
                 + repr(ne)
             )
-    return args, config
-
+    return args, config, tomlobj
+    
 
 def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
     com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
@@ -283,8 +287,10 @@ if __name__ == "__main__":
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config = configure_runtime(comm)
-
+    args, config, tomlobj = configure_runtime(comm)
+    
+    #print('!! config', config.n_particles)
+        
     if args.double_precision:
         dtype = np.float64
         if dtype == np.float64:
@@ -378,7 +384,7 @@ if __name__ == "__main__":
         pm = pmesh.ParticleMesh(
             config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
         )
-
+    
     if config.hamiltonian.lower() == "defaultnochi":
         hamiltonian = DefaultNoChi(config)
     elif config.hamiltonian.lower() == "defaultwithchi":
@@ -395,10 +401,14 @@ if __name__ == "__main__":
             raise NotImplementedError(err_str)
 
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
+    
+    #print('!!!!!!!', config.n_types)
+    #exit()
+
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-
-
+    
+    
     phi_fourier = [
         pm.create("complex", value=0.0) for _ in range(config.n_types)
     ]  # noqa: E501
@@ -633,10 +643,14 @@ if __name__ == "__main__":
         )
         #print(field_q_energy, elec_forces[0])
 
+    #print('here rank bonds', rank, len(bonds), len(positions))
+    #exit()
+    
     
     if molecules_flag:
         if not (args.disable_bonds and args.disable_angle_bonds):
-            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+            #bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, tomlobj)
             (
                 bonds_2_atom1,
                 bonds_2_atom2,
@@ -648,6 +662,12 @@ if __name__ == "__main__":
                 bonds_3_equilibrium,
                 bonds_3_stength,
             ) = bonds_prep
+            
+            ##print(rank, bonds_2_atom1)
+            ##print(rank, bonds_2_atom2)
+            ##print(rank, bonds_2_equilibrium)
+            ##print(rank, bonds_2_stength) 
+            
         if not args.disable_bonds:
             bond_energy_ = compute_bond_forces(
                 bond_forces,
@@ -874,6 +894,10 @@ if __name__ == "__main__":
         
         # Update slow forces
         if not args.disable_field:
+            layouts = [
+                pm.decompose(positions[types == t]) for t in range(config.n_types)
+            ]
+
             update_field(
                 phi,
                 layouts,
@@ -887,9 +911,9 @@ if __name__ == "__main__":
                 phi_fourier,
                 v_ext_fourier,
             )
-            layouts = [
-                pm.decompose(positions[types == t]) for t in range(config.n_types)
-            ]
+            #layouts = [
+            #    pm.decompose(positions[types == t]) for t in range(config.n_types)
+            #] #https://github.com/Cascella-Group-UiO/HyMD-2021/issues/53 2021-11-11
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types, config.n_types
             )
@@ -1010,7 +1034,8 @@ if __name__ == "__main__":
                 ]
 
                 if molecules_flag:
-                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+                    #bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, tomlobj)
                     (
                         bonds_2_atom1,
                         bonds_2_atom2,
@@ -1022,7 +1047,8 @@ if __name__ == "__main__":
                         bonds_3_equilibrium,
                         bonds_3_stength,
                     ) = bonds_prep
-       
+                    #exit()
+
         for t in range(config.n_types):
             if args.verbose > 2:
                 exchange_cost = layouts[t].get_exchange_cost()
