@@ -4,8 +4,8 @@ from mpi4py import MPI
 from logger import Logger
 
 
-def compute_field_force(layouts, r, force_mesh, force, types, n_types):
-    for t in range(n_types):
+def compute_field_force(layouts, r, force_mesh, force, types, config):
+    for t in range(config.n_types):
         ind = types == t
         for d in range(3):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
@@ -203,17 +203,22 @@ def update_field(
     hamiltonian,
     pm,
     positions,
+    masses, # xinmeng <-------
     types,
     config,
     v_ext,
     phi_fourier,
     v_ext_fourier,
     compute_potential=False,
-):
+): 
+    ## for simplicity, assume there is mass 
+    ## Masses!!!! not used ....
+    ## ---- used config.kai_types instead of range(config.n_types)
+    ## 
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
-    for t in range(config.n_types):
+    for t in config.kai_types : #xinmeng !!! 
         
         ###### !!!!! 
         #if t == 11:
@@ -222,15 +227,16 @@ def update_field(
         #else:
         #    pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
         
+        #pm.paint(positions[types == t], mass=masses[types==t], layout=layouts[t], out=phi[t])
         pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
-        
+
         phi[t] /= volume_per_cell
         phi[t].r2c(out=phi_fourier[t])
         phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)
         phi_fourier[t].c2r(out=phi[t]) 
 
-    # External potential
-    for t in range(config.n_types):
+    # External potential 
+    for t in config.kai_types: # xinmeng !!! 
         hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
         np.copyto(

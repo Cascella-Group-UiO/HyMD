@@ -362,12 +362,12 @@ def BK_prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj):
 
 
 
-def prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj):
+def prepare_bonds_old(molecules, names, bonds, indices, config, gmxtomlobj):
 
     #print('xxxxxx', tomlobj)
     
-    bonds_2 = []
-    bonds_3 = []
+    #bonds_2 = []
+    #bonds_3 = []
     bonds_2_new = []
     bonds_3_new = []
     
@@ -403,7 +403,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj):
         
         ## determine what type of molecule
         resid  = mol + 1 # mol starts from 0 
-        top_summary = tomlobj['gmx']['molecules']
+        top_summary = gmxtomlobj['gmx']['molecules']
         resname = None
         for _item in top_summary:
             #print(f'molname:     {_item[0][0]}')
@@ -419,12 +419,12 @@ def prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj):
         
         ## pull the bonds 
         try:
-            tomlobj['gmx'][resname]['bonds']
+            gmxtomlobj['gmx'][resname]['bonds']
 
             _first_id = np.where(molecules == mol)[0][0]
             #print('here', _first_id)
             
-            for _bond in tomlobj['gmx'][resname]['bonds']:
+            for _bond in gmxtomlobj['gmx'][resname]['bonds']:
                 #print(resname)
                 index_i = _bond[0][0] -1 + _first_id 
                 index_j = _bond[1][0] -1 + _first_id
@@ -440,12 +440,12 @@ def prepare_bonds_old(molecules, names, bonds, indices, config, tomlobj):
         
         ## pull the angles 
         try:
-            tomlobj['gmx'][resname]['angles']
-
+            gmxtomlobj['gmx'][resname]['angles']
+            
             _first_id = np.where(molecules == mol)[0][0]
             #print('here', _first_id)
 
-            for _angle in tomlobj['gmx'][resname]['angles']:
+            for _angle in gmxtomlobj['gmx'][resname]['angles']:
                 index_i = _angle[0][0] -1 + _first_id  
                 index_j = _angle[1][0] -1 + _first_id 
                 index_k = _angle[2][0] -1 + _first_id 

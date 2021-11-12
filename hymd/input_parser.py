@@ -42,18 +42,14 @@ class Config:
     initial_energy: float = None
     cancel_com_momentum: bool = False
     coulombtype: str = None
-    dielectric_const: float = None
-
-    ## xinmeng
-    molecules: int = None
-    RAMP: int = None
-    PW: int = None
-    CA: int = None
-    NA: int = None
-    CL: int = None
-    AZT: int = None
-    W: int = None
-
+    dielectric_const: float = None 
+    
+    # xinmeng 
+    vitual_charge_types: List[str] = None
+    vitual_charge_ids: List[int] = None
+    # 
+    kai_types: List[int] = None
+    
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
             [
@@ -217,7 +213,9 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "n_particles",
         "max_molecule_size",
         "coulombtype", 
-        "dielectric_const",  
+        "dielectric_const",
+        "vitual_charge_types",
+        "vitual_charge_ids",
     ):
         config_dict[n] = None
     
@@ -339,6 +337,8 @@ def _find_unique_names(config, names, comm=MPI.COMM_WORLD):
     unique_names = sorted([n.decode("UTF-8") for n in unique_names])
     config.unique_names = unique_names
     config.n_types = len(unique_names)
+    config.vitual_charge_ids =  [ config.unique_names.index(_item) for _item in config.vitual_charge_types] # xinmeng 
+    config.kai_types = [ _ for _ in range(config.n_types) if _ not in config.vitual_charge_ids ] # xinmeng 
     return config
 
 

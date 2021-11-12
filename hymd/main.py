@@ -62,6 +62,12 @@ def configure_runtime(comm):
         nargs="?",
         help="Increase logging verbosity",
     )
+    #ap.add_argument(
+    #    "--gmxtoml",
+    #    default=False,
+    #    action="store_true",
+    #    help="gmx topology file in toml format",
+    #) # xinmeng 
     ap.add_argument(
         "--profile",
         default=False,
@@ -136,6 +142,7 @@ def configure_runtime(comm):
     )
     ap.add_argument("config", help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
+    ap.add_argument("gmxtoml", help="gmx topology file in toml format")
     args = ap.parse_args()
 
     # Given as '--verbose' or '-v' without a specific value specified,
@@ -154,7 +161,7 @@ def configure_runtime(comm):
 
     # Setup logger
     Logger.setup(
-        default_level=logging.INFO, log_file=args.logfile, verbose=args.verbose
+        default_level=logging.INFO, log_file=args.logfile, verbose=args.verbose,
     )
 
     if args.profile:
@@ -188,7 +195,8 @@ def configure_runtime(comm):
         )
         ### 2021-11-10 xinmeng 
         #tomlobj = toml.loads(toml_config) 
-        tomlobj = toml.load(args.config)
+        #tomlobj = toml.load(args.config)
+        gmxtomlobj = toml.load(args.gmxtoml)
         ###
         Logger.rank0.log(
             logging.INFO, f"Successfully parsed {args.config} as .toml file"
@@ -229,7 +237,7 @@ def configure_runtime(comm):
                 + "\n\npython parse traceback:"
                 + repr(ne)
             )
-    return args, config, tomlobj
+    return args, config, gmxtomlobj
     
 
 def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
@@ -287,7 +295,7 @@ if __name__ == "__main__":
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config, tomlobj = configure_runtime(comm)
+    args, config, gmxtomlobj = configure_runtime(comm)
     
     #print('!! config', config.n_particles)
         
@@ -343,10 +351,23 @@ if __name__ == "__main__":
             charges_flag = True
         else:
             charges_flag = False
-            
+
+        ## mass xinmeng            
+        if "mass" in in_file: 
+            masses = in_file["mass"][rank_range]
+            masses_flag = True
+        else:
+            masses_flag = False
 
     
     config = check_config(config, indices, names, types, comm=comm)
+    #print(config.n_types)
+    #print(config.unique_names)
+    #print(config.vitual_charge_types)
+    #print(config.vitual_charge_ids)
+    
+
+
     if config.n_print:
         if config.n_flush is None:
             config.n_flush = 10000 // config.n_print
@@ -405,19 +426,24 @@ if __name__ == "__main__":
     #print('!!!!!!!', config.n_types)
     #exit()
 
+    #phi = [pm.create("real", value=0.0) for _ in  range(config.n_types)]
+    #clean_type_list = [ x for x in range(config.n_types) if x not in config.vitual_charge_ids ]
 
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-    
+
+    ## xinmeng 
+    #print([ x for x in range(config.n_types) if x not in config.vitual_charge_ids ])
+    #exit()
     
     phi_fourier = [
-        pm.create("complex", value=0.0) for _ in range(config.n_types)
+        pm.create("complex", value=0.0) for _ in range(config.n_types)   
     ]  # noqa: E501
     force_on_grid = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-
+    
     
     ############### 
     ############### add charge relatd terms 
@@ -477,7 +503,8 @@ if __name__ == "__main__":
          angle_forces,
          field_forces,
          names, 
-         types
+         types,
+         masses, #<--- xinmeng
     ]
     args_recv = [
          'positions',
@@ -487,13 +514,15 @@ if __name__ == "__main__":
          'angle_forces',
          'field_forces',
          'names', 
-         'types'
+         'types',
+         'masses', #<---- xinmeng
     ]
     if charges_flag: ## add charge related 
         args_in.append(charges) 
         args_in.append(elec_forces)
         args_recv.append('charges')
         args_recv.append('elec_forces')
+    
     if molecules_flag:
         args_recv.append('bonds')
         args_recv.append('molecules')
@@ -563,7 +592,7 @@ if __name__ == "__main__":
     #print('here', positions.shape, type(positions))
     
     if not args.disable_field:
-        layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
+        layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types) ]
         update_field(
             phi,
             layouts,
@@ -571,6 +600,7 @@ if __name__ == "__main__":
             hamiltonian,
             pm,
             positions,
+            masses, #<----- xinmeng 
             types,
             config,
             v_ext,
@@ -590,8 +620,8 @@ if __name__ == "__main__":
             comm=comm,
         )
         compute_field_force(
-            layouts, positions, force_on_grid, field_forces, types, config.n_types
-        )
+            layouts, positions, force_on_grid, field_forces, types, config
+        ) 
     else:
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
  
@@ -650,7 +680,7 @@ if __name__ == "__main__":
     if molecules_flag:
         if not (args.disable_bonds and args.disable_angle_bonds):
             #bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
-            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, tomlobj)
+            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, gmxtomlobj)
             (
                 bonds_2_atom1,
                 bonds_2_atom2,
@@ -845,11 +875,11 @@ if __name__ == "__main__":
         if charges_flag and config.coulombtype == 'PIC_Spectral':
             velocities = integrate_velocity(
                 velocities, (field_forces + elec_forces) / config.mass, config.time_step
-            )
+            ) # <--- xinmeng  , masses 
         else:
             velocities = integrate_velocity(
                 velocities, field_forces / config.mass, config.time_step
-            )
+            ) #<---- xinmeng  , masses
         
         # Inner rRESPA steps
         for inner in range(config.respa_inner):
@@ -857,7 +887,7 @@ if __name__ == "__main__":
                 velocities,
                 (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner,
-            )
+            ) #<---- xinmeng  masses,
             positions = integrate_position(
                 positions, velocities, config.time_step / config.respa_inner
             )
@@ -889,8 +919,8 @@ if __name__ == "__main__":
             velocities = integrate_velocity(
                 velocities,
                 (bond_forces + angle_forces) / config.mass,
-                config.time_step / config.respa_inner,
-            )
+                config.time_step / config.respa_inner, 
+            ) #<---- xinmeng masses
         
         # Update slow forces
         if not args.disable_field:
@@ -905,6 +935,7 @@ if __name__ == "__main__":
                 hamiltonian,
                 pm,
                 positions,
+                masses, #<---xinmeng 
                 types,
                 config,
                 v_ext,
@@ -915,7 +946,7 @@ if __name__ == "__main__":
             #    pm.decompose(positions[types == t]) for t in range(config.n_types)
             #] #https://github.com/Cascella-Group-UiO/HyMD-2021/issues/53 2021-11-11
             compute_field_force(
-                layouts, positions, force_on_grid, field_forces, types, config.n_types
+                layouts, positions, force_on_grid, field_forces, types, config
             )
 
             ## add q related 
@@ -949,11 +980,11 @@ if __name__ == "__main__":
         if charges_flag and config.coulombtype == 'PIC_Spectral':
             velocities = integrate_velocity(
                 velocities, (field_forces + elec_forces) / config.mass, config.time_step
-            )
+            ) #<---- xinmeng , masses
         else:
             velocities = integrate_velocity(
                 velocities, field_forces / config.mass, config.time_step
-            )
+            ) #<---- xinmeng , masses
         ### <-------- TBF
         #print(type(field_forces),type(field_forces))
         #print(field)
@@ -986,7 +1017,8 @@ if __name__ == "__main__":
                      angle_forces,
                      field_forces,
                      names, 
-                     types
+                     types,
+                     masses, #<---- xinmeng 
                 ]
                 if charges_flag: ## add charge related 
                     args_in.append(charges) 
@@ -1035,7 +1067,7 @@ if __name__ == "__main__":
 
                 if molecules_flag:
                     #bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
-                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, tomlobj)
+                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, gmxtomlobj)
                     (
                         bonds_2_atom1,
                         bonds_2_atom2,
@@ -1155,6 +1187,7 @@ if __name__ == "__main__":
                 hamiltonian,
                 pm,
                 positions,
+                masses, #<---- xinmeng 
                 types,
                 config,
                 v_ext,
