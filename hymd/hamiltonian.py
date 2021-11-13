@@ -10,7 +10,8 @@ class Hamiltonian:
     def _setup(self):
         if not hasattr(self.config, "simulation_volume"):
             self.config.simulation_volume = np.prod(np.asarray(self.config.box_size))
-        self.config.rho0 = self.config.n_particles / self.config.simulation_volume
+        #self.config.rho0 = self.config.n_particles - / self.config.simulation_volume
+        self.config.rho0 = (self.config.n_particles - self.config.vitual_charge_types_num) / self.config.simulation_volume # xinmeng 
         self.phi = sympy.var("phi:%d" % (len(self.config.unique_names)))
         k = sympy.var("k:%d" % (3))
 
@@ -100,9 +101,11 @@ class DefaultWithChi(Hamiltonian):
         ):
 
             interaction = 0
-            for i in range(self.config.n_types):
-                ## for j in range(i , self.config.n_types): 
-                for j in range(i + 1, self.config.n_types):
+            _len = len(self.config.kai_types) # xinmeng 
+            #for i in range(self.config.n_types):
+            #    for j in range(i + 1, self.config.n_types): ## for j in range(i , self.config.n_types): 
+            for i in range(_len):
+                for j in range(i + 1, _len):
                     ni = type_to_name_map[i]
                     nj = type_to_name_map[j]
                     names = sorted([ni, nj])
@@ -111,7 +114,7 @@ class DefaultWithChi(Hamiltonian):
                     interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - rho0) ** 2
             return incompressibility + interaction
-
+        
         self.v_ext = [
             sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
             for i in range(len(self.config.unique_names))
@@ -119,57 +122,6 @@ class DefaultWithChi(Hamiltonian):
         self.w = sympy.lambdify([self.phi], w(self.phi))
 
 
-class DefaultWithChiVirtual(Hamiltonian):
-    """
-    2021-07-29 with self-interaction, if does not work, then use the 
-    old BACK_DefaultWithChi
-    only modification is:
-
-    for j in range(i + 1, self.config.n_types):
-    ===> 
-    for j in range(i    , self.config.n_types):
-
-    TOBE DONE 
-    """
-    def __init__(self, config, unique_names, type_to_name_map):
-        super(DefaultWithChi, self).__init__(config)
-        super(DefaultWithChi, self)._setup()
-        self.setup(unique_names, type_to_name_map)
-
-    def setup(self, unique_names, type_to_name_map):
-        self.type_to_name_map = type_to_name_map
-        self.chi_type_dictionary = {
-            tuple(sorted([c.atom_1, c.atom_2])): c.interaction_energy
-            for c in self.config.chi
-        }
-
-        def w(
-            phi,
-            kappa=self.config.kappa,
-            rho0=self.config.rho0,
-            chi=self.config.chi,
-            type_to_name_map=self.type_to_name_map,
-            chi_type_dictionary=self.chi_type_dictionary,
-        ):
-
-            interaction = 0
-            for i in range(self.config.n_types):
-                ## for j in range(i , self.config.n_types): 
-                for j in range(i + 1, self.config.n_types):
-                    ni = type_to_name_map[i]
-                    nj = type_to_name_map[j]
-                    names = sorted([ni, nj])
-                    c = chi_type_dictionary[tuple(names)]
-
-                    interaction += c * phi[i] * phi[j] / rho0
-            incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - rho0) ** 2
-            return incompressibility + interaction
-
-        self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
-            for i in range(len(self.config.unique_names))
-        ]
-        self.w = sympy.lambdify([self.phi], w(self.phi))
 
 
 class BACK_DefaultWithChi(Hamiltonian):

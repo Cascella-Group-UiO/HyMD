@@ -219,6 +219,7 @@ def update_field(
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
     for t in config.kai_types : #xinmeng !!! 
+        #for t in range(config.n_types):  
         
         ###### !!!!! 
         #if t == 11:
@@ -237,6 +238,7 @@ def update_field(
 
     # External potential 
     for t in config.kai_types: # xinmeng !!! 
+        #for t in range(config.n_types): 
         hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
         np.copyto(
