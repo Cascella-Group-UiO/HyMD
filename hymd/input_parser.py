@@ -247,7 +247,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags","m"):
+    for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags","m", "target_pressure"):
         config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
@@ -293,22 +293,24 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_1=c_[0], atom_2=c_[1], squaregradient_energy=c[1][0]
                 )
         if k == "target_pressure":
-            print('len(v):',len(v))
             if len(v) == 2:
                 config_dict["target_pressure"] = Target_pressure(
                     P_L = v[0][0], P_N = v[1][0]
                 )
-            else:
-                #assuming the case: length is 1
+            elif len(v) == 1:
                 config_dict["target_pressure"] = Target_pressure(
                     P_L = v[0][0], P_N = None
                 )
+            else:
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = None, P_N = None
+                )
+
 
     if file_path is not None:
         config_dict["file_name"] = file_path
 
     for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure",
-            "target_pressure"
         ):
         if n not in config_dict:
             err_str = (
@@ -732,7 +734,7 @@ def check_name(config, comm=MPI.COMM_WORLD):
     return config
 
 def check_barostat(config, comm=MPI.COMM_WORLD):
-    if config.barostat is None and (config.tau_p is not None or config.target_pressure is not None):
+    if config.barostat is None and (config.tau_p is not None or config.target_pressure.P_L is not None):
         err_str = "barostat not specified but config.tau_p "\
                   "or config.target_pressure specified, cannot start simulation {config.barostat}"
         Logger.rank0.log(logging.ERROR, err_str)
