@@ -293,10 +293,16 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_1=c_[0], atom_2=c_[1], squaregradient_energy=c[1][0]
                 )
         if k == "target_pressure":
-            #config_dict["target_pressure"] = [None] * len(v)
-            config_dict["target_pressure"] = Target_pressure(
-                P_L = v[0][0], P_N = v[1][0]
-            )
+            print('len(v):',len(v))
+            if len(v) == 2:
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = v[0][0], P_N = v[1][0]
+                )
+            else:
+                #assuming the case: length is 1
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = v[0][0], P_N = None
+                )
 
     if file_path is not None:
         config_dict["file_name"] = file_path

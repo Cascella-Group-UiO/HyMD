@@ -59,7 +59,7 @@ def isotropic(
     P = np.average(pressure[-3:-1])
 
     #scaling factor                                                                                        
-    alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - P)
+    alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure.P_L - P)
 
     #length scaling
     L0 = alpha**(1/3) * config.box_size[0]
