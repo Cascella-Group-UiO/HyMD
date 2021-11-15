@@ -8,6 +8,7 @@ from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
 from force import Bond, Angle, Chi, K_Coupl
+from barostat import Target_pressure
 from logger import Logger
 
 
@@ -54,12 +55,16 @@ class Config:
     #For NPT runs
     barostat: str = None
     tau_p: float = None
-    target_pressure: float = None
+    target_pressure : List[Target_pressure] = field(default_factory=list)
     alpha_0: float = None
     n_b: int = None
     m: List[float] = field(default_factory=list)
 
     def __str__(self):
+        target_pressure_str = "\ttarget_pressure:\n" + "".join(
+                "\t\tP_L: " + f"{self.target_pressure.P_L}\n" +
+                "\t\tP_N: " + f"{self.target_pressure.P_N}\n"
+        )
         bonds_str = "\tbonds:\n" + "".join(
             [
                 (f"\t\t{k.atom_1} {k.atom_2}: " + f"{k.equilibrium}, {k.strength}\n")
@@ -99,9 +104,9 @@ class Config:
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            if k not in ("bonds", "angle_bonds", "chi", "K_coupl", "thermostat_coupling_groups"):
+            if k not in ("target_pressure", "bonds", "angle_bonds", "chi", "K_coupl", "thermostat_coupling_groups"):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += bonds_str + angle_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
+        ret_str += target_pressure_str + bonds_str + angle_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
         return ret_str
 
 
@@ -244,7 +249,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags", "m"):
+    for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags","m"):
         config_dict[n] = []
 
     # Defaults: bool
@@ -292,11 +297,23 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                 config_dict["K_coupl"][i] = K_Coupl(
                     atom_1=c_[0], atom_2=c_[1], squaregradient_energy=c[1][0]
                 )
+        if k == "target_pressure":
+            print('len(v):',len(v))
+            if len(v) == 2:
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = v[0][0], P_N = v[1][0]
+                )
+            else:
+                #assuming the case: length is 1
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = v[0][0], P_N = None
+                )
 
     if file_path is not None:
         config_dict["file_name"] = file_path
 
     for n in ("n_steps", "time_step", "mesh_size", "sigma", "kappa", "rho_0", "a", "pressure",
+            "target_pressure"
         ):
         if n not in config_dict:
             err_str = (

@@ -182,9 +182,9 @@ def comp_pressure(
             [PL, PN] = [0, 0]
             PL = (return_value[-3] + return_value[-2])/2
             PN = return_value[-1]
-            alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
-            alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
+            alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure.P_L - PL)
+            alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure.P_L - PN)
         elif config.barostat == 'isotropic':
             P = np.average(return_value[-3:-1])
-            alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - P)
+            alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure.P_L - P)
     return return_value
