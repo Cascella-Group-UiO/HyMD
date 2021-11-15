@@ -338,7 +338,6 @@ if __name__ == "__main__":
         shape=(len(positions), 3), dtype=dtype
     )  # , order='F')  # noqa: E501
     field_forces = np.zeros(shape=(len(positions), 3), dtype=dtype)
-
     field_energy = 0.0
     bond_energy = 0.0
     angle_energy = 0.0
@@ -541,7 +540,7 @@ if __name__ == "__main__":
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
         temperature = (2 / 3) * kinetic_energy / (config.R * config.n_particles)  # noqa: E501
-        if config.pressure:
+        if config.pressure or config.barostat:
             pressure = comp_pressure(
                     phi,
                     phi_gradient,
@@ -561,6 +560,7 @@ if __name__ == "__main__":
                     angle_pr_,
                     comm=comm
             )
+
             #if rank ==0 : print(pressure[9:12])
             #print('phi_fft after pressure call: phi_fft[d=0]',phi_fft[0].value[0][0][0:2])
         else:
@@ -813,6 +813,7 @@ if __name__ == "__main__":
             if config.barostat.lower() == 'isotropic':
                 pm_stuff, change = isotropic(
                      pmesh,
+                     pm_stuff,
                      phi,
                      phi_gradient,
                      hamiltonian,
@@ -856,7 +857,6 @@ if __name__ == "__main__":
                      step,
                      comm=comm
                 )
-
             (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
             phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
             if (change and not args.disable_field):

@@ -173,4 +173,18 @@ def comp_pressure(
                 p_tot['x'], p_tot['y'], p_tot['z']                            #22-24
     ]
     return_value = [comm.allreduce(_, MPI.SUM) for _ in return_value]
+    #Total pressure across all ranks
+
+    if config.barostat:
+        beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
+        if config.barostat == 'semiisotropic':
+            #L: Lateral; N: Normal
+            [PL, PN] = [0, 0]
+            PL = (return_value[-3] + return_value[-2])/2
+            PN = return_value[-1]
+            alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)
+            alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PN)
+        elif config.barostat == 'isotropic':
+            P = np.average(return_value[-3:-1])
+            alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - P)
     return return_value

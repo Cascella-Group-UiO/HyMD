@@ -24,7 +24,7 @@ class Config:
     rho_0: float
     a: float
     pressure: bool
-    plot: bool
+    plot: bool = False
 
     n_print: int = None
     tau: float = None
@@ -238,12 +238,17 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "n_particles",
         "max_molecule_size",
         "alpha_0",
+        "n_b",
+        "box_size"
     ):
         config_dict[n] = None
 
     # Defaults = []
     for n in ("bonds", "angle_bonds", "chi", "K_coupl", "tags", "m"):
         config_dict[n] = []
+
+    # Defaults: bool
+    config_dict["pressure"] = False
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
     # any).
@@ -512,6 +517,29 @@ def check_K_coupl(config, names, comm=MPI.COMM_WORLD):
     unique_names = config.unique_names
     #add warnings and error remarks here
     return config
+
+def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
+    if config.box_size:
+        config.box_size = np.array(config.box_size, dtype=np.float32)
+        if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
+            err_str = (
+                f"Box size specified in {config.file_name}: "
+                f"{config.box_size} does not match input box:"
+                f"{input_box}"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+    else:
+        if input_box.all():
+            config.box_size = input_box
+        else:
+            err_str = (
+                f"No box information found"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
 
 def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
     if config.box_size:
