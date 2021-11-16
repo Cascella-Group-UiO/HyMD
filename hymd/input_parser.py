@@ -1,5 +1,5 @@
 import copy
-import toml
+import tomli
 import datetime
 import logging
 import warnings
@@ -69,12 +69,14 @@ class Config:
         )
         thermostat_coupling_groups_str = ""
         if any(self.thermostat_coupling_groups):
-            thermostat_coupling_groups_str = "\tthermostat_coupling_groups:\n" + "".join(
-                [
-                    "\t\t" + ", ".join(
-                        [f"{n}" for n in ng]
-                    ) + "\n" for ng in self.thermostat_coupling_groups
-                ]
+            thermostat_coupling_groups_str = (
+                "\tthermostat_coupling_groups:\n"
+                + "".join(
+                    [
+                        "\t\t" + ", ".join([f"{n}" for n in ng]) + "\n"
+                        for ng in self.thermostat_coupling_groups
+                    ]
+                )
             )
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
@@ -200,7 +202,7 @@ def read_config_toml(file_path):
 
 
 def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
-    parsed_toml = toml.loads(toml_content)
+    parsed_toml = tomli.loads(toml_content)
     config_dict = {}
 
     # Defaults = None
@@ -236,27 +238,27 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
             config_dict["bonds"] = [None] * len(v)
             for i, b in enumerate(v):
                 config_dict["bonds"][i] = Bond(
-                    atom_1=b[0][0],
-                    atom_2=b[0][1],
-                    equilibrium=b[1][0],
-                    strength=b[1][1],
+                    atom_1=b[0],
+                    atom_2=b[1],
+                    equilibrium=b[2],
+                    strength=b[3],
                 )
         if k == "angle_bonds":
             config_dict["angle_bonds"] = [None] * len(v)
             for i, b in enumerate(v):
                 config_dict["angle_bonds"][i] = Angle(
-                    atom_1=b[0][0],
-                    atom_2=b[0][1],
-                    atom_3=b[0][2],
-                    equilibrium=b[1][0],
-                    strength=b[1][1],
+                    atom_1=b[0],
+                    atom_2=b[1],
+                    atom_3=b[2],
+                    equilibrium=b[3],
+                    strength=b[4],
                 )
         if k == "chi":
             config_dict["chi"] = [None] * len(v)
             for i, c in enumerate(v):
-                c_ = sorted([c[0][0], c[0][1]])
+                c_ = sorted([c[0], c[1]])
                 config_dict["chi"][i] = Chi(
-                    atom_1=c_[0], atom_2=c_[1], interaction_energy=c[1][0]
+                    atom_1=c_[0], atom_2=c_[1], interaction_energy=c[2]
                 )
 
     if file_path is not None:
