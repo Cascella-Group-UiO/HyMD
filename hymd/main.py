@@ -182,8 +182,10 @@ def configure_runtime(comm):
         Logger.rank0.log(
             logging.INFO, f"Attempting to parse config file {args.config} as .toml"
         )
-        # toml_config = read_config_toml(args.config)
-        config = parse_config_toml(file_path=os.path.abspath(args.config), comm=comm)
+        toml_config = read_config_toml(args.config)
+        config = parse_config_toml(
+            toml_config, file_path=os.path.abspath(args.config), comm=comm
+        )
         if args.top is not None:
             with open(args.top, "rb") as in_top:
                 topol = tomli.load(in_top)
