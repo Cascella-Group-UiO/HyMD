@@ -143,7 +143,7 @@ def prepare_index_based_bonds(molecules, topol):
     return bonds_2, bonds_3
 
 
-def prepare_bonds(molecules, names, bonds, indices, config, topol):
+def prepare_bonds(molecules, names, bonds, indices, config, topol=None):
     if topol is not None:
         bonds_2, bonds_3 = prepare_index_based_bonds(molecules, topol)
     else:
