@@ -112,28 +112,28 @@ def prepare_index_based_bonds(molecules, topol):
         resid = mol + 1
         top_summary = topol["gmx"]["molecules"]
         resname = None
-        for item in top_summary:
-            if resid >= item[1][0] and resid <= item[1][1]:
-                resname = item[0][0]
+        for molname in top_summary:
+            if resid >= molname[1][0] and resid <= molname[1][1]:
+                resname = molname[0]
                 break
 
         if "bonds" in topol["gmx"][resname]:
-            first_id = np.where(molecules == mol)[0][0]
+            first_id = np.where(molecules == mol)[0]
             for bond in topol["gmx"][resname]["bonds"]:
-                index_i = bond[0][0] - 1 + first_id
-                index_j = bond[1][0] - 1 + first_id
-                equilibrium = bond[3][0]
-                strength = bond[4][0]
+                index_i = bond[0] - 1 + first_id
+                index_j = bond[1] - 1 + first_id
+                equilibrium = bond[3]
+                strength = bond[4]
                 bonds_2.append([index_i, index_j, equilibrium, strength])
 
         if "angles" in topol["gmx"][resname]:
-            first_id = np.where(molecules == mol)[0][0]
+            first_id = np.where(molecules == mol)[0]
             for angle in topol["gmx"][resname]["angles"]:
-                index_i = angle[0][0] - 1 + first_id
-                index_j = angle[1][0] - 1 + first_id
-                index_k = angle[2][0] - 1 + first_id
-                equilibrium = np.radians(angle[4][0])
-                strength = angle[5][0]
+                index_i = angle[0] - 1 + first_id
+                index_j = angle[1] - 1 + first_id
+                index_k = angle[2] - 1 + first_id
+                equilibrium = np.radians(angle[4])
+                strength = angle[5]
                 bonds_3.append([index_i, index_j, index_k, equilibrium, strength])
 
         # if "dihedrals" in topol["gmx"][resname]:
