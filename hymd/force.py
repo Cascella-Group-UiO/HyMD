@@ -34,7 +34,7 @@ class Chi:
     interaction_energy: float
 
 
-def prepare_bonds_old(molecules, names, bonds, indices, config):
+def prepare_type_based_bonds(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
     different_molecules = np.unique(molecules)
@@ -103,8 +103,53 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
     return bonds_2, bonds_3
 
 
-def prepare_bonds(molecules, names, bonds, indices, config):
-    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices, config)
+def prepare_index_based_bonds(molecules, topol):
+    bonds_2 = []
+    bonds_3 = []
+
+    different_molecules = np.unique(molecules)
+    for mol in different_molecules:
+        resid = mol + 1
+        top_summary = topol["gmx"]["molecules"]
+        resname = None
+        for item in top_summary:
+            if resid >= item[1][0] and resid <= item[1][1]:
+                resname = item[0][0]
+                break
+
+        if "bonds" in topol["gmx"][resname]:
+            first_id = np.where(molecules == mol)[0][0]
+            for bond in topol["gmx"][resname]["bonds"]:
+                index_i = bond[0][0] - 1 + first_id
+                index_j = bond[1][0] - 1 + first_id
+                equilibrium = bond[3][0]
+                strength = bond[4][0]
+                bonds_2.append([index_i, index_j, equilibrium, strength])
+
+        if "angles" in topol["gmx"][resname]:
+            first_id = np.where(molecules == mol)[0][0]
+            for angle in topol["gmx"][resname]["angles"]:
+                index_i = angle[0][0] - 1 + first_id
+                index_j = angle[1][0] - 1 + first_id
+                index_k = angle[2][0] - 1 + first_id
+                equilibrium = np.radians(angle[4][0])
+                strength = angle[5][0]
+                bonds_3.append([index_i, index_j, index_k, equilibrium, strength])
+
+        # if "dihedrals" in topol["gmx"][resname]:
+
+        # if "improper_dihedrals" in topol["gmx"][resname]:
+
+    return bonds_2, bonds_3
+
+
+def prepare_bonds(molecules, names, bonds, indices, config, topol):
+    if topol is not None:
+        bonds_2, bonds_3 = prepare_index_based_bonds(molecules, topol)
+    else:
+        bonds_2, bonds_3 = prepare_type_based_bonds(
+            molecules, names, bonds, indices, config
+        )
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
     bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
