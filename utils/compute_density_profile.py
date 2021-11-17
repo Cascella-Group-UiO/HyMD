@@ -60,6 +60,23 @@ def h5md_density_profile(file_path, time_steps=(0, -1), species="all",
     max_pos = np.max(positions_slice[..., dim])
     min_pos = np.min(positions_slice[..., dim])
     
+#for binary mix, hardcode pbc shift for type A
+#    for s in species:
+#        t = species_index[np.where(species_names == np.string_(s))][0]
+#        ind_t = np.where(types == t)
+#
+#        if t==0:
+#            positions_slice[:, ind_t, 2] += 11.792
+#            max_pos = np.max(positions_slice[..., dim])
+#        hist, bin_edges = np.histogram(
+#            positions_slice[:, ind_t, dim], bins=bins, 
+#            range=(min_pos, max_pos),
+#        )
+#        hist = hist.astype(np.float64) / float(n_steps_average)
+#        edge_width = np.mean(np.diff(bin_edges))
+#        bin_edges_ = bin_edges[:-1] + 0.5 * edge_width
+#        print(str(s), 'total number:', np.sum(hist) )
+#        ax.plot(bin_edges_, hist, label=str(s)+' '+str(time_steps))
     for s in species:
         t = species_index[np.where(species_names == np.string_(s))][0]
         ind_t = np.where(types == t)
@@ -70,6 +87,7 @@ def h5md_density_profile(file_path, time_steps=(0, -1), species="all",
         hist = hist.astype(np.float64) / float(n_steps_average)
         edge_width = np.mean(np.diff(bin_edges))
         bin_edges_ = bin_edges[:-1] + 0.5 * edge_width
+        print(str(s), 'total number:', np.sum(hist) )
         ax.plot(bin_edges_, hist, label=str(s)+' '+str(time_steps))
     
     ax.set_xlabel(f"{dimension} position / nm", fontsize=13)
