@@ -504,7 +504,7 @@ if __name__ == "__main__":
          field_forces,
          names, 
          types,
-         masses, #<--- xinmeng
+         #masses, #<--- xinmeng
     ]
     args_recv = [
          'positions',
@@ -515,7 +515,7 @@ if __name__ == "__main__":
          'field_forces',
          'names', 
          'types',
-         'masses', #<---- xinmeng
+         #'masses', #<---- xinmeng
     ]
     if charges_flag: ## add charge related 
         args_in.append(charges) 
@@ -600,7 +600,7 @@ if __name__ == "__main__":
             hamiltonian,
             pm,
             positions,
-            masses, #<----- xinmeng 
+            #masses, #<----- xinmeng 
             types,
             config,
             v_ext,
@@ -935,7 +935,7 @@ if __name__ == "__main__":
                 hamiltonian,
                 pm,
                 positions,
-                masses, #<---xinmeng 
+                #masses, #<---xinmeng 
                 types,
                 config,
                 v_ext,
@@ -1018,7 +1018,7 @@ if __name__ == "__main__":
                      field_forces,
                      names, 
                      types,
-                     masses, #<---- xinmeng 
+                     #masses, #<---- xinmeng 
                 ]
                 if charges_flag: ## add charge related 
                     args_in.append(charges) 
@@ -1187,7 +1187,7 @@ if __name__ == "__main__":
                 hamiltonian,
                 pm,
                 positions,
-                masses, #<---- xinmeng 
+                #masses, #<---- xinmeng 
                 types,
                 config,
                 v_ext,

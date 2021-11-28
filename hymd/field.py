@@ -203,7 +203,7 @@ def update_field(
     hamiltonian,
     pm,
     positions,
-    masses, # xinmeng <-------
+    #masses, # xinmeng <-------
     types,
     config,
     v_ext,
@@ -230,7 +230,7 @@ def update_field(
         
         #pm.paint(positions[types == t], mass=masses[types==t], layout=layouts[t], out=phi[t])
         pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
-
+        
         phi[t] /= volume_per_cell
         phi[t].r2c(out=phi_fourier[t])
         phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)

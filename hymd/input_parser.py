@@ -48,6 +48,10 @@ class Config:
     vitual_charge_types: List[str] = None
     vitual_charge_ids: List[int] = None
     vitual_charge_types_num: int = 0 
+    freez_types:  List[str] = None
+    freez_ids:  List[int] = None
+    freez_types_num: int = 0
+
     # 
     kai_types: List[int] = None
     
@@ -218,6 +222,9 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "vitual_charge_types",
         "vitual_charge_ids",
         "vitual_charge_types_num", 
+        "freez_types",
+        "freez_ids",
+        "freez_types_num",
     ):
         config_dict[n] = None
     
