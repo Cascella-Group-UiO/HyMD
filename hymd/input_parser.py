@@ -55,8 +55,9 @@ class Config:
     freez_types:  List[str] = None
     freez_ids:  List[int] = None
     freez_types_num: int = 0
-
-    # 
+    meta_ghost_types:  List[str] = None
+    meta_ghost_kai:  List[float] = None
+    #
     kai_types: List[int] = None
     
     def __str__(self):
@@ -252,6 +253,8 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "freez_types",
         "freez_ids",
         "freez_types_num",
+        "meta_ghost_types",
+        "meta_ghost_kai",
     ):
         config_dict[n] = None
     

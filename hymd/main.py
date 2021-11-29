@@ -444,7 +444,15 @@ if __name__ == "__main__":
     v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
     v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     
+    ######### xinmeng 2021-11-29 add meta_ghost type, let's assume only one type ghost is needed..
+    if  config.meta_ghost_types:
+        print(config.meta_ghost_types)
+        phi_ghost = pm.create("real", value=0.0) # single type ghost
+        phi_ghost_fourier = pm.create("complex", value=0.0) #
+        
+    #################################################
     
+
     ############### 
     ############### add charge relatd terms 
     ############### 
