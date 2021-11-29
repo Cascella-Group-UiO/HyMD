@@ -37,8 +37,8 @@ from input_parser import (
 )
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
-from thermostat import velocity_rescale
-
+#from thermostat import velocity_rescale #old
+from thermostat import csvr_thermostat # new
 
 def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     days = timedelta.days
@@ -874,11 +874,11 @@ if __name__ == "__main__":
         # Initial rRESPA velocity step
         if charges_flag and config.coulombtype == 'PIC_Spectral':
             velocities = integrate_velocity(
-                velocities, (field_forces + elec_forces) / config.mass, config.time_step
+                velocities, (field_forces + elec_forces) / config.mass, config.time_step,  names, config
             ) # <--- xinmeng  , masses 
         else:
             velocities = integrate_velocity(
-                velocities, field_forces / config.mass, config.time_step
+                velocities, field_forces / config.mass, config.time_step , names, config
             ) #<---- xinmeng  , masses
         
         # Inner rRESPA steps
@@ -886,7 +886,7 @@ if __name__ == "__main__":
             velocities = integrate_velocity(
                 velocities,
                 (bond_forces + angle_forces) / config.mass,
-                config.time_step / config.respa_inner,
+                config.time_step / config.respa_inner, names, config
             ) #<---- xinmeng  masses,
             positions = integrate_position(
                 positions, velocities, config.time_step / config.respa_inner
@@ -919,7 +919,7 @@ if __name__ == "__main__":
             velocities = integrate_velocity(
                 velocities,
                 (bond_forces + angle_forces) / config.mass,
-                config.time_step / config.respa_inner, 
+                config.time_step / config.respa_inner, names, config
             ) #<---- xinmeng masses
         
         # Update slow forces
@@ -979,11 +979,11 @@ if __name__ == "__main__":
         # Second rRESPA velocity step
         if charges_flag and config.coulombtype == 'PIC_Spectral':
             velocities = integrate_velocity(
-                velocities, (field_forces + elec_forces) / config.mass, config.time_step
+                velocities, (field_forces + elec_forces) / config.mass, config.time_step, names, config
             ) #<---- xinmeng , masses
         else:
             velocities = integrate_velocity(
-                velocities, field_forces / config.mass, config.time_step
+                velocities, field_forces / config.mass, config.time_step, names, config
             ) #<---- xinmeng , masses
         ### <-------- TBF
         #print(type(field_forces),type(field_forces))
@@ -1093,9 +1093,25 @@ if __name__ == "__main__":
                     ),
                 )
 
-        # Thermostat
+        # Thermostat old
+        #if config.target_temperature:
+        #    velocities = velocity_rescale(velocities, config, comm)
+        
+        #####
+        # Thermostat new
         if config.target_temperature:
-            velocities = velocity_rescale(velocities, config, comm)
+            # Add loop if multiple groups/temperatures are defined
+            # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
+            csvr_thermostat(velocities, names, config, comm=comm)
+
+        # Remove total linear momentum 
+        if config.cancel_com_momentum:
+            if np.mod(step, config.cancel_com_momentum) == 0:
+                velocities = cancel_com_momentum(velocities, config, comm=comm)
+        ######
+
+
+
 
         # Print trajectory
         if config.n_print > 0:
