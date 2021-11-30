@@ -213,12 +213,12 @@ def update_field(
 ): 
     ## for simplicity, assume there is mass 
     ## Masses!!!! not used ....
-    ## ---- used config.kai_types instead of range(config.n_types)
+    ## ---- used config.kai_types_id instead of range(config.n_types)
     ## 
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
-    for t in config.kai_types : #xinmeng !!! 
+    for t in config.kai_types_id : #xinmeng !!! 
         #for t in range(config.n_types):  
         
         ###### !!!!! 
@@ -237,7 +237,7 @@ def update_field(
         phi_fourier[t].c2r(out=phi[t]) 
 
     # External potential 
-    for t in config.kai_types: # xinmeng !!! 
+    for t in config.kai_types_id: # xinmeng !!! 
         #for t in range(config.n_types): 
         hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)

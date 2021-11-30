@@ -57,8 +57,10 @@ class Config:
     freez_types_num: int = 0
     meta_ghost_types:  List[str] = None
     meta_ghost_kai:  List[float] = None
+    meta_ghost_stat_step: float = None
     #
-    kai_types: List[int] = None
+    kai_types_id: List[int] = None
+    meta_ghost_types_id: List[int] = None
     
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -255,6 +257,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "freez_types_num",
         "meta_ghost_types",
         "meta_ghost_kai",
+        "meta_ghost_stat_step",
     ):
         config_dict[n] = None
     
@@ -377,7 +380,8 @@ def _find_unique_names(config, names, comm=MPI.COMM_WORLD):
     config.unique_names = unique_names
     config.n_types = len(unique_names)
     config.vitual_charge_ids =  [ config.unique_names.index(_item) for _item in config.vitual_charge_types] # xinmeng 
-    config.kai_types = [ _ for _ in range(config.n_types) if _ not in config.vitual_charge_ids ] # xinmeng 
+    config.kai_types_id = [ _ for _ in range(config.n_types) if _ not in config.vitual_charge_ids ] # xinmeng 
+    config.meta_ghost_types_id = [ config.unique_names.index(_item) for _item in config.meta_ghost_types] # xinmeng ghost type 
     return config
 
 

@@ -1,3 +1,4 @@
+#import pyvista as pv #xinmeng  conda install -c conda-forge pyvista
 from argparse import ArgumentParser
 import atexit
 import cProfile
@@ -446,7 +447,7 @@ if __name__ == "__main__":
     
     ######### xinmeng 2021-11-29 add meta_ghost type, let's assume only one type ghost is needed..
     if  config.meta_ghost_types:
-        print(config.meta_ghost_types)
+        #print(config.meta_ghost_types)
         phi_ghost = pm.create("real", value=0.0) # single type ghost
         phi_ghost_fourier = pm.create("complex", value=0.0) #
         
@@ -598,6 +599,7 @@ if __name__ == "__main__":
     #charges = np.asfortranarray(charges)
     #print('here', charges.shape, type(charges))
     #print('here', positions.shape, type(positions))
+    
     
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types) ]
@@ -983,7 +985,45 @@ if __name__ == "__main__":
                     comm=comm
                 )
                 #print(field_q_energy, elec_forces[0])
-        
+            
+            
+            ########################## !!! here can add the  phi_ghost phi_ghost_fourier !!! xinmeng 
+            ### print(phi[t].shape, np.sum(phi[t]), rank)
+            ### Note in multi-cores the density is splitted according to spatial decomposition 
+            ### after splitting, we lose the spatical inforamtion, for simplicity now try to use single core...
+            ### 
+            
+            ###### track A
+            ###if  config.meta_ghost_types and np.mod(step, config.meta_ghost_stat_step)==0 and step > 0 :
+            #if config.meta_ghost_types:
+            #    for t in config.kai_types_id : #xinmeng !!!         
+            #        if t in config.meta_ghost_types_id:
+            #            phi_ghost += phi[t]
+            #            if np.mod(step, config.meta_ghost_stat_step) == 0: 
+            #                #print(t, phi_ghost.shape, phi_ghost)
+            #                np.save(f"ghost_density_{step}.npy", phi_ghost)
+            #                print(f"ghost_density_{step}.npy  density file saved")
+            
+
+            ##### track B
+            if config.meta_ghost_types:
+                for t in config.kai_types_id : #xinmeng !!!         
+                    if t in config.meta_ghost_types_id:
+                        phi_ghost += phi[t]/config.meta_ghost_stat_step
+                        if np.mod(step, config.meta_ghost_stat_step) == 0: 
+                            #print(t, phi_ghost.shape, phi_ghost)
+                            np.save(f"ghost_density_{step}.npy", phi_ghost)
+                            #print(f"ghost_density_{step}.npy  density file saved")
+
+                            ##### introduce the ghost interaction 
+                            
+
+
+            
+
+
+
+
         # Second rRESPA velocity step
         if charges_flag and config.coulombtype == 'PIC_Spectral':
             velocities = integrate_velocity(

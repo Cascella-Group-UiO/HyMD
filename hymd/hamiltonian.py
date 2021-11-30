@@ -101,7 +101,7 @@ class DefaultWithChi(Hamiltonian):
         ):
 
             interaction = 0
-            _len = len(self.config.kai_types) # xinmeng 
+            _len = len(self.config.kai_types_id) # xinmeng 
             #for i in range(self.config.n_types):
             #    for j in range(i + 1, self.config.n_types): ## for j in range(i , self.config.n_types): 
             for i in range(_len):
