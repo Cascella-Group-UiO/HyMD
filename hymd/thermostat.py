@@ -107,6 +107,7 @@ def csvr_thermostat(
     """
     if not any(config.thermostat_coupling_groups):
         config.thermostat_coupling_groups = [config.unique_names.copy()]
+        config.thermostat_coupling_groups_temp = [ config.target_temperature ] * len(config.unique_names)
     for i, group in enumerate(config.thermostat_coupling_groups):
         ind = np.where(
             np.logical_or.reduce(list(names == np.string_(t) for t in group))

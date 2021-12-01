@@ -7,6 +7,7 @@ import numpy as np
 def integrate_velocity(velocities, accelerations, time_step, names, config): #xinmeng
     if not config.freez_types:
         accelerations = accelerations
+        
     else:
         for i, group in enumerate(config.freez_types):
             ind = np.where(

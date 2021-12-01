@@ -259,13 +259,21 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
     )
+    
     start_kinetic_energy_target = (
         (3 / 2)
         * (2.479 / 298.0)
         * config.n_particles
         * config.start_temperature  # noqa: E501
     )
-    factor = np.sqrt((3 / 2) * config.n_particles * kT_start / kinetic_energy)
+
+    # xinmeng add 
+    if kinetic_energy == 0: 
+        factor = 1
+    else: 
+        factor = np.sqrt((3 / 2) * config.n_particles * kT_start / kinetic_energy)
+    ## 
+
     velocities[...] = velocities[...] * factor
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
@@ -336,6 +344,13 @@ if __name__ == "__main__":
 
         names = in_file["names"][rank_range]
 
+        #### 2021-12-1 
+        #### toy system 
+        #### some how in the toy system, molecule_flag here is True...
+        #### as a quick fix, just set the molecule_flag to be false 
+        molecules_flag = False
+        
+
         types = None
         bonds = None
         molecules = []
@@ -376,6 +391,7 @@ if __name__ == "__main__":
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, comm=comm)
+        
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
@@ -566,7 +582,7 @@ if __name__ == "__main__":
     #print('bond_forces.shape',  bond_forces.shape) 
     #print('elec_forces.shape',  elec_forces.shape) 
     
-
+    
 
     ### https://pythonprogramming.net/mpi-broadcast-tutorial-mpi4py/
     ### testing of incides
@@ -635,8 +651,7 @@ if __name__ == "__main__":
         ) 
     else:
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
- 
-     
+
     ## Add Simple Poisson Equation Electrostatic: compute field/force/energy together 
     ##field_q_energy = 0.0 
     if charges_flag and config.coulombtype == 'PIC_Spectral':
@@ -687,7 +702,7 @@ if __name__ == "__main__":
     #print('here rank bonds', rank, len(bonds), len(positions))
     #exit()
     
-    
+
     if molecules_flag:
         if not (args.disable_bonds and args.disable_angle_bonds):
             #bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
@@ -775,7 +790,7 @@ if __name__ == "__main__":
             force_out=args.force_output,
             comm=comm,
         )
-
+    
     
     if config.n_print > 0:
         step = 0
@@ -835,7 +850,6 @@ if __name__ == "__main__":
         last_step_time = datetime.datetime.now()
     
     
-    
     flush_step = 0
     
     # ======================================================================= #
@@ -893,17 +907,23 @@ if __name__ == "__main__":
             ) #<---- xinmeng  , masses
         
         # Inner rRESPA steps
+
+        
         for inner in range(config.respa_inner):
             velocities = integrate_velocity(
                 velocities,
                 (bond_forces + angle_forces) / config.mass,
                 config.time_step / config.respa_inner, names, config
             ) #<---- xinmeng  masses,
+             
             positions = integrate_position(
                 positions, velocities, config.time_step / config.respa_inner
             )
+            
+            
+            #print(positions, config.box_size[None, :])
             positions = np.mod(positions, config.box_size[None, :])
-    
+            
             # Update fast forces
             if molecules_flag:
                 if not args.disable_bonds:
