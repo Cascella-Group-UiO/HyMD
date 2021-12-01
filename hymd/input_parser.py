@@ -49,6 +49,7 @@ class Config:
     dielectric_const: float = None 
     
     # xinmeng 
+    preset_rho: int = None
     vitual_charge_types: List[str] = None
     vitual_charge_ids: List[int] = None
     vitual_charge_types_num: int = 0 
@@ -56,11 +57,13 @@ class Config:
     freez_ids:  List[int] = None
     freez_types_num: int = 0
     meta_ghost_types:  List[str] = None
-    meta_ghost_kai:  List[float] = None
+    meta_ghost_kai:  float = None
     meta_ghost_stat_step: float = None
     #
     kai_types_id: List[int] = None
     meta_ghost_types_id: List[int] = None
+    # 
+    h5_type_name: List[str] = None
     
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -253,11 +256,12 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "vitual_charge_ids",
         "vitual_charge_types_num", 
         "freez_types",
-        "freez_ids",
         "freez_types_num",
         "meta_ghost_types",
         "meta_ghost_kai",
         "meta_ghost_stat_step",
+        "h5_type_name",
+        "preset_rho",
     ):
         config_dict[n] = None
     
@@ -369,6 +373,21 @@ def check_max_molecule_size(config, comm=MPI.COMM_WORLD):
 
 
 def _find_unique_names(config, names, comm=MPI.COMM_WORLD):
+    ### warning !!! as seen before in the bond calculation, np.unique with sort the list/seq
+    ### we could try to make it not sorted, e.g. https://stackoverflow.com/questions/12926898/numpy-unique-without-sort
+    ### the following works: 
+    ### 
+    ### unique_names = np.unique(names)
+    ### print('unique_names before',  unique_names)
+    ### indexes = np.unique(names, return_index=True)[1]
+    ### unique_names = [names[index] for index in sorted(indexes)]
+    ### print('unique_names after',  unique_names)
+    ### 
+    ### - but later also there  will be np.unique  
+    ### - but there might also exist problem for multi-core situation (not sure)
+    ###
+    ### to save trouble can have pre-sorted list in the config toml file 
+    ### 
     unique_names = np.unique(names)
     receive_buffer = comm.gather(unique_names, root=0)
 
@@ -379,11 +398,30 @@ def _find_unique_names(config, names, comm=MPI.COMM_WORLD):
     unique_names = sorted([n.decode("UTF-8") for n in unique_names])
     config.unique_names = unique_names
     config.n_types = len(unique_names)
-    config.vitual_charge_ids =  [ config.unique_names.index(_item) for _item in config.vitual_charge_types] # xinmeng 
-    config.kai_types_id = [ _ for _ in range(config.n_types) if _ not in config.vitual_charge_ids ] # xinmeng 
-    config.meta_ghost_types_id = [ config.unique_names.index(_item) for _item in config.meta_ghost_types] # xinmeng ghost type 
+    
+    ##### 2021-12-01
+    ##### warning !!! find the ids according to unique_names does not work, as the order of types are different with the h5 ones 
+    ##### config.vitual_charge_ids =  [ config.unique_names.index(_item) for _item in config.vitual_charge_types] # xinmeng 
+    ##### config.kai_types_id = [ _ for _ in range(config.n_types) if _ not in config.vitual_charge_ids ] # xinmeng 
+    ##### either do not consider the special kai_types or use single core (everything will be simpler)
+    ##### or use the h5_type_name order same as h5 
+    #####  
+    if config.vitual_charge_types:
+        config.vitual_charge_ids =  [ config.h5_type_name.index(_item) for _item in config.vitual_charge_types] # xinmeng 
+        config.kai_types_id = [ _ for _ in range(config.n_types) if _ not in config.vitual_charge_ids ] # xinmeng 
+    else:
+        config.kai_types_id = [ _ for _ in range(config.n_types)]
+    if config.meta_ghost_types:
+        config.meta_ghost_types_id = [ config.h5_type_name.index(_item) for _item in config.meta_ghost_types] # xinmeng ghost type 
+        #print('config.meta_ghost_types_id', config.meta_ghost_types_id, config.h5_type_name.index("A"), config.h5_type_name.index("FA"))
+        #print(config.h5_type_name)
+        #print(config.unique_names)
+        #print([ config.h5_type_name.index(_item) for _item in config.unique_names] )
+    
+    if config.freez_types:
+        config.freez_ids = [  config.h5_type_name.index(_item) for _item in config.freez_types ] 
     return config
-
+    
 
 def _setup_type_to_name_map(config, names, types, comm=MPI.COMM_WORLD):
     if not hasattr(config, "unique_names"):

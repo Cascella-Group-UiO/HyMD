@@ -194,7 +194,7 @@ def update_field_force_energy_q(
         field_q_energy = 0.5 * comm.allreduce(np.sum(elec_energy_field.value))
 
     return field_q_energy.real
-    
+
 
 def update_field(
     phi,
@@ -240,6 +240,96 @@ def update_field(
     for t in config.kai_types_id: # xinmeng !!! 
         #for t in range(config.n_types): 
         hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
+        v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
+        np.copyto(
+            v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True
+        )
+        np.copyto(
+            v_ext_fourier[2].value, v_ext_fourier[0].value, casting="no", where=True
+        )
+        if compute_potential:
+            np.copyto(
+                v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no", where=True
+            )
+
+        # Differentiate the external potential in fourier space
+        for d in range(3):
+
+            def force_transfer_function(k, v, d=d):
+                return -k[d] * 1j * v
+
+            v_ext_fourier[d].apply(force_transfer_function, out=Ellipsis)
+            v_ext_fourier[d].c2r(out=force_mesh[t][d])
+
+        if compute_potential:
+            v_ext_fourier[3].c2r(out=v_ext[t])
+
+def update_field_with_ghost(
+    phi,
+    phi_ghost,
+    layouts,
+    force_mesh,
+    hamiltonian,
+    pm,
+    positions,
+    #masses, # xinmeng <-------
+    types,
+    config,
+    v_ext,
+    phi_fourier,
+    v_ext_fourier,
+    compute_potential=False,
+): 
+    
+    ## 
+    V = np.prod(config.box_size)
+    n_mesh_cells = np.prod(np.full(3, config.mesh_size))
+    volume_per_cell = V / n_mesh_cells
+    for t in config.kai_types_id : #xinmeng !!! 
+        #for t in range(config.n_types):  
+        
+        ###### !!!!! 
+        #if t == 11:
+        #    #pm.paint(positions[types == t], mass=np.zeros(len(positions[types == t])), layout=layouts[t], out=phi[t])
+        #    pm.paint(positions[types == t], mass=np.zeros(len(positions[types == t])), layout=layouts[t], out=phi[t])
+        #else:
+        #    pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
+        
+        #pm.paint(positions[types == t], mass=masses[types==t], layout=layouts[t], out=phi[t])
+        pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
+        
+        phi[t] /= volume_per_cell
+        phi[t].r2c(out=phi_fourier[t])
+        phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)
+        phi_fourier[t].c2r(out=phi[t]) 
+
+    # External potential 
+    for t in config.kai_types_id: # xinmeng !!! 
+        #### thanks to manuel 2021-11-30 
+        # if w = w_0 + \kai \rho_L \rho_L'
+        # first is the v from w_0
+        v_full = hamiltonian.v_ext[t](phi)
+        #print('t in kai_types_id', t,config.kai_types_id )
+        ### comment this extra part, with behave 'normal'
+        # second consider the extra part
+        if config.meta_ghost_types:            
+            if t in config.meta_ghost_types_id:
+                #print(np.sum(phi[t])*volume_per_cell)
+                
+                ### test 
+                #phi_ghost += phi[t] #/config.meta_ghost_stat_step
+                ###
+                #print('xx', t)
+                #v_full += config.meta_ghost_kai * phi_ghost
+                #print(np.max(v_full))
+                v_full += config.meta_ghost_kai * phi_ghost/config.rho0
+                #print(np.max(v_full))
+                #exit()
+                
+
+                
+        v_full.r2c(out=v_ext_fourier[0])
+        #hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
         np.copyto(
             v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True

@@ -8,11 +8,18 @@ def integrate_velocity(velocities, accelerations, time_step, names, config): #xi
     if not any(config.freez_types):
         accelerations = accelerations
     else:
-        for i, group in enumerate(config.freez_types):
-            ind = np.where(
-                np.logical_or.reduce(list(names == np.string_(t) for t in group))
-            )
-            accelerations[ind] = accelerations[ind]*0.0 
+        #for i, group in enumerate(config.freez_types):
+        #    ind = np.where(
+        #        np.logical_or.reduce(list(names == np.string_(t) for t in group))
+        #    )
+        #    accelerations[ind] = accelerations[ind]*0.0 
+
+         
+        ind = np.where(
+            np.logical_or.reduce(list(names == np.string_(t) for t in config.freez_types))
+        )
+        accelerations[ind] = accelerations[ind]*0.0 
+    
     
     return velocities + 0.5 * time_step * accelerations #/ masses.reshape(masses.shape[0], 1)
 

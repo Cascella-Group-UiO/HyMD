@@ -23,7 +23,8 @@ from field import (
     domain_decomposition,
     update_field_force_energy_q, #elec related
     update_field_force_q,
-    compute_field_energy_q
+    compute_field_energy_q,
+    update_field_with_ghost, # meta 
 )
 
 from file_io import distribute_input, OutDataset, store_static, store_data, store_static_with_charge
@@ -937,9 +938,11 @@ if __name__ == "__main__":
             layouts = [
                 pm.decompose(positions[types == t]) for t in range(config.n_types)
             ]
-
-            update_field(
+            ### meta xinmeng 
+            if config.meta_ghost_types: 
+                update_field_with_ghost(
                 phi,
+                phi_ghost, #<--- meta 
                 layouts,
                 force_on_grid,
                 hamiltonian,
@@ -952,6 +955,22 @@ if __name__ == "__main__":
                 phi_fourier,
                 v_ext_fourier,
             )
+            else:
+                update_field(
+                    phi,
+                    layouts,
+                    force_on_grid,
+                    hamiltonian,
+                    pm,
+                    positions,
+                    #masses, #<---xinmeng 
+                    types,
+                    config,
+                    v_ext,
+                    phi_fourier,
+                    v_ext_fourier,
+                )
+            
             #layouts = [
             #    pm.decompose(positions[types == t]) for t in range(config.n_types)
             #] #https://github.com/Cascella-Group-UiO/HyMD-2021/issues/53 2021-11-11
@@ -1009,19 +1028,19 @@ if __name__ == "__main__":
             if config.meta_ghost_types:
                 for t in config.kai_types_id : #xinmeng !!!         
                     if t in config.meta_ghost_types_id:
+                        #phi_ghost += phi[t]/config.meta_ghost_stat_step
+                        ###a * (a >= np.amax(a)) # self-trapping?? 
+                        #_max = phi[t]* (phi[t] >= np.amax(phi[t]))
+                        #phi_ghost += _max/config.meta_ghost_stat_step
                         phi_ghost += phi[t]/config.meta_ghost_stat_step
-                        if np.mod(step, config.meta_ghost_stat_step) == 0: 
+                        if np.mod(step, 10) == 0 :## here  
+                            #_max = phi[t]* (phi[t] >= np.amax(phi[t]))
+                            #phi_ghost += _max
+                            
                             #print(t, phi_ghost.shape, phi_ghost)
                             np.save(f"ghost_density_{step}.npy", phi_ghost)
+                            #np.save(f"ghost_density_{step}.npy", _max)
                             #print(f"ghost_density_{step}.npy  density file saved")
-
-                            ##### introduce the ghost interaction 
-                            
-
-
-            
-
-
 
 
         # Second rRESPA velocity step
@@ -1244,21 +1263,39 @@ if __name__ == "__main__":
 
     if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
         if not args.disable_field:
-            update_field(
+            ### meta xinmeng 
+            if config.meta_ghost_types: 
+                update_field_with_ghost(
                 phi,
+                phi_ghost, #<--- meta 
                 layouts,
                 force_on_grid,
                 hamiltonian,
                 pm,
                 positions,
-                #masses, #<---- xinmeng 
+                #masses, #<---xinmeng 
                 types,
                 config,
                 v_ext,
                 phi_fourier,
                 v_ext_fourier,
-                compute_potential=True,
             )
+            else:
+                update_field(
+                    phi,
+                    layouts,
+                    force_on_grid,
+                    hamiltonian,
+                    pm,
+                    positions,
+                    #masses, #<---xinmeng 
+                    types,
+                    config,
+                    v_ext,
+                    phi_fourier,
+                    v_ext_fourier,
+                )
+            
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(
                 phi,
                 velocities,
@@ -1297,6 +1334,16 @@ if __name__ == "__main__":
                     comm=comm
                 )
                 #print(field_q_energy, elec_forces[0])
+
+            ###### updat the meta ghost also here ? xinmeng !!!
+            #if config.meta_ghost_types:
+            #    for t in config.kai_types_id : #xinmeng !!!         
+            #        if t in config.meta_ghost_types_id:
+            #            phi_ghost += phi[t]/config.meta_ghost_stat_step
+            #            #if np.mod(step, 10) == 0: 
+            #            #    #print(t, phi_ghost.shape, phi_ghost)
+            #            #    np.save(f"ghost_density_{step}.npy", phi_ghost)
+            #            #    #print(f"ghost_density_{step}.npy  density file saved")
 
         else:
             kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
