@@ -5,7 +5,7 @@ import numpy as np
 #    return velocities + 0.5 * time_step * accelerations #/ masses.reshape(masses.shape[0], 1)
 
 def integrate_velocity(velocities, accelerations, time_step, names, config): #xinmeng
-    if not any(config.freez_types):
+    if not config.freez_types:
         accelerations = accelerations
     else:
         #for i, group in enumerate(config.freez_types):
