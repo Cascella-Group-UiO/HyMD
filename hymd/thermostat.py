@@ -149,7 +149,7 @@ def csvr_thermostat(
         R = comm.bcast(R, root=0)
         SNf = comm.bcast(SNf, root=0)
         
-        if K<0.000000001:
+        if K<0.0000000000001:
             alpha2=1.0 
         else: 
             alpha2 = (
