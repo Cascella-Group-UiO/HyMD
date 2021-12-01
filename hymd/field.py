@@ -10,6 +10,27 @@ def compute_field_force(layouts, r, force_mesh, force, types, config):
         for d in range(3):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
 
+def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, config):
+    for t in range(config.n_types):
+        ind = types == t
+
+        #for d in range(3):
+        #    force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
+        ##--> only x dimension 
+        d = 0 
+        force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
+        
+        ## 1 particle with potential at  v= 100(r-ro)^2
+        r0 =  2.0
+        #print('here ', force[ind, d], r[ind][0], r[ind][0][0])
+        #print(force[ind, d])
+        force[ind, d] += -10.0*(r[ind][0][0]-r0)
+        #print(force[ind, d])
+        #exit()
+        
+
+
+
 
 #def compute_field_energy_q(   
 #    phi_q_fourier,

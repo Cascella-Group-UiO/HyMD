@@ -25,6 +25,7 @@ from field import (
     update_field_force_q,
     compute_field_energy_q,
     update_field_with_ghost, # meta 
+    compute_field_force_1d_with_potential, # toy1d
 )
 
 from file_io import distribute_input, OutDataset, store_static, store_data, store_static_with_charge
@@ -294,11 +295,83 @@ def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
     return velocities
 
 
+
+def generate_initial_velocities_1d(velocities, config, comm=MPI.COMM_WORLD):
+    kT_start = (2.479 / 298.0) * config.start_temperature
+    n_particles_ = velocities.shape[0]
+
+    #velocities[...] = np.random.normal(
+    #    loc=0, scale=kT_start / config.mass, size=(n_particles_, 3)
+    #)
+    #print(velocities)
+    
+    ### 1d 
+    _velocities = np.zeros(shape=(n_particles_, 3))
+    _velocities[:,0] = np.random.normal(
+        loc=0, scale=kT_start / config.mass, size=(n_particles_, 1)
+    )
+    velocities[...] = _velocities
+    print(velocities)
+
+
+    com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
+    if config.n_particles == 1: 
+        velocities[...] = velocities[...]
+    else: 
+        velocities[...] = velocities[...] - com_velocity / config.n_particles
+    
+
+    kinetic_energy = comm.allreduce(
+        0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
+    )
+    
+    #start_kinetic_energy_target = (
+    #    (3 / 2)
+    #    * (2.479 / 298.0)
+    #    * config.n_particles
+    #    * config.start_temperature  # noqa: E501
+    #)
+    
+    ### 1D 3/2 --> 1/2 ??? 
+    #print('1D 3/2 --> 1/2 ??? ')
+    start_kinetic_energy_target = (
+        (1 / 2)
+        * (2.479 / 298.0)
+        * config.n_particles
+        * config.start_temperature  # noqa: E501
+    )
+    
+    # xinmeng add 
+    if kinetic_energy == 0: 
+        factor = 1
+    else: 
+        #factor = np.sqrt((3 / 2) * config.n_particles * kT_start / kinetic_energy)
+        # 1D 
+        factor = np.sqrt((1 / 2) * config.n_particles * kT_start / kinetic_energy)
+    ## 
+
+    velocities[...] = velocities[...] * factor
+    kinetic_energy = comm.allreduce(
+        0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
+    )
+
+    Logger.rank0.log(
+        logging.INFO,
+        (
+            f"Initialized {config.n_particles} velocities, target kinetic energy:"
+            f" {start_kinetic_energy_target}, actual kinetic energy generated:"
+            f" {kinetic_energy}"
+        ),
+    )
+    return velocities
+
+
 def judge_add_force( charges_flag, field_forces, bond_forces, angle_forces, elec_forces):
     if charges_flag == True: 
         return field_forces+bond_forces+angle_forces+elec_forces
     else:
         return field_forces+bond_forces+angle_forces
+
 
 
 
@@ -395,8 +468,8 @@ if __name__ == "__main__":
             config.n_flush = 10000 // config.n_print
 
     if config.start_temperature:
-        velocities = generate_initial_velocities(velocities, config, comm=comm)
-        
+        #velocities = generate_initial_velocities(velocities, config, comm=comm)
+        velocities = generate_initial_velocities_1d(velocities, config, comm=comm)
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
@@ -651,9 +724,12 @@ if __name__ == "__main__":
             layouts,
             comm=comm,
         )
-        compute_field_force(
+        #compute_field_force(
+        #    layouts, positions, force_on_grid, field_forces, types, config
+        #) 
+        compute_field_force_1d_with_potential(
             layouts, positions, force_on_grid, field_forces, types, config
-        ) 
+        )
     else:
         kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocities ** 2))
 
@@ -999,8 +1075,11 @@ if __name__ == "__main__":
             #layouts = [
             #    pm.decompose(positions[types == t]) for t in range(config.n_types)
             #] #https://github.com/Cascella-Group-UiO/HyMD-2021/issues/53 2021-11-11
-            compute_field_force(
-                layouts, positions, force_on_grid, field_forces, types, config
+            #compute_field_force(
+            #    layouts, positions, force_on_grid, field_forces, types, config
+            #)
+            compute_field_force_1d_with_potential(
+            layouts, positions, force_on_grid, field_forces, types, config
             )
 
             ## add q related 

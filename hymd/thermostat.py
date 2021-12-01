@@ -118,6 +118,8 @@ def csvr_thermostat(
         target_temperature = config.thermostat_coupling_groups_temp[i] 
         #print(group, target_temperature)
         ## 
+        #print(velocity[...])
+        #exit()
 
         # Clean velocities of center of mass momentum
         if remove_center_of_mass_momentum and group_n_particles > 1:
@@ -132,12 +134,18 @@ def csvr_thermostat(
         #    1.5 * config.R * group_n_particles * config.target_temperature
         #)
         ## xinmeng replace 
+        #K_target = (
+        #    1.5 * config.R * group_n_particles * target_temperature
+        #)
+
         K_target = (
-            1.5 * config.R * group_n_particles * target_temperature
+            0.5 * config.R * group_n_particles * target_temperature
         )
         ### 
 
         N_f = 3 * group_n_particles
+
+        #print('N_f = 3 * group_n_particles, 3 to 1 in 1 D?')
         c = np.exp(-(config.time_step * config.respa_inner) / config.tau)
 
         # Draw random numbers and broadcast them so they are identical across
@@ -169,3 +177,4 @@ def csvr_thermostat(
         else:
             velocity *= alpha
         config.thermostat_work += dK
+        
