@@ -38,13 +38,23 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
             return a*np.exp(- (x - mu)**2 / (2 * sig**2) )* -1.0*(x-mu)/sig**2
         def gaussian_f(a, x, mu, sig):
             return a*np.exp(- (x - mu)**2 / (2 * sig**2) )* (x-mu)/sig**2
-
+        
+        ### works set 1 
         a1 = -30.0  #-10.0  
         mu1 = 3.0
         sig1 = 0.5
-        a2 = -50.0 #-30.0 
+        a2 = -20.0 #-50.0 #-30.0 
         mu2 = 5.0
         sig2 = 0.5
+
+        ### works set 2 
+        a1 = -30.0  #-10.0  
+        mu1 = 2.0
+        sig1 = 0.5
+        a2 = -20.0 #-50.0 #-30.0 
+        mu2 = 5.0
+        sig2 = 0.5
+        ###
         
         rx = r[ind][0][0]  
         x = np.mod(rx, config.box_size[0]) ## correct pbc.. 
@@ -345,9 +355,16 @@ def update_field_with_ghost(
         pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
         
         phi[t] /= volume_per_cell
+
+        #print('here', phi[t], np.sum(phi[t]), np.sum(phi[t])*volume_per_cell)
+        
+
         phi[t].r2c(out=phi_fourier[t])
         phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)
         phi_fourier[t].c2r(out=phi[t]) 
+        
+        #print('there', phi[t], np.sum(phi[t]), np.sum(phi[t])*volume_per_cell)
+        #exit()
 
     # External potential 
     for t in config.kai_types_id: # xinmeng !!! 
@@ -368,7 +385,7 @@ def update_field_with_ghost(
                 #print('xx', t)
                 #v_full += config.meta_ghost_kai * phi_ghost
                 #print(np.max(v_full))
-                v_full += config.meta_ghost_kai * phi_ghost/config.rho0
+                v_full += config.meta_ghost_weight * phi_ghost/config.rho0
                 #print(np.max(v_full))
                 #exit()
                 

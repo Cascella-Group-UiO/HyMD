@@ -20,14 +20,24 @@ class Hamiltonian:
             self.config.rho0 = self.config.preset_rho
         
         self.phi = sympy.var("phi:%d" % (len(self.config.unique_names)))
+        
         k = sympy.var("k:%d" % (3))
-
+        #k = sympy.var("k:%d" % (1))
         def fourier_space_window_function(k):
+            #return sympy.functions.elementary.exponential.exp(
+            #    -0.5
+            #    * self.config.sigma ** 2
+            #    * (k0 ** 2 + k1 ** 2 + k2 ** 2)  # noqa: F821, E501
+            #)
+            #
+            ### xinmeng 1D
             return sympy.functions.elementary.exponential.exp(
                 -0.5
                 * self.config.sigma ** 2
-                * (k0 ** 2 + k1 ** 2 + k2 ** 2)  # noqa: F821, E501
+                * (k0 ** 2 )  # noqa: F821, E501
             )
+            
+            
 
         self.window_function_lambda = sympy.lambdify(
             [k], fourier_space_window_function(k)
@@ -120,7 +130,10 @@ class DefaultWithChi(Hamiltonian):
                         #if i in self.config.kai_types_id and j in self.config.kai_types_id and not (i in self.config.freez_ids and j in self.config.freez_ids) :  ### only consider the kai when types are not vitual type; also exclude freez self-interaction 
                         interaction += c * phi[i] * phi[j] / rho0
                         #print(i, j, ni, nj, c, self.config.kai_types_id)
-            #print(sum)
+            
+            #print('here', sum, rho0)
+            #exit()
+            
             #print(sum([phi[index] for index in self.config.kai_types_id]))
             
             ### this way some how give error 

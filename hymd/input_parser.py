@@ -57,8 +57,9 @@ class Config:
     freez_ids:  List[int] = None
     freez_types_num: int = 0
     meta_ghost_types:  List[str] = None
-    meta_ghost_kai:  float = None
-    meta_ghost_stat_step: float = None
+    meta_ghost_weight:  float = None
+    meta_ghost_window: int = None
+    meta_ghost_flush: int = None
     #
     kai_types_id: List[int] = None
     meta_ghost_types_id: List[int] = None
@@ -258,8 +259,9 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "freez_types",
         "freez_types_num",
         "meta_ghost_types",
-        "meta_ghost_kai",
-        "meta_ghost_stat_step",
+        "meta_ghost_weight",
+        "meta_ghost_window",
+        "meta_ghost_flush",
         "h5_type_name",
         "preset_rho",
     ):

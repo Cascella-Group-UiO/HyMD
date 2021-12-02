@@ -1136,13 +1136,20 @@ if __name__ == "__main__":
                         ###a * (a >= np.amax(a)) # self-trapping?? 
                         #_max = phi[t]* (phi[t] >= np.amax(phi[t]))
                         #phi_ghost += _max/config.meta_ghost_stat_step
-                        phi_ghost += phi[t]/config.meta_ghost_stat_step
-                        if np.mod(step, 10) == 0 :## here  
+                        #phi_ghost += phi[t]/config.meta_ghost_window
+
+                        phi_ghost += phi[t] # just add the raw density; 
+                        
+                        if np.mod(step, config.meta_ghost_flush) == 0 :## here  
                             #_max = phi[t]* (phi[t] >= np.amax(phi[t]))
                             #phi_ghost += _max
-                            
                             #print(t, phi_ghost.shape, phi_ghost)
-                            np.save(f"ghost_density_{step}.npy", phi_ghost)
+                            _volume_per_cell = 0.5
+                            #np.save(f"ghost_density_{step}.npy", phi_ghost)
+                            np.save(f"ghost_density_{step}.npy", _volume_per_cell*config.meta_ghost_weight*phi_ghost/config.rho0)
+                            np.save(f"real_density_{step}.npy", phi[t])
+                            
+
                             #np.save(f"ghost_density_{step}.npy", _max)
                             #print(f"ghost_density_{step}.npy  density file saved")
 
