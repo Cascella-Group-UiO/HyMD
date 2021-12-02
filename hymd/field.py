@@ -19,14 +19,39 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
         ##--> only x dimension 
         d = 0 
         force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
+        #print(force[ind, d])
+        ############## simple homonic potential 
+        ### 1 particle with potential at  v= 100(r-ro)^2
+        #r0 =  2.0
+        #rx = r[ind][0][0] 
+        ##force[ind, d] += -10.0*(rx-r0)#--->   
+        ## apply pbc to the distance rx-r0
+        #dr = (rx-r0) - config.box_size[0] * np.around( (rx-r0) / config.box_size[0])
+        #df = -10.0 * dr
+        #force[ind, d] += df
+        ###############
+
+        ############## two gaussain potential  
+        def gaussian(a, x, mu, sig):
+            return a*np.exp(- (x - mu)**2 / (2 * sig**2) )
+        def gaussian_dev(a, x, mu, sig):
+            return a*np.exp(- (x - mu)**2 / (2 * sig**2) )* -1.0*(x-mu)/sig**2
+        def gaussian_f(a, x, mu, sig):
+            return a*np.exp(- (x - mu)**2 / (2 * sig**2) )* (x-mu)/sig**2
+
+        a1 = -30.0  #-10.0  
+        mu1 = 3.0
+        sig1 = 0.5
+        a2 = -50.0 #-30.0 
+        mu2 = 5.0
+        sig2 = 0.5
         
-        ## 1 particle with potential at  v= 100(r-ro)^2
-        r0 =  2.0
-        #print('here ', force[ind, d], r[ind][0], r[ind][0][0])
-        #print(force[ind, d])
-        force[ind, d] += -10.0*(r[ind][0][0]-r0)
-        #print(force[ind, d])
-        #exit()
+        rx = r[ind][0][0]  
+        x = np.mod(rx, config.box_size[0]) ## correct pbc.. 
+
+        #v = gaussian(a1, x, mu1, sig1) + gaussian(a2, x, mu2, sig2)
+        df =  gaussian_f(a1, x, mu1, sig1) + gaussian_f(a2, x, mu2, sig2)
+        force[ind, d] += df
         
 
 
