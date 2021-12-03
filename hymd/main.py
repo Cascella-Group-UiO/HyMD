@@ -25,6 +25,7 @@ from field import (
     update_field_force_q,
     compute_field_energy_q,
     update_field_with_ghost, # meta 
+    update_field_ghost, # meta
     compute_field_force_1d_with_potential, # toy1d
 )
 
@@ -545,7 +546,7 @@ if __name__ == "__main__":
         #print(config.meta_ghost_types)
         phi_ghost = pm.create("real", value=0.0) # single type ghost
         phi_ghost_fourier = pm.create("complex", value=0.0) #
-        
+        v_ghost = pm.create("real", value=0.0) # single type ghost
     #################################################
     
 
@@ -1039,12 +1040,8 @@ if __name__ == "__main__":
             layouts = [
                 pm.decompose(positions[types == t]) for t in range(config.n_types)
             ]
-            ### meta xinmeng 
-            if config.meta_ghost_types: 
-                update_field_with_ghost(
-                step,
+            update_field(
                 phi,
-                phi_ghost, #<--- meta 
                 layouts,
                 force_on_grid,
                 hamiltonian,
@@ -1057,21 +1054,26 @@ if __name__ == "__main__":
                 phi_fourier,
                 v_ext_fourier,
             )
-            else:
-                update_field(
-                    phi,
-                    layouts,
-                    force_on_grid,
-                    hamiltonian,
-                    pm,
-                    positions,
-                    #masses, #<---xinmeng 
-                    types,
-                    config,
-                    v_ext,
-                    phi_fourier,
-                    v_ext_fourier,
-                )
+            ### meta xinmeng 
+            if config.meta_ghost_types: 
+                update_field_ghost(
+                step,
+                phi,
+                phi_ghost, #<--- meta 
+                v_ghost, #<--- meta
+                layouts,
+                force_on_grid,
+                hamiltonian,
+                pm,
+                positions,
+                #masses, #<---xinmeng 
+                types,
+                config,
+                v_ext,
+                phi_fourier,
+                v_ext_fourier,
+            )
+
             
             #layouts = [
             #    pm.decompose(positions[types == t]) for t in range(config.n_types)
@@ -1128,7 +1130,7 @@ if __name__ == "__main__":
             #                np.save(f"ghost_density_{step}.npy", phi_ghost)
             #                print(f"ghost_density_{step}.npy  density file saved")
             
-            
+            """
             ##### track B
             if config.meta_ghost_types:
                 for t in config.kai_types_id : #xinmeng !!!         
@@ -1169,7 +1171,7 @@ if __name__ == "__main__":
 
                             #np.save(f"ghost_density_{step}.npy", _max)
                             #print(f"ghost_density_{step}.npy  density file saved")
-
+            """
 
         # Second rRESPA velocity step
         if charges_flag and config.coulombtype == 'PIC_Spectral':
@@ -1392,11 +1394,9 @@ if __name__ == "__main__":
     if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
         if not args.disable_field:
             ### meta xinmeng 
-            if config.meta_ghost_types: 
-                update_field_with_ghost(
-                step,
+            
+            update_field(
                 phi,
-                phi_ghost, #<--- meta 
                 layouts,
                 force_on_grid,
                 hamiltonian,
@@ -1409,22 +1409,26 @@ if __name__ == "__main__":
                 phi_fourier,
                 v_ext_fourier,
             )
-            else:
-                update_field(
-                    phi,
-                    layouts,
-                    force_on_grid,
-                    hamiltonian,
-                    pm,
-                    positions,
-                    #masses, #<---xinmeng 
-                    types,
-                    config,
-                    v_ext,
-                    phi_fourier,
-                    v_ext_fourier,
-                )
+            if config.meta_ghost_types: 
+                update_field_ghost(
+                step,
+                phi,
+                phi_ghost, #<--- meta 
+                v_ghost, #<--- meta 
+                layouts,
+                force_on_grid,
+                hamiltonian,
+                pm,
+                positions,
+                #masses, #<---xinmeng 
+                types,
+                config,
+                v_ext,
+                phi_fourier,
+                v_ext_fourier,
+            )
             
+
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(
                 phi,
                 velocities,
