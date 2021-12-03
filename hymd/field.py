@@ -56,6 +56,17 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
         sig2 = 0.5
         ###
         
+        ### works set 3
+        #a1 = -50.0  #-10.0  
+        #mu1 = 2.0
+        #sig1 = 0.5
+        #a2 = -20.0 #-50.0 #-30.0 
+        #mu2 = 5.0
+        #sig2 = 0.5
+        ###
+
+
+        
         rx = r[ind][0][0]  
         x = np.mod(rx, config.box_size[0]) ## correct pbc.. 
 
@@ -321,6 +332,7 @@ def update_field(
             v_ext_fourier[3].c2r(out=v_ext[t])
 
 def update_field_with_ghost(
+    step,
     phi,
     phi_ghost,
     layouts,
@@ -365,7 +377,7 @@ def update_field_with_ghost(
         
         #print('there', phi[t], np.sum(phi[t]), np.sum(phi[t])*volume_per_cell)
         #exit()
-
+        
     # External potential 
     for t in config.kai_types_id: # xinmeng !!! 
         #### thanks to manuel 2021-11-30 
@@ -389,9 +401,17 @@ def update_field_with_ghost(
                 #print(np.max(v_full))
                 #exit()
                 
-
+    
+        if np.mod(step, config.meta_ghost_flush) == 0 :## here
+            #v_ext_fourier[0].c2r(out=v_ext[t])  
+            np.save(f"ghost_density_{step}.npy", config.meta_ghost_weight * phi_ghost/config.rho0)
+        
                 
         v_full.r2c(out=v_ext_fourier[0])
+
+        
+        
+
         #hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
         np.copyto(
@@ -404,7 +424,10 @@ def update_field_with_ghost(
             np.copyto(
                 v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no", where=True
             )
-
+        
+        
+        
+        
         # Differentiate the external potential in fourier space
         for d in range(3):
 
@@ -416,6 +439,9 @@ def update_field_with_ghost(
 
         if compute_potential:
             v_ext_fourier[3].c2r(out=v_ext[t])
+        
+
+        
 
 
 

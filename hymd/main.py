@@ -1042,6 +1042,7 @@ if __name__ == "__main__":
             ### meta xinmeng 
             if config.meta_ghost_types: 
                 update_field_with_ghost(
+                step,
                 phi,
                 phi_ghost, #<--- meta 
                 layouts,
@@ -1127,7 +1128,7 @@ if __name__ == "__main__":
             #                np.save(f"ghost_density_{step}.npy", phi_ghost)
             #                print(f"ghost_density_{step}.npy  density file saved")
             
-
+            
             ##### track B
             if config.meta_ghost_types:
                 for t in config.kai_types_id : #xinmeng !!!         
@@ -1144,9 +1145,25 @@ if __name__ == "__main__":
                             #_max = phi[t]* (phi[t] >= np.amax(phi[t]))
                             #phi_ghost += _max
                             #print(t, phi_ghost.shape, phi_ghost)
-                            _volume_per_cell = 0.5
+                            V = np.prod(config.box_size)
+                            n_mesh_cells = np.prod(np.full(3, config.mesh_size))
+                            _volume_per_cell = V / n_mesh_cells
+                            #print(_volume_per_cell, config.rho0)
+                            #exit()
+                            #_volume_per_cell = 0.5
                             #np.save(f"ghost_density_{step}.npy", phi_ghost)
-                            np.save(f"ghost_density_{step}.npy", _volume_per_cell*config.meta_ghost_weight*phi_ghost/config.rho0)
+                            #np.save(f"ghost_density_{step}.npy", _volume_per_cell*config.meta_ghost_weight*phi_ghost/config.rho0)
+                            #_gfactor = 1.0/(config.sigma * np.sqrt(2.)*np.pi) 
+                            #print(_gfactor )
+                            #np.save(f"ghost_density_{step}.npy", _volume_per_cell*config.meta_ghost_weight*phi_ghost/config.rho0 * _gfactor)
+
+                            ### 
+                            #np.save(f"ghost_density_{step}.npy", _volume_per_cell*config.meta_ghost_weight*phi_ghost*np.max(phi[t])/config.rho0)
+                            
+                            #np.save(f"ghost_density_{step}.npy", _volume_per_cell*config.meta_ghost_weight*phi_ghost/config.rho0)
+
+
+                            #np.save(f"ghost_density_{step}.npy", _volume_per_cell*config.meta_ghost_weight*phi_ghost)
                             np.save(f"real_density_{step}.npy", phi[t])
                             
 
@@ -1377,6 +1394,7 @@ if __name__ == "__main__":
             ### meta xinmeng 
             if config.meta_ghost_types: 
                 update_field_with_ghost(
+                step,
                 phi,
                 phi_ghost, #<--- meta 
                 layouts,
