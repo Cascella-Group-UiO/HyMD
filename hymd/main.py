@@ -1145,9 +1145,9 @@ if __name__ == "__main__":
                             #_max = phi[t]* (phi[t] >= np.amax(phi[t]))
                             #phi_ghost += _max
                             #print(t, phi_ghost.shape, phi_ghost)
-                            V = np.prod(config.box_size)
-                            n_mesh_cells = np.prod(np.full(3, config.mesh_size))
-                            _volume_per_cell = V / n_mesh_cells
+                            #V = np.prod(config.box_size)
+                            #n_mesh_cells = np.prod(np.full(3, config.mesh_size))
+                            #_volume_per_cell = V / n_mesh_cells
                             #print(_volume_per_cell, config.rho0)
                             #exit()
                             #_volume_per_cell = 0.5

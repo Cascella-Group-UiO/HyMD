@@ -397,36 +397,35 @@ def update_field_with_ghost(
                 #print('xx', t)
                 #v_full += config.meta_ghost_kai * phi_ghost
                 #print(np.max(v_full))
-                v_full += config.meta_ghost_weight * phi_ghost/config.rho0
-                #print(np.max(v_full))
-                #exit()
-                
-    
-        if np.mod(step, config.meta_ghost_flush) == 0 :## here
-            #v_ext_fourier[0].c2r(out=v_ext[t])  
-            np.save(f"ghost_density_{step}.npy", config.meta_ghost_weight * phi_ghost/config.rho0)
+
+                ###
+                #v_full += config.meta_ghost_weight * phi_ghost/config.rho0
+                v_full = config.meta_ghost_weight * phi_ghost/config.rho0
+        
+        #if np.mod(step, config.meta_ghost_flush) == 0 :## here
+        #    #v_ext_fourier[0].c2r(out=v_ext[t])  
+        #    np.save(f"ghost_density_{step}.npy", config.meta_ghost_weight * phi_ghost/config.rho0)
         
                 
         v_full.r2c(out=v_ext_fourier[0])
 
-        
-        
-
         #hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
+
         np.copyto(
             v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True
         )
         np.copyto(
             v_ext_fourier[2].value, v_ext_fourier[0].value, casting="no", where=True
         )
-        if compute_potential:
+
+        #### v after H 
+        if np.mod(step, config.meta_ghost_flush) == 0 :## here
             np.copyto(
                 v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no", where=True
             )
-        
-        
-        
+            v_ext_fourier[3].c2r(out=v_ext[t])
+            np.save(f"ghost_density_{step}.npy", v_ext[t])
         
         # Differentiate the external potential in fourier space
         for d in range(3):
@@ -437,8 +436,8 @@ def update_field_with_ghost(
             v_ext_fourier[d].apply(force_transfer_function, out=Ellipsis)
             v_ext_fourier[d].c2r(out=force_mesh[t][d])
 
-        if compute_potential:
-            v_ext_fourier[3].c2r(out=v_ext[t])
+        
+        
         
 
         
