@@ -65,6 +65,16 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
         #sig2 = 0.5
         ###
 
+        ## works set 4
+        a1 = -30.0  #-10.0  
+        mu1 = 2.0
+        sig1 = 1.0 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        a2 = -20.0 #-50.0 #-30.0 
+        mu2 = 6.0
+        sig2 = 1.0 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        ##
+        
+
 
         
         rx = r[ind][0][0]  
@@ -485,8 +495,8 @@ def update_field_ghost(
             v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no", where=True
         )
         v_ext_fourier[3].c2r(out=v_ext[t])
-        v_ghost += v_ext[t] ## this will contain several types of beads 
-        #v_ghost = v_ext[t] ## this will contain several types of beads 
+        #v_ghost += v_ext[t] ## this will contain several types of beads 
+        v_ghost = v_ext[t] ## this will contain several types of beads 
         
         # Differentiate the external potential in fourier space
         for d in range(3):
