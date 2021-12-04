@@ -64,19 +64,16 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
         #mu2 = 5.0
         #sig2 = 0.5
         ###
-
-        ## works set 4
+        
+        ## works set 5
         a1 = -30.0  #-10.0  
         mu1 = 2.0
-        sig1 = 1.0 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        sig1 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
         a2 = -20.0 #-50.0 #-30.0 
         mu2 = 6.0
-        sig2 = 1.0 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        sig2 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
         ##
-        
 
-
-        
         rx = r[ind][0][0]  
         x = np.mod(rx, config.box_size[0]) ## correct pbc.. 
 
