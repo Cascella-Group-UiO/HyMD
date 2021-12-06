@@ -547,6 +547,7 @@ if __name__ == "__main__":
         phi_ghost = pm.create("real", value=0.0) # single type ghost
         phi_ghost_fourier = pm.create("complex", value=0.0) #
         v_ghost = pm.create("real", value=0.0) # single type ghost
+        ##_v_ghost = pm.create("real", value=0.0) # single type ghost
     #################################################
     
 
@@ -1056,7 +1057,7 @@ if __name__ == "__main__":
             )
             ### meta xinmeng 
             if config.meta_ghost_types: 
-                update_field_ghost(
+                v_ghost,phi_ghost=update_field_ghost(
                 step,
                 phi,
                 phi_ghost, #<--- meta 

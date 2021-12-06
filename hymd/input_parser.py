@@ -60,6 +60,7 @@ class Config:
     meta_ghost_weight:  float = None
     meta_ghost_window: int = None
     meta_ghost_flush: int = None
+    meta_bias_temp: float = None
     #
     kai_types_id: List[int] = None
     meta_ghost_types_id: List[int] = None
@@ -262,6 +263,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "meta_ghost_weight",
         "meta_ghost_window",
         "meta_ghost_flush",
+        "meta_bias_temp",
         "h5_type_name",
         "preset_rho",
     ):
