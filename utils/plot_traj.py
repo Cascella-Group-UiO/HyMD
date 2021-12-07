@@ -115,6 +115,11 @@ def extract_property(h5md_file, property, args):
     name = keyword_to_group_name[property]
     property_group = observables_group[name]
     values = property_group["value"][:]
+    
+    if name =="kinetic_energy":
+        values /= (0.00831446261815324/2.)
+    
+
     times = property_group["time"][:]
     plot_kwargs = {"label": keyword_to_group_name[property]}
     xlabel = "time [ps]"

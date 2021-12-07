@@ -535,18 +535,36 @@ def update_field_ghost_nowelltempered(
     v_ext_fourier,
     compute_potential=False,
 ): 
-      
-    ### 
-    #V = np.prod(config.box_size)
-    #n_mesh_cells = np.prod(np.full(3, config.mesh_size))
-    #volume_per_cell = V / n_mesh_cells
+    ###### omited before  ########### 
+    V = np.prod(config.box_size)
+    n_mesh_cells = np.prod(np.full(3, config.mesh_size))
+    volume_per_cell = V / n_mesh_cells
+    for t in config.kai_types_id : #xinmeng !!! 
+        #for t in range(config.n_types):  
+        
+        ###### !!!!! 
+        #if t == 11:
+        #    #pm.paint(positions[types == t], mass=np.zeros(len(positions[types == t])), layout=layouts[t], out=phi[t])
+        #    pm.paint(positions[types == t], mass=np.zeros(len(positions[types == t])), layout=layouts[t], out=phi[t])
+        #else:
+        #    pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
+        
+        #pm.paint(positions[types == t], mass=masses[types==t], layout=layouts[t], out=phi[t])
+        pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
+        
+        phi[t] /= volume_per_cell
 
-    #v_ghost *= 0.0  
-    #if np.mod(step, config.meta_ghost_window ) == 0 :
-    #    ## apply the ghost interaction
-    #
+        #print('here', phi[t], np.sum(phi[t]), np.sum(phi[t])*volume_per_cell)
+        
+
+        phi[t].r2c(out=phi_fourier[t])
+        phi_fourier[t].apply(hamiltonian.H, out=Ellipsis)
+        phi_fourier[t].c2r(out=phi[t]) 
+        
+        #print('there', phi[t], np.sum(phi[t]), np.sum(phi[t])*volume_per_cell)
+        #exit()
+    ###################################
     
-
     _v_ghost = v_ghost*0.0  
     
     for t in config.meta_ghost_types_id:  
@@ -596,6 +614,8 @@ def update_field_ghost_nowelltempered(
         np.save(f"ghost_potential_{step}.npy", v_ghost)
         np.save(f"real_density_{step}.npy", sum(phi))
     
+    ### sees return or not does not matter 
+    return phi_ghost
 
 def update_field_ghost(
     step,
@@ -635,7 +655,8 @@ def update_field_ghost(
     for t in config.meta_ghost_types_id:  
         
         ##print(config.meta_ghost_weight)
-        #_tempered_meta_ghost_weight = config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp))
+        #_tempered_meta_ghost_weight = config.meta_ghost_weight*np.exp(-(phi_ghost / config.meta_bias_temp))
+        _tempered_meta_ghost_weight = config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp/ config.R))
         #
         #if np.mod(step, config.meta_ghost_flush) == 0 :
         #    print(_tempered_meta_ghost_weight)
@@ -644,12 +665,17 @@ def update_field_ghost(
         #v_full = config.meta_ghost_weight * phi_ghost/config.rho0
         #v_full = _tempered_meta_ghost_weight * phi_ghost/config.rho0
         
-
-        v_full = config.meta_ghost_weight * phi[t] /config.rho0  + phi_ghost
-        #print(step,  np.sum(v_ghost), np.sum(_v_ghost))
-        # exit()
+        #v_full = config.meta_ghost_weight * phi[t] /config.rho0  + phi_ghost
+        
+        #v_full = _tempered_meta_ghost_weight * phi[t] /config.rho0  + phi_ghost
+        v_full =  phi_ghost
+        
+        if np.mod(step, config.meta_ghost_flush) == 0 :## here
+            print(step, _tempered_meta_ghost_weight, np.sum(v_full), np.sum(phi_ghost), np.sum(v_ghost))
+            # exit()
         
         v_full.r2c(out=v_ext_fourier[0])
+
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
         np.copyto(
             v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True
@@ -662,6 +688,7 @@ def update_field_ghost(
             v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no", where=True
         )
         v_ext_fourier[3].c2r(out=v_ext[t])
+        
         _v_ghost += v_ext[t] ## this is targeting for several types of beads ; not tested 
         #v_ghost = v_ext[t] ## this will contain one 
         
@@ -685,13 +712,14 @@ def update_field_ghost(
         
         #phi_ghost += phi[t] # just add the raw density; 
         
-        phi_ghost += config.meta_ghost_weight * phi[t] /config.rho0
+        ##phi_ghost += config.meta_ghost_weight * phi[t] /config.rho0
+        phi_ghost += _tempered_meta_ghost_weight * phi[t] /config.rho0
         
-
+    
     if np.mod(step, config.meta_ghost_flush) == 0 :## here
-        np.save(f"ghost_potential_{step}.npy", v_ghost)
-        #np.save(f"estimated_free_energy_{step}.npy", v_ghost*( -(config.target_temperature+ config.meta_bias_temp)/config.meta_bias_temp ))
-        np.save(f"estimated_free_energy_{step}.npy", -v_ghost)
+        #np.save(f"ghost_potential_{step}.npy", v_ghost)
+        np.save(f"estimated_free_energy_{step}.npy", v_ghost*( -(config.target_temperature+ config.meta_bias_temp)/config.meta_bias_temp ))
+        #np.save(f"estimated_free_energy_{step}.npy", -v_ghost)
         np.save(f"real_density_{step}.npy", sum(phi))
 
     ### this phi_ghost is the trace of history 

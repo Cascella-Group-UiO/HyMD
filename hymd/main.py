@@ -26,6 +26,7 @@ from field import (
     compute_field_energy_q,
     update_field_with_ghost, # meta 
     update_field_ghost, # meta
+    update_field_ghost_nowelltempered, #meta
     compute_field_force_1d_with_potential, # toy1d
 )
 
@@ -42,7 +43,7 @@ from input_parser import (
 from integrator import integrate_velocity, integrate_position
 from logger import Logger
 #from thermostat import velocity_rescale #old
-from thermostat import csvr_thermostat # new
+from thermostat import velocity_rescale, csvr_thermostat # new
 
 def fmtdt(timedelta):  ### FIX ME (move this somewhere else)
     days = timedelta.days
@@ -1057,23 +1058,40 @@ if __name__ == "__main__":
             )
             ### meta xinmeng 
             if config.meta_ghost_types: 
+                #phi_ghost=update_field_ghost_nowelltempered(
+                #    step,
+                #    phi,
+                #    phi_ghost, #<--- meta 
+                #    v_ghost, #<--- meta
+                #    layouts,
+                #    force_on_grid,
+                #    hamiltonian,
+                #    pm,
+                #    positions,
+                #    #masses, #<---xinmeng 
+                #    types,
+                #    config,
+                #    v_ext,
+                #    phi_fourier,
+                #    v_ext_fourier,
+                #)
                 v_ghost,phi_ghost=update_field_ghost(
-                step,
-                phi,
-                phi_ghost, #<--- meta 
-                v_ghost, #<--- meta
-                layouts,
-                force_on_grid,
-                hamiltonian,
-                pm,
-                positions,
-                #masses, #<---xinmeng 
-                types,
-                config,
-                v_ext,
-                phi_fourier,
-                v_ext_fourier,
-            )
+                    step,
+                    phi,
+                    phi_ghost, #<--- meta 
+                    v_ghost, #<--- meta
+                    layouts,
+                    force_on_grid,
+                    hamiltonian,
+                    pm,
+                    positions,
+                    #masses, #<---xinmeng 
+                    types,
+                    config,
+                    v_ext,
+                    phi_fourier,
+                    v_ext_fourier,
+                )
 
             
             #layouts = [
@@ -1292,16 +1310,15 @@ if __name__ == "__main__":
                 )
 
         # Thermostat old
-        #if config.target_temperature:
-        #    velocities = velocity_rescale(velocities, config, comm)
-        
-        #####
-        # Thermostat new
         if config.target_temperature:
-            # Add loop if multiple groups/temperatures are defined
-            # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
-            csvr_thermostat(velocities, names, config, comm=comm)
-
+            velocities = velocity_rescale(velocities, config, comm)
+        
+        ######
+        ## Thermostat new
+        #if config.target_temperature:
+        #    # Add loop if multiple groups/temperatures are defined
+        #    # csrv_thermostat(velocities_grp_i, config_T_i, config_tau_i)
+        #    csvr_thermostat(velocities, names, config, comm=comm)
         # Remove total linear momentum 
         if config.cancel_com_momentum:
             if np.mod(step, config.cancel_com_momentum) == 0:
