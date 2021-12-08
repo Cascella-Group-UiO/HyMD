@@ -305,7 +305,6 @@ def generate_initial_velocities_1d(velocities, config, comm=MPI.COMM_WORLD):
     #velocities[...] = np.random.normal(
     #    loc=0, scale=kT_start / config.mass, size=(n_particles_, 3)
     #)
-    #print(velocities)
     
     ### 1d 
     _velocities = np.zeros(shape=(n_particles_, 3))
@@ -313,8 +312,9 @@ def generate_initial_velocities_1d(velocities, config, comm=MPI.COMM_WORLD):
         loc=0, scale=kT_start / config.mass, size=(n_particles_, 1)
     )
     velocities[...] = _velocities
-    print(velocities)
 
+    #print(velocities)
+    #exit()
 
     com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
     if config.n_particles == 1: 
@@ -365,6 +365,9 @@ def generate_initial_velocities_1d(velocities, config, comm=MPI.COMM_WORLD):
             f" {kinetic_energy}"
         ),
     )
+
+    #print(velocities)
+    #exit()
     return velocities
 
 
@@ -1092,7 +1095,6 @@ if __name__ == "__main__":
                     phi_fourier,
                     v_ext_fourier,
                 )
-
             
             #layouts = [
             #    pm.decompose(positions[types == t]) for t in range(config.n_types)

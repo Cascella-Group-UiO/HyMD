@@ -250,4 +250,13 @@ def velocity_rescale(velocity, config, comm):
     alpha = np.sqrt(alpha2)
     velocity = velocity * alpha
     config.thermostat_work += K * (alpha2 - 1.0)
+
+    ### 1d direct rescale 
+    #if velocity[0][0]>0: 
+    #    velocity = np.array([[0.13596398, 0.0, 0.0]]) #0.13596398 -> 100k
+    #else:
+    #    velocity = np.array([[-0.13596398, 0.0, 0.0]])
+    #
+    #print(velocity)
+    
     return velocity
