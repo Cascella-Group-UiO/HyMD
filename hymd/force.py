@@ -110,25 +110,27 @@ def prepare_index_based_bonds(molecules, topol):
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
         resid = mol + 1
-        top_summary = topol["gmx"]["molecules"]
+        top_summary = topol["system"]["molecules"]
         resname = None
+        test_mol_number = 0
         for molname in top_summary:
-            if resid >= molname[1][0] and resid <= molname[1][1]:
+            test_mol_number += molname[1]
+            if resid <= test_mol_number:
                 resname = molname[0]
                 break
 
-        if "bonds" in topol["gmx"][resname]:
+        if "bonds" in topol[resname]:
             first_id = np.where(molecules == mol)[0]
-            for bond in topol["gmx"][resname]["bonds"]:
+            for bond in topol[resname]["bonds"]:
                 index_i = bond[0] - 1 + first_id
                 index_j = bond[1] - 1 + first_id
                 equilibrium = bond[3]
                 strength = bond[4]
                 bonds_2.append([index_i, index_j, equilibrium, strength])
 
-        if "angles" in topol["gmx"][resname]:
+        if "angles" in topol[resname]:
             first_id = np.where(molecules == mol)[0]
-            for angle in topol["gmx"][resname]["angles"]:
+            for angle in topol[resname]["angles"]:
                 index_i = angle[0] - 1 + first_id
                 index_j = angle[1] - 1 + first_id
                 index_k = angle[2] - 1 + first_id
@@ -136,9 +138,10 @@ def prepare_index_based_bonds(molecules, topol):
                 strength = angle[5]
                 bonds_3.append([index_i, index_j, index_k, equilibrium, strength])
 
-        # if "dihedrals" in topol["gmx"][resname]:
+        # if "dihedrals" in topol[resname]:
 
-        # if "improper_dihedrals" in topol["gmx"][resname]:
+        # if "improper_dihedrals" in topol[resname]:
+    exit()
 
     return bonds_2, bonds_3
 
