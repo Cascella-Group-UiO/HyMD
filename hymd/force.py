@@ -141,7 +141,6 @@ def prepare_index_based_bonds(molecules, topol):
         # if "dihedrals" in topol[resname]:
 
         # if "improper_dihedrals" in topol[resname]:
-    exit()
 
     return bonds_2, bonds_3
 
