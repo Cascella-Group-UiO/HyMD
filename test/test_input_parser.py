@@ -157,7 +157,7 @@ def _change_in_config(config_str, old_line, new_line):
 def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
     caplog.set_level(logging.INFO)
     _, config_toml_str = config_toml
-    _, _, names, _, _, _ = dppc_single
+    _, _, names, _, _, _, _ = dppc_single
     solvent_names = np.empty((8), dtype="a5")
     solvent_names.fill("W")
     names = np.concatenate((names, solvent_names))
@@ -203,7 +203,7 @@ def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
 def test_input_parser_check_angles(config_toml, dppc_single, caplog):
     caplog.set_level(logging.INFO)
     _, config_toml_str = config_toml
-    _, _, names, _, _, _ = dppc_single
+    _, _, names, _, _, _, _ = dppc_single
     solvent_names = np.empty((8), dtype="a5")
     solvent_names.fill("W")
     names = np.concatenate((names, solvent_names))
@@ -256,7 +256,7 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
         elif c.atom_1 == "P" and c.atom_2 == "C":
             assert c.interaction_energy == pytest.approx(14.72, abs=1e-2)
 
-    _, _, names, _, _, _ = dppc_single
+    _, _, names, _, _, _, _ = dppc_single
     solvent_names = np.empty((8), dtype="a5")
     solvent_names.fill("W")
     names = np.concatenate((names, solvent_names))

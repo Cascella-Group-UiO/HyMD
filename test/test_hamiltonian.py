@@ -8,10 +8,11 @@ from hamiltonian import Hamiltonian, DefaultNoChi, DefaultWithChi, SquaredPhi
 from input_parser import _find_unique_names, convert_CONF_to_config
 from force import Chi
 
+# fmt: off
 
 def test_DefaultNoChi_window_function(dppc_single, config_CONF, caplog):
     caplog.set_level(logging.INFO)
-    indices, _, names, _, r, _ = dppc_single
+    indices, _, names, _, r, _, _ = dppc_single
     conf_file_name, _ = config_CONF
     CONF = {}
     CONF_ = {}
