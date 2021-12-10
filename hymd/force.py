@@ -120,7 +120,7 @@ def prepare_index_based_bonds(molecules, topol):
                 break
 
         if "bonds" in topol[resname]:
-            first_id = np.where(molecules == mol)[0]
+            first_id = np.where(molecules == mol)[0][0]
             for bond in topol[resname]["bonds"]:
                 index_i = bond[0] - 1 + first_id
                 index_j = bond[1] - 1 + first_id
@@ -129,7 +129,7 @@ def prepare_index_based_bonds(molecules, topol):
                 bonds_2.append([index_i, index_j, equilibrium, strength])
 
         if "angles" in topol[resname]:
-            first_id = np.where(molecules == mol)[0]
+            first_id = np.where(molecules == mol)[0][0]
             for angle in topol[resname]["angles"]:
                 index_i = angle[0] - 1 + first_id
                 index_j = angle[1] - 1 + first_id
