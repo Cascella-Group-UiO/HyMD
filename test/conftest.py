@@ -6,6 +6,7 @@ import h5py
 import pytest
 import collections
 
+# fmt: off
 # TODO: Remove this when we have a working pip installable main package and
 # can test against installed package by
 #
@@ -51,6 +52,7 @@ def dppc_single():
                       /
     N(0) -- P(1) -- G(2) -- C(4) -- C(5) -- C(6) -- C(7)
     """
+
     indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], dtype=int)
     molecules = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int)
     r = np.array([[0.244559E+01, 0.909193E+00, 0.560020E+01],
@@ -101,8 +103,55 @@ def dppc_single():
     for k, v in {'Np': 12, 'types': 5, 'mass': 72.0,
                  'L': [13.0, 13.0, 14.0]}.items():
         CONF[k] = v
-    return indices, bonds, names, molecules, r, CONF
-
+    # fmt: on
+    itp_topol = {
+            "system": {
+                "name": "Single dppc molecule", 
+                "molecules": [["DPPC", 1],] 
+            },
+            "DPPC": {
+                "atomnum": 12, 
+                "atoms": [
+                    [ 1, "N", 1, "N",  1,  0],
+                    [ 2, "P", 1, "P",  2,  0],
+                    [ 3, "G", 1, "G",  3,  0],
+                    [ 4, "G", 1, "G",  4,  0],
+                    [ 5, "C", 1, "C",  5,  0],
+                    [ 6, "C", 1, "C",  6,  0],
+                    [ 7, "C", 1, "C",  7,  0],
+                    [ 8, "C", 1, "C",  8,  0],
+                    [ 9, "C", 1, "C",  9,  0],
+                    [10, "C", 1, "C", 10,  0],
+                    [11, "C", 1, "C", 11,  0],
+                    [12, "C", 1, "C", 12,  0],
+                ],
+                "bonds": [
+                    [ 1,  2, 1, 0.47, 1250.0],
+                    [ 2,  3, 1, 0.47, 1250.0],
+                    [ 3,  4, 1, 0.37, 1250.0],
+                    [ 3,  5, 1, 0.47, 1250.0],
+                    [ 5,  6, 1, 0.47, 1250.0],
+                    [ 6,  7, 1, 0.47, 1250.0],
+                    [ 7,  8, 1, 0.47, 1250.0],
+                    [ 4,  9, 1, 0.47, 1250.0], 
+                    [ 9, 10, 1, 0.47, 1250.0],
+                    [10, 11, 1, 0.47, 1250.0],
+                    [11, 12, 1, 0.47, 1250.0],
+                ],
+                "angles": [
+                    [ 2,  3, 4,  1, 120.0, 25.0],
+                    [ 2,  3, 5,  1, 180.0, 25.0],
+                    [ 3,  5, 6,  1, 180.0, 25.0],
+                    [ 5,  6, 7,  1, 180.0, 25.0],
+                    [ 6,  7, 8,  1, 180.0, 25.0],
+                    [ 4,  9, 10, 1, 180.0, 25.0], 
+                    [ 9, 10, 11, 1, 180.0, 25.0],
+                    [10, 11, 12, 1, 180.0, 25.0],
+                ],
+            }
+    }
+    # fmt: off
+    return indices, bonds, names, molecules, r, itp_topol, CONF
 
 @pytest.fixture()
 def h5py_molecules_file(mpi_file_name):

@@ -3,19 +3,17 @@ import numpy as np
 from force import compute_bond_forces__plain as compute_bond_forces
 from force import compute_angle_forces__plain as compute_angle_forces
 from force import prepare_type_based_bonds as prepare_bonds
+from force import prepare_index_based_bonds
 from input_parser import Config
 
+# fmt: off
 
 def test_prepare_bonds_2(dppc_single):
-    indices, bonds, names, molecules, r, CONF = dppc_single
+    indices, bonds, names, molecules, r, itp_topol, CONF = dppc_single
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.bonds = CONF['bond_2']
-    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, config)
-    bonds_2_ind = [b[:2] for b in bonds_2]
-    bonds_2_val = [b[2:] for b in bonds_2]
 
-    assert len(bonds_2) == 11
     expected = [[0, 1, 0.47, 1250.0],  # N--P, 0.47nm, 1250.0 kJ/mol nm
                 [1, 2, 0.47, 1250.0],  # P--G, 0.47nm, 1250.0 kJ/mol nm
                 [2, 3, 0.37, 1250.0],  # G--G, ** 0.37nm **, 1250.0 kJ/mol nm
@@ -27,20 +25,30 @@ def test_prepare_bonds_2(dppc_single):
                 [8, 9, 0.47, 1250.0],  # C--C, 0.47nm, 1250.0 kJ/mol nm
                 [9, 10, 0.47, 1250.0],  # C--C, 0.47nm, 1250.0 kJ/mol nm
                 [10, 11, 0.47, 1250.0]]  # C--C, 0.47nm, 1250.0 kJ/mol nm
-    for e in expected:
-        assert e[:2] in bonds_2_ind
-        for ind, val in zip(bonds_2_ind, bonds_2_val):
-            if ind == e[:2]:
-                assert e[2] == pytest.approx(val[0], abs=1e-13)
-                assert e[3] == pytest.approx(val[1], abs=1e-13)
+
+    for num, fun in enumerate((prepare_bonds, prepare_index_based_bonds)):
+        if num == 0:
+            bonds_2, _ = fun(molecules, names, bonds, indices, config)
+        else:
+            bonds_2, _ = fun(molecules, itp_topol)
+
+        bonds_2_ind = [b[:2] for b in bonds_2]
+        bonds_2_val = [b[2:] for b in bonds_2]
+        assert len(bonds_2) == 11
+
+        for e in expected:
+            assert e[:2] in bonds_2_ind
+            for ind, val in zip(bonds_2_ind, bonds_2_val):
+                if ind == e[:2]:
+                    assert e[2] == pytest.approx(val[0], abs=1e-13)
+                    assert e[3] == pytest.approx(val[1], abs=1e-13)
 
 
 def test_comp_bonds(dppc_single):
-    indices, bonds, names, molecules, r, CONF = dppc_single
+    indices, bonds, names, molecules, r, itp_topol, CONF = dppc_single
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.bonds = CONF['bond_2']
-    bonds_2, _ = prepare_bonds(molecules, names, bonds, indices, config)
 
     expected_energies = np.array([0.24545803261508981,
                                   0.76287125411373635,
@@ -82,28 +90,29 @@ def test_comp_bonds(dppc_single):
         [-5.5323489341501677,  -5.4217094311092637,  -4.4175438063815795]],
         dtype=np.float64
     )
-    for i, b in enumerate(bonds_2):
-        f_bonds = np.zeros(shape=r.shape, dtype=np.float64)
-        energy = 0.0
-        energy = compute_bond_forces(f_bonds, r, (b,), CONF['L'])
-        assert energy == pytest.approx(expected_energies[i], abs=1e-13)
-        assert f_bonds[b[0], :] == pytest.approx(expected_forces_i[i],
-                                                 abs=1e-13)
-        assert f_bonds[b[1], :] == pytest.approx(expected_forces_j[i],
-                                                 abs=1e-13)
+    expected_energies = [pytest.approx(e, abs=1e-13) for e in expected_energies]
+    expected_forces_i = [pytest.approx(e, abs=1e-13) for e in expected_forces_i]
+    expected_forces_j = [pytest.approx(e, abs=1e-13) for e in expected_forces_j]
 
+    for num, fun in enumerate((prepare_bonds, prepare_index_based_bonds)):
+        if num == 0:
+            bonds_2, _ = fun(molecules, names, bonds, indices, config)
+        else:
+            bonds_2, _ = fun(molecules, itp_topol)
+
+        for i, b in enumerate(bonds_2):
+            f_bonds = np.zeros(shape=r.shape, dtype=np.float64)
+            energy = 0.0
+            energy = compute_bond_forces(f_bonds, r, (b,), CONF['L'])
+            assert energy in expected_energies
+            assert f_bonds[b[0], :] in expected_forces_i
+            assert f_bonds[b[1], :] in expected_forces_j
 
 def test_prepare_bonds_3(dppc_single):
-    indices, bonds, names, molecules, r, CONF = dppc_single
+    indices, bonds, names, molecules, r, itp_topol, CONF = dppc_single
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.angle_bonds = CONF['bond_3']
-    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, config)
-    bonds_3_ind = [b[:3] for b in bonds_3]
-    bonds_3_val = [b[3:] for b in bonds_3]
-
-    assert len(bonds_3) == 8
-
     expected = [[1, 2, 3, 120.0, 25.0],  # P--G--G, 120º, 25.0 kJ/mol nm
                 [1, 2, 4, 180.0, 25.0],  # P--G--C, 180º, 25.0 kJ/mol nm
                 [3, 8, 9, 180.0, 25.0],  # G--C--C, 180º, 25.0 kJ/mol nm
@@ -112,20 +121,30 @@ def test_prepare_bonds_3(dppc_single):
                 [5, 6, 7, 180.0, 25.0],  # C--C--C, 180º, 25.0 kJ/mol nm
                 [8, 9, 10, 180.0, 25.0],  # C--C--C, 180º, 25.0 kJ/mol nm
                 [9, 10, 11, 180.0, 25.0]]  # C--C--C, 180º, 25.0 kJ/mol nm
-    for e in expected:
-        assert e[:3] in bonds_3_ind
-        for ind, val in zip(bonds_3_ind, bonds_3_val):
-            if ind == e[:3]:
-                assert np.radians(e[3]) == pytest.approx(val[0], abs=1e-13)
-                assert e[4] == pytest.approx(val[1], abs=1e-13)
+
+    for num, fun in enumerate((prepare_bonds, prepare_index_based_bonds)):
+        if num == 0:
+            _, bonds_3 = fun(molecules, names, bonds, indices, config)
+        else:
+            _, bonds_3 = fun(molecules, itp_topol)
+
+        bonds_3_ind = [b[:3] for b in bonds_3]
+        bonds_3_val = [b[3:] for b in bonds_3]
+        assert len(bonds_3) == 8
+
+        for e in expected:
+            assert e[:3] in bonds_3_ind
+            for ind, val in zip(bonds_3_ind, bonds_3_val):
+                if ind == e[:3]:
+                    assert np.radians(e[3]) == pytest.approx(val[0], abs=1e-13)
+                    assert e[4] == pytest.approx(val[1], abs=1e-13)
 
 
 def test_comp_angles(dppc_single):
-    indices, bonds, names, molecules, r, CONF = dppc_single
+    indices, bonds, names, molecules, r, itp_topol, CONF = dppc_single
     config = Config(n_steps=1, time_step=0.03, mesh_size=[30, 30, 30],
                     box_size=np.array([13.0, 13.0, 14.0]), sigma=0.5, kappa=1)
     config.angle_bonds = CONF['bond_3']
-    _, bonds_3 = prepare_bonds(molecules, names, bonds, indices, config)
 
     expected_energies = np.array([0.24138227262192161,
                                   12.962077271327919,
@@ -168,15 +187,22 @@ def test_comp_angles(dppc_single):
         [1.5466905286596875,  -17.675447548977683,   19.756297345960085]],
         dtype=np.float64
     )
+    expected_energies = [pytest.approx(e, abs=1e-13) for e in expected_energies]
+    expected_forces_i = [pytest.approx(e, abs=1e-13) for e in expected_forces_i]
+    expected_forces_j = [pytest.approx(e, abs=1e-13) for e in expected_forces_j]
+    expected_forces_k = [pytest.approx(e, abs=1e-13) for e in expected_forces_k]
 
-    for i, b in enumerate(bonds_3):
-        f_angles = np.zeros(shape=r.shape, dtype=np.float64)
-        energy = 0.0
-        energy = compute_angle_forces(f_angles, r, (b,), CONF['L'])
-        assert energy == pytest.approx(expected_energies[i], abs=1e-13)
-        assert f_angles[b[0], :] == pytest.approx(expected_forces_i[i],
-                                                  abs=1e-13)
-        assert f_angles[b[1], :] == pytest.approx(expected_forces_j[i],
-                                                  abs=1e-13)
-        assert f_angles[b[2], :] == pytest.approx(expected_forces_k[i],
-                                                  abs=1e-13)
+    for num, fun in enumerate((prepare_bonds, prepare_index_based_bonds)):
+        if num == 0:
+            _, bonds_3 = fun(molecules, names, bonds, indices, config)
+        else:
+            _, bonds_3 = fun(molecules, itp_topol)
+
+        for i, b in enumerate(bonds_3):
+            f_angles = np.zeros(shape=r.shape, dtype=np.float64)
+            energy = 0.0
+            energy = compute_angle_forces(f_angles, r, (b,), CONF['L'])
+            assert energy in expected_energies
+            assert f_angles[b[0], :] in expected_forces_i
+            assert f_angles[b[1], :] in expected_forces_j
+            assert f_angles[b[2], :] in expected_forces_k
