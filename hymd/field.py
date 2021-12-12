@@ -73,6 +73,25 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
         mu2 = 6.0
         sig2 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
         ##
+       
+        ## works set 5
+        a1 = -50.0  #-10.0  
+        mu1 = 2.0
+        sig1 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        a2 = -20.0 #-50.0 #-30.0 
+        mu2 = 6.0
+        sig2 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        ##
+
+        ## works set 6
+        a1 = -10.0  #-10.0  
+        mu1 = 2.0
+        sig1 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        a2 = -12 #-20.0 #-50.0 #-30.0 
+        mu2 = 6.0
+        sig2 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
+        ##
+        
 
         ## works set 5
         a1 = -10.0  #-10.0  
@@ -582,8 +601,8 @@ def update_field_ghost_nowelltempered(
         #phi_ghost 
         #print()
 
-        v_full = config.meta_ghost_weight * phi_ghost/config.rho0
-
+        #v_full = config.meta_ghost_weight * phi_ghost/config.rho0
+        v_full = config.time_step*config.meta_ghost_weight * phi_ghost/config.rho0
 
         v_full.r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
@@ -666,8 +685,16 @@ def update_field_ghost(
         
         ##print(config.meta_ghost_weight)
         #_tempered_meta_ghost_weight = config.meta_ghost_weight*np.exp(-(phi_ghost / config.meta_bias_temp))
+<<<<<<< HEAD
         _tempered_meta_ghost_weight = config.time_step*config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp/ config.R))
         
+=======
+
+        _tempered_meta_ghost_weight = config.time_step*config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp/ config.R))
+        
+        ## _tempered_meta_ghost_weight = config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp/ config.R/ 4.184))
+        ## kj mol to kcal mol
+>>>>>>> 6cf85d46a23aa776c41c7749d58c0fa0587fa610
         
         #if np.mod(step, config.meta_ghost_flush) == 0 :
         #    print(_tempered_meta_ghost_weight)
@@ -689,6 +716,11 @@ def update_field_ghost(
         
         #v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
 
+<<<<<<< HEAD
+=======
+        #v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
+        
+>>>>>>> 6cf85d46a23aa776c41c7749d58c0fa0587fa610
         np.copyto(
             v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True
         )
@@ -699,8 +731,9 @@ def update_field_ghost(
         np.copyto(
             v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no", where=True
         )
+
         v_ext_fourier[3].c2r(out=v_ext[t])
-        
+
         _v_ghost += v_ext[t] ## this is targeting for several types of beads ; not tested 
         #v_ghost = v_ext[t] ## this will contain one 
         
