@@ -685,16 +685,8 @@ def update_field_ghost(
         
         ##print(config.meta_ghost_weight)
         #_tempered_meta_ghost_weight = config.meta_ghost_weight*np.exp(-(phi_ghost / config.meta_bias_temp))
-<<<<<<< HEAD
         _tempered_meta_ghost_weight = config.time_step*config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp/ config.R))
         
-=======
-
-        _tempered_meta_ghost_weight = config.time_step*config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp/ config.R))
-        
-        ## _tempered_meta_ghost_weight = config.meta_ghost_weight*np.exp(-(v_ghost / config.meta_bias_temp/ config.R/ 4.184))
-        ## kj mol to kcal mol
->>>>>>> 6cf85d46a23aa776c41c7749d58c0fa0587fa610
         
         #if np.mod(step, config.meta_ghost_flush) == 0 :
         #    print(_tempered_meta_ghost_weight)
@@ -716,11 +708,6 @@ def update_field_ghost(
         
         #v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
 
-<<<<<<< HEAD
-=======
-        #v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
-        
->>>>>>> 6cf85d46a23aa776c41c7749d58c0fa0587fa610
         np.copyto(
             v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True
         )
