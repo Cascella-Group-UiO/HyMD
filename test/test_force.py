@@ -90,9 +90,6 @@ def test_comp_bonds(dppc_single):
         [-5.5323489341501677,  -5.4217094311092637,  -4.4175438063815795]],
         dtype=np.float64
     )
-    expected_energies = [pytest.approx(e, abs=1e-13) for e in expected_energies]
-    expected_forces_i = [pytest.approx(e, abs=1e-13) for e in expected_forces_i]
-    expected_forces_j = [pytest.approx(e, abs=1e-13) for e in expected_forces_j]
 
     for num, fun in enumerate((prepare_bonds, prepare_index_based_bonds)):
         if num == 0:
@@ -104,9 +101,12 @@ def test_comp_bonds(dppc_single):
             f_bonds = np.zeros(shape=r.shape, dtype=np.float64)
             energy = 0.0
             energy = compute_bond_forces(f_bonds, r, (b,), CONF['L'])
-            assert energy in expected_energies
-            assert f_bonds[b[0], :] in expected_forces_i
-            assert f_bonds[b[1], :] in expected_forces_j
+            assert energy == pytest.approx(expected_energies[i], abs=1e-13)
+            assert f_bonds[b[0], :] == pytest.approx(expected_forces_i[i],
+                                                     abs=1e-13)
+            assert f_bonds[b[1], :] == pytest.approx(expected_forces_j[i],
+                                                     abs=1e-13)
+
 
 def test_prepare_bonds_3(dppc_single):
     indices, bonds, names, molecules, r, itp_topol, CONF = dppc_single
@@ -187,10 +187,6 @@ def test_comp_angles(dppc_single):
         [1.5466905286596875,  -17.675447548977683,   19.756297345960085]],
         dtype=np.float64
     )
-    expected_energies = [pytest.approx(e, abs=1e-13) for e in expected_energies]
-    expected_forces_i = [pytest.approx(e, abs=1e-13) for e in expected_forces_i]
-    expected_forces_j = [pytest.approx(e, abs=1e-13) for e in expected_forces_j]
-    expected_forces_k = [pytest.approx(e, abs=1e-13) for e in expected_forces_k]
 
     for num, fun in enumerate((prepare_bonds, prepare_index_based_bonds)):
         if num == 0:
@@ -202,7 +198,10 @@ def test_comp_angles(dppc_single):
             f_angles = np.zeros(shape=r.shape, dtype=np.float64)
             energy = 0.0
             energy = compute_angle_forces(f_angles, r, (b,), CONF['L'])
-            assert energy in expected_energies
-            assert f_angles[b[0], :] in expected_forces_i
-            assert f_angles[b[1], :] in expected_forces_j
-            assert f_angles[b[2], :] in expected_forces_k
+            assert energy == pytest.approx(expected_energies[i], abs=1e-13)
+            assert f_angles[b[0], :] == pytest.approx(expected_forces_i[i],
+                                                      abs=1e-13)
+            assert f_angles[b[1], :] == pytest.approx(expected_forces_j[i],
+                                                      abs=1e-13)
+            assert f_angles[b[2], :] == pytest.approx(expected_forces_k[i],
+                                                      abs=1e-13)
