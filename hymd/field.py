@@ -93,7 +93,7 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
         ##
         
 
-        ## works set 5
+        ## production 1 
         a1 = -10.0  #-10.0  
         mu1 = 2.0
         sig1 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
@@ -101,6 +101,16 @@ def compute_field_force_1d_with_potential(layouts, r, force_mesh, force, types, 
         mu2 = 6.0
         sig2 = 0.5 #0.5 0.4 1.0 work #0.2 narrow, does not work 
         ##
+        
+
+        ### production 2
+        #a1 = -10.0  #-10.0  
+        #mu1 = 2.0
+        #sig1 = 0.5  
+        #a2 = -12.0  
+        #mu2 = 6.0
+        #sig2 = 0.5  
+        ###
         
 
         rx = r[ind][0][0]  
