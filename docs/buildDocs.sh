@@ -1,5 +1,6 @@
 #!/bin/bash
 set -x
+set -e
 ################################################################################
 # File:    buildDocs.sh
 # Purpose: Script that builds our documentation using sphinx and updates GitHub
@@ -17,7 +18,7 @@ set -x
 ###################
 
 apt-get update
-apt-get -y install git rsync python3-sphinx python3-sphinx-rtd-theme sphinxcontrib.bibtex sphinxcontrib-jsmath
+apt-get -y install git make rsync python3-sphinx python3-sphinx-rtd-theme python3-sphinxcontrib.bibtex
 
 #####################
 # DECLARE VARIABLES #
