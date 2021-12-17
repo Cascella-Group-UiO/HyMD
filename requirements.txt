@@ -1,10 +1,11 @@
-networkx
 cython
-numpy
-sympy
+h5py
 mpi4py
 mpsort
+networkx
+numba
+numpy
 pfft-python
 pmesh
-h5py
-numba
+sympy
+tomli
