@@ -1,7 +1,3 @@
-mkdir -p ../.github/workflows/
-cat > ../.github/workflows/docs_pages.yml <<'EOF'
-name: docs_pages
-
 # execute this workflow automatically when a we push to master
 on:
   push:
@@ -29,4 +25,3 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: "docs/buildDocs.sh"
       shell: bash
-EOF
