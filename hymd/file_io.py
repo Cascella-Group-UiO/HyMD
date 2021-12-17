@@ -240,14 +240,27 @@ def store_static(
     ) = setup_time_dependent_element(
         "thermostat_work", h5md.observables, n_frames, (1,), "float32", units="kJ/mol"
     )
-    (
-        _,
-        h5md.pressure_step,
-        h5md.pressure_time,
-        h5md.pressure,
-    ) = setup_time_dependent_element(
-        "pressure", h5md.observables, n_frames, (25,), "float32", units="Bar"
-    )
+    if config.pr_arr:
+        (
+            _,
+            h5md.pressure_step,
+            h5md.pressure_time,
+            h5md.pressure,
+        ) = setup_time_dependent_element(
+            "pressure", h5md.observables, n_frames,
+            (25,config.mesh_size[0],config.mesh_size[1],config.mesh_size[2]),
+            "float32", units="Bar"
+        )
+    else:
+        (
+            _,
+            h5md.pressure_step,
+            h5md.pressure_time,
+            h5md.pressure,
+        ) = setup_time_dependent_element(
+            "pressure", h5md.observables, n_frames, (25,), "float32", units="Bar"
+        )
+
     (
         _,
         h5md.box_step,

@@ -469,6 +469,24 @@ if __name__ == "__main__":
                 bonds_3_stength,
             ) = bonds_prep
         if not args.disable_bonds:
+            #import itertools as it
+            #V = np.prod(config.box_size)
+            #ind = int( np.where(bonds_2_atom1 == 648)[0] )
+            #print('bonds_2_atom1[i],\tbonds_2_atom2[i],\tr_0,\
+            #        r_AB_z,\tr_AB,\tr_AB-r_0,\tp_A_z,\tp_B_z')
+            #for i in it.chain(range(0, 12), range(ind, ind+11)):
+            #    rB = positions[bonds_2_atom2[i]]
+            #    rA = positions[bonds_2_atom1[i]]
+            #    rABvec = rB - rA
+            #    rAB = np.linalg.norm(rABvec)
+            #    df = -1*bonds_2_stength[i]*(rAB - bonds_2_equilibrium[i])
+            #    p_A_z = df/V * -1 * rABvec[2] * rA[2] / rAB
+            #    p_B_z = df/V * rABvec[2] * rB[2] / rAB
+                #print('%d\t%d\t%2.2f\t%2.2f\t%2.2f\t%2.2f,\t%2.2f,\t%2.2f' %(
+                #    bonds_2_atom1[i],bonds_2_atom2[i],bonds_2_equilibrium[i],
+                #    rB[2]-rA[2],rAB,rAB-bonds_2_equilibrium[i], p_A_z, p_B_z)
+                #    )
+
             bond_energy_,bond_pr_= compute_bond_forces(
                 bond_forces,
                 positions,
@@ -477,14 +495,9 @@ if __name__ == "__main__":
                 bonds_2_atom2,
                 bonds_2_equilibrium,
                 bonds_2_stength,
+                len(positions),
             )
             bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
-            #bond_pr = comm.allreduce(bond_pr_, MPI.SUM)
-            #if(rank == 0):
-            #    print('bond_energy:',bond_energy)
-            #    print('bond_pr in x:', bond_pr[0])
-            #    print('bond_pr in y:', bond_pr[1])
-            #    print('bond_pr in z:', bond_pr[2])
         if not args.disable_angle_bonds:
             angle_energy_, angle_pr_ = compute_angle_forces(
                 angle_forces,
@@ -495,9 +508,10 @@ if __name__ == "__main__":
                 bonds_3_atom3,
                 bonds_3_equilibrium,
                 bonds_3_stength,
+                len(positions),
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-            angle_pr = comm.allreduce(angle_pr_, MPI.SUM)
+            #angle_pr = comm.allreduce(angle_pr_, MPI.SUM)
         else:
             bonds_2_atom1, bonds_2_atom2 = [], []
     else:
@@ -664,6 +678,7 @@ if __name__ == "__main__":
                         bonds_2_atom2,
                         bonds_2_equilibrium,
                         bonds_2_stength,
+                        config.n_particles
                     )
                 if not args.disable_angle_bonds:
                     angle_energy_, angle_pr_ = compute_angle_forces(
@@ -675,6 +690,7 @@ if __name__ == "__main__":
                         bonds_3_atom3,
                         bonds_3_equilibrium,
                         bonds_3_stength,
+                        len(positions)
                     )
             velocities = integrate_velocity(
                 velocities,

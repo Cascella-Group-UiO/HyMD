@@ -126,8 +126,8 @@ def semiisotropic(
         #Total pressure across all ranks
         #L: Lateral; N: Normal
         [PL, PN] = [0, 0]
-        PL = (pressure[-3] + pressure[-2])/2
-        PN = pressure[-1]
+        PL = (np.sum(pressure[-3]) + np.sum(pressure[-2]))/2
+        PN = np.sum(pressure[-1])
 
         #scaling factor                                                                                        
         alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure - PL)

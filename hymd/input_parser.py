@@ -58,6 +58,7 @@ class Config:
     alpha_0: float = None
     n_b: int = None
     m: List[float] = field(default_factory=list)
+    pr_arr: bool = False
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(

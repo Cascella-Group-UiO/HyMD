@@ -1,4 +1,4 @@
-subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
+subroutine caf(f, r, box, a, b, c, t0, k, n, energy, angle_pr)
 ! ==============================================================================
 ! compute_angle_forces() speedup attempt.
 !
@@ -17,13 +17,13 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
     integer, dimension(:),   intent(in)     :: c
     real(8), dimension(:),   intent(in)     :: t0
     real(8), dimension(:),   intent(in)     :: k
+    integer,                 intent(in)     :: n
     real(8),                 intent(out)    :: energy
-    real(8), dimension(3),   intent(out)    :: angle_pr
+    real(8), dimension(n,3),   intent(out)    :: angle_pr
 
-    integer :: ind, aa, bb, cc
-    real(8) :: ra_x, ra_y, ra_z, rc_x, rc_y, rc_z
+    real(8), dimension(3) :: faa, fcc, ra, rc
+    integer :: ind, d_, aa, bb, cc
     real(8) :: ea_x, ea_y, ea_z, ec_x, ec_y, ec_z
-    real(8) :: fa_x, fa_y, fa_z, fc_x, fc_y, fc_z
     real(8) :: d, ff, bx, by, bz, xsinph, xra, xrc
     real(8) :: xrasin, xrcsin
     real(8) :: cosphi, cosphi2, theta
@@ -41,30 +41,30 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
       bb = b(ind) + 1
       cc = c(ind) + 1
 
-      ra_x = r(aa, 1) - r(bb, 1)
-      ra_y = r(aa, 2) - r(bb, 2)
-      ra_z = r(aa, 3) - r(bb, 3)
-      ra_x = ra_x - box(1) * nint(ra_x * bx)
-      ra_y = ra_y - box(2) * nint(ra_y * by)
-      ra_z = ra_z - box(3) * nint(ra_z * bz)
+      ra(1) = r(aa, 1) - r(bb, 1)
+      ra(2) = r(aa, 2) - r(bb, 2)
+      ra(3) = r(aa, 3) - r(bb, 3)
+      ra(1) = ra(1) - box(1) * nint(ra(1) * bx)
+      ra(2) = ra(2) - box(2) * nint(ra(2) * by)
+      ra(3) = ra(3) - box(3) * nint(ra(3) * bz)
 
-      rc_x = r(cc, 1) - r(bb, 1)
-      rc_y = r(cc, 2) - r(bb, 2)
-      rc_z = r(cc, 3) - r(bb, 3)
-      rc_x = rc_x - box(1) * nint(rc_x * bx)
-      rc_y = rc_y - box(2) * nint(rc_y * by)
-      rc_z = rc_z - box(3) * nint(rc_z * bz)
+      rc(1) = r(cc, 1) - r(bb, 1)
+      rc(2) = r(cc, 2) - r(bb, 2)
+      rc(3) = r(cc, 3) - r(bb, 3)
+      rc(1) = rc(1) - box(1) * nint(rc(1) * bx)
+      rc(2) = rc(2) - box(2) * nint(rc(2) * by)
+      rc(3) = rc(3) - box(3) * nint(rc(3) * bz)
 
-      xra = 1.0d0 / sqrt(ra_x * ra_x + ra_y * ra_y + ra_z * ra_z)
-      xrc = 1.0d0 / sqrt(rc_x * rc_x + rc_y * rc_y + rc_z * rc_z)
+      xra = 1.0d0 / sqrt(ra(1) * ra(1) + ra(2) * ra(2) + ra(3) * ra(3))
+      xrc = 1.0d0 / sqrt(rc(1) * rc(1) + rc(2) * rc(2) + rc(3) * rc(3))
 
-      ea_x = ra_x * xra
-      ea_y = ra_y * xra
-      ea_z = ra_z * xra
+      ea_x = ra(1) * xra
+      ea_y = ra(2) * xra
+      ea_z = ra(3) * xra
 
-      ec_x = rc_x * xrc
-      ec_y = rc_y * xrc
-      ec_z = rc_z * xrc
+      ec_x = rc(1) * xrc
+      ec_y = rc(2) * xrc
+      ec_z = rc(3) * xrc
 
       cosphi = ea_x * ec_x + ea_y * ec_y + ea_z * ec_z
       cosphi2 = cosphi * cosphi
@@ -80,31 +80,33 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
         xrasin = xra * xsinph * ff
         xrcsin = xrc * xsinph * ff
 
-        fa_x = (ea_x * cosphi - ec_x) * xrasin
-        fa_y = (ea_y * cosphi - ec_y) * xrasin
-        fa_z = (ea_z * cosphi - ec_z) * xrasin
+        faa(1) = (ea_x * cosphi - ec_x) * xrasin
+        faa(2) = (ea_y * cosphi - ec_y) * xrasin
+        faa(3) = (ea_z * cosphi - ec_z) * xrasin
 
-        fc_x = (ec_x * cosphi - ea_x) * xrcsin
-        fc_y = (ec_y * cosphi - ea_y) * xrcsin
-        fc_z = (ec_z * cosphi - ea_z) * xrcsin
+        fcc(1) = (ec_x * cosphi - ea_x) * xrcsin
+        fcc(2) = (ec_y * cosphi - ea_y) * xrcsin
+        fcc(3) = (ec_z * cosphi - ea_z) * xrcsin
 
-        f(aa, 1) = f(aa, 1) + fa_x
-        f(aa, 2) = f(aa, 2) + fa_y
-        f(aa, 3) = f(aa, 3) + fa_z
+        f(aa, 1) = f(aa, 1) + faa(1)
+        f(aa, 2) = f(aa, 2) + faa(2)
+        f(aa, 3) = f(aa, 3) + faa(3)
 
-        f(cc, 1) = f(cc, 1) + fc_x
-        f(cc, 2) = f(cc, 2) + fc_y
-        f(cc, 3) = f(cc, 3) + fc_z
+        f(cc, 1) = f(cc, 1) + fcc(1)
+        f(cc, 2) = f(cc, 2) + fcc(2)
+        f(cc, 3) = f(cc, 3) + fcc(3)
 
-        f(bb, 1) = f(bb, 1) - (fa_x + fc_x)
-        f(bb, 2) = f(bb, 2) - (fa_y + fc_y)
-        f(bb, 3) = f(bb, 3) - (fa_z + fc_z)
+        f(bb, 1) = f(bb, 1) - (faa(1) + fcc(1))
+        f(bb, 2) = f(bb, 2) - (faa(2) + fcc(2))
+        f(bb, 3) = f(bb, 3) - (faa(3) + fcc(3))
 
         energy = energy - 0.5d0 * ff * d
 
-        angle_pr(1) = angle_pr(1) + (fa_x * ra_x) + (fc_x * rc_x)
-        angle_pr(2) = angle_pr(2) + (fa_y * ra_y) + (fc_y * rc_y)
-        angle_pr(3) = angle_pr(3) + (fa_z * ra_z) + (fc_z * rc_z)
+        do d_ = 1, 3
+          angle_pr(aa, d_) = angle_pr(aa, d_) + ( faa(d_) * ra(d_) + fcc(d_) * rc(d_) )/3
+          angle_pr(cc, d_) = angle_pr(cc, d_) + ( faa(d_) * ra(d_) + fcc(d_) * rc(d_) )/3
+          angle_pr(bb, d_) = angle_pr(bb, d_) + ( faa(d_) * ra(d_) + fcc(d_) * rc(d_) )/3
+        end do
 
       end if
     end do

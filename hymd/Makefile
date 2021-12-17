@@ -11,6 +11,7 @@ all: \
 	compute_bond_forces__double$(EXT_SUFFIX)   	\
 	compute_bond_forces__double.f90   					\
 	compute_gaussian_core$(EXT_SUFFIX) 					\
+	#compute_bond_forces_serial__single$(EXT_SUFFIX)        \
 
 
 compute_angle_forces__single$(EXT_SUFFIX): compute_angle_forces.f90
@@ -25,6 +26,9 @@ compute_angle_forces__double$(EXT_SUFFIX): compute_angle_forces__double.f90
 
 compute_bond_forces__single$(EXT_SUFFIX): compute_bond_forces.f90
 	$(FC) -c compute_bond_forces.f90 -m compute_bond_forces
+
+#compute_bond_forces_serial__single$(EXT_SUFFIX): compute_bond_forces_serial.f90
+#	$(FC) -c compute_bond_forces_serial.f90 -m compute_bond_forces_serial
 
 compute_bond_forces__double.f90: compute_bond_forces.f90
 	sed ${SINGLE_TO_DOUBLE} compute_bond_forces.f90 > compute_bond_forces__double.f90
