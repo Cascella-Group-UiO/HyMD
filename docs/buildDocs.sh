@@ -20,9 +20,9 @@ set -e
 apt-get update
 apt-get -y install git make rsync python3
 
-pip3 install cython numpy mpi4py 
-pip3 install -r requirements.txt
-pip3 install -r docs/docs_requirements.txt
+python3 -m pip install cython numpy mpi4py 
+python3 -m pip install -r requirements.txt
+python3 -m pip install -r docs/docs_requirements.txt
 
 #####################
 # DECLARE VARIABLES #
