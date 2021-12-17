@@ -11,24 +11,19 @@ jobs:
     container: debian:buster-slim
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        ref: docs_setup
-
     - name: prereqs
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         apt-get update
         apt-get install -y git
+        git clone --depth 1 "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
+        git checkout docs_setup
       shell: bash
 
     - name: Execute script to build our documentation and update pages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        ls
-        ls docs
-        chmod +x docs/buildDocs.sh
         docs/buildDocs.sh
       shell: bash
