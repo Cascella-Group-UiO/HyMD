@@ -1,11 +1,12 @@
-"""Thermostat(s)
-Scales or otherwise modifies the particle velocities during simulation to
+"""Scales or otherwise modifies the particle velocities during simulation to
 simulate coupling to an external heat bath with temperature T₀.
+
 Functions
 ---------
-csvr_thermostat     Canonical sampling through velocity rescaling thermostat.
-_random_gaussian    Generate standard normal deviates.
-_random_chi_squared Generate squared sum of standard normal deviates.
+csvr_thermostat :     Canonical sampling through velocity rescaling thermostat.
+_random_gaussian :    Generate standard normal deviates.
+_random_chi_squared : Generate squared sum of standard normal deviates.
+
 """
 import numpy as np
 from mpi4py import MPI

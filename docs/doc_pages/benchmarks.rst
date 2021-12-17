@@ -1,0 +1,4 @@
+.. _benchmarks-label:
+
+Benchmarks
+##########
