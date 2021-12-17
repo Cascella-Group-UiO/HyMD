@@ -109,8 +109,10 @@ def extract_property(h5md_file, property, args):
         "KE": "kinetic_energy",
         "BE": "bond_energy",
         "AE": "angle_energy",
+        "DE": "dihedral_energy",
         "FE": "field_energy",
         "P": "total_momentum",
+        "EE": "field_q_energy",
     }
     name = keyword_to_group_name[property]
     property_group = observables_group[name]
@@ -159,7 +161,7 @@ class Property:
 if __name__ == "__main__":
     args = parse_args()
     if "all" in args.property:
-        args.property = ["E", "PE", "KE", "BE", "FE", "AE", "P"]
+        args.property = ["E", "PE", "KE", "BE", "FE", "AE", "DE", "P"]
     file_path = os.path.abspath(args.file)
     h5md_file = open_h5md_file(file_path)
 

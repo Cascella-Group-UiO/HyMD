@@ -1,5 +1,4 @@
-
-subroutine cbf(f, r, box, i, j, r0, k, energy)
+subroutine cbf(f, r, box, a, b, r0, k, energy)
 ! ==============================================================================
 ! compute_bond_forces() speedup attempt.
 !
@@ -12,50 +11,34 @@ subroutine cbf(f, r, box, i, j, r0, k, energy)
 
     real(4), dimension(:,:), intent(in out) :: f
     real(4), dimension(:,:), intent(in)     :: r
-    real(4), dimension(:),   intent(in)     :: box
-    integer, dimension(:),   intent(in)     :: i
-    integer, dimension(:),   intent(in)     :: j
-    real(4), dimension(:),   intent(in)     :: r0
-    real(4), dimension(:),   intent(in)     :: k
-    real(4),                 intent(out)    :: energy
+    real(8), dimension(:),   intent(in)     :: box
+    integer, dimension(:),   intent(in)     :: a
+    integer, dimension(:),   intent(in)     :: b
+    real(8), dimension(:),   intent(in)     :: r0
+    real(8), dimension(:),   intent(in)     :: k
+    real(8),                 intent(out)    :: energy
 
-    integer :: ind, ii, jj
-    real(4) :: rij, rij_x, rij_y, rij_z
-    real(4) :: df
-    real(4) :: bx, by, bz
+    integer :: ind, aa, bb
+    real(8), dimension(3) :: rab, fa
+    real(8) :: df, rab_norm
 
     energy = 0.0d00
-    f = 0.0d00 ! Set all array elements
+    f = 0.0d00
 
-    bx = 1.0d00 / box(1)
-    by = 1.0d00 / box(2)
-    bz = 1.0d00 / box(3)
+    do ind = 1, size(a)
+      aa = a(ind) + 1
+      bb = b(ind) + 1
 
-    do ind = 1, size(i)
-      ii = i(ind) + 1
-      jj = j(ind) + 1
+      rab = r(bb, :) - r(aa, :)
+      rab = rab - box * nint(rab / box)
+      rab_norm = norm2(rab)
 
-      rij_x = r(jj, 1) - r(ii, 1)
-      rij_x = rij_x - box(1) * nint(rij_x * bx)
+      df = k(ind) * (rab_norm - r0(ind))
+      fa = -df * rab / rab_norm
 
-      rij_y = r(jj, 2) - r(ii, 2)
-      rij_y = rij_y - box(2) * nint(rij_y * by)
+      f(aa, :) = f(aa, :) - fa
+      f(bb, :) = f(bb, :) + fa
 
-      rij_z = r(jj, 3) - r(ii, 3)
-      rij_z = rij_z - box(3) * nint(rij_z * bz)
-
-      rij = sqrt(rij_x * rij_x + rij_y * rij_y + rij_z * rij_z)
-      df = -k(ind) * (rij - r0(ind))
-
-      f(ii, 1) = f(ii, 1) - df * rij_x / rij
-      f(jj, 1) = f(jj, 1) + df * rij_x / rij
-
-      f(ii, 2) = f(ii, 2) - df * rij_y / rij
-      f(jj, 2) = f(jj, 2) + df * rij_y / rij
-
-      f(ii, 3) = f(ii, 3) - df * rij_z / rij
-      f(jj, 3) = f(jj, 3) + df * rij_z / rij
-
-      energy = energy + 0.5d00 * k(ind) * (rij - r0(ind))**2
+      energy = energy + 0.5d00 * k(ind) * (rab_norm - r0(ind))**2
     end do
 end subroutine

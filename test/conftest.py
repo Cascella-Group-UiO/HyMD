@@ -6,6 +6,7 @@ import h5py
 import pytest
 import collections
 
+# fmt: off
 # TODO: Remove this when we have a working pip installable main package and
 # can test against installed package by
 #
@@ -103,6 +104,103 @@ def dppc_single():
         CONF[k] = v
     return indices, bonds, names, molecules, r, CONF
 
+
+@pytest.fixture
+def alanine_octapeptide():
+    """
+    Sets up a octa-alanine system to test dihedrals
+
+    Notes
+    -----
+    Type names (indices) and bonds::
+
+    SC(1)              SC(5)
+      |                  |
+    BB(0) --  BB(2) -- BB(4) -- BB(6) -- x2
+                |                 |
+              SC(3)             SC(7)
+    """
+    indices = np.array(range(16), dtype=int)
+    molecules = np.array([0 for _ in range(16)], dtype=int)
+    r = np.array(
+        [
+            [3.797, 5.461, 4.763],
+            [3.662, 5.324, 4.663],
+            [4.039, 5.203, 4.851],
+            [4.119, 5.327, 5.010],
+            [4.367, 5.086, 4.740],
+            [4.286, 5.034, 4.547],
+            [4.574, 4.786, 4.766],
+            [4.583, 4.808, 4.981],
+            [4.925, 4.693, 4.732],
+            [4.923, 4.751, 4.523],
+            [5.124, 4.392, 4.674],
+            [5.053, 4.306, 4.860],
+            [5.467, 4.278, 4.720],
+            [5.539, 4.428, 4.582],
+            [5.710, 3.987, 4.640],
+            [5.559, 3.863, 4.675],
+        ],
+        dtype=np.float64)
+    bonds = np.array(
+        [
+            [ 1,  2, -1],  # BB(0)
+            [ 0, -1, -1],  # SC(1)
+            [ 0,  3,  4],  # BB(2)
+            [ 2, -1, -1],  # SC(3)
+            [ 2,  5,  6],  # BB(4)
+            [ 4, -1, -1],  # SC(5)
+            [ 4,  7,  8],  # BB(6)
+            [ 6, -1, -1],  # SC(7)
+            [ 6,  9, 10],  # BB(8)
+            [ 8, -1, -1],  # SC(9)
+            [ 8, 11, 12],  # BB(10)
+            [10, -1, -1],  # SC(11)
+            [10, 13, 14],  # BB(12)
+            [12, -1, -1],  # SC(13)
+            [12, 15, -1],  # BB(14)
+            [14, -1, -1],  # SC(15)
+        ],
+        dtype=int)
+    names = np.array(
+        [
+            b"BB", b"SC", b"BB", b"SC", b"BB", b"SC", b"BB", b"SC",
+            b"BB", b"SC", b"BB", b"SC", b"BB", b"SC", b"BB", b"SC",
+        ], 
+        dtype="S5"
+    )
+    CONF = {}
+    Bond = collections.namedtuple(
+        "Bond", ["atom_1", "atom_2", "equilibrium", "strength"]
+    )
+    Angle = collections.namedtuple(
+        "Angle", ["atom_1", "atom_2", "atom_3", "equilibrium", "strength"]
+    )
+    Dihedral = collections.namedtuple(
+        "Dihedral", ["atom_1", "atom_2", "atom_3", "atom_4", "coeff", "phase"]
+    )
+    # Values for bonds and angles taken from MARTINI 3 parameters.
+    # Not used to test dihedral forces.
+    CONF["bond_2"] = (
+        Bond("BB", "SC", 0.27, 100000),
+        Bond("BB", "BB", 0.35, 4000),
+    )
+    CONF["bond_3"] = (
+        Angle("BB", "BB", "BB", 127, 20),
+        Angle("BB", "BB", "SC", 100, 25),
+        #Angle("SC", "BB", "BB", 100, 25), # In martini they have only the first angle of this type
+    )
+    # Symbolic arrays of 1s and 0s for analytical check
+    CONF["bond_4"] = (
+        Dihedral(
+            "BB", "BB", "BB", "BB", 
+            [1 for _ in range(5)], 
+            [0 for _ in range(5)],
+        ),
+    )
+    for k, v in {"Np": 8, "types": 2, "mass": 72.0, "L": [5.0, 5.0, 5.0]}.items():
+        CONF[k] = v
+    return indices, bonds, names, molecules, r, CONF
 
 @pytest.fixture()
 def h5py_molecules_file(mpi_file_name):

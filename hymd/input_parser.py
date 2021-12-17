@@ -7,7 +7,7 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
-from force import Bond, Angle, Chi
+from force import Bond, Angle, Dihedral, Chi
 from logger import Logger
 
 
@@ -34,9 +34,10 @@ class Config:
     file_name: str = "<config file path unknown>"
     name: str = None
     tags: List[str] = field(default_factory=list)
-    chi: List[Chi] = field(default_factory=list)
-    angle_bonds: List[Angle] = field(default_factory=list)
     bonds: List[Bond] = field(default_factory=list)
+    angle_bonds: List[Angle] = field(default_factory=list)
+    dihedrals: List[Dihedral] = field(default_factory=list)
+    chi: List[Chi] = field(default_factory=list)
     n_particles: int = None
     max_molecule_size: int = None
     n_flush: int = None
@@ -44,6 +45,8 @@ class Config:
     thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: Union[int, bool] = False
+    coulombtype: str = None
+    dielectric_const: float = None
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -59,6 +62,34 @@ class Config:
                     + f"{k.equilibrium}, {k.strength}\n"
                 )
                 for k in self.angle_bonds
+            ]
+        )
+        dihedrals_str = "\tdihedrals:\n" + "".join(
+            [
+                (
+                    f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
+                    # This might need to be fixed/made prettier, probably there's an easier way
+                    + (
+                        "\n\t\t"
+                        + " " * len(f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: ")
+                    ).join(
+                        map(
+                            str,
+                            [
+                                [round(num, 3) for num in c_in]
+                                if isinstance(c_in, list)
+                                else c_in
+                                for c_in in k.coeffs
+                            ],
+                        )
+                    )
+                    + (
+                        "\n\t\t"
+                        + " " * len(f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: ")
+                    )
+                    + f"dih_type = {k.dih_type}\n"
+                )
+                for k in self.dihedrals
             ]
         )
         chi_str = "\tchi:\n" + "".join(
@@ -81,9 +112,21 @@ class Config:
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            if k not in ("bonds", "angle_bonds", "chi", "thermostat_coupling_groups"):
+            if k not in (
+                "bonds",
+                "angle_bonds",
+                "dihedrals",
+                "chi",
+                "thermostat_coupling_groups",
+            ):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += bonds_str + angle_str + chi_str + thermostat_coupling_groups_str
+        ret_str += (
+            bonds_str
+            + angle_str
+            + dihedrals_str
+            + chi_str
+            + thermostat_coupling_groups_str
+        )
         return ret_str
 
 
@@ -201,6 +244,53 @@ def read_config_toml(file_path):
     return toml_content
 
 
+def propensity_potential_coeffs(x: float, comm):
+    alpha_coeffs = np.array(
+        [
+            [7.406, -5.298, -2.570, 1.336, 0.739],
+            [-0.28632126, 1.2099146, 1.18122138, 0.49075168, 0.98495911],
+        ]
+    )
+    beta_coeffs = np.array(
+        [
+            [3.770, 5.929, -4.151, -0.846, 0.190],
+            [-0.2300693, -0.0583289, 0.99342396, 1.03237971, 2.90160988],
+        ]
+    )
+    coil_coeffs = np.array(
+        [
+            [1.416, -0.739, 0.990, -0.397, 0.136],
+            [1.3495933, 0.45649087, 2.30441057, -0.12274901, -0.26179939],
+        ]
+    )
+
+    zero_add = np.zeros((2, 5))
+    if x == -1:
+        return np.concatenate((alpha_coeffs, zero_add))
+    elif x == 0:
+        return np.concatenate((coil_coeffs, zero_add))
+    elif x == 1:
+        return np.concatenate((beta_coeffs, zero_add))
+
+    abs_x = np.abs(x)
+    if abs_x > 1:
+        err_str = (
+            f"The provided value of λ = {x} is out of λ definition range, [-1.0, 1.0]."
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+        if comm.Get_rank() == 0:
+            raise ValueError(err_str)
+
+    else:
+        coil_coeffs[0] *= 1 - abs_x
+        if x < 0:
+            alpha_coeffs[0] *= 0.5 * (abs_x - x)
+            return np.concatenate((alpha_coeffs, coil_coeffs))
+        else:
+            beta_coeffs[0] *= 0.5 * (abs_x + x)
+            return np.concatenate((beta_coeffs, coil_coeffs))
+
+
 def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     parsed_toml = tomli.loads(toml_content)
     config_dict = {}
@@ -218,11 +308,13 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "name",
         "n_particles",
         "max_molecule_size",
+        "coulombtype",
+        "dielectric_const",
     ):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "chi", "tags"):
+    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "tags"):
         config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
@@ -253,6 +345,54 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     equilibrium=b[3],
                     strength=b[4],
                 )
+        if k == "dihedrals":
+            config_dict["dihedrals"] = [None] * len(v)
+            for i, b in enumerate(v):
+                try:
+                    dih_type = int(b[2][0])
+                except IndexError:
+                    Logger.rank0.log(
+                        logging.WARNING, "Dihedral type not provided, defaulting to 0."
+                    )
+                    dih_type = 0
+
+                    # Probably it's better to move this in check_dihedrals?
+                    wrong_len = len(b[1]) not in (1, 2)
+                    wrong_type_1 = len(b[1]) == 1 and not isinstance(b[1][0], float)
+                    wrong_type_2 = len(b[1]) == 2 and not isinstance(b[1][0], list)
+                    if wrong_len or wrong_type_1 or wrong_type_2:
+                        err_str = (
+                            "The coefficients specified for the dihedral type (0) do not match the correct structure."
+                            + "Either use [lambda] or [[cn_prop], [dn_prop]], or select the correct dihedral type."
+                        )
+                        Logger.rank0.log(logging.ERROR, err_str)
+                        if comm.Get_rank() == 0:
+                            raise RuntimeError(err_str)
+
+                # FIXME: this is messy af, I don't like it
+                if dih_type == 0 and isinstance(b[1][0], (float, int)):
+                    coeff = propensity_potential_coeffs(b[1][0], comm)
+                elif dih_type == 1 and len(b[1]) == 3:
+                    coeff = np.array(
+                        propensity_potential_coeffs(b[1][0][0], comm).tolist()
+                        + b[1][1:]
+                    )
+                elif dih_type == 2:
+                    coeff = np.array(b[1])
+                else:
+                    coeff = np.insert(np.array(b[1]), 2, np.zeros((2, 5)), axis=0)
+
+                config_dict["dihedrals"][i] = Dihedral(
+                    atom_1=b[0][0],
+                    atom_2=b[0][1],
+                    atom_3=b[0][2],
+                    atom_4=b[0][3],
+                    coeffs=coeff,
+                    dih_type=dih_type,
+                )
+        # if k == "improper dihedrals":
+        #     config_dict["improper dihedrals"] = [None] * len(v)
+        # ...
         if k == "chi":
             config_dict["chi"] = [None] * len(v)
             for i, c in enumerate(v):
@@ -430,6 +570,42 @@ def check_angles(config, names, comm=MPI.COMM_WORLD):
     return config
 
 
+def check_dihedrals(config, names, comm=MPI.COMM_WORLD):
+    if not hasattr(config, "unique_names"):
+        config = _find_unique_names(config, names)
+    unique_names = config.unique_names
+
+    for a in config.dihedrals:
+        if (
+            a.atom_1 not in unique_names
+            or a.atom_2 not in unique_names
+            or a.atom_3 not in unique_names
+            or a.atom_4 not in unique_names
+        ):
+            missing = [
+                a.atom_1 not in unique_names,
+                a.atom_2 not in unique_names,
+                a.atom_3 not in unique_names,
+                a.atom_4 not in unique_names,
+            ]
+            missing_names = [
+                atom
+                for i, atom in enumerate([a.atom_1, a.atom_2, a.atom_3, a.atom_4])
+                if missing[i]
+            ]
+            missing_str = ", ".join(np.unique(missing_names))
+
+            warn_str = (
+                f"Dihedral type {a.atom_1}--{a.atom_2}--{a.atom_3}--{a.atom_4} "
+                f"specified in {config.file_name} but no {missing_str} atoms "
+                f"are present in the specified system (names array)"
+            )
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+    return config
+
+
 def check_chi(config, names, comm=MPI.COMM_WORLD):
     if not hasattr(config, "unique_names"):
         config = _find_unique_names(config, names)
@@ -467,6 +643,7 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
                 ):
                     found = True
             if not found:
+                config.chi.append(Chi(atom_1=n, atom_2=m, interaction_energy=0.0))
                 warn_str = (
                     f"Atom types {n} and {m} found in the "
                     f"system, but no chi interaction {n}--{m} "
@@ -748,8 +925,9 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_name(config, comm=comm)
     config = check_n_particles(config, indices, comm=comm)
     config = check_chi(config, names, comm=comm)
-    config = check_angles(config, names, comm=comm)
     config = check_bonds(config, names, comm=comm)
+    config = check_angles(config, names, comm=comm)
+    config = check_dihedrals(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     config = check_cancel_com_momentum(config, comm=comm)

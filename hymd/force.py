@@ -6,12 +6,18 @@ from compute_bond_forces import cbf as compute_bond_forces__fortran  # noqa: F40
 from compute_angle_forces import (
     caf as compute_angle_forces__fortran,
 )  # noqa: F401, E501
+from compute_dihedral_forces import (
+    cdf as compute_dihedral_forces__fortran,
+)  # noqa: F401, E501
 from compute_bond_forces__double import (
     cbf as compute_bond_forces__fortran__double,
 )  # noqa: F401, E501
 from compute_angle_forces__double import (
     caf as compute_angle_forces__fortran__double,
 )  # noqa: F401, E501
+from compute_dihedral_forces__double import (
+    cdf as compute_dihedral_forces__fortran__double,
+)
 
 
 @dataclass
@@ -27,6 +33,32 @@ class Angle(Bond):
     atom_3: str
 
 
+# 1- Fourier series
+@dataclass
+class Dihedral:
+    atom_1: str
+    atom_2: str
+    atom_3: str
+    atom_4: str
+    coeffs: np.ndarray
+    # type: (0) Fourier or (1) CBT
+    # Impropers to be specified in the toml?
+    dih_type: int
+
+
+# 2- Combined bending-torsional potential
+# @dataclass
+# class CBT_potential(Dihedral):
+#     coeff_k: list
+#     phase_k: list
+
+# 3- Harmonic potential for impropers
+# @dataclass
+# class improper(Dihedral):
+#     equilibrium: float
+#     strength: float
+
+
 @dataclass
 class Chi:
     atom_1: str
@@ -34,12 +66,28 @@ class Chi:
     interaction_energy: float
 
 
+def findPathsNoLC(G, u, n):
+    if n == 0:
+        return [[u]]
+    paths = []
+    for neighbor in G.neighbors(u):
+        for path in findPathsNoLC(G, neighbor, n - 1):
+            if u not in path:
+                paths.append([u] + path)
+    return paths
+
+
 def prepare_bonds_old(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
+    bonds_4 = []
+    bb_index = []
+
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
+        bb_dihedral = 0
         bond_graph = nx.Graph()
+
         for local_index, global_index in enumerate(indices):
             if molecules[local_index] != mol:
                 continue
@@ -63,7 +111,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
 
                     for b in config.bonds:
                         match_forward = name_i == b.atom_1 and name_j == b.atom_2
-                        match_backward = name_j == b.atom_2 and name_i == b.atom_1
+                        match_backward = name_i == b.atom_2 and name_j == b.atom_1
                         if match_forward or match_backward:
                             bonds_2.append(
                                 [
@@ -100,11 +148,47 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                     a.strength,
                                 ]
                             )
-    return bonds_2, bonds_3
+
+            all_paths_len_four = findPathsNoLC(bond_graph, i, 3)
+            for p in all_paths_len_four:
+                name_i = bond_graph.nodes()[i]["name"]
+                name_mid_1 = bond_graph.nodes()[p[1]]["name"]
+                name_mid_2 = bond_graph.nodes()[p[2]]["name"]
+                name_j = bond_graph.nodes()[p[3]]["name"]
+
+                for a in config.dihedrals:
+                    match_forward = (
+                        name_i == a.atom_1
+                        and name_mid_1 == a.atom_2
+                        and name_mid_2 == a.atom_3
+                        and name_j == a.atom_4
+                    )
+                    if match_forward:
+                        bonds_4.append(
+                            [
+                                bond_graph.nodes()[i]["local_index"],
+                                bond_graph.nodes()[p[1]]["local_index"],
+                                bond_graph.nodes()[p[2]]["local_index"],
+                                bond_graph.nodes()[p[3]]["local_index"],
+                                a.coeffs,
+                                a.dih_type,
+                            ]
+                        )
+                        # This works for protein inside molecule, but not for block peptides
+                        if a.dih_type == 1:
+                            bb_dihedral = len(bonds_4)
+
+        if bb_dihedral:
+            bb_index.append(bb_dihedral - 1)
+
+    return bonds_2, bonds_3, bonds_4, bb_index
 
 
 def prepare_bonds(molecules, names, bonds, indices, config):
-    bonds_2, bonds_3 = prepare_bonds_old(molecules, names, bonds, indices, config)
+    bonds_2, bonds_3, bonds_4, bb_index = prepare_bonds_old(
+        molecules, names, bonds, indices, config
+    )
+    # Bonds
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
     bonds_2_equilibrium = np.empty(len(bonds_2), dtype=np.float64)
@@ -114,6 +198,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_2_atom2[i] = b[1]
         bonds_2_equilibrium[i] = b[2]
         bonds_2_stength[i] = b[3]
+    # Angles
     bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom3 = np.empty(len(bonds_3), dtype=int)
@@ -125,6 +210,29 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
+    # Dihedrals
+    bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
+    bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
+    # 4 => 2 sets of 2 parameters
+    # Might it be useful to decouple dihedral types to prevent having lots of zeros/empty arrays?
+    number_of_coeff = 6
+    len_of_coeff = 5
+    bonds_4_coeff = np.empty(
+        (len(bonds_4), number_of_coeff, len_of_coeff), dtype=np.float64
+    )
+    bonds_4_type = np.empty(len(bonds_4), dtype=int)
+    bonds_4_last = np.zeros(len(bonds_4), dtype=int)
+    for i, b in enumerate(bonds_4):
+        bonds_4_atom1[i] = b[0]
+        bonds_4_atom2[i] = b[1]
+        bonds_4_atom3[i] = b[2]
+        bonds_4_atom4[i] = b[3]
+        bonds_4_coeff[i] = np.resize(b[4], (number_of_coeff, len_of_coeff))
+        bonds_4_type[i] = b[5]
+    bonds_4_last[bb_index] = 1
+
     return (
         bonds_2_atom1,
         bonds_2_atom2,
@@ -135,6 +243,13 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3,
         bonds_3_equilibrium,
         bonds_3_stength,
+        bonds_4_atom1,
+        bonds_4_atom2,
+        bonds_4_atom3,
+        bonds_4_atom4,
+        bonds_4_coeff,
+        bonds_4_type,
+        bonds_4_last,
     )
 
 
@@ -289,8 +404,78 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
         f_angles[a, :] += fa
         f_angles[c, :] += fc
-        f_angles[b, :] += -(fa + fc)
+        f_angles[b, :] -= fa + fc
+        # f_angles[b, :] += -(fa + fc)
 
         energy -= 0.5 * f * d
 
     return energy
+
+
+def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
+    """Calculates dihedral forces with a cosine sum potential. A sign
+    is probably wrong somewhere"""
+    f_dihedrals.fill(0.0)
+    energy = 0.0
+
+    for a, b, c, d, coeff, phase in bonds_4:
+        f = r[a, :] - r[b, :]
+        g = r[b, :] - r[c, :]
+        h = r[d, :] - r[c, :]
+
+        for dim in range(3):
+            f -= box_size[dim] * np.around(f[dim] / box_size[dim])
+            g -= box_size[dim] * np.around(g[dim] / box_size[dim])
+            h -= box_size[dim] * np.around(h[dim] / box_size[dim])
+
+        v = np.cross(f, g)
+        w = np.cross(h, g)
+        vv = np.dot(v, v)
+        ww = np.dot(w, w)
+        gn = np.linalg.norm(g)
+
+        cosphi = np.dot(v, w)
+        sinphi = np.dot(np.cross(v, w), g) / gn
+        phi = np.arctan2(sinphi, cosphi)
+
+        fg = np.dot(f, g)
+        hg = np.dot(h, g)
+        sc = v * fg / (vv * gn) - w * hg / (ww * gn)
+
+        df = 0
+
+        for m in range(len(coeff)):
+            energy += coeff[m] * (1 + np.cos(m * phi - phase[m]))
+            df += m * coeff[m] * np.sin(m * phi - phase[m])
+
+        force_on_a = df * gn * v / vv
+        force_on_d = df * gn * w / ww
+
+        f_dihedrals[a, :] -= force_on_a
+        f_dihedrals[b, :] += df * sc + force_on_a
+        f_dihedrals[c, :] -= df * sc + force_on_d
+        f_dihedrals[d, :] += force_on_d
+    return energy
+
+
+def dipole_forces_redistribution(
+    f_on_bead, f_dipoles, trans_matrices, a, b, c, d, type_array, last_bb
+):
+    """Redistribute electrostatic forces calculated from ghost dipole point
+    charges to the backcone atoms of the protein."""
+
+    f_on_bead.fill(0.0)
+    for i, j, k, l, fd, matrix, dih_type, is_last in zip(
+        a, b, c, d, f_dipoles, trans_matrices, type_array, last_bb
+    ):
+        if dih_type == 1:
+            tot_force = fd[0] + fd[1]
+            f_on_bead[i] += matrix[0] @ tot_force  # Atom A
+            f_on_bead[j] += matrix[1] @ tot_force + 0.5 * tot_force  # Atom B
+            f_on_bead[k] += matrix[2] @ tot_force + 0.5 * tot_force  # Atom C
+
+            if is_last == 1:
+                tot_force = fd[2] + fd[3]
+                f_on_bead[j] += matrix[3] @ tot_force  # Atom B
+                f_on_bead[k] += matrix[4] @ tot_force + 0.5 * tot_force  # Atom C
+                f_on_bead[l] += matrix[5] @ tot_force + 0.5 * tot_force  # Atom D

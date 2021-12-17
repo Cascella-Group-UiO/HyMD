@@ -1,0 +1,123 @@
+# [meta]
+# Name of the simulation. May be ommitted.
+# name = "Alanine octa-peptide in vacuum"
+# Tags classifying the simulation. May be ommitted.
+# tags = ["peptide", "ALA"]
+
+[particles]
+# Number of total particles in the simulation. If an input .hdf5 format file is
+# specified, the number of particles will be inferred from this and *may* be
+# ommited here.
+n_particles = 2143
+# Mass of the particles in [g/mol]. All masses are assumed equal.
+mass = 72.0
+# Maximum number of particles per molecules present in the system. A default of
+# 200 is assumed, and this keyword may be ommitted for any system with smaller
+# molecules.
+# max_molecule_size = 15
+
+[simulation]
+# Number of total time steps in the simulation.
+n_steps = 10000
+# Frequency of trajectory/energy file output in time steps.
+n_print = 10
+# Frequency of requesting that the HDF5 library flush the file output buffers
+# to disk after in number of n_print timesteps.
+n_flush = 10000
+# Time step used in the simulation in [picoseconds].
+time_step = 0.3
+# Simulation box size in [nanometers].
+box_size = [6.25, 6.25, 6.25]
+# Time integrator used in the simulation. Either "velocity-verlet" or "respa".
+# If "respa", specify also the number of small rRESPA time steps per large
+# time_step with the 'respa_inner' keyword.
+integrator = "respa"
+respa_inner = 5
+# Perform MPI rank domain decomposition every x time steps to (hopefully)
+# reduce the amount of neccessary communication between ranks in the pmesh
+# procedures. Ommit or set to 'false' or '0' to not perform any domain
+# decomposition.
+domain_decomposition = false
+# Remove linear center of mass momentum from the system before integration
+# starts.
+cancel_com_momentum = true
+# Starting temperature to generate before simulation begins in [kelvin]. Ommit
+# or set to 'false' to not change the temperature before starting.
+start_temperature = 300
+# Target temperature used in the velocity rescale thermostat in [kelvin]. Ommit
+# or set to 'false' to use no thermostat, i.e. a constant energy simulation.
+target_temperature = 300
+# Thermostat collision frequency in [1/picoseconds].
+tau = 1
+# Couple groups of particles species to individual different thermostats.
+thermostat_coupling_groups = [
+  ["BB", "SC"],
+  ["W"]
+]
+# The energy functional W[phi] to use. Options:
+#    "SquaredPhi":      φ² / 2κφ₀,
+#    "DefaultNoChi":   (φ - φ₀)² / 2κφ₀
+#    "DefaultWithChi": (φ - φ₀)² / 2κφ₀ + Σ χφφ' / φ₀
+# Subclass Hamiltonian to create a new energy functional.
+hamiltonian = 'DefaultNoChi'
+dielectric_const = 5.0
+
+[field]
+# Particle-mesh grid size, either a single integer or an array of 3 integers
+# (number of grid points in each dimension). In order to guarantee consistency
+# and speed in the PFFT routines, the actual mesh grid will be changed to ensure
+# that each dimension of the 2d PFFT process grid divides each dimension of the
+# mesh grid size.
+mesh_size = [40, 40, 40]
+# Compressibility used in the relaxed incompressibility term of W(phi) in
+# [mol/kJ].
+kappa = 0.03
+# Standard deviation in the Gaussian filter (window function) in [nanometers].
+# This value is a characteristic length scale for the size of the particles in
+# the simulation.
+sigma = 0.5
+# Interaction matrix, chi, ((atom name 1, atom name 2), (mixing energy in
+# [kJ/mol])).
+chi = [
+    [["BB", "SC"], [0]],
+    [["BB", "W"], [0]],
+    [["SC", "W"], [0]],
+]
+
+[bonds]
+# Two-particle bonds, ((atom name 1, atom name 2), (equilibrium length in
+# [nanometers], bond strength in [kJ/mol])). Note the two
+# Same for the angles since he used the combined angle-torsion potential.
+# IMPORTANT: numbers in arrays must have the same type!
+bonds = [
+  [["BB", "BB"], [0.35, 1000.0]],
+  [["BB", "SC"], [0.27, 1000.0]],
+]
+# Three-particle angular bonds, ((atom name 1, atom name 2, atom name 3),
+# (equilibrium angle in [degrees], bond strength in [kJ/mol])
+angle_bonds = [
+  [["BB", "BB", "SC"], [100.0, 100.0]],
+]
+# Four-particles torsion angles defined with a fourier series potential.
+# ((atom name 1, atom name 2, atom name 3, atom name 4),
+#  (coefficients), 
+#  (dihedral type))
+dihedrals = [
+  [
+        ["BB", "BB", "BB", "BB"],
+        [
+          # Move this out and provide propensity instead?
+          # α propensity (λ = -1)
+          [7.406, -5.298, -2.570, 1.336, 0.739], # c_v (kJ/mol)
+          [-16.405, 69.323, 67.679, 28.118, 56.434], # d_v (deg)
+          # β propensity (λ = 1) 
+          # [3.770, 5.929, -4.151, -0.846, 0.190], # c_v
+          # [-13.182, -3.342, 56.919, 59.151, 166.250], # d_v
+          # No propensity (λ = 0)
+          # [1.416, -0.739, 0.990, -0.397, 0.136], # c_v
+          # [77.326, 26.155, 132.033, -7.033, -15.000], # d_v
+          [0.13680, 0.18589, -0.16586, 0.07664, -0.02589], # c_k (kJ/mol deg-2)
+          [4.412, 26.488, 94.723, -55.004, 21.662], # d_k
+        ],
+    [1.0] # Type
+]]
