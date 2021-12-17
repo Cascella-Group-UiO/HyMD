@@ -1,4 +1,5 @@
-# execute this workflow automatically when a we push to master
+name: docs_pages
+
 on:
   push:
     branches: [ docs_setup ]
@@ -11,7 +12,7 @@ jobs:
 
     steps:
 
-    - name: Prereqs
+    - name: prereqs
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -23,5 +24,7 @@ jobs:
     - name: Execute script to build our documentation and update pages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: "docs/buildDocs.sh"
+      run: |
+        ls
+        docs/buildDocs.sh
       shell: bash
