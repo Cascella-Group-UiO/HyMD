@@ -18,7 +18,11 @@ set -e
 ###################
 
 apt-get update
-apt-get -y install git make rsync python3-sphinx python3-sphinx-rtd-theme python3-sphinxcontrib.bibtex
+apt-get -y install git make rsync python3
+
+pip3 install cython numpy mpi4py 
+pip3 install -r requirements.txt
+pip3 install -r docs/docs_requirements.txt
 
 #####################
 # DECLARE VARIABLES #
