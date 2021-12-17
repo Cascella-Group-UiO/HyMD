@@ -18,7 +18,7 @@ set -e
 ###################
 
 apt-get update
-apt-get -y install git make rsync python3-numpy python3-mpi4py python3-pip
+apt-get -y install git make rsync libhdf5-serial-dev python3-numpy python3-mpi4py python3-pip
 
 python3 -m pip install cython
 python3 -m pip install -r requirements.txt
