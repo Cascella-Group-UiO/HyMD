@@ -77,7 +77,7 @@ def findPathsNoLC(G, u, n):
     return paths
 
 
-def prepare_bonds_old(molecules, names, bonds, indices, config):
+def prepare_type_based_bonds(molecules, names, bonds, indices, config):
     bonds_2 = []
     bonds_3 = []
     bonds_4 = []
@@ -163,7 +163,18 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                         and name_mid_2 == a.atom_3
                         and name_j == a.atom_4
                     )
-                    if match_forward:
+                    if (
+                        match_forward
+                        and [
+                            bond_graph.nodes()[p[3]]["local_index"],
+                            bond_graph.nodes()[p[2]]["local_index"],
+                            bond_graph.nodes()[p[1]]["local_index"],
+                            bond_graph.nodes()[i]["local_index"],
+                            a.coeffs,
+                            a.dih_type,
+                        ]
+                        not in bonds_4
+                    ):
                         bonds_4.append(
                             [
                                 bond_graph.nodes()[i]["local_index"],
@@ -184,10 +195,55 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
     return bonds_2, bonds_3, bonds_4, bb_index
 
 
-def prepare_bonds(molecules, names, bonds, indices, config):
-    bonds_2, bonds_3, bonds_4, bb_index = prepare_bonds_old(
-        molecules, names, bonds, indices, config
-    )
+def prepare_index_based_bonds(molecules, topol):
+    bonds_2 = []
+    bonds_3 = []
+
+    different_molecules = np.unique(molecules)
+    for mol in different_molecules:
+        resid = mol + 1
+        top_summary = topol["system"]["molecules"]
+        resname = None
+        test_mol_number = 0
+        for molname in top_summary:
+            test_mol_number += molname[1]
+            if resid <= test_mol_number:
+                resname = molname[0]
+                break
+
+        if "bonds" in topol[resname]:
+            first_id = np.where(molecules == mol)[0][0]
+            for bond in topol[resname]["bonds"]:
+                index_i = bond[0] - 1 + first_id
+                index_j = bond[1] - 1 + first_id
+                equilibrium = bond[3]
+                strength = bond[4]
+                bonds_2.append([index_i, index_j, equilibrium, strength])
+
+        if "angles" in topol[resname]:
+            first_id = np.where(molecules == mol)[0][0]
+            for angle in topol[resname]["angles"]:
+                index_i = angle[0] - 1 + first_id
+                index_j = angle[1] - 1 + first_id
+                index_k = angle[2] - 1 + first_id
+                equilibrium = np.radians(angle[4])
+                strength = angle[5]
+                bonds_3.append([index_i, index_j, index_k, equilibrium, strength])
+
+        # if "dihedrals" in topol[resname]:
+
+        # if "improper_dihedrals" in topol[resname]:
+
+    return bonds_2, bonds_3
+
+
+def prepare_bonds(molecules, names, bonds, indices, config, topol=None):
+    if topol is not None:
+        bonds_2, bonds_3 = prepare_index_based_bonds(molecules, topol)
+    else:
+        bonds_2, bonds_3, bonds_4, bb_index = prepare_type_based_bonds(
+            molecules, names, bonds, indices, config
+        )
     # Bonds
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
@@ -413,12 +469,11 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
 
 def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
-    """Calculates dihedral forces with a cosine sum potential. A sign
-    is probably wrong somewhere"""
+    """Calculates dihedral forces with a cosine sum potential."""
     f_dihedrals.fill(0.0)
     energy = 0.0
 
-    for a, b, c, d, coeff, phase in bonds_4:
+    for a, b, c, d, coeffs, dih_type in bonds_4:
         f = r[a, :] - r[b, :]
         g = r[b, :] - r[c, :]
         h = r[d, :] - r[c, :]
@@ -443,10 +498,9 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
         sc = v * fg / (vv * gn) - w * hg / (ww * gn)
 
         df = 0
-
-        for m in range(len(coeff)):
-            energy += coeff[m] * (1 + np.cos(m * phi - phase[m]))
-            df += m * coeff[m] * np.sin(m * phi - phase[m])
+        for m in range(len(coeffs[0])):
+            energy += coeffs[0][m] * (1 + np.cos(m * phi - coeffs[1][m]))
+            df += m * coeffs[0][m] * np.sin(m * phi - coeffs[1][m])
 
         force_on_a = df * gn * v / vv
         force_on_d = df * gn * w / ww
