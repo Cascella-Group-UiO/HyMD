@@ -3,7 +3,7 @@ import numpy as np
 from force import compute_bond_forces__plain as compute_bond_forces
 from force import compute_angle_forces__plain as compute_angle_forces
 from force import compute_dihedral_forces__plain as compute_dihedral_forces
-from force import prepare_bonds_old as prepare_bonds
+from force import prepare_type_based_bonds as prepare_bonds
 from input_parser import Config
 
 # This doesn't check fortran routines?
