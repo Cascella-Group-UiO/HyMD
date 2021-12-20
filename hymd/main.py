@@ -10,6 +10,7 @@ import os
 import pmesh.pm as pmesh
 import pstats
 import sys
+import tomli
 from types import ModuleType as moduleobj
 import warnings
 
@@ -157,6 +158,9 @@ def configure_runtime(comm):
     ap.add_argument(
         "--logfile", default="sim.log", help="Redirect event logging to specified file"
     )
+    ap.add_argument(
+        "-t", "--top", default=None, help="gmx topology file in toml format"
+    )
     ap.add_argument("config", help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args()
@@ -208,10 +212,17 @@ def configure_runtime(comm):
         Logger.rank0.log(
             logging.INFO, f"Attempting to parse config file {args.config} as .toml"
         )
+
         toml_config = read_config_toml(args.config)
         config = parse_config_toml(
             toml_config, file_path=os.path.abspath(args.config), comm=comm
         )
+        if args.top is not None:
+            with open(args.top, "rb") as in_top:
+                topol = tomli.load(in_top)
+        else:
+            topol = args.top
+
         Logger.rank0.log(
             logging.INFO, f"Successfully parsed {args.config} as .toml file"
         )
@@ -251,7 +262,7 @@ def configure_runtime(comm):
                 + "\n\npython parse traceback:"
                 + repr(ne)
             )
-    return args, config
+    return args, config, topol
 
 
 def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
@@ -318,7 +329,7 @@ if __name__ == "__main__":
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config = configure_runtime(comm)
+    args, configm, topol = configure_runtime(comm)
 
     if args.double_precision:
         dtype = np.float64
@@ -582,7 +593,7 @@ if __name__ == "__main__":
         if not (
             args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals
         ):
-            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, topol)
             (
                 bonds_2_atom1,
                 bonds_2_atom2,
@@ -1082,7 +1093,9 @@ if __name__ == "__main__":
 
                 # Why do we need to do this again? Molecules moving to different ranks?
                 if molecules_flag:
-                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+                    bonds_prep = prepare_bonds(
+                        molecules, names, bonds, indices, config, topol
+                    )
                     (
                         bonds_2_atom1,
                         bonds_2_atom2,
