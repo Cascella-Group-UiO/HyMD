@@ -177,7 +177,7 @@ def alanine_octapeptide():
         "Angle", ["atom_1", "atom_2", "atom_3", "equilibrium", "strength"]
     )
     Dihedral = collections.namedtuple(
-        "Dihedral", ["atom_1", "atom_2", "atom_3", "atom_4", "coeff", "phase"]
+        "Dihedral", ["atom_1", "atom_2", "atom_3", "atom_4", "coeffs", "dih_type"]
     )
     # Values for bonds and angles taken from MARTINI 3 parameters.
     # Not used to test dihedral forces.
@@ -194,8 +194,11 @@ def alanine_octapeptide():
     CONF["bond_4"] = (
         Dihedral(
             "BB", "BB", "BB", "BB", 
-            [1 for _ in range(5)], 
-            [0 for _ in range(5)],
+            np.array([
+                [1, 1, 1, 1, 1], 
+                [0, 0, 0, 0, 0]
+            ]),
+            0
         ),
     )
     for k, v in {"Np": 8, "types": 2, "mass": 72.0, "L": [5.0, 5.0, 5.0]}.items():
