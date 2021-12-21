@@ -69,3 +69,15 @@ class Logger:
 
             cls.rank0.addHandler(cls.stdout_handler)
             cls.all_ranks.addHandler(cls.stdout_handler)
+
+
+def format_timedelta(timedelta):
+    days = timedelta.days
+    hours, rem = divmod(timedelta.seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    microseconds = timedelta.microseconds
+    ret_str = ""
+    if days != 0:
+        ret_str += f"{days} days "
+    ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
+    return ret_str

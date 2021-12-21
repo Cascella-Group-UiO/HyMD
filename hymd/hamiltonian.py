@@ -9,8 +9,12 @@ class Hamiltonian:
 
     def _setup(self):
         if not hasattr(self.config, "simulation_volume"):
-            self.config.simulation_volume = np.prod(np.asarray(self.config.box_size))
-        self.config.rho0 = self.config.n_particles / self.config.simulation_volume
+            self.config.simulation_volume = np.prod(
+                np.asarray(self.config.box_size)
+            )
+        self.config.rho0 = (
+            self.config.n_particles / self.config.simulation_volume
+        )
         self.phi = sympy.var("phi:%d" % (len(self.config.unique_names)))
         k = sympy.var("k:%d" % (3))
 

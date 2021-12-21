@@ -1,22 +1,25 @@
-import numba
 import numpy as np
 import networkx as nx
 from dataclasses import dataclass
-from compute_bond_forces import cbf as compute_bond_forces__fortran  # noqa: F401, E501
-from compute_angle_forces import (
+
+# Imported here so we can call from force import compute_bond_forces__fortran
+from force_kernels import (  # noqa: F401
+    cbf as compute_bond_forces__fortran
+)
+from force_kernels import (  # noqa: F401
     caf as compute_angle_forces__fortran,
-)  # noqa: F401, E501
-from compute_dihedral_forces import (
+)
+from force_kernels import (  # noqa: F401
     cdf as compute_dihedral_forces__fortran,
-)  # noqa: F401, E501
-from compute_bond_forces__double import (
-    cbf as compute_bond_forces__fortran__double,
-)  # noqa: F401, E501
-from compute_angle_forces__double import (
-    caf as compute_angle_forces__fortran__double,
-)  # noqa: F401, E501
-from compute_dihedral_forces__double import (
-    cdf as compute_dihedral_forces__fortran__double,
+)
+from force_kernels import (  # noqa: F401
+    cbf_d as compute_bond_forces__fortran__double,
+)
+from force_kernels import (  # noqa: F401
+    caf_d as compute_angle_forces__fortran__double,
+)
+from force_kernels import (  # noqa: F401
+    cdf_d as compute_dihedral_forces__fortran__double,
 )
 
 
@@ -33,7 +36,6 @@ class Angle(Bond):
     atom_3: str
 
 
-# 1- Fourier series
 @dataclass
 class Dihedral:
     atom_1: str
@@ -41,22 +43,7 @@ class Dihedral:
     atom_3: str
     atom_4: str
     coeffs: np.ndarray
-    # type: (0) Fourier or (1) CBT
-    # Impropers to be specified in the toml?
     dih_type: int
-
-
-# 2- Combined bending-torsional potential
-# @dataclass
-# class CBT_potential(Dihedral):
-#     coeff_k: list
-#     phase_k: list
-
-# 3- Harmonic potential for impropers
-# @dataclass
-# class improper(Dihedral):
-#     equilibrium: float
-#     strength: float
 
 
 @dataclass
@@ -110,8 +97,12 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                     name_j = bond_graph.nodes()[j]["name"]
 
                     for b in config.bonds:
-                        match_forward = name_i == b.atom_1 and name_j == b.atom_2
-                        match_backward = name_i == b.atom_2 and name_j == b.atom_1
+                        match_forward = (
+                            name_i == b.atom_1 and name_j == b.atom_2
+                        )
+                        match_backward = (
+                            name_i == b.atom_2 and name_j == b.atom_1
+                        )
                         if match_forward or match_backward:
                             bonds_2.append(
                                 [
@@ -174,7 +165,6 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                 a.dih_type,
                             ]
                         )
-                        # This works for protein inside molecule, but not for block peptides
                         if a.dih_type == 1:
                             bb_dihedral = len(bonds_4)
 
@@ -188,6 +178,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_2, bonds_3, bonds_4, bb_index = prepare_bonds_old(
         molecules, names, bonds, indices, config
     )
+
     # Bonds
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
     bonds_2_atom2 = np.empty(len(bonds_2), dtype=int)
@@ -198,6 +189,7 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_2_atom2[i] = b[1]
         bonds_2_equilibrium[i] = b[2]
         bonds_2_stength[i] = b[3]
+
     # Angles
     bonds_3_atom1 = np.empty(len(bonds_3), dtype=int)
     bonds_3_atom2 = np.empty(len(bonds_3), dtype=int)
@@ -210,13 +202,12 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_stength[i] = b[4]
+
     # Dihedrals
     bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom3 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom4 = np.empty(len(bonds_4), dtype=int)
-    # 4 => 2 sets of 2 parameters
-    # Might it be useful to decouple dihedral types to prevent having lots of zeros/empty arrays?
     number_of_coeff = 6
     len_of_coeff = 5
     bonds_4_coeff = np.empty(
@@ -234,61 +225,10 @@ def prepare_bonds(molecules, names, bonds, indices, config):
     bonds_4_last[bb_index] = 1
 
     return (
-        bonds_2_atom1,
-        bonds_2_atom2,
-        bonds_2_equilibrium,
-        bonds_2_stength,
-        bonds_3_atom1,
-        bonds_3_atom2,
-        bonds_3_atom3,
-        bonds_3_equilibrium,
-        bonds_3_stength,
-        bonds_4_atom1,
-        bonds_4_atom2,
-        bonds_4_atom3,
-        bonds_4_atom4,
-        bonds_4_coeff,
-        bonds_4_type,
-        bonds_4_last,
+        bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength,
+        bonds_3_atom1, bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium, bonds_3_stength,  # noqa: E501
+        bonds_4_atom1, bonds_4_atom2, bonds_4_atom3, bonds_4_atom4, bonds_4_coeff, bonds_4_type, bonds_4_last,  # noqa: E501
     )
-
-
-@numba.jit(nopython=True, fastmath=True)
-def compute_bond_forces__numba(
-    f_bonds,
-    r,
-    box_size,
-    bonds_2_atom1,
-    bonds_2_atom2,
-    bonds_2_equilibrium,
-    bonds_2_stength,
-):
-    f_bonds.fill(0.0)
-    energy = 0.0
-
-    for ind in range(len(bonds_2_atom1)):
-        i = bonds_2_atom1[ind]
-        j = bonds_2_atom2[ind]
-        r0 = bonds_2_equilibrium[ind]
-        k = bonds_2_stength[ind]
-        ri = r[i, :]
-        rj = r[j, :]
-        rij = rj - ri
-
-        # Apply periodic boundary conditions to the distance rij
-        rij[0] -= box_size[0] * np.around(rij[0] / box_size[0])
-        rij[1] -= box_size[1] * np.around(rij[1] / box_size[1])
-        rij[2] -= box_size[2] * np.around(rij[2] / box_size[2])
-
-        dr = np.linalg.norm(rij)
-        df = -k * (dr - r0)
-
-        f_bond_vector = df * rij / dr
-        f_bonds[i, :] -= f_bond_vector
-        f_bonds[j, :] += f_bond_vector
-
-        energy += 0.5 * k * (dr - r0) ** 2
-    return energy
 
 
 def compute_bond_forces__plain(f_bonds, r, bonds_2, box_size):
@@ -310,65 +250,6 @@ def compute_bond_forces__plain(f_bonds, r, bonds_2, box_size):
         f_bonds[j, :] += f_bond_vector
 
         energy += 0.5 * k * (dr - r0) ** 2
-    return energy
-
-
-@numba.jit(nopython=True, fastmath=True)
-def compute_angle_forces__numba(
-    f_angles,
-    r,
-    box_size,
-    bonds_3_atom1,
-    bonds_3_atom2,
-    bonds_3_atom3,
-    bonds_3_equilibrium,
-    bonds_3_stength,
-):
-    f_angles.fill(0.0)
-    energy = 0.0
-
-    for ind in range(len(bonds_3_atom1)):
-        a = bonds_3_atom1[ind]
-        b = bonds_3_atom2[ind]
-        c = bonds_3_atom3[ind]
-        theta0 = bonds_3_equilibrium[ind]
-        k = bonds_3_stength[ind]
-
-        ra = r[a, :] - r[b, :]
-        rc = r[c, :] - r[b, :]
-
-        ra[0] -= box_size[0] * np.around(ra[0] / box_size[0])
-        ra[1] -= box_size[1] * np.around(ra[1] / box_size[1])
-        ra[2] -= box_size[2] * np.around(ra[2] / box_size[2])
-
-        rc[0] -= box_size[0] * np.around(rc[0] / box_size[0])
-        rc[1] -= box_size[1] * np.around(rc[1] / box_size[1])
-        rc[2] -= box_size[2] * np.around(rc[2] / box_size[2])
-
-        xra = 1.0 / np.sqrt(np.dot(ra, ra))
-        xrc = 1.0 / np.sqrt(np.dot(rc, rc))
-        ea = ra * xra
-        ec = rc * xrc
-
-        cosphi = np.dot(ea, ec)
-        theta = np.arccos(cosphi)
-        xsinph = 1.0 / np.sqrt(1.0 - cosphi ** 2)
-
-        d = theta - theta0
-        f = -k * d
-
-        xrasin = xra * xsinph * f
-        xrcsin = xrc * xsinph * f
-
-        fa = (ea * cosphi - ec) * xrasin
-        fc = (ec * cosphi - ea) * xrcsin
-
-        f_angles[a, :] += fa
-        f_angles[c, :] += fc
-        f_angles[b, :] += -(fa + fc)
-
-        energy -= 0.5 * f * d
-
     return energy
 
 
@@ -413,8 +294,6 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
 
 def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
-    """Calculates dihedral forces with a cosine sum potential. A sign
-    is probably wrong somewhere"""
     f_dihedrals.fill(0.0)
     energy = 0.0
 
@@ -476,6 +355,12 @@ def dipole_forces_redistribution(
 
             if is_last == 1:
                 tot_force = fd[2] + fd[3]
-                f_on_bead[j] += matrix[3] @ tot_force  # Atom B
-                f_on_bead[k] += matrix[4] @ tot_force + 0.5 * tot_force  # Atom C
-                f_on_bead[l] += matrix[5] @ tot_force + 0.5 * tot_force  # Atom D
+
+                # Atom B
+                f_on_bead[j] += matrix[3] @ tot_force
+
+                # Atom C
+                f_on_bead[k] += matrix[4] @ tot_force + 0.5 * tot_force
+
+                # Atom D
+                f_on_bead[l] += matrix[5] @ tot_force + 0.5 * tot_force

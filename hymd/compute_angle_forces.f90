@@ -1,6 +1,6 @@
 subroutine caf(f, r, box, a, b, c, t0, k, energy)
 ! ==============================================================================
-! compute_angle_forces() speedup attempt.
+! compute_angle_forces()
 !
 ! Compile:
 !   f2py3 --f90flags="-Ofast" -c compute_angle_forces.f90 -m compute_angle_forces
@@ -59,7 +59,7 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
         ! 𝜕θ/𝜕cos(θ) * 𝜕cos(θ)/𝜕r
         fa = (ec - cosphi * ea) * xrasin
         fc = (ea - cosphi * ec) * xrcsin
-        
+
         f(aa, :) = f(aa, :) - fa
         f(cc, :) = f(cc, :) - fc
         f(bb, :) = f(bb, :) + fa + fc

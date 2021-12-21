@@ -7,13 +7,14 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
-from force import Bond, Angle, Dihedral, Chi
-from logger import Logger
+from .force import Bond, Angle, Dihedral, Chi
+from .logger import Logger
 
 
 @dataclass
 class Config:
-    R: ClassVar[float] = 0.00831446261815324  # kJ/mol K, gas constant
+    gas_constant: ClassVar[float] = 0.0083144621  # kJ mol-1 K-1
+    coulomb_constant: ClassVar[float] = 138.935458  # kJ mn mol-1 e-2
 
     n_steps: int
     time_step: float
@@ -51,7 +52,10 @@ class Config:
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
             [
-                (f"\t\t{k.atom_1} {k.atom_2}: " + f"{k.equilibrium}, {k.strength}\n")
+                (
+                    f"\t\t{k.atom_1} {k.atom_2}: "
+                    f"{k.equilibrium}, {k.strength}\n"
+                )
                 for k in self.bonds
             ]
         )
@@ -68,10 +72,13 @@ class Config:
             [
                 (
                     f"\t\t{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
-                    # This might need to be fixed/made prettier, probably there's an easier way
+                    # This might need to be fixed/made prettier, probably
+                    # there's an easier way
                     + (
                         "\n\t\t"
-                        + " " * len(f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: ")
+                        + " " * len(
+                            f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
+                        )
                     ).join(
                         map(
                             str,
@@ -85,7 +92,9 @@ class Config:
                     )
                     + (
                         "\n\t\t"
-                        + " " * len(f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: ")
+                        + " " * len(
+                            f"{k.atom_1} {k.atom_2} {k.atom_3} {k.atom_4}: "
+                        )
                     )
                     + f"dih_type = {k.dih_type}\n"
                 )
@@ -130,114 +139,6 @@ class Config:
         return ret_str
 
 
-def convert_CONF_to_config(CONF, file_path=None):
-    # Name in CONF.py, name in class Config, default if not present in CONF.py
-    vars_names_defaults = [
-        ("mass", "mass", 72.0),
-        ("NSTEPS", "n_steps", 1),
-        ("nprint", "n_print", -1),
-        ("dt", "time_step", 0.03),
-        ("L", "box_size", [1.0, 1.0, 1.0]),
-        ("Nv", "mesh_size", 50),
-        ("Np", "n_particles", -1),
-        ("domain_decomp", "domain_decomposition", False),
-        ("sigma", "sigma", 0.5),
-        ("T_start", "start_temperature", False),
-        ("T0", "target_temperature", False),
-        ("kappa", "kappa", 0.05),
-        ("tau", "tau", 0.7),
-    ]
-    config_dict = {}
-    for x in vars_names_defaults:
-        CONF_name = x[0]
-        config_name = x[1]
-        default = x[2]
-        config_dict[config_name] = CONF[CONF_name] if CONF_name in CONF else default
-
-        # Warning: all the keywords have to be specified in the CONF.py for this to work
-        # CONF.pop(CONF_name)
-        if CONF_name in CONF:
-            CONF.pop(CONF_name)
-
-    if file_path is not None:
-        config_dict["file_name"] = file_path
-    if "respa" in CONF or "RESPA" in CONF:
-        config_dict["integrator"] = "respa"
-        config_dict["respa_inner"] = CONF["respa_inner"] if "respa_inner" in CONF else 1
-        CONF.pop("respa") if "respa" in CONF else CONF.pop("RESPA")
-        CONF.pop("respa_inner")
-    else:
-        config_dict["integrator"] = "velocity-verlet"
-    for k in ("bonds", "angle_bonds", "chi"):
-        config_dict[k] = []
-
-    if "bonds" in CONF:
-        bonds = [None] * len(CONF["bonds"])
-        for i, b in enumerate(CONF["bonds"]):
-            bonds[i] = Bond(
-                atom_1=b[0][0], atom_2=b[0][1], equilibrium=b[1][0], strength=b[1][1]
-            )
-        config_dict["bonds"] = bonds
-        CONF.pop("bonds")
-    if "angle_bonds" in CONF:
-        angle_bonds = [None] * len(CONF["angle_bonds"])
-        for i, b in enumerate(CONF["angle_bonds"]):
-            angle_bonds[i] = Angle(
-                atom_1=b[0][0],
-                atom_2=b[0][1],
-                atom_3=b[0][2],
-                equilibrium=b[1][0],
-                strength=b[1][1],
-            )
-        config_dict["angle_bonds"] = angle_bonds
-        CONF.pop("angle_bonds")
-    if "chi" in CONF:
-        chi = [None] * len(CONF["chi"])
-        for i, c in enumerate(CONF["chi"]):
-            chi[i] = Chi(atom_1=c[0][0], atom_2=c[0][1], interaction_energy=c[1][0])
-        config_dict["chi"] = chi
-        CONF.pop("chi")
-
-    ignore_names = [
-        "dV",
-        "k",
-        "k0",
-        "k1",
-        "k2",
-        "kdHdk",
-        "np",
-        "ntypes",
-        "rho0",
-        "sympy",
-        "phi",
-        "phi0",
-        "phi1",
-        "phi2",
-        "phi3",
-        "phi4",
-        "phi5",
-        "phi6",
-        "phi7",
-        "phi8",
-        "phi9",
-        "types",
-    ]
-    ignore_names.append([f"phi{i}" for i in range(100)])
-    for k, v in sorted(CONF.items()):
-        if not k.startswith("_") and k not in ignore_names:
-            warn_str = (
-                f"{k} = {v} in "
-                f'{file_path if file_path else "config file"}'
-                f" ignored when converting to Config object."
-            )
-            Logger.rank0.log(logging.WARNING, warn_str)
-
-            # warn only if string in CONF?
-            # warnings.warn(warn_str in CONF)
-            warnings.warn(warn_str)
-    return Config(**config_dict)
-
-
 def read_config_toml(file_path):
     with open(file_path, "r") as in_file:
         toml_content = in_file.read()
@@ -275,7 +176,8 @@ def propensity_potential_coeffs(x: float, comm):
     abs_x = np.abs(x)
     if abs_x > 1:
         err_str = (
-            f"The provided value of λ = {x} is out of λ definition range, [-1.0, 1.0]."
+            f"The provided value of λ = {x} is out of λ definition range, "
+            f"[-1.0, 1.0]."
         )
         Logger.rank0.log(logging.ERROR, err_str)
         if comm.Get_rank() == 0:
@@ -352,18 +254,25 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     dih_type = int(b[2][0])
                 except IndexError:
                     Logger.rank0.log(
-                        logging.WARNING, "Dihedral type not provided, defaulting to 0."
+                        logging.WARNING,
+                        "Dihedral type not provided, defaulting to 0."
                     )
                     dih_type = 0
 
                     # Probably it's better to move this in check_dihedrals?
                     wrong_len = len(b[1]) not in (1, 2)
-                    wrong_type_1 = len(b[1]) == 1 and not isinstance(b[1][0], float)
-                    wrong_type_2 = len(b[1]) == 2 and not isinstance(b[1][0], list)
+                    wrong_type_1 = len(b[1]) == 1 and not isinstance(
+                        b[1][0], float
+                    )
+                    wrong_type_2 = len(b[1]) == 2 and not isinstance(
+                        b[1][0], list
+                    )
                     if wrong_len or wrong_type_1 or wrong_type_2:
                         err_str = (
-                            "The coefficients specified for the dihedral type (0) do not match the correct structure."
-                            + "Either use [lambda] or [[cn_prop], [dn_prop]], or select the correct dihedral type."
+                            "The coefficients specified for the dihedral type "
+                            "(0) do not match the correct structure. Either "
+                            "use [lambda] or [[cn_prop], [dn_prop]], or select"
+                            " the correct dihedral type."
                         )
                         Logger.rank0.log(logging.ERROR, err_str)
                         if comm.Get_rank() == 0:
@@ -380,7 +289,9 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                 elif dih_type == 2:
                     coeff = np.array(b[1])
                 else:
-                    coeff = np.insert(np.array(b[1]), 2, np.zeros((2, 5)), axis=0)
+                    coeff = np.insert(
+                        np.array(b[1]), 2, np.zeros((2, 5)), axis=0
+                    )
 
                 config_dict["dihedrals"][i] = Dihedral(
                     atom_1=b[0][0],
@@ -404,7 +315,9 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     if file_path is not None:
         config_dict["file_name"] = file_path
 
-    for n in ("n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa"):
+    for n in (
+        "n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa"
+    ):
         if n not in config_dict:
             err_str = (
                 f"No {n} specified in config file {file_path}. Unable to start"
@@ -519,7 +432,7 @@ def check_bonds(config, names, comm=MPI.COMM_WORLD):
                     if b.atom_1 == b.atom_2:
                         missing_str = f"no {b.atom_1} atoms"
                     else:
-                        missing_str = f"neither {b.atom_1}, nor {b.atom_2} atoms"
+                        missing_str = f"neither {b.atom_1}, {b.atom_2} atoms"
                 else:
                     missing_str = f"no {b.atom_1} atoms"
             else:
@@ -575,29 +488,31 @@ def check_dihedrals(config, names, comm=MPI.COMM_WORLD):
         config = _find_unique_names(config, names)
     unique_names = config.unique_names
 
-    for a in config.dihedrals:
+    for d in config.dihedrals:
         if (
-            a.atom_1 not in unique_names
-            or a.atom_2 not in unique_names
-            or a.atom_3 not in unique_names
-            or a.atom_4 not in unique_names
+            d.atom_1 not in unique_names
+            or d.atom_2 not in unique_names
+            or d.atom_3 not in unique_names
+            or d.atom_4 not in unique_names
         ):
             missing = [
-                a.atom_1 not in unique_names,
-                a.atom_2 not in unique_names,
-                a.atom_3 not in unique_names,
-                a.atom_4 not in unique_names,
+                d.atom_1 not in unique_names,
+                d.atom_2 not in unique_names,
+                d.atom_3 not in unique_names,
+                d.atom_4 not in unique_names,
             ]
             missing_names = [
                 atom
-                for i, atom in enumerate([a.atom_1, a.atom_2, a.atom_3, a.atom_4])
+                for i, atom in enumerate(
+                    [d.atom_1, d.atom_2, d.atom_3, d.atom_4]
+                )
                 if missing[i]
             ]
             missing_str = ", ".join(np.unique(missing_names))
 
             warn_str = (
-                f"Dihedral type {a.atom_1}--{a.atom_2}--{a.atom_3}--{a.atom_4} "
-                f"specified in {config.file_name} but no {missing_str} atoms "
+                f"Dihedral type {d.atom_1}--{d.atom_2}--{d.atom_3}--{d.atom_4}"
+                f" specified in {config.file_name} but no {missing_str} atoms "
                 f"are present in the specified system (names array)"
             )
             Logger.rank0.log(logging.WARNING, warn_str)
@@ -619,7 +534,7 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
                     if c.atom_1 == c.atom_2:
                         missing_str = f"no {c.atom_1} atoms"
                     else:
-                        missing_str = f"neither {c.atom_1}, nor {c.atom_2} atoms"
+                        missing_str = f"neither {c.atom_1}, {c.atom_2} atoms"
                 else:
                     missing_str = f"no {c.atom_1} atoms"
             else:
@@ -635,7 +550,7 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
                 warnings.warn(warn_str)
 
     for i, n in enumerate(unique_names):
-        for m in unique_names[i + 1 :]:
+        for m in unique_names[i+1:]:
             found = False
             for c in config.chi:
                 if (c.atom_1 == n and c.atom_2 == m) or (
@@ -643,7 +558,9 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
                 ):
                     found = True
             if not found:
-                config.chi.append(Chi(atom_1=n, atom_2=m, interaction_energy=0.0))
+                config.chi.append(
+                    Chi(atom_1=n, atom_2=m, interaction_energy=0.0)
+                )
                 warn_str = (
                     f"Atom types {n} and {m} found in the "
                     f"system, but no chi interaction {n}--{m} "
@@ -713,7 +630,10 @@ def check_integrator(config, comm=MPI.COMM_WORLD):
                 if comm.Get_rank() == 0:
                     raise TypeError(err_str)
 
-    if config.integrator.lower() == "velocity-verlet" and config.respa_inner != 1:
+    if (
+        config.integrator.lower() == "velocity-verlet"
+        and config.respa_inner != 1
+    ):
         warn_str = (
             f"Integrator type Velocity-Verlet specified in {config.file_name} "
             f"and inner rRESPA time steps set to {config.respa_inner}. "
@@ -808,7 +728,8 @@ def check_mass(config, comm=MPI.COMM_WORLD):
         Logger.rank0.log(logging.INFO, info_str)
     elif isinstance(config.mass, int) or isinstance(config.mass, float):
         err_str = (
-            f"specified mass is invalid type {config.mass}, " f"({type(config.mass)})"
+            f"specified mass is invalid type {config.mass}, "
+            f"({type(config.mass)})"
         )
         Logger.rank0.log(logging.ERROR, err_str)
         if comm.Get_rank() == 0:
@@ -850,7 +771,9 @@ def check_name(config, comm=MPI.COMM_WORLD):
     if config.name is None:
         root_current_time = ""
         if comm.Get_rank() == 0:
-            root_current_time = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            root_current_time = datetime.datetime.now().strftime(
+                "%m/%d/%Y, %H:%M:%S"
+            )
         current_time = comm.bcast(root_current_time, root=0)
 
         if config.name is None:

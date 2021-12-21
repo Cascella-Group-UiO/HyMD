@@ -8,9 +8,48 @@ _random_gaussian    Generate standard normal deviates.
 _random_chi_squared Generate squared sum of standard normal deviates.
 """
 import numpy as np
+import logging
 from mpi4py import MPI
-from input_parser import Config
 from typing import Callable
+from .logger import Logger
+from .input_parser import Config
+
+
+def cancel_com_momentum(velocities, config, comm=MPI.COMM_WORLD):
+    com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
+    velocities[...] = velocities[...] - com_velocity / config.n_particles
+    return velocities
+
+
+def generate_initial_velocities(velocities, config, comm=MPI.COMM_WORLD):
+    kT_start = config.gas_constant * config.start_temperature
+    n_particles_ = velocities.shape[0]
+    velocities[...] = np.random.normal(
+        loc=0, scale=kT_start / config.mass, size=(n_particles_, 3)
+    )
+    com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
+    velocities[...] = velocities[...] - com_velocity / config.n_particles
+    kinetic_energy = comm.allreduce(
+        0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
+    )
+    start_kinetic_energy_target = (
+        1.5 * config.gas_constant * config.n_particles
+        * config.start_temperature
+    )
+    factor = np.sqrt(1.5 * config.n_particles * kT_start / kinetic_energy)
+    velocities[...] = velocities[...] * factor
+    kinetic_energy = comm.allreduce(
+        0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
+    )
+    Logger.rank0.log(
+        logging.INFO,
+        (
+            f"Initialized {config.n_particles} velocities, target kinetic "
+            f"energy: {start_kinetic_energy_target}, actual kinetic energy "
+            f"generated: {kinetic_energy}"
+        ),
+    )
+    return velocities
 
 
 def _random_gaussian() -> float:
@@ -133,7 +172,8 @@ def csvr_thermostat(
         else:
             K = comm.allreduce(0.5 * config.mass * np.sum(velocity[...]**2))
         K_target = (
-            1.5 * config.R * group_n_particles * config.target_temperature
+            1.5 * config.gas_constant * group_n_particles
+            * config.target_temperature
         )
         N_f = 3 * group_n_particles
         c = np.exp(-(config.time_step * config.respa_inner) / config.tau)

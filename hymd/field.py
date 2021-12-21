@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from mpi4py import MPI
-from logger import Logger
+from .logger import Logger
 
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
@@ -12,212 +12,116 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
 
 
 def compute_field_energy_q(
-    config,
-    phi_q_fourier,
-    elec_energy_field,  # for energy calculation
-    field_q_energy,
+    config, phi_q_fourier, elec_energy_field, field_q_energy,
     comm=MPI.COMM_WORLD,
 ):
-
-    COULK_GMX = 138.935458 / config.dielectric_const
+    elec_conversion_factor = config.coulomb_constant / config.dielectric_const
 
     def transfer_energy(k, v):
-        ### potential field is electric field / (-ik)  --> potential field * q -->
         return (
-            4.0 * np.pi * COULK_GMX * np.abs(v) ** 2 / k.normp(p=2, zeromode=1)
-        )  ## zeromode = 1 needed here?
+            4.0 * np.pi * elec_conversion_factor * np.abs(v)**2
+            / k.normp(p=2, zeromode=1)
+        )
 
-    phi_q_fourier.apply(transfer_energy, kind="wavenumber", out=elec_energy_field)
-
+    phi_q_fourier.apply(
+        transfer_energy, kind="wavenumber", out=elec_energy_field
+    )
     V = np.prod(config.box_size)
-
     field_q_energy = 0.5 * V * comm.allreduce(np.sum(elec_energy_field.value))
-
     return field_q_energy.real
 
 
 def update_field_force_q(
-    charges,  # charge
-    phi_q,  # chage density
-    phi_q_fourier,
-    elec_field_fourier,  # for force calculation
-    elec_field,
-    elec_forces,
-    layout_q,  #### general terms
-    pm,
-    positions,
-    config,
+    charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field,
+    elec_forces, layout_q, pm, positions, config,
 ):
-    """
-    - added for the simple piosson equation eletrostatics (follow PIC)
-    - this funciton get the electrostatic forces
-    - refering to the test-pure-sphere-new.py, this inlcudes:
-        [O] hpf_init_simple_gmx_units(grid_num,box_size,coords,charges,masses)
-        ## ^----- define the pm and layout, already out outside this fucntion
-        [Y] gen_qe_hpf_use_self(out_phiq_paraview_file)
-        [Y] calc_phiq_fft_use_self_applyH_checkq(grid_num, out_phiq_paraview_file2 )
-        [Y] poisson_solver(calc_energy, out_elec_field_paraview_file)
-        [Y] compute_electric_field_on_particle()
-        [Y] compute_electric_force_on_particle()
-    """
-    ## basic setup
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
-
-    ## paint  ## pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
-    ## old protocol in gen_qe_hpf_use_self
-    pm.paint(positions, layout=layout_q, mass=charges, out=phi_q)  ##
-    ## scale and fft
-    ## old protocol in gen_qe_hpf_use_self
+    pm.paint(positions, layout=layout_q, mass=charges, out=phi_q)
     phi_q /= volume_per_cell
     phi_q.r2c(out=phi_q_fourier)
 
-    # Provide different sigma value if using dipoles
-    # if dipole_flag:
-    #     sigma = 0.1
-    # else:
-    #     sigma = config.sigma
     def phi_transfer_function(k, v):
-        return v * np.exp(-0.5 * config.sigma ** 2 * k.normp(p=2, zeromode=1))
+        return v * np.exp(-0.5 * config.sigma**2 * k.normp(p=2, zeromode=1))
 
     phi_q_fourier.apply(phi_transfer_function, out=phi_q_fourier)
-    ## ^------ use the same gaussian as the \kai interaciton
-    ## ^------ tbr; phi_transfer_funciton by hamiltonian.H ??
-    phi_q_fourier.c2r(out=phi_q)  ## this phi_q is after applying the smearing function
+    phi_q_fourier.c2r(out=phi_q)
+    n_dimensions = config.box_size.size
+    elec_conversion_factor = config.coulomb_constant / config.dielectric_const
 
-    ## electric field via solving poisson equation
-    ## old protol in poisson_solver
-    _SPACE_DIM = 3
-
-    COULK_GMX = 138.935458 / config.dielectric_const
-
-    for _d in np.arange(_SPACE_DIM):
+    for _d in np.arange(n_dimensions):
 
         def poisson_transfer_function(k, v, d=_d):
-            return -1j * k[d] * 4.0 * np.pi * COULK_GMX * v / k.normp(p=2, zeromode=1)
-            ######return - 1j * k[_d] * 4.0 * np.pi * v /k.normp(p=2) #hymd.py:173: RuntimeWarning: invalid value encountered in true_divide
-
-        phi_q_fourier.apply(poisson_transfer_function, out=elec_field_fourier[_d])
+            return (
+                -1j * k[d] * 4.0 * np.pi * elec_conversion_factor * v
+                / k.normp(p=2, zeromode=1)
+            )
+        phi_q_fourier.apply(
+            poisson_transfer_function, out=elec_field_fourier[_d]
+        )
         elec_field_fourier[_d].c2r(out=elec_field[_d])
 
-    ## calculate electric forces on particles
-    ## old protocol in compute_electric_force_on_particle_onestep
-    for _d in np.arange(_SPACE_DIM):
+    for _d in np.arange(n_dimensions):
         elec_forces[:, _d] = charges * (
             elec_field[_d].readout(positions, layout=layout_q)
         )
-        ###^------ here the use the column, as the elec_forces are defined as (N,3) dimension
 
 
 def update_field_force_energy_q(
-    charges,  # charge
-    phi_q,  # chage density
-    phi_q_fourier,
-    elec_field_fourier,  # for force calculation
-    elec_field,
-    elec_forces,
-    elec_energy_field,  # for energy calculation
-    field_q_energy,  # electric energy
-    layout_q,  #### general terms
-    pm,
-    positions,
-    config,
-    compute_energy=False,
-    comm=MPI.COMM_WORLD,
+    charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_forces,
+    elec_energy_field, field_q_energy, layout_q, pm, positions, config,
+    compute_energy=False, comm=MPI.COMM_WORLD,
 ):
-    """
-    - added for the simple piosson equation eletrostatics (follow PIC)
-    - this funciton get the electrostatic forces
-    - refering to the test-pure-sphere-new.py, this inlcudes:
-        [O] hpf_init_simple_gmx_units(grid_num,box_size,coords,charges,masses)
-        ## ^----- define the pm and layout, already out outside this fucntion
-        [Y] gen_qe_hpf_use_self(out_phiq_paraview_file)
-        [Y] calc_phiq_fft_use_self_applyH_checkq(grid_num, out_phiq_paraview_file2 )
-        [Y] poisson_solver(calc_energy, out_elec_field_paraview_file)
-        [Y] compute_electric_field_on_particle()
-        [Y] compute_electric_force_on_particle()
-    """
-    ## basic setup
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
-
-    ## paint  ## pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
-    ## old protocol in gen_qe_hpf_use_self
-    pm.paint(positions, layout=layout_q, mass=charges, out=phi_q)  ##
-    ## scale and fft
-    ## old protocol in gen_qe_hpf_use_self
+    pm.paint(positions, layout=layout_q, mass=charges, out=phi_q)
     phi_q /= volume_per_cell
     phi_q.r2c(out=phi_q_fourier)
 
-    # IDEA: Provide different sigma value if using dipoles
-    # if dipole_flag:
-    #     sigma = 0.1
-    # else:
-    #     sigma = config.sigma
     def phi_transfer_function(k, v):
         return v * np.exp(-0.5 * config.sigma ** 2 * k.normp(p=2, zeromode=1))
 
     phi_q_fourier.apply(phi_transfer_function, out=phi_q_fourier)
-    ## ^------ use the same gaussian as the \kai interaciton
-    ## ^------ tbr; phi_transfer_funciton by hamiltonian.H ??
-    phi_q_fourier.c2r(out=phi_q)  ## this phi_q is after applying the smearing function
+    phi_q_fourier.c2r(out=phi_q)
+    n_dimensions = config.box_size.size
+    elec_conversion_factor = config.coulomb_constant / config.dielectric_const
 
-    ## electric field via solving poisson equation
-    ## old protol in poisson_solver
-    _SPACE_DIM = 3
-
-    COULK_GMX = 138.935458 / config.dielectric_const
-
-    for _d in np.arange(_SPACE_DIM):
-
+    for _d in np.arange(n_dimensions):
         def poisson_transfer_function(k, v, d=_d):
-            return -1j * k[d] * 4.0 * np.pi * COULK_GMX * v / k.normp(p=2, zeromode=1)
-            ######return - 1j * k[_d] * 4.0 * np.pi * v /k.normp(p=2) #hymd.py:173: RuntimeWarning: invalid value encountered in true_divide
+            return (
+                -1j * k[d] * 4.0 * np.pi * elec_conversion_factor * v
+                / k.normp(p=2, zeromode=1)
+            )
 
-        phi_q_fourier.apply(poisson_transfer_function, out=elec_field_fourier[_d])
+        phi_q_fourier.apply(
+            poisson_transfer_function, out=elec_field_fourier[_d]
+        )
         elec_field_fourier[_d].c2r(out=elec_field[_d])
 
-    ## calculate electric forces on particles
-    ## old protocol in compute_electric_force_on_particle_onestep
-    for _d in np.arange(_SPACE_DIM):
+    for _d in np.arange(n_dimensions):
         elec_forces[:, _d] = charges * (
             elec_field[_d].readout(positions, layout=layout_q)
         )
-        ###^------ here the use the column, as the elec_forces are defined as (N,3) dimension
 
-    ## calculate electric energy in Fourier space
-    ## old protocol in poisson_solver [ if calc_energy: ] block
     if compute_energy:
-
-        def transfer_energy(
-            k, v
-        ):  ### potential field is electric field / (-ik)  --> potential field * q -->
+        def transfer_energy(k, v):
             return (
-                4.0 * np.pi * COULK_GMX * np.abs(v) ** 2 / k.normp(p=2, zeromode=1)
-            )  ## zeromode = 1 needed here?
-
-        phi_q_fourier.apply(transfer_energy, kind="wavenumber", out=elec_energy_field)
-
+                4.0 * np.pi * elec_conversion_factor * np.abs(v)**2
+                / k.normp(p=2, zeromode=1)
+            )
+        phi_q_fourier.apply(
+            transfer_energy, kind="wavenumber", out=elec_energy_field
+        )
         field_q_energy = 0.5 * comm.allreduce(np.sum(elec_energy_field.value))
 
     return field_q_energy.real
 
 
 def update_field(
-    phi,
-    layouts,
-    force_mesh,
-    hamiltonian,
-    pm,
-    positions,
-    types,
-    config,
-    v_ext,
-    phi_fourier,
-    v_ext_fourier,
-    compute_potential=False,
+    phi, layouts, force_mesh, hamiltonian, pm, positions, types, config, v_ext,
+    phi_fourier, v_ext_fourier, compute_potential=False,
 ):
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
@@ -234,19 +138,21 @@ def update_field(
         hamiltonian.v_ext[t](phi).r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
         np.copyto(
-            v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no", where=True
+            v_ext_fourier[1].value, v_ext_fourier[0].value, casting="no",
+            where=True,
         )
         np.copyto(
-            v_ext_fourier[2].value, v_ext_fourier[0].value, casting="no", where=True
+            v_ext_fourier[2].value, v_ext_fourier[0].value, casting="no",
+            where=True,
         )
         if compute_potential:
             np.copyto(
-                v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no", where=True
+                v_ext_fourier[3].value, v_ext_fourier[0].value, casting="no",
+                where=True,
             )
 
         # Differentiate the external potential in fourier space
         for d in range(3):
-
             def force_transfer_function(k, v, d=d):
                 return -k[d] * 1j * v
 
@@ -258,14 +164,7 @@ def update_field(
 
 
 def compute_field_and_kinetic_energy(
-    phi,
-    velocity,
-    hamiltonian,
-    positions,
-    types,
-    v_ext,
-    config,
-    layouts,
+    phi, velocity, hamiltonian, positions, types, v_ext, config, layouts,
     comm=MPI.COMM_WORLD,
 ):
     V = np.prod(config.box_size)
@@ -279,10 +178,11 @@ def compute_field_and_kinetic_energy(
 
 
 def domain_decomposition(
-    positions, pm, *args, molecules=None, bonds=None, verbose=0, comm=MPI.COMM_WORLD
+    positions, pm, *args, molecules=None, bonds=None, verbose=0,
+    comm=MPI.COMM_WORLD
 ):
     if molecules is not None:
-        assert bonds is not None, "bonds must be provided when molecules are present"
+        assert bonds is not None, "bonds must be provided with molecules"
         unique_molecules = np.sort(np.unique(molecules))
         molecules_com = np.empty_like(positions)
         for m in unique_molecules:

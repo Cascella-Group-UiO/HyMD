@@ -1,6 +1,6 @@
 subroutine cbf(f, r, box, a, b, r0, k, energy)
 ! ==============================================================================
-! compute_bond_forces() speedup attempt.
+! compute_bond_forces()
 !
 ! Compile:
 !   f2py3 --f90flags="-Ofast" -c compute_bond_forces.f90 -m compute_bond_forces

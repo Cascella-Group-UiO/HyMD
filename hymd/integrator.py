@@ -5,6 +5,3 @@ def integrate_velocity(velocities, accelerations, time_step):
 
 def integrate_position(positions, velocities, time_step):
     return positions + time_step * velocities
-
-
-# Leap frog?

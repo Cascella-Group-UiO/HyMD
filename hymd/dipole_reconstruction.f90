@@ -4,15 +4,15 @@ implicit none
 contains
 function cross(vector1, vector2) result(vector3)
   real(8), dimension(3), intent(in) :: vector1, vector2
-  real(8), dimension(3)             :: vector3 
-  
+  real(8), dimension(3)             :: vector3
+
   vector3(1) = vector1(2) * vector2(3) - vector1(3) * vector2(2)
   vector3(2) = vector1(3) * vector2(1) - vector1(1) * vector2(3)
   vector3(3) = vector1(1) * vector2(2) - vector1(2) * vector2(1)
 end function
 
 function cross_matrix(matrix, vector) result(output)
-  ! The i-th row of the output matrix is the cross product 
+  ! The i-th row of the output matrix is the cross product
   ! between the i-th row of the input matrix and the input vector.
   real(8), dimension(3,3), intent(in) :: matrix
   real(8), dimension(3),   intent(in) :: vector
@@ -24,7 +24,7 @@ function cross_matrix(matrix, vector) result(output)
 end function
 
 function outer_product(vector1, vector2) result(output)
-  ! The i-th row of the output matrix is vector2 
+  ! The i-th row of the output matrix is vector2
   ! multiplied by the i-th component of vector1.
   real(8), dimension(3), intent(in) :: vector1, vector2
   real(8), dimension(3,3)           :: output
@@ -103,7 +103,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
   cos_gamma = dot_product(w, v)
   cos2 = cos_gamma * cos_gamma
-  
+
   ! This prevents sin_gamma == 0
   if (cos2 < 1.0) then
     gamm = acos(cos_gamma)
@@ -115,7 +115,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
       print *, "There's probably something wrong with the simulation. Setting sin(γ) = 0.1"
       sin_gamma = 0.1
     end if
-    
+
     ! Bending "forces" == f_gamma_i in the paper
     ! 1/sin(γ) ∂cos(γ)/∂γ
     fa = (v - cos_gamma * w) / norm_a
@@ -133,7 +133,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     energy_cbt = 0.5d0 * k * var_sq
     ! Positive gradient, add to V_prop gradient
     df_cbt = 0.5d0 * dk * var_sq - df_ang * dg
-    
+
     ! Exit subroutine if we only need the forces
     if (dipole_flag == 0) then
       fa = df_ang * fa
@@ -161,7 +161,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     dipole(1, :) = r0 + d
     dipole(2, :) = r0 - d
-    
+
     ! PBC
     dipole(1, :) = dipole(1, :) - box * nint(dipole(1, :) / box)
     dipole(2, :) = dipole(2, :) - box * nint(dipole(2, :) / box)
@@ -175,7 +175,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
           V_b(i, j) = V_b(i, j) - 1.d0
           W_b(i, j) = W_b(i, j) - 1.d0
         end if
-      end do 
+      end do
     end do
 
     V_b = V_b / norm_c
@@ -183,7 +183,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     V_c = -V_b
     W_a = -W_b
-    
+
     ! Last term is 0 for N_a, second term is 0 for N_c (S19)
     ! Minus in the last term because inverse cross_matrix
     ! 1 / sin(γ) is already inside fa, fb, and fc

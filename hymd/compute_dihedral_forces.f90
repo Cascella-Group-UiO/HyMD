@@ -35,20 +35,20 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
     f = r(aa, :) - r(bb, :)
     g = r(bb, :) - r(cc, :)
     h = r(dd, :) - r(cc, :)
-      
+
     f = f - box * nint(f / box)
     g = g - box * nint(g / box)
     h = h - box * nint(h / box)
-  
+
     v = cross(f, g)
     w = cross(h, g)
     v_sq = dot_product(v, v)
     w_sq = dot_product(w, w)
     g_norm = norm2(g)
-    
+
     cos_phi = dot_product(v, w)
     sin_phi = dot_product(w, f) * g_norm
-    phi = atan2(sin_phi, cos_phi) 
+    phi = atan2(sin_phi, cos_phi)
 
     f_dot_g = dot_product(f, g)
     h_dot_g = dot_product(h, g)
@@ -70,7 +70,7 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
 
     ! CBT potential
     if (dtype(ind) == 1) then
-      ! V = V_prop + k * (gamma - gamma_0)**2      
+      ! V = V_prop + k * (gamma - gamma_0)**2
 
       c_k = coeff(ind, 5, :)
       d_k = coeff(ind, 6, :)
@@ -114,7 +114,7 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
       df_dih = force_const * (phi - eq_value)
       energy = energy + 0.5 * force_const * (phi - eq_value) ** 2
     end if
-    
+
     ! Dihedral forces
     sc = v * f_dot_g / (v_sq * g_norm) - w * h_dot_g / (w_sq * g_norm)
 
@@ -122,25 +122,12 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
     fd =  df_dih * g_norm * w / w_sq
     fb =  df_dih * sc - fa
     fc = -df_dih * sc - fd
-    
+
     ! Subtract negative gradient
     force(aa, :) = force(aa, :) + fa
     force(bb, :) = force(bb, :) + fb
     force(cc, :) = force(cc, :) + fc
     force(dd, :) = force(dd, :) + fd
 
-    ! For debugging forces
-    ! if (ind == 1 .or. ind == 2) then
-    ! print *, "coords"
-    ! print *, ind, r(aa, :)
-    ! print *, ind, r(bb, :)
-    ! print *, ind, r(cc, :)
-    ! print *, ind, r(dd, :)
-    ! print *, "tot_forces"
-    ! print *, ind, force(aa, :)
-    ! print *, ind, force(bb, :)
-    ! print *, ind, force(cc, :)
-    ! print *, ind, force(dd, :)
-    ! end if
   end do
 end subroutine cdf
