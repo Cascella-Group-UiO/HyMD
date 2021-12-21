@@ -8,19 +8,24 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine numpy cython mpi4py
+        sudo apt-get update
+        sudo apt-get install -y python3-mpi4py python3-numpy
+    - name: Install python dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install setuptools wheel twine cython numpy mpi4py
     - name: Build and publish
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TEST_PASSWORD }}
       run: |
-        python setup.py sdist bdist_wheel
-        twine upload --repository testpypi dist/*
+        pip3 list
+        python3 setup.py sdist
+        python3 -m twine upload --repository testpypi dist/*
