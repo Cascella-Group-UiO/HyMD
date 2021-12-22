@@ -41,6 +41,18 @@ setup(
     packages=["hymd"],
     version=find_version("hymd/version.py"),
     ext_modules=[force_kernels],
+    install_requires=[
+        "cython",
+        "h5py",
+        "mpi4py",
+        "mpsort",
+        "networkx",
+        "numpy",
+        "pfft-python",
+        "pmesh",
+        "sympy",
+        "tomli",
+    ],
     python_requires=">=3.6",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
