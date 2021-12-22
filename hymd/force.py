@@ -154,7 +154,18 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                         and name_mid_2 == a.atom_3
                         and name_j == a.atom_4
                     )
-                    if match_forward:
+                    if (
+                        match_forward
+                        and [
+                            bond_graph.nodes()[p[3]]["local_index"],
+                            bond_graph.nodes()[p[2]]["local_index"],
+                            bond_graph.nodes()[p[1]]["local_index"],
+                            bond_graph.nodes()[i]["local_index"],
+                            a.coeffs,
+                            a.dih_type,
+                        ]
+                        not in bonds_4
+                    ):
                         bonds_4.append(
                             [
                                 bond_graph.nodes()[i]["local_index"],
@@ -297,7 +308,7 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
     f_dihedrals.fill(0.0)
     energy = 0.0
 
-    for a, b, c, d, coeff, phase in bonds_4:
+    for a, b, c, d, coeffs, phase in bonds_4:
         f = r[a, :] - r[b, :]
         g = r[b, :] - r[c, :]
         h = r[d, :] - r[c, :]
@@ -323,9 +334,9 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
 
         df = 0
 
-        for m in range(len(coeff)):
-            energy += coeff[m] * (1 + np.cos(m * phi - phase[m]))
-            df += m * coeff[m] * np.sin(m * phi - phase[m])
+        for m in range(len(coeffs[0])):
+            energy += coeffs[0][m] * (1 + np.cos(m * phi - coeffs[1][m]))
+            df += m * coeffs[0][m] * np.sin(m * phi - coeffs[1][m])
 
         force_on_a = df * gn * v / vv
         force_on_d = df * gn * w / ww

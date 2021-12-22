@@ -1,18 +1,9 @@
 from mpi4py import MPI
-import sys
-import os
+import sympy
 import numpy as np
 import h5py
 import pytest
 import collections
-
-# fmt: off
-# TODO: Remove this when we have a working pip installable main package and
-# can test against installed package by
-#
-# pip3 install -e . && python3 -m pytest
-curr_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(curr_path, os.pardir, 'hymd'))
 
 
 @pytest.fixture
@@ -144,29 +135,29 @@ def alanine_octapeptide():
         dtype=np.float64)
     bonds = np.array(
         [
-            [ 1,  2, -1],  # BB(0)
-            [ 0, -1, -1],  # SC(1)
-            [ 0,  3,  4],  # BB(2)
-            [ 2, -1, -1],  # SC(3)
-            [ 2,  5,  6],  # BB(4)
-            [ 4, -1, -1],  # SC(5)
-            [ 4,  7,  8],  # BB(6)
-            [ 6, -1, -1],  # SC(7)
-            [ 6,  9, 10],  # BB(8)
-            [ 8, -1, -1],  # SC(9)
-            [ 8, 11, 12],  # BB(10)
-            [10, -1, -1],  # SC(11)
-            [10, 13, 14],  # BB(12)
-            [12, -1, -1],  # SC(13)
-            [12, 15, -1],  # BB(14)
-            [14, -1, -1],  # SC(15)
+            [1,   2,  -1],  # BB(0)
+            [0,  -1,  -1],  # SC(1)
+            [0,   3,   4],  # BB(2)
+            [2,  -1,  -1],  # SC(3)
+            [2,   5,   6],  # BB(4)
+            [4,  -1,  -1],  # SC(5)
+            [4,   7,   8],  # BB(6)
+            [6,  -1,  -1],  # SC(7)
+            [6,   9,  10],  # BB(8)
+            [8,  -1,  -1],  # SC(9)
+            [8,  11,  12],  # BB(10)
+            [10, -1,  -1],  # SC(11)
+            [10, 13,  14],  # BB(12)
+            [12, -1,  -1],  # SC(13)
+            [12, 15,  -1],  # BB(14)
+            [14, -1,  -1],  # SC(15)
         ],
         dtype=int)
     names = np.array(
         [
             b"BB", b"SC", b"BB", b"SC", b"BB", b"SC", b"BB", b"SC",
             b"BB", b"SC", b"BB", b"SC", b"BB", b"SC", b"BB", b"SC",
-        ], 
+        ],
         dtype="S5"
     )
     CONF = {}
@@ -177,7 +168,8 @@ def alanine_octapeptide():
         "Angle", ["atom_1", "atom_2", "atom_3", "equilibrium", "strength"]
     )
     Dihedral = collections.namedtuple(
-        "Dihedral", ["atom_1", "atom_2", "atom_3", "atom_4", "coeff", "phase"]
+        "Dihedral",
+        ["atom_1", "atom_2", "atom_3", "atom_4", "coeffs", "dih_type"]
     )
     # Values for bonds and angles taken from MARTINI 3 parameters.
     # Not used to test dihedral forces.
@@ -188,19 +180,24 @@ def alanine_octapeptide():
     CONF["bond_3"] = (
         Angle("BB", "BB", "BB", 127, 20),
         Angle("BB", "BB", "SC", 100, 25),
-        #Angle("SC", "BB", "BB", 100, 25), # In martini they have only the first angle of this type
     )
     # Symbolic arrays of 1s and 0s for analytical check
     CONF["bond_4"] = (
         Dihedral(
-            "BB", "BB", "BB", "BB", 
-            [1 for _ in range(5)], 
-            [0 for _ in range(5)],
+            "BB", "BB", "BB", "BB",
+            np.array([
+                [1, 1, 1, 1, 1],
+                [0, 0, 0, 0, 0]
+            ]),
+            0,
         ),
     )
-    for k, v in {"Np": 8, "types": 2, "mass": 72.0, "L": [5.0, 5.0, 5.0]}.items():
+    for k, v in {
+        "Np": 8, "types": 2, "mass": 72.0, "L": [5.0, 5.0, 5.0]
+    }.items():
         CONF[k] = v
     return indices, bonds, names, molecules, r, CONF
+
 
 @pytest.fixture()
 def h5py_molecules_file(mpi_file_name):
@@ -557,3 +554,55 @@ def molecules_with_solvent():
                      dtype=int)
     return (np.arange(0, r.shape[0]), r, molecules, velocities, bonds, names,
             types)
+
+
+@pytest.fixture
+def filter(sigma):
+    k = sympy.var('k:%d' % (3))
+
+    def H1(k):
+        return sympy.functions.elementary.exponential.exp(
+            -0.5 * sigma**2 * (k0**2 + k1**2 + k2**2)  # noqa: F821
+        )
+    H1 = sympy.lambdify([k], H1(k))
+
+    def H(k, v):
+        return v * H1(k)
+
+    return sigma, H
+
+
+@pytest.fixture
+def v_ext(types, kappa, rho0, sigma):
+    n_types = len(types)
+    phi = sympy.var('phi:%d' % (n_types))
+
+    def w(phi):
+        return 0.5 / (kappa * rho0) * (sum(phi) - rho0)**2
+
+    v_external = [
+        sympy.lambdify([phi], sympy.diff(w(phi), "phi%d" % (i)))
+        for i in range(n_types)
+    ]
+
+    w = sympy.lambdify([phi], w(phi))
+    return types, n_types, kappa, rho0, sigma, w, v_external
+    """
+    k = sympy.var("k:%d" % (3))
+
+    def H1(k):
+        return sympy.functions.elementary.exponential.exp(
+            -0.5 * sigma**2 * (k0**2 + k1**2 + k2**2)  # noqa: F821
+        )
+
+    kdHdk = [
+        k0 * sympy.diff(H1(k), "k0"),  # noqa: F821
+        k1 * sympy.diff(H1(k), "k1"),  # noqa: F821
+        k2 * sympy.diff(H1(k), "k2")   # noqa: F821
+    ]
+    kdHdk = [sympy.lambdify([k], kdHdk[i]) for i in range(3)]
+    H1 = sympy.lambdify([k], H1(k))
+
+    def H(k, v):
+        return v * H1(k)
+    """

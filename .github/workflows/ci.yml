@@ -25,25 +25,26 @@ jobs:
           ${{ runner.os }}-
     - name: Install dependencies
       run: |
-        sudo apt-get install libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
-        python -m pip install --upgrade pip
-        pip install wheel
-        pip install pytest pytest-cov pytest-mpi coverage
-        pip install --upgrade numpy mpi4py cython
-        pip install -r requirements.txt
-    - name: Compile fortran modules
+        sudo apt-get update
+        sudo apt-get install -y python3-mpi4py python3-numpy
+        sudo apt-get install -y libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
+    - name: Install python dependencies
       run: |
-        cd hymd/
-        make clean
-        make
-        cd ..
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade wheel numpy mpi4py cython
+        python3 -m pip install -r requirements.txt
+    - name: Install package
+      run: |
+        python3 -m pip install .
     - name: Test with pytest
       run: |
-        pytest -v --cov=./ --cov-report=
-        #### NPROCS=6
-        #### chmod +x pytest-mpi
-        #### ./pytest-mpi --nprocs ${NPROCS} --order-output --verbose
-        #### mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh 0 pytest -v --only-mpi --cov=./ --cov-append --cov-report=
-    - name: Coverage report
+        python3 -m pip install pytest pytest-cov pytest-mpi coverage
+        pytest --cov=./
+        chmod +x pytest-mpi
+        ./pytest-mpi -c -ca -n 2 -ns -oo
+    - name: Coverage report and upload
       run: |
         coverage report
+        coverage xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2

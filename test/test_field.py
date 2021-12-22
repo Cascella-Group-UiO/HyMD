@@ -4,9 +4,9 @@ import warnings
 import pmesh
 import logging
 import numpy as np
-from input_parser import Config
-from file_io import distribute_input
-from field import domain_decomposition
+from hymd.input_parser import Config
+from hymd.file_io import distribute_input
+from hymd.field import domain_decomposition
 
 
 @pytest.mark.mpi()

@@ -1,6 +1,6 @@
 import numpy as np
 import h5py
-from file_io import distribute_input
+from hymd.file_io import distribute_input
 
 
 def _distribute_nranks(size, in_path, n_particles):

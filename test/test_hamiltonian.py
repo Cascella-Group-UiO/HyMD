@@ -2,33 +2,42 @@ from mpi4py import MPI
 import pytest
 import logging
 import pmesh
+import sympy
 from types import ModuleType
 import numpy as np
-from hamiltonian import Hamiltonian, DefaultNoChi, DefaultWithChi, SquaredPhi
-from input_parser import _find_unique_names, convert_CONF_to_config
-from force import Chi
+from hymd.hamiltonian import (
+    Hamiltonian, DefaultNoChi, DefaultWithChi, SquaredPhi,
+)
+from hymd.input_parser import (
+    _find_unique_names, Config, read_config_toml, parse_config_toml,
+)
+from hymd.force import Chi
 
 
-def test_DefaultNoChi_window_function(dppc_single, config_CONF, caplog):
+@pytest.mark.parametrize(
+    "sigma",
+    [
+        0.2988365823859701,
+        1.2585762493242553,
+        9.2159828579248931,
+    ],
+)
+def test_DefaultNoChi_window_function(
+    dppc_single, config_toml, filter, caplog
+):
     caplog.set_level(logging.INFO)
+    sigma, filter = filter
+    print(sigma, filter)
     indices, _, names, _, r, _ = dppc_single
-    conf_file_name, _ = config_CONF
-    CONF = {}
-    CONF_ = {}
-    exec(open(conf_file_name).read(), CONF)
-    exec(open(conf_file_name).read(), CONF_)
-    CONF = {k: v for k, v in CONF.items() if (not k.startswith('_') and
-                                              not isinstance(v, ModuleType))}
-    CONF_ = {k: v for k, v in CONF_.items() if (not k.startswith('_') and
-                                                not isinstance(v, ModuleType))}
-    with pytest.warns(Warning) as recorded_warning:
-        config_conf = convert_CONF_to_config(CONF_)
-        assert recorded_warning[0].message.args[0]
-        assert caplog.text
-    config_conf = _find_unique_names(config_conf, names)
-    W = DefaultNoChi(config_conf)
+    conf_file_name, _ = config_toml
+    file_contents = read_config_toml(conf_file_name)
+    config = parse_config_toml(file_contents)
 
-    k = np.array(
+    config = _find_unique_names(config, names)
+    config.sigma = sigma
+    W = DefaultNoChi(config)
+
+    k_ = np.array(
         [[0.5321315378106508, -0.6711591309063634,  0.8362051282174443],
          [0.2853046917286570, -0.6542962742862817,  0.3174805390299977],
          [0.6999748102259762, -0.9385345654631219, -0.7383831543700541]]
@@ -38,28 +47,32 @@ def test_DefaultNoChi_window_function(dppc_single, config_CONF, caplog):
          [-0.7348831910188103, 0.2808258965802970, 0.7446817693106476],
          [0.6458163432308923, -0.0526126093343278, 0.7065510160449484]]
     )
-    for kk, vv in zip(k, v):
-        assert np.allclose(W.H(kk, vv), CONF['H'](kk, vv), atol=1e-14)
+
+    for kk, vv in zip(k_, v):
+        assert np.allclose(W.H(kk, vv), filter(kk, vv), atol=1e-14)
 
 
-def test_DefaultNoChi_energy_functional(config_CONF, caplog):
+@pytest.mark.parametrize(
+    ["types", "kappa", "rho0", "sigma"],
+    [
+        (["A", "B"], 0.029230985982, 0.012169633583017335, 0.2988365823859701),
+        (["A", "B"], 1.299759825895, 0.012169633583017335, 1.2095870248085025),
+    ],
+)
+def test_DefaultNoChi_energy_functional(filter, v_ext, caplog):
+    _, filter = filter
+    types, n_types, kappa, rho0, sigma, w, v_external = v_ext
+
     caplog.set_level(logging.INFO)
-    conf_file_name, _ = config_CONF
-    CONF = {}
-    CONF_ = {}
-    exec(open(conf_file_name).read(), CONF)
-    exec(open(conf_file_name).read(), CONF_)
-    CONF = {k: v for k, v in CONF.items() if (not k.startswith('_') and
-                                              not isinstance(v, ModuleType))}
-    CONF_ = {k: v for k, v in CONF_.items() if (not k.startswith('_') and
-                                                not isinstance(v, ModuleType))}
-    with pytest.warns(Warning) as recorded_warning:
-        config_conf = convert_CONF_to_config(CONF_)
-        assert recorded_warning[0].message.args[0]
-        assert caplog.text
-    config_conf = _find_unique_names(config_conf, list(CONF['NAMES']))
-    W = DefaultNoChi(config_conf)
-
+    config_conf = Config(
+        n_particles=5,
+        mesh_size=[8, 8, 8],
+        box_size=[7.1598, 11.2498, 5.1009],
+        time_step=0.01,
+        n_steps=1,
+        sigma=sigma,
+        kappa=kappa,
+    )
     r = np.array(
         [[5.0856957005460090, 2.6917109262984917, 2.1680859811719504],
          [0.0592355479043435, 7.4705053874595030, 0.7169198724514365],
@@ -68,14 +81,17 @@ def test_DefaultNoChi_energy_functional(config_CONF, caplog):
          [1.6400925628903045, 2.1325438112867725, 3.4149968975443680]]
     )
     types = np.array([0, 0, 1, 1, 1], dtype=int)
+    names = np.array([np.string_(x) for x in ["A", "A", "B", "B", "B"]])
+    n_types = len(np.unique(types))
+    config_conf = _find_unique_names(config_conf, names)
 
-    assert config_conf.mesh_size == CONF['Nv']
-    assert np.allclose(np.asarray(config_conf.box_size), np.asarray(CONF['L']),
-                       atol=1e-14)
+    W = DefaultNoChi(config_conf)
+
     mesh_size = config_conf.mesh_size
-    pm = pmesh.ParticleMesh((mesh_size, mesh_size, mesh_size),
-                            BoxSize=config_conf.box_size, dtype='f8',
-                            comm=MPI.COMM_WORLD)
+    pm = pmesh.ParticleMesh(
+        mesh_size, BoxSize=config_conf.box_size, dtype='f8',
+        comm=MPI.COMM_WORLD
+    )
     layouts = [pm.decompose(r[t == types]) for t in
                range(len(config_conf.unique_names))]
     painted = [
@@ -83,8 +99,7 @@ def test_DefaultNoChi_energy_functional(config_CONF, caplog):
         for t in range(len(config_conf.unique_names))
     ]
     painted_ = [
-        pm.paint(r[t == types], layout=layouts[t])
-        for t in range(CONF['ntypes'])
+        pm.paint(r[t == types], layout=layouts[t]) for t in range(n_types)
     ]
     # Particles -> grid operation should conserve total mass
     assert np.sum(np.sum(painted[0])) == pytest.approx(2.0, abs=1e-14)
@@ -92,14 +107,15 @@ def test_DefaultNoChi_energy_functional(config_CONF, caplog):
     assert np.sum(np.sum(painted[1])) == pytest.approx(3.0, abs=1e-14)
     assert np.sum(np.sum(painted_[1])) == pytest.approx(3.0, abs=1e-14)
 
-    pm = pmesh.ParticleMesh([6, 6, 6],
-                            BoxSize=np.array([5, 5, 5]), dtype='f8',
-                            comm=MPI.COMM_WORLD)
+    pm = pmesh.ParticleMesh(
+        config_conf.mesh_size, BoxSize=np.array(config_conf.box_size),
+        dtype="f8", comm=MPI.COMM_WORLD
+    )
 
     for p in painted:
         p.r2c(out=Ellipsis).apply(W.H, out=Ellipsis).c2r(out=Ellipsis)
     for p_ in painted_:
-        p_.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
+        p_.r2c(out=Ellipsis).apply(filter, out=Ellipsis).c2r(out=Ellipsis)
     for p, p_ in zip(painted, painted_):
         assert np.allclose(p, p_, atol=1e-14)
 
@@ -114,18 +130,15 @@ def test_DefaultNoChi_energy_functional(config_CONF, caplog):
     filtered_ = painted_
 
     for t in range(len(config_conf.unique_names)):
-        v_ext_fourier_space = (W.v_ext[t](filtered)
-                                .r2c(out=Ellipsis)
-                                .apply(W.H, out=Ellipsis))
-        v_ext_fourier_space_ = (CONF['V_EXT'][t](filtered_)
-                                .r2c(out=Ellipsis)
-                                .apply(CONF['H'], out=Ellipsis))
-        assert np.allclose(v_ext_fourier_space, v_ext_fourier_space_,
-                           atol=1e-14)
+        v_ext_fourier_space = (
+            W.v_ext[t](filtered).r2c(out=Ellipsis).apply(W.H, out=Ellipsis)
+        )
+        v_ext_fourier_space_ = (
+            v_external[t](filtered_).r2c(out=Ellipsis)
+                                    .apply(filter, out=Ellipsis)
+        )
+        assert np.allclose(v_ext_fourier_space, v_ext_fourier_space_, atol=1e-14)  # noqa: E501
 
-    CONF['L'] = np.array(CONF['L'])
-    CONF['V'] = CONF['L'][0] * CONF['L'][1] * CONF['L'][2]
-    CONF['dV'] = CONF['V'] / (CONF['Nv']**3)
     V = np.prod(config_conf.box_size)
     n_mesh__cells = np.prod(np.full(3, config_conf.mesh_size))
     volume_per_cell = V / n_mesh__cells
@@ -135,58 +148,62 @@ def test_DefaultNoChi_energy_functional(config_CONF, caplog):
     ]
     painted_ = [
         pm.paint(r[t == types], layout=layouts[t]) / volume_per_cell
-        for t in range(CONF['ntypes'])
+        for t in range(n_types)
     ]
     for p in painted:
         p.r2c(out=Ellipsis).apply(W.H, out=Ellipsis).c2r(out=Ellipsis)
     for p_ in painted_:
-        p_.r2c(out=Ellipsis).apply(CONF['H'], out=Ellipsis).c2r(out=Ellipsis)
-    w = W.w(painted) * volume_per_cell
-    w_ = CONF['w'](painted_) * CONF['dV']
+        p_.r2c(out=Ellipsis).apply(filter, out=Ellipsis).c2r(out=Ellipsis)
+    w__ = W.w(painted) * volume_per_cell
+    w_ = w(painted_) * volume_per_cell
 
-    assert np.allclose(w, w_, atol=1e-14)
-    assert w.csum() == pytest.approx(w_.csum(), abs=1e-14)
+    assert np.allclose(w__, w_, atol=1e-14)
+    assert w__.csum() == pytest.approx(w_.csum(), abs=1e-14)
 
 
-def test_Hamiltonian_no_chi_gaussian_core(config_CONF, caplog):
+@pytest.mark.parametrize(
+    ["types", "kappa", "rho0", "sigma"],
+    [
+        (["A"], 0.029230985982, 0.000888888888888888, 0.2988365823859701),
+        (["A"], 1.299759825895, 0.000888888888888888, 1.2095870248085025),
+    ],
+)
+def test_Hamiltonian_no_chi_gaussian_core(v_ext, caplog):
     caplog.set_level(logging.INFO)
-    conf_file_name, _ = config_CONF
-    CONF = {}
-    exec(open(conf_file_name).read(), CONF)
-    CONF = {k: v for k, v in CONF.items() if (not k.startswith('_') and
-                                              not isinstance(v, ModuleType))}
-    CONF['Np'] = 3
-    with pytest.warns(Warning) as recorded_warning:
-        config_conf = convert_CONF_to_config(CONF)
-        assert recorded_warning[0].message.args[0]
-        assert caplog.text
+    types, n_types, kappa, rho0, sigma, w, v_external = v_ext
 
+    config = Config(
+        n_particles=3,
+        mesh_size=[160, 160, 160],
+        box_size=[15.0, 15.0, 15.0],
+        time_step=0.01,
+        n_steps=1,
+        sigma=sigma,
+        kappa=kappa,
+    )
     names = np.array([np.string_(s) for s in ['A', 'A']])
-    config = _find_unique_names(config_conf, names)
-    config.box_size = np.array([15.0, 15.0, 15.0])
-    config.mesh_size = np.array([160, 160, 160])
-    config.n_particles = 3
+    config = _find_unique_names(config, names)
     r = np.array(
         [[1.50, 0.75, 2.25],
          [2.25, 0.00, 3.00],
          [4.50, 1.50, 2.25]]
     )
-    pm = pmesh.ParticleMesh(config.mesh_size, BoxSize=config.box_size,
-                            dtype='f8', comm=MPI.COMM_WORLD)
+    pm = pmesh.ParticleMesh(
+        config.mesh_size, BoxSize=config.box_size, dtype="f8",
+        comm=MPI.COMM_WORLD
+    )
     V = np.prod(config.box_size)
     n_mesh__cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh__cells
 
     layout = pm.decompose(r)
     phi = pm.paint(r, layout=layout) / volume_per_cell
-    assert phi.csum() == pytest.approx(config.n_particles / volume_per_cell,
-                                       abs=1e-14)
+    assert phi.csum() == pytest.approx(config.n_particles / volume_per_cell, abs=1e-14)  # noqa: E501
     hamiltonian = Hamiltonian(config)
     phi = (phi.r2c(out=Ellipsis)
               .apply(hamiltonian.H, out=Ellipsis)
               .c2r(out=Ellipsis))
-    assert phi.csum() == pytest.approx(config.n_particles / volume_per_cell,
-                                       abs=1e-11)
+    assert phi.csum() == pytest.approx(config.n_particles / volume_per_cell, abs=1e-11)  # noqa: E501
 
     for W in [SquaredPhi(config), DefaultNoChi(config)]:
         w = (W.w([phi]) * volume_per_cell).csum()
@@ -241,21 +258,29 @@ def test_Hamiltonian_no_chi_gaussian_core(config_CONF, caplog):
     # 0.8411702820397121 --> grid 160
 
 
-def test_Hamiltonian_with_chi_gaussian_core(config_CONF, caplog):
+@pytest.mark.parametrize(
+    ["types", "kappa", "rho0", "sigma"],
+    [
+        (["A", "B", "C"], 0.029230985982, 0.0014814814814814814, 0.2988365823859701),
+        (["A", "B", "C"], 1.299759825895, 0.0014814814814814814, 1.2095870248085025),
+    ],
+)
+def test_Hamiltonian_with_chi_gaussian_core(v_ext, caplog):
     caplog.set_level(logging.INFO)
-    conf_file_name, _ = config_CONF
-    CONF = {}
-    exec(open(conf_file_name).read(), CONF)
-    CONF = {k: v for k, v in CONF.items() if (not k.startswith('_') and
-                                              not isinstance(v, ModuleType))}
-    with pytest.warns(Warning) as recorded_warning:
-        config_conf = convert_CONF_to_config(CONF)
-        assert recorded_warning[0].message.args[0]
-        assert caplog.text
+    types, n_types, kappa, rho0, sigma, w, v_external = v_ext
+    config = Config(
+        n_particles=5,
+        mesh_size=[160, 160, 160],
+        box_size=[15.0, 15.0, 15.0],
+        time_step=0.01,
+        n_steps=1,
+        sigma=sigma,
+        kappa=kappa,
+    )
 
     names = np.array([np.string_(s) for s in ['A', 'A', 'B', 'C', 'C']])
     types = np.array([0, 0, 1, 2, 2])
-    config = _find_unique_names(config_conf, names)
+    config = _find_unique_names(config, names)
     config.box_size = np.array([15.0, 15.0, 15.0])
     config.mesh_size = np.array([160, 160, 160])
     config.n_particles = 5
@@ -266,8 +291,10 @@ def test_Hamiltonian_with_chi_gaussian_core(config_CONF, caplog):
          [1.50, 1.50, 0.75],
          [3.00, 4.50, 1.50]]
     )
-    pm = pmesh.ParticleMesh(config.mesh_size, BoxSize=config.box_size,
-                            dtype='f8', comm=MPI.COMM_WORLD)
+    pm = pmesh.ParticleMesh(
+        config.mesh_size, BoxSize=config.box_size, dtype="f8",
+        comm=MPI.COMM_WORLD
+    )
     V = np.prod(config.box_size)
     n_mesh__cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh__cells
@@ -275,16 +302,9 @@ def test_Hamiltonian_with_chi_gaussian_core(config_CONF, caplog):
     layouts = [pm.decompose(r[types == t]) for t in range(config.n_types)]
     phi = [pm.paint(r[types == t], layout=layouts[t]) / volume_per_cell
            for t in range(config.n_types)]
-    # assert sum(phi).csum() == pytest.approx(config.n_particles/volume_per_cell, abs=1e-14)    <<<<<---- FIXME
     hamiltonian = Hamiltonian(config)
     for t in range(config.n_types):
-        """
-        phi[t] = (phi[t].r2c(out=Ellipsis)
-                        .apply(hamiltonian.H, out=Ellipsis)
-                        .c2r(out=Ellipsis))
-        """
         phi[t].r2c(out=Ellipsis).apply(hamiltonian.H, out=Ellipsis).c2r(out=Ellipsis)  # noqa: E501
-    # assert sum(phi).csum() == pytest.approx(config.n_particles/volume_per_cell, abs=1e-14)      <<<<<---- FIXME
 
     chi_ = [
       [['A', 'B'],   [9.6754032616815161]],

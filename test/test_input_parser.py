@@ -5,7 +5,7 @@ import logging
 from types import ModuleType
 import numpy as np
 from mpi4py import MPI
-from input_parser import (
+from hymd.input_parser import (
     Config,
     read_config_toml,
     parse_config_toml,
@@ -16,7 +16,6 @@ from input_parser import (
     check_chi,
     check_box_size,
     check_integrator,
-    convert_CONF_to_config,
     check_thermostat_coupling_groups,
     check_cancel_com_momentum,
 )
@@ -96,11 +95,12 @@ def test_input_parser_check_optionals(config_toml, caplog):
     assert config.max_molecule_size is None
     config = check_max_molecule_size(config)
     if MPI.COMM_WORLD.Get_rank() == 0:
-        assert all([(s in caplog.text) for s in ("No", "max_molecule_size", "201")])
+        assert all([(s in caplog.text) for s in ("No", "max_molecule_size", "201")])  # noqa: E501
     caplog.clear()
 
     config_toml_wrong_max_molecule_size = re.sub(
-        "max_molecule_size[ \t]*=[ \t]*[0-9]+", "max_molecule_size = 0", config_toml_str
+        "max_molecule_size[ \t]*=[ \t]*[0-9]+", "max_molecule_size = 0",
+        config_toml_str
     )
 
     if MPI.COMM_WORLD.Get_rank() == 0:
@@ -177,7 +177,7 @@ def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
         ["A--A", "no A"],
         ["P--B", "no B"],
         ["A--A", "no A"],
-        ["A--B", "neither A, nor B"],
+        ["A--B", "neither A, B"],
     ]
 
     for a, w in zip(add_bonds, warn_strs):
@@ -227,7 +227,9 @@ def test_input_parser_check_angles(config_toml, dppc_single, caplog):
     ]
 
     for a, w in zip(add_angles, warn_strs):
-        added_angles_toml_str = _add_to_config(config_toml_str, a, "angle_bonds")
+        added_angles_toml_str = _add_to_config(
+            config_toml_str, a, "angle_bonds"
+        )
         config = parse_config_toml(added_angles_toml_str)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
@@ -276,7 +278,7 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
         ["A--A", "no A"],
         ["B--P", "no B"],
         ["A--A", "no A"],
-        ["A--B", "neither A, nor B"],
+        ["A--B", "neither A, B"],
     ]
 
     for a, w in zip(add_chi, warn_strs):
@@ -332,7 +334,7 @@ def test_input_parser_check_box_size(config_toml, caplog):
     caplog.set_level(logging.INFO)
     _, config_toml_str = config_toml
     config = parse_config_toml(config_toml_str)
-    assert np.allclose(np.array([2.1598, 11.2498, 5.1009]), config.box_size, atol=1e-4)
+    assert np.allclose(np.array([2.1598, 11.2498, 5.1009]), config.box_size, atol=1e-4)  # noqa: E501
 
     changed_box_toml_str = _change_in_config(
         config_toml_str, "box_size = [", "box_size = [2.25, -3.91, 4.11]"
@@ -368,72 +370,6 @@ def test_input_parser_check_integrator(config_toml, caplog):
     message = str(recorded_error.value)
     assert all([(s in message) for s in ("Invalid", "integrator")])
     caplog.clear()
-
-
-def test_input_parser_convert_CONF_to_config(config_CONF, caplog):
-    caplog.set_level(logging.INFO)
-    file_name, conf_str = config_CONF
-    CONF = {}
-    CONF_ = {}
-    exec(open(file_name).read(), CONF)
-    exec(open(file_name).read(), CONF_)
-    CONF = {
-        k: v
-        for k, v in CONF.items()
-        if (not k.startswith("_") and not isinstance(v, ModuleType))
-    }
-    CONF_ = {
-        k: v
-        for k, v in CONF_.items()
-        if (not k.startswith("_") and not isinstance(v, ModuleType))
-    }
-
-    with pytest.warns(Warning) as recorded_warning:
-        config = convert_CONF_to_config(CONF_, file_path=file_name)
-        assert recorded_warning[0].message.args[0]
-        assert caplog.text
-
-    convert_names = [
-        ("mass", "mass"),
-        ("NSTEPS", "n_steps"),
-        ("nprint", "n_print"),
-        ("dt", "time_step"),
-        ("L", "box_size"),
-        ("Nv", "mesh_size"),
-        ("Np", "n_particles"),
-        ("domain_decomp", "domain_decomposition"),
-        ("sigma", "sigma"),
-        ("T_start", "start_temperature"),
-        ("T0", "target_temperature"),
-    ]
-    for names in convert_names:
-        assert CONF[names[0]] == getattr(config, names[1])
-    caplog.clear()
-
-
-def test_input_parser_check_n_print():
-    ...  ##### <<<< FIX ME
-
-
-def test_input_parser_check_tau():  ##### <<<< FIX ME
-    ...
-
-
-def test_input_parser_check_start_and_target_temperature():  ##### <<<< FIX ME
-    ...
-
-
-def test_input_parser_check_mass():  ##### <<<< FIX ME
-    ...
-
-
-def test_input_parser_check_domain_decomposition():  ##### <<<< FIX ME
-    ...
-
-
-@pytest.mark.mpi()
-def test_input_parser_check_name():  ##### <<<< FIX ME
-    ...
 
 
 def test_input_parser_thermostat_coupling_groups(config_toml, caplog):
@@ -511,11 +447,11 @@ def test_input_parser_thermostat_coupling_groups(config_toml, caplog):
     with pytest.raises(ValueError) as recorded_error:
         _ = check_thermostat_coupling_groups(config)
         log = caplog.text
-        assert all([(s in log) for s in ("species P", "specified", "multiple")])
+        assert all([(s in log) for s in ("species P", "specified", "multiple")])  # noqa: E501
 
     message = str(recorded_error.value)
     print(message)
-    assert all([(s in message) for s in ("species P", "specified", "multiple")])
+    assert all([(s in message) for s in ("species P", "specified", "multiple")])  # noqa: E501
     caplog.clear()
 
 

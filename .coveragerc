@@ -3,8 +3,8 @@ omit =
     setup.py
     conf.py
     test/*
-    benchmarks/*
-    examples/*
     docs/*
     utils/*
-    hymd/__init__.py
+    hymd/__main__.py
+    hymd/main.py
+    hymd/gaussian_core.py

@@ -3,10 +3,10 @@ import numpy as np
 import warnings
 import pmesh
 from mpi4py import MPI
-from input_parser import Config, _find_unique_names
-from thermostat import csvr_thermostat
-from field import domain_decomposition
-from file_io import distribute_input
+from hymd.input_parser import Config, _find_unique_names
+from hymd.thermostat import csvr_thermostat
+from hymd.field import domain_decomposition
+from hymd.file_io import distribute_input
 
 
 @pytest.mark.mpi()
@@ -76,22 +76,20 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
 
     # Regression testing to ensure the underlying system didn't change.
     kinetic_energy = 168.45555165866017
-    temperature = 300.0000262607726
+    temperature = 300.1562358223504
     kinetic_energy_species = [55.69986940118755, 59.56037533981311,
                               7.495327677224677, 45.699979240434836]
-    temperature_species = [318.8413354377512, 318.2106019678958,
-                           600.6743707981589, 244.15927235264365]
+    temperature_species = [319.0073556406238, 318.3762937488012,
+                           600.9871410378249, 244.28640571781278]
 
     total_kinetic_energy = K_from_V(velocities, comm=comm)
     total_temperature = T_from_K(total_kinetic_energy, n_particles)
     assert total_kinetic_energy == pytest.approx(kinetic_energy, abs=1e-12)
     assert total_temperature == pytest.approx(temperature, abs=1e-12)
 
-    print("TOTAL NPARTICLES, KINETIC, TEMP", n_particles,
-          total_kinetic_energy, total_temperature)
-
-    for t, T, K in zip(("A", "B", "C", "D"), temperature_species,
-                       kinetic_energy_species):
+    for t, T, K in zip(
+        ("A", "B", "C", "D"), temperature_species, kinetic_energy_species
+    ):
         n_particles_species = comm.allreduce(
             len(np.where(names == np.string_(t))[0]), MPI.SUM
         )
@@ -99,8 +97,6 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
         T_species = T_from_K(K_species, n_particles_species)
         assert K == pytest.approx(K_species, abs=1e-13)
         assert T == pytest.approx(T_species, abs=1e-13)
-        print("SPECIES, NPARTICLES, KINETIC, TEMP", t, n_particles_species,
-              K_species, T_species)
 
     config = _find_unique_names(config, names, comm=comm)
     velocities_copy = velocities.copy()
@@ -115,8 +111,8 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
         remove_center_of_mass_momentum=False,
     )
     kinetic_energy_new = K_from_V(velocities_copy, comm=comm)
-    assert kinetic_energy_new == pytest.approx(171.257138006274, abs=1e-13)
-    assert config.thermostat_work == pytest.approx(2.80158634761387, abs=1e-13)
+    assert kinetic_energy_new == pytest.approx(171.25339969021243, abs=1e-13)
+    assert config.thermostat_work == pytest.approx(2.797848031552252, abs=1e-13)
 
     config.thermostat_work = 0.0
     config.thermostat_coupling_groups = [
@@ -135,19 +131,7 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
         random_gaussian=random_gaussian, random_chi_squared=random_chi_squared,
         remove_center_of_mass_momentum=False,
     )
-
-    K_species = np.array([
-        K_from_V(velocities_copy[names == np.string_("A")], comm=comm),
-        K_from_V(velocities_copy[names == np.string_("B")], comm=comm),
-        K_from_V(velocities_copy[names == np.string_("C")], comm=comm),
-        K_from_V(velocities_copy[names == np.string_("D")], comm=comm),
-    ])
-    K_expected = np.array([50.03215278458857, 62.31604075323946,
-                           8.039648643032598, 43.74504593736311])
-
-    # assert np.allclose(K_species, K_expected, atol=1e-13, rtol=0.0)
-    # assert config.thermostat_work == pytest.approx(-4.322663540436441,
-    #                                                abs=1e-13)
+    assert config.thermostat_work == pytest.approx(-21.670791766960217, abs=1e-13)  # noqa: E501
 
     config.thermostat_work = 0.0
     config.thermostat_coupling_groups = [

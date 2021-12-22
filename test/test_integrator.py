@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from integrator import integrate_velocity, integrate_position
+from hymd.integrator import integrate_velocity, integrate_position
 
 
 def test_integrator_velocity_zero_force(three_atoms):
@@ -284,7 +284,7 @@ def test_integrator_respa_constant_force(three_atoms):
                     v = velocities[i, d]
                     v_0 = initial_velocities[i, d]
                     p = positions[i, d]
-                    p_0 = initial_positions[i, d]
+                    # p_0 = initial_positions[i, d]
                     a_s = acceleration_short[i, d]
                     a_l = acceleration_long[i, d]
                     v_expected = v_0 + step * (Dt * a_l + M * dt * a_s)

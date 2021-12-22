@@ -3,7 +3,6 @@ h5py
 mpi4py
 mpsort
 networkx
-numba
 numpy
 pfft-python
 pmesh

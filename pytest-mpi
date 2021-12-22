@@ -17,6 +17,8 @@ while [[ "$#" -gt 0 ]]; do
     -s|--capture=no) CAPTURE=1 ;;
     -x|--exitfirst) EXITFIRST=1 ;;
     -ns|--no-summary) SUMMARY=1 ;;
+    -c|--coverage) COVERAGE=1 ;;
+    -ca|--cov-append) COVERAGE_APPEND=1 ;;
     -oo|--order-output) ORDEROUTPUT=1 ;;
     -h|--help) HELP=1 ;;
     *) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -38,6 +40,8 @@ then
   echo "    -s --capture=no                 Pass --capture=no to pytest."
   echo "    -x --exitfirst                  Pass --exitfirst to pytest."
   echo "    -ns --no-summary                Pass --no-summary to pytest."
+  echo "    -c  --coverage                  Pass --cov=./ to pytest."
+  echo "    -ca  --cov-append               Pass --cov-append to pytest."
   echo "    -oo --order-output              Dump output from ranks in order."
   echo "    -u --unmute                     Unmute (show output from) only a specfic MPI rank."
 else
@@ -58,6 +62,14 @@ else
 
   if [ "${EXITFIRST}" -eq 1 ]; then
     PYTEST_ARGS="${PYTEST_ARGS} --exitfirst"
+  fi
+
+  if [ "${COVERAGE}" -eq 1 ]; then
+    PYTEST_ARGS="${PYTEST_ARGS} --cov=./"
+  fi
+
+  if [ "${COVERAGE_APPEND}" -eq 1 ]; then
+    PYTEST_ARGS="${PYTEST_ARGS} --cov-append"
   fi
 
   if [ "${ORDEROUTPUT}" -eq 1 ]; then
