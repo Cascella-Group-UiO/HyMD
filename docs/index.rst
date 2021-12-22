@@ -34,17 +34,13 @@ via HDF5 formats to allow MPI parallel reads.
 
 User Guide
 ==========
-The HylleraasMD `User Guide`_ provides comprehensive information on how to run
-simulations. Selected `Examples`_ are available to guide new users.
+The HylleraasMD :doc:`User Guide </doc_pages/overview>` provides comprehensive information on how to run
+simulations. Selected :doc:`Examples </doc_pages/examples>` are available to guide new users.
 
 .. _`github.com/rainwoodman/pmesh`:
    https://github.com/rainwoodman/pmesh
 .. _`github.com/rainwoodman/pfft-python`:
    https://github.com/rainwoodman/pfft-python
-.. _`User Guide`:
-   404
-.. _`Examples`:
-   404
 
 Installing HyMD
 ===============
@@ -53,6 +49,8 @@ The easiest approach is to install using pip_:
 .. code-block:: bash
 
    pip install hymd
+
+For more information and required dependencies, see :ref:`installation-label`.
 
 .. _pip:
    http://www.pip-installer.org/en/latest/index.html
@@ -117,6 +115,7 @@ Indices and tables
    :numbered:
    :hidden:
 
+   ./doc_pages/installation
    ./doc_pages/overview
    ./doc_pages/theory
    ./doc_pages/examples

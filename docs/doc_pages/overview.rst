@@ -107,7 +107,7 @@ files may look like the following:
 
 .. code-block:: bash
 
-   mpirun -n ${MPI_NUM_RANKS} python3 {HYMD_EXE}      \  # HyMD executable
+   mpirun -n ${MPI_NUM_RANKS} python3 -m hymd         \  # HyMD executable
                               config_simple_1.toml    \  # configuration file
                               example_structure.HDF5  \  # structure file
                               --logfile=log_out.txt   \  # set logfile path
@@ -122,3 +122,45 @@ For a full specification of all command line arguments, see
 
 For more thorough rundown and concrete usage examples, see
 :ref:`examples-label`.
+
+Running parallel simulations
+============================
+Executing the HyMD code in parallel is fundamentally no different from running
+it in serial, with the **only** difference being how the python3 interpreter is
+invoked. Prepending :code:`mpirun -n ${NPROCS}` to the usual
+:code:`python3 -m hymd` runs the simulation with :code:`${NPROCS}` MPI ranks.
+
+Inputting
+
+.. code:: bash
+
+   mpirun -n 6 python3 -m ideal_gas.toml ideal_gas.HDF5 --disable-field
+
+sets up an example simulation of the `HyMD-tutorial/ideal_gas`_ system. For
+more details about this system in particular, or other example simulations, see
+the `HyMD-tutorial`_ repository.
+
+.. _HyMD-tutorial:
+   https://github.com/Cascella-Group-UiO/HyMD-tutorial
+.. _HyMD-tutorial/ideal_gas:
+   https://github.com/Cascella-Group-UiO/HyMD-tutorial/tree/main/ideal_gas
+
+
+Running tests
+=============
+Run serial code tests by
+
+.. code-block:: bash
+
+   git clone https://github.com/Cascella-Group-UiO/HyMD.git hymd
+   cd hymd/
+   python3 -m pip install pytest pytest-mpi
+   python3 -m pytest
+
+There is a small convenience script in :code:`hymd/` for running the MPI-enabled
+tests,
+
+.. code-block:: bash
+
+   chmod +x pytest-mpi
+   ./pytest-mpi --nprocs 5 --order-output --no-summary --capture=no

@@ -176,3 +176,19 @@ Configuration keywords specifying bonds and bonds parameters.
    :code:`array` [:code:`array` [4 :code:`string`, :code:`integer`, :code:`COSINE SERIES` ]] [**optional**, default: :code:`[]`] {units: :math:`\text{kJ}\,\text{mol}^{-1}\text{rad}^{-2}`}
 
    Specifies four-particle torsional potentials by cosine series. See :ref:`bonds-label` for details about how to specify dihedrals.
+
+
+
+Electrostatic keywords
+^^^^^^^^^^^^^^^^^^^^^^
+Configuration keywords specifying electrostatics and electrostatic parameters.
+
+:coulombtype:
+   :code:`string` [**optional**, default: :code:`None`] (options: :code:`PIC_Spectral`)
+
+   Specifies the type of electrostatic Coulomb interactions in the system. The strength of the electrostatic forces is modulated by the relative dielectric constant of the simulation medium, specified with the :code:`dielectric_const` keyword. Charges for individual particles are specified in the structure/topology HDF5 input file, *not* in the configuration file. If no charges (or peptide backbone dipoles) are present, the electrostatic forces will not be calculated even if this keyword is set to `PIC_Spectral`.
+
+:dielectric_const:
+   :code:`float` [**optional**, default: :code:`None`]
+
+   Specifies the relative dielectric constant of the simulation medium which regulates the strength of the electrostatic interactions. When using helical propensity dihedrals, this keyword must be specified---even if electrostatics are not included with the :code:`coulombtype` keyword.
