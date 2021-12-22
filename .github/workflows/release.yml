@@ -3,8 +3,8 @@
 name: Upload Python Package
 
 on:
-  push:
-    branches: [ main ]
+  release:
+    types: [ created ]
 
 jobs:
   deploy:
@@ -24,8 +24,8 @@ jobs:
     - name: Build and publish
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TEST_PASSWORD }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         pip3 list
         python3 setup.py sdist
-        python3 -m twine upload --repository testpypi dist/*
+        python3 -m twine upload dist/*
