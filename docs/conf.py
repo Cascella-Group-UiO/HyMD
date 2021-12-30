@@ -14,6 +14,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../hymd/'))
+from hymd import __version__  # noqa: E402
 
 
 # -- Project information -----------------------------------------------------
@@ -26,7 +27,8 @@ author = (
 copyright = f'2021, {author}'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+version = __version__
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,10 +42,10 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.mathjax',
     'sphinx_rtd_theme',
-    'sphinx.ext.napoleon',
     'sphinxcontrib.bibtex',
     'sphinx.ext.intersphinx',
     'matplotlib.sphinxext.plot_directive',
+    'numpydoc',
 ]
 
 # Bibtex configuration.
@@ -80,3 +82,27 @@ html_show_sphinx = False
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 html_css_files = ['custom.css']
+
+html_context = {
+    "sidebar_external_links_caption": "Links",
+    "sidebar_external_links": [
+        (
+            '<i class="fa fa-cube fa-fw"></i> PyPI',
+            f"https://pypi.org/project/{project.lower()}",
+        ),
+        (
+            '<i class="fa fa-code fa-fw"></i> Source code',
+            f"https://github.com/Cascella-Group-UiO/{project.lower()}",
+        ),
+        (
+            '<i class="fa fa-bug fa-fw"></i> Issue tracker',
+            f"https://github.com/Cascella-Group-UiO/{project.lower()}/issues/",
+        ),
+        (
+            '<i class="fa fa-file-text fa-fw"></i> Citation',
+            "about:blank",
+        ),
+    ],
+}
+
+numpydoc_show_class_members = False
