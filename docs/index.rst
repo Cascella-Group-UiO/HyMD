@@ -50,7 +50,8 @@ The easiest approach is to install using pip_:
 
    pip install hymd
 
-For more information and required dependencies, see :ref:`installation-label`.
+For more information and **required dependencies**, see
+:ref:`installation-label`.
 
 .. _pip:
    http://www.pip-installer.org/en/latest/index.html
@@ -114,17 +115,41 @@ Indices and tables
    :maxdepth: 2
    :numbered:
    :hidden:
+   :caption: Getting started
 
    ./doc_pages/installation
    ./doc_pages/overview
-   ./doc_pages/theory
-   ./doc_pages/examples
    ./doc_pages/config_file
    ./doc_pages/topology_input
    ./doc_pages/command_line
+   ./doc_pages/constants_and_units
+
+
+.. toctree::
+   :maxdepth: 2
+   :numbered:
+   :hidden:
+   :caption: Examples
+
+   ./doc_pages/examples
+
+.. toctree::
+   :maxdepth: 2
+   :numbered:
+   :hidden:
+   :caption: Theory
+
+   ./doc_pages/theory
    ./doc_pages/intramolecular_bonds
    ./doc_pages/electrostatics
+
+.. toctree::
+   :maxdepth: 2
+   :numbered:
+   :hidden:
+   :caption: Developer documentation
+
    ./doc_pages/interaction_energy_functionals
    ./doc_pages/filtering
-   ./doc_pages/constants_and_units
    ./doc_pages/benchmarks
+   ./doc_pages/api
