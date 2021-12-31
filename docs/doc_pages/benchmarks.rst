@@ -46,8 +46,8 @@ Legend label denotes the number of particles in the system.
    plt.xlabel("CPUs", fontsize=15)
    plt.ylabel("Time per step, us", fontsize=15)
    plt.legend(fontsize=15)
-   plt.xscale('log', basex=2)
-   plt.yscale('log', basey=2)
+   plt.xscale('log', base=2)
+   plt.yscale('log', base=2)
    plt.show()
 
 
@@ -86,8 +86,8 @@ the energy conservation precision of the method.
     plt.loglog(mesh_128_cpus, mesh_128_time, "y-8", label="128²")
     plt.loglog(mesh_64_cpus, mesh_64_time, "g->", label="64²")
     plt.xlabel("CPUs", fontsize=15)
-    plt.xscale('log', basex=2)
-    plt.yscale('log', basey=2)
+    plt.xscale('log', base=2)
+    plt.yscale('log', base=2)
     plt.ylabel("Time per step, s", fontsize=15)
     plt.legend(loc="upper left", fontsize=15)
     plt.show()
