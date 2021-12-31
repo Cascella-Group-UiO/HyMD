@@ -65,6 +65,13 @@ Optional datasets
 :/bonds:
    :code:`array` shape [:code:`N`, :code:`B`,]
 
-   :code:`datatype: [:code:`int32` or :code:`int64`]
+   :code:`datatype` [:code:`int32` or :code:`int64`]
 
    The shape represents :code:`B` bond specifications (indices of different particles) per :code:`N` particles. The data type may be either 32 or 64 bit integers.
+
+:/charge:
+   :code:`array` shape [:code:`N`,]
+
+   :code:`datatype` [:code:`float32` or :code:`float64`]
+
+   The shape represents one particle charge per :code:`N` particles. The data type may be either four or eight byte reals.
