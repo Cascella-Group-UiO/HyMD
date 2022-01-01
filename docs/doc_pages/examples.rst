@@ -20,9 +20,6 @@ The simplest possible system is one with no interactions at all---intramolecular
 or intermolecular. A minimal configuration file for a non-interacting system
 may look like:
 
-|
-
-|
 
 .. code-block:: toml
    :caption: **ideal_gas.toml**
@@ -421,7 +418,6 @@ interactions. In this case, we couple a different thermostat to the solvent and
 the lipids via the :code:`thermostat_coupling_groups` keyword. With parameters
 optimised in :cite:`ledum2020automated`, the configuration file looks like:
 
-|
 
 .. code-block:: toml
    :caption: **lipid_self_assembly.toml**
@@ -511,7 +507,6 @@ Next, we combine the dihedral helical propensity and the lipid model, and model
 a single homopolypeptide consisting of alanine amino acids embedded inside a
 DOPC phospholipid bilayer.
 
-|
 
 The `configuration file`_ is available in the `HyMD-tutorial/peptide`_ github
 repository (omitted here for brevity).
@@ -554,7 +549,6 @@ chains with the head group carrying charge of negative one. We add sodium
 counter-ions to ensure stability of the Ewald scheme by neutralising the total
 system charge.
 
-|
 
 
 .. code-block:: toml
