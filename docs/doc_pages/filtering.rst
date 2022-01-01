@@ -24,7 +24,7 @@ particle extent and is given as configuration file input by
 
 Implementing new filters
 ^^^^^^^^^^^^^^^^^^^^^^^^
-Implementing new interaction energy functions is straightforward by hijacking
+Implementing new filter functions is straightforward by hijacking
 the :code:`setup` method of the Hamiltonian superclass. The new filter is
 automatically applied and differentiated through the potential and interaction
 energy functional.
