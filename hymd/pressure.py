@@ -11,26 +11,13 @@ def bin_pr(pr, r, d, config, comm):
     #binning z axis
     z = r[:,2]
     n_bins = config.mesh_size[2]
-    bins = np.linspace(0, config.box_size[d], num=n_bins)
+    bins = np.linspace(0, config.box_size[2], num=n_bins)
     indices = np.digitize(z, bins)
     hist = np.zeros(n_bins)
     for i in range(len(indices)):
         idx = indices[i]
-        hist[idx-1] += pr[i,d]
+        hist[idx] += pr[i,d]
     bond_pr_binned[0,0,:] = hist
-    #print('n_bins:',n_bins)
-    #print('pr:',pr.shape,pr)
-    #print('sum of pr:',np.sum(pr))
-    #print('r:',r.shape,r)
-    #print('max_pos:',max_pos)
-    #print('min_pos:',min_pos)
-    #print('indices:',indices.shape,indices)
-    #print('hist:',hist.shape)
-    #print(hist)
-    #with open('bond_pr_hist.dat','w') as f1:
-    #    f1.write('index\tbin\tbond_pr_hist')
-    #    for i in range(len(bins)):
-    #        f1.write(str(i)+'\t'+str(bins[i])+'\t'+str(hist[i])+'\n')
     return bond_pr_binned
 
 def comp_pressure(

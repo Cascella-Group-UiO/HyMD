@@ -469,24 +469,6 @@ if __name__ == "__main__":
                 bonds_3_stength,
             ) = bonds_prep
         if not args.disable_bonds:
-            #import itertools as it
-            #V = np.prod(config.box_size)
-            #ind = int( np.where(bonds_2_atom1 == 648)[0] )
-            #print('bonds_2_atom1[i],\tbonds_2_atom2[i],\tr_0,\
-            #        r_AB_z,\tr_AB,\tr_AB-r_0,\tp_A_z,\tp_B_z')
-            #for i in it.chain(range(0, 12), range(ind, ind+11)):
-            #    rB = positions[bonds_2_atom2[i]]
-            #    rA = positions[bonds_2_atom1[i]]
-            #    rABvec = rB - rA
-            #    rAB = np.linalg.norm(rABvec)
-            #    df = -1*bonds_2_stength[i]*(rAB - bonds_2_equilibrium[i])
-            #    p_A_z = df/V * -1 * rABvec[2] * rA[2] / rAB
-            #    p_B_z = df/V * rABvec[2] * rB[2] / rAB
-                #print('%d\t%d\t%2.2f\t%2.2f\t%2.2f\t%2.2f,\t%2.2f,\t%2.2f' %(
-                #    bonds_2_atom1[i],bonds_2_atom2[i],bonds_2_equilibrium[i],
-                #    rB[2]-rA[2],rAB,rAB-bonds_2_equilibrium[i], p_A_z, p_B_z)
-                #    )
-
             bond_energy_,bond_pr_= compute_bond_forces(
                 bond_forces,
                 positions,
