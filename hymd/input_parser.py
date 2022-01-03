@@ -17,7 +17,6 @@ class Config:
 
     n_steps: int
     time_step: float
-    box_size: Union[List[float], np.ndarray]
     mesh_size: Union[Union[List[int], np.ndarray], int]
     sigma: float
     kappa: float
@@ -26,6 +25,7 @@ class Config:
     pressure: bool
     plot: bool
 
+    box_size: Union[List[float], np.ndarray] = None
     n_print: int = None
     tau: float = None
     start_temperature: Union[float, bool] = None
