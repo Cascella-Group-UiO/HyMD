@@ -1,3 +1,5 @@
+"""Parses and handles the configuration information provided for the simulation
+"""
 import copy
 import tomli
 import datetime
@@ -13,6 +15,139 @@ from .logger import Logger
 
 @dataclass
 class Config:
+    """Configuration object
+
+    Handles and verifies the simulation configuration specified in the
+    configuration file.
+
+    Attributes
+    ----------
+    gas_constant : float
+        Constant value of the gas constant, R (equivalently the Boltzmann
+        constant) in the units used internally in HyMD.
+    coulomb_constant : float
+        Constant value of the Coulomb constant which converts electric field
+        values to forces and electric potential values to energies in the units
+        used internally in HyMD.
+    n_steps: int
+        Number of time steps in the simulation.
+    time_step: float
+        *Outer* time step used in the simulation. If the rRESPA intergrator is
+        used, the *inner* time step (the time step used in the integration of
+        intramolecular bending, stretching, and torsional forces) is
+        :code:`time_step / respa_inner`.
+    box_size : list[float] or (D,) numpy.ndarray
+        Simulation box size of simulation in :code:`D` dimensions in units of
+        nanometers.
+    mesh_size : list[int] or int or numpy.ndarray
+        Number of grid points used for the discrete density grid.
+    sigma : float
+        Filter width representing the effective coarse-graining level of the
+        particles in the simulation.
+    kappa : float
+        Compressibility parameter used in the relaxed incompressibility term in
+        the interaction energy functional.
+    n_print : int, optional
+        Frequency of trajectory/energy output to the H5MD trajectory/energy
+        output file (in units of number of time steps).
+    tau : float, optional
+        The time scale of the CSVR thermostat coupling.
+    start_temperature : float, optional
+        Generate starting temperature by assigning all particle velocities
+        randomly according to the Maxwell-Boltzmann distribution at
+        :code:`start_temperature` Kelvin prior to starting the simulation.
+    target_temperature : float, optional
+        Couple the system to a heat bath at :code:`target_temperature` Kelvin.
+    mass : float, optional
+        Mass of the particles in the simulation.
+    hamiltonian : str, optional
+        Specifies the interaction energy functional :math:`W[\\tilde\\phi]`
+        for use with the particle-field interactions. Options:
+        :code:`SquaredPhi`, :code:`DefaultNohChi`, or :code:`DefaultWithChi`.
+    domain_decomposition : int, optional
+        Specifies the interval (in time steps) of domain decomposition
+        exchange, involving all MPI ranks sending and receiving particles
+        according to the particles’ positions in the integration box and the
+        MPI ranks’ assigned domain.
+    integrator : str, optional
+        Specifies the time integrator used in the simulation. Options:
+        :code:`velocity-verlet` or :code:`respa`.
+    respa_inner : int, optional
+        The number of inner time steps in the rRESPA integrator. This denotes
+        the number of intramolecular force calculations (stretching, bending,
+        torsional) are performed between each impulse applied from the field
+        forces.
+    file_name : str, optional
+        File path of the parsed configuration file.
+    name : str, optional
+        Name for the simulation.
+    tags : list[str], optional
+        Tags for the simulation.
+    bonds : list[Bond], optional
+        Specifies harmonic stretching potentials between particles in the
+        same molecule.
+    angle_bonds : list[Angle], optional
+        Specifies harmonic angular bending potentials between particles in the
+        same molecule.
+    dihedrals : list[Dihedral], optional
+        Specifies four-particle torsional potentials by cosine series.
+    chi : list[Chi], optional
+        Specifies :math:`\\chi`-interaction parameters between particle
+        species.
+    n_particles : int, optional
+        Specifies the total number of particles in the input. Optional keyword
+        for validation, ensuring the input HDF5 topology has the correct number
+        of particles and molecules.
+    max_molecule_size : int, optional
+        Maximum size of any single molecule in the system. Used to speed up
+        distribution of particles onto MPI ranks in a parallel fashion.
+    n_flush : int, optional
+        Frequency of HDF5 write buffer flush, forcing trajectory/energy to be
+        written to disk (in units of number of :code:`n_print`).
+    thermostat_work : float
+        Work performed by the thermostat on the system.
+    thermostat_coupling_groups : list[str], optional
+        Specifies individual groups coupling independently to the CSVR
+        thermostat. E.g. in a system containing :code:`"A"`, :code:`"B"`, and
+        :code:`"C"` type particles,
+        :code:`thermostat_coupling_groups = [["A", "B"], ["C"],]` would
+        thermalise types :code:`"A"` and :code:`"B"` together and couple
+        :code:`"C"` type particles to a different thermostat (all individual
+        thermostats are at the same temperature, i.e. target_temperature
+        Kelvin).
+    initial_energy : float
+        Value of the total energy prior to the start of the simulation.
+    cancel_com_momentum : int, optional
+        If :code:`True`, the total linear momentum of the center of mass is
+        removed before starting the simulation. If an integer is specifed, the
+        total linear momentum of the center of mass is removed every
+        :code:`remove_com_momentum` time steps. If :code:`False`, the linear
+        momentum is never removed.
+    coulombtype : str, optional
+        Specifies the type of electrostatic Coulomb interactions in the system.
+        The strength of the electrostatic forces is modulated by the relative
+        dielectric constant of the simulation medium, specified with the
+        :code:`dielectric_const` keyword. Charges for individual particles are
+        specified in the structure/topology HDF5 input file, not in the
+        configuration file. If no charges (or peptide backbone dipoles) are
+        present, the electrostatic forces will not be calculated even if this
+        keyword is set to :code:`"PIC_Spectral"`.
+    dielectric_const : float, optional
+        Specifies the relative dielectric constant of the simulation medium
+        which regulates the strength of the electrostatic interactions. When
+        using helical propensity dihedrals, this keyword must be specified—even
+        if electrostatics are not included with the :code:`coulombtype`
+        keyword.
+
+    See also
+    --------
+    hymd.input_parser.Bond :
+        Two-particle bond type dataclass.
+    hymd.input_parser.Angle :
+        Three-particle bond type dataclass.
+    hymd.input_parser.Dihedral :
+        Four-particle bond type dataclass.
+    """
     gas_constant: ClassVar[float] = 0.0083144621  # kJ mol-1 K-1
     coulomb_constant: ClassVar[float] = 138.935458  # kJ mn mol-1 e-2
 
@@ -834,6 +969,26 @@ def check_cancel_com_momentum(config, comm=MPI.COMM_WORLD):
 
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
+    """Performs various checks on the specfied config to ensure consistency
+
+    Parameters
+    ----------
+    config : Config
+        Configuration object.
+    indices : (N,) numpy.ndarray
+        Array of integer indices for :code:`N` particles.
+    names : (N,) numpy.ndarray
+        Array of string names for :code:`N` particles.
+    types : (N,) numpy.ndarray
+        Array of integer type indices for :code:`N` particles.
+    comm : mpi4py.Comm, optional
+        MPI communicator, defaults to :code:`mpi4py.COMM_WORLD`.
+
+    Returns
+    -------
+    config : Config
+        Validated configuration object.
+    """
     config.box_size = np.array(config.box_size)
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
