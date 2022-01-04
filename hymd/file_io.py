@@ -1,3 +1,5 @@
+"""Handle file input/output in parllel HDF5 fashion
+"""
 import numpy as np
 import h5py
 import os
@@ -8,10 +10,34 @@ from .logger import Logger
 
 
 class OutDataset:
+    """HDF5 dataset handler for file output
+    """
+
     def __init__(
         self, dest_directory, config, double_out=False, disable_mpio=False,
         comm=MPI.COMM_WORLD,
     ):
+        """Constructor
+
+        Parameters
+        ----------
+        dest_directory : str
+            Ouput directory for saving data.
+        config : Config
+            Configuration object.
+        double_out : bool, optional
+            If :code:`True`, the output HDF5 objects are written in eight byte
+            floating point representation. Otherwise, four byte single
+            precision is used.
+        disable_mpio : bool, optional
+            If :code:`True`, disables parallel MPI-enabled HDF5 file output.
+            This is a compatibility option used if HDF5 is not compiled with
+            MPI support. This makes everything much harder by splitting all
+            output in one file per MPI rank, and having an MPI-enabled HDF5
+            library is **highly recommended**.
+        comm : mpi4py.Comm
+            MPI communicator to use for rank commuication.
+        """
         self.disable_mpio = disable_mpio
         self.config = config
         if double_out:
@@ -34,16 +60,43 @@ class OutDataset:
             )
 
     def close_file(self, comm=MPI.COMM_WORLD):
+        """Closes the HDF5 output file
+
+        Parameters
+        ----------
+        comm : mpi4py.Comm
+            MPI communicator to use for rank commuication.
+        """
         comm.Barrier()
         self.file.close()
 
     def flush(self):
+        """Flushes output buffers, forcing file writes
+        """
         self.file.flush()
 
 
 def setup_time_dependent_element(
     name, parent_group, n_frames, shape, dtype, units=None
 ):
+    """Helper function for setting up time-dependent HDF5 group datasets
+
+    All output groups must adhere to the H5MD standard, meaning a structure of
+
+
+    |    ┗━ **group** particle group (e.g. :code:`all`) or :code:`observables` group
+    |        ┗━ **group** time-dependent data
+    |            ┣━ **dataset** :code:`step` :code:`shape=(n_frames,)`
+    |            ┣━ **dataset** :code:`time` :code:`shape=(n_frames,)`
+    |            ┗━ **dataset** :code:`value` :code:`shape=(n_frames, *)`
+
+    is necessary.
+
+    References
+    ----------
+    H5MD specification :
+        https://www.nongnu.org/h5md/h5md.html
+    """
     group = parent_group.create_group(name)
     step = group.create_dataset("step", (n_frames,), "int32")
     time = group.create_dataset("time", (n_frames,), "float32")
@@ -58,6 +111,49 @@ def store_static(
     bonds_2_atom2, molecules=None, velocity_out=False, force_out=False,
     charges=False, comm=MPI.COMM_WORLD,
 ):
+    """Outputs all static time-independent quantities to the HDF5 output file
+
+    Parameters
+    ----------
+    h5md : OutDataset
+        HDF5 dataset handler.
+    rank_range : list[int]
+        Start and end indices for global arrays for each MPI rank.
+    names : (N,) numpy.ndarray
+        Array of names for :code:`N` particles.
+    types : (N,) numpy.ndarray
+        Array of type indices for :code:`N` particles.
+    indices : (N,) numpy.ndarray
+        Array of indices for :code:`N` particles.
+    config : Config
+        Configuration object.
+    bonds_2_atom1 : (B,) numpy.ndarray
+        Array of indices of the first particle for :code:`B` total
+        two-particle bonds.
+    bonds_2_atom2 : (B,) numpy.ndarray
+        Array of indices of the second particle for :code:`B` total
+        two-particle bonds.
+    molecules : (N,) numpy.ndarray, optional
+        Array of integer molecule affiliation for each of :code:`N` particles.
+        Global (across all MPI ranks) or local (local indices on this MPI rank
+        only) may be used, both, without affecting the result.
+    velocity_out : bool, optional
+        If :code:`True`, velocities are written to output HDF5 file.
+    force_out : bool, optional
+        If :code:`True`, forces are written to output HDF5 file.
+    charges : (N,) numpy.ndarray
+        Array of particle charge values for :code:`N` particles.
+    comm : mpi4py.Comm
+        MPI communicator to use for rank commuication.
+
+    See also
+    --------
+    prepare_bonds :
+        Constructs two-, three-, and four-particle bonds from toplogy input
+        file and bond configuration information.
+    distribute_input :
+        Distributes input arrays onto MPI ranks, attempting load balancing.
+    """
     dtype = h5md.float_dtype
 
     h5md_group = h5md.file.create_group("/h5md")
@@ -348,6 +444,64 @@ def store_data(
     force_out=False, charge_out=False, dump_per_particle=False,
     comm=MPI.COMM_WORLD,
 ):
+    """Writes time-step data to HDF5 output file
+
+    Handles all quantities which change during simulation, as opposed to
+    static quanitities (see :code:`store_static`).
+
+    Parameters
+    ----------
+    h5md : OutDataset
+        HDF5 dataset handler.
+    step : int
+        Step number.
+    frame : int
+        Output frame number (:code:`step // n_print`).
+    indices : (N,) numpy.ndarray
+        Array of indices for :code:`N` particles.
+    positions : (N,) numpy.ndarray
+        Array of positions for :code:`N` particles in :code:`D` dimensions.
+    velocities : (N,) numpy.ndarray
+        Array of velocities for :code:`N` particles in :code:`D` dimensions.
+    forces : (N,) numpy.ndarray
+        Array of forces for :code:`N` particles in :code:`D` dimensions.
+    box_size : (D,) numpy.ndarray
+        Array containing the simulation box size.
+    temperature : float
+        Calculated instantaneous temperature.
+    kinetic_energy : float
+        Calculated instantaneous kinetic energy.
+    bond2_energy : float
+        Calculated instantaneous harmonic two-particle bond energy.
+    bond3_energy : float
+        Calculated instantaneous harmonic angular three-particle bond energy.
+    bond4_energy : float
+        Calculated instantaneous dihedral four-particle torsion energy.
+    field_energy : float
+        Calculated instantaneous particle-field energy.
+    field_energy_q : float
+        Calculated instantaneous electrostatic energy.
+    time_step : float
+        Value of the time step.
+    config : Config
+        Configuration object.
+    velocity_out : bool, optional
+        If :code:`True`, velocities are written to output HDF5 file.
+    force_out : bool, optional
+        If :code:`True`, forces are written to output HDF5 file.
+    charge_out : bool, optional
+        If :code:`True`, electrostatic energies are written to the output
+        HDF5 file.
+    dump_per_particle : bool, optional
+        If :code:`True`, all quantities are written **per particle**.
+    comm : mpi4py.Comm
+        MPI communicator to use for rank commuication.
+
+    See also
+    --------
+    store_static :
+        Outputs all static time-independent quantities to the HDF5 output file
+    """
     for dset in (
         h5md.positions_step,
         h5md.total_energy_step,
@@ -493,6 +647,37 @@ def distribute_input(
     in_file, rank, size, n_particles, max_molecule_size=201,
     comm=MPI.COMM_WORLD
 ):
+    """Assign global arrays onto MPI ranks, attempting load balancing
+
+    Distributes approximately equal numbers of particles (workload) onto each
+    independent MPI rank, while respecting the requirement that any molecule
+    must be fully contained on a single MPI rank only (no splitting molecules
+    across multiple CPUs).
+
+    Parameters
+    ----------
+    in_file : h5py.File
+        HDF5 input file object.
+    rank : int
+        Local rank number for this MPI rank.
+    size : int
+        Global size of the MPI communicator (number of total CPUs).
+    n_particles : int
+        Total number of particles.
+    max_molecule_size : int, optional
+        Maximum size of any molecule present in the system. Used to initially
+        guess where the MPI rank boundaries (start/end indices) in the global
+        arrays should be placed. If molecules of size
+        :code:`>max_molecule_size` exist in the simulation system, HyMD
+        **might** work as expected. Or it might fail spectacularly.
+    comm : mpi4py.Comm
+        MPI communicator to use for rank commuication.
+
+    Returns
+    -------
+    rank_range :
+        Starting and ending indices in the global arrays for each MPI rank.
+    """
     if n_particles is None:
         n_particles = len(in_file["indices"])
     np_per_MPI = n_particles // size
