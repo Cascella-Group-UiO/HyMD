@@ -1,3 +1,5 @@
+"""Parses command line arguments to HyMD
+"""
 from argparse import ArgumentParser
 import os
 import sys
@@ -11,6 +13,20 @@ from .input_parser import read_config_toml, parse_config_toml
 
 
 def configure_runtime(comm):
+    """Parse command line arguments and configuration file
+
+    Parameters
+    ----------
+    comm : mpi4py.Comm
+        MPI communicator to use for rank commuication.
+
+    Returns
+    -------
+    args : argparse.Namespace
+        Namespace containing command line arguments.
+    config : hymd.input_parser.Config
+        Parsed configuration object.
+    """
     ap = ArgumentParser()
 
     ap.add_argument(
@@ -93,7 +109,6 @@ def configure_runtime(comm):
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
 
-    # Is this used anywhere?
     if args.seed is not None:
         np.random.seed(args.seed)
     else:
