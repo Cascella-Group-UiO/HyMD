@@ -1,3 +1,5 @@
+"""Main simulation driver module
+"""
 import datetime
 import h5py
 import logging
@@ -20,6 +22,11 @@ from .integrator import integrate_velocity, integrate_position
 
 
 def main():
+    """Main simulation driver
+
+    Initializes structure, topology, and simulation configuration and iterates
+    the molecular dynamics loop.
+    """
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()

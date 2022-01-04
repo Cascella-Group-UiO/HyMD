@@ -1,12 +1,30 @@
 subroutine caf(f, r, box, a, b, c, t0, k, energy)
-! ==============================================================================
-! compute_angle_forces()
-!
-! Compile:
-!   f2py3 --f90flags="-Ofast" -c compute_angle_forces.f90 -m compute_angle_forces
-! Import:
-!   from compute_angle_forces import caf as compute_angle_forces__fortran
-! ==============================================================================
+    ! Compute three-particle bond forces and energy
+    !
+    ! Parameters
+    ! ---------
+    ! f : (N,D) numpy.ndarray
+    !     Forces for N particles in D dimensions. Changed in place.
+    ! r : (N,D) numpy.ndarray
+    !     Positions for N particles in D dimensions.
+    ! box : (D,) numpy.ndarray
+    !     D-dimensional simulation box size.
+    ! a : (M,) numpy.ndarray
+    !     Index of particle 1 for M individual three-particle bonds.
+    ! b : (M,) numpy.ndarray
+    !     Index of particle 2 for M individual three-particle bonds.
+    ! c : (M,) numpy.ndarray
+    !     Index of particle 3 for M individual three-particle bonds.
+    ! t0 : (M,) numpy.ndarray
+    !     Equilibrium bond angle for M individual three-particle bonds.
+    ! k : (M,) numpy.ndarray
+    !     Bond strength for M individual three-particle bonds.
+    !
+    ! Returns
+    ! -------
+    ! energy : float
+    !     Total energy of all two-particle bonds.
+    !
     implicit none
 
     real(4), dimension(:,:),     intent(in out) :: f

@@ -1,13 +1,28 @@
-
 subroutine cgc(r, chi, f, box, sigma, kappa, N, energy)
-! ==============================================================================
-! compute_gaussian_core() speedup attempt.
-!
-! Compile:
-!   f2py3 --f90flags="-Ofast" -c compute_gaussian_core.f90 -m compute_gaussian_core
-! Import:
-!   from compute_gaussian_core import cgc as compute_gaussian_core__fortran
-! ==============================================================================
+    ! Compute Gaussian code interaction forces
+    !
+    ! Parameters
+    ! ---------
+    ! f : (N,D) numpy.ndarray
+    !     Forces for N particles in D dimensions. Changed in place.
+    ! r : (N,D) numpy.ndarray
+    !     Positions for N particles in D dimensions.
+    ! chi : (T,T) numpy.ndarray
+    !     Interaction mixing energy between T species.
+    ! box : (D,) numpy.ndarray
+    !     D-dimensional simulation box size.
+    ! kappa : float
+    !     Incompressibility.
+    ! sigma : float
+    !     Filter width.
+    ! N : int
+    !     Total number of particles.
+    !
+    ! Returns
+    ! -------
+    ! energy : float
+    !     Total energy of all two-particle bonds.
+    !
     implicit none
 
     real(4), dimension(:,:), intent(in)     :: r
