@@ -813,7 +813,7 @@ def check_n_print(config, comm=MPI.COMM_WORLD):
     elif not isinstance(config.n_print, int):
         if isinstance(config.n_print, float) and config.n_print.is_int():
             config.n_print = int(config.n_print)
-        elif isinstance(config.n_print, int):
+        elif isinstance(config.n_print, float):
             warn_str = (
                 f"n_print is a float ({config.n_print}), not int, using "
                 f"{int(round(config.n_print))}"
@@ -821,7 +821,9 @@ def check_n_print(config, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.WARNING, warn_str)
             if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
-            if (n_print := int(round(config.n_print))) > 0:
+
+            n_print = int(round(config.n_print))
+            if n_print > 0:
                 config.n_print = n_print
             else:
                 config.n_print = False
