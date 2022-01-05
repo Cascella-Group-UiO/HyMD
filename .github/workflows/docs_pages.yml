@@ -1,8 +1,10 @@
-name: docs_pages
+name: docs
 
 on:
   push:
-    branches: [ docs_setup ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
 
@@ -20,8 +22,6 @@ jobs:
         # git clone --depth 1 "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
         git clone "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
         ls -lha
-        git status
-        git checkout docs_setup
         git status
       shell: bash
 
