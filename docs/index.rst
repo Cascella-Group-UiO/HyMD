@@ -48,7 +48,9 @@ The easiest approach is to install using pip_:
 
 .. code-block:: bash
 
-   pip install hymd
+   python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade numpy mpi4py cython
+   python3 -m pip install hymd
 
 For more information and **required dependencies**, see
 :ref:`installation-label`.

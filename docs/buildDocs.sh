@@ -20,9 +20,9 @@ set -e
 apt-get update
 apt-get -y install git make rsync wget pkg-config libhdf5-serial-dev python3-numpy python3-h5py python3-mpi4py python3-pip
 
-python3 -m pip install cython
-python3 -m pip install -U -r requirements.txt
-python3 -m pip install -U -r docs/docs_requirements.txt
+python3 -m pip install -U cython numpy mpi4py
+python3 -m pip install -r requirements.txt
+python3 -m pip install -r docs/docs_requirements.txt
 python3 -m pip install .
 
 #####################
@@ -36,6 +36,15 @@ export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 ##############
 # BUILD DOCS #
 ##############
+
+# Debug sanity checks
+ls -lha
+pwd
+python3 -c "import sys; print(sys.path)"
+cd hymd
+python3 -c "import force_kernels"
+cd ..
+python3 -c "import force_kernels"
 
 # build our documentation with sphinx (see docs/conf.py)
 # * https://www.sphinx-doc.org/en/master/usage/quickstart.html#running-the-build

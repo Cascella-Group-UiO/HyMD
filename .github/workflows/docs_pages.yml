@@ -7,25 +7,47 @@ on:
     branches: [ main ]
 
 jobs:
-
   build_docs_job:
     runs-on: ubuntu-latest
-    container: debian:buster-slim
-
     steps:
-    - name: Install build requirements
-      shell: bash
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
+    - name: Install dependencies
       run: |
-        apt-get update
-        apt-get install -y git
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-
+        sudo apt-get update
+        sudo apt-get install -y python3-mpi4py python3-numpy
+        sudo apt-get install -y libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
+    - name: Install python dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade wheel numpy mpi4py cython
+        python3 -m pip install -r requirements.txt
+    - name: Install package
+      run: |
+        python3 -m pip install .
     - name: Build docs and update gh-pages
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        set -x
+        ls -lha
+        pwd
+        python3 -c "import sys; print(sys.path)"
+        cd hymd
+        python3 -c "import force_kernels"
+        cd ..
+        python3 -c "import force_kernels"
         ls -lha
         docs/buildDocs.sh
