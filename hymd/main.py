@@ -424,11 +424,10 @@ def main():
         temperature = (
             (2 / 3) * kinetic_energy / (config.gas_constant * config.n_particles)  # noqa: E501
         )
-        if args.force_output:
-            forces_out = (
-                field_forces + bond_forces + angle_forces + dihedral_forces
-                + reconstructed_forces + dipole_forces
-            )
+        forces_out = (
+            field_forces + bond_forces + angle_forces + dihedral_forces
+            + reconstructed_forces
+        )
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
             forces_out if args.force_output else None, config.box_size,
@@ -752,12 +751,11 @@ def main():
                 )
                 if args.disable_field:
                     field_energy = 0.0
-                if args.force_output:
-                    forces_out = (
-                        field_forces + bond_forces + angle_forces
-                        + dihedral_forces + reconstructed_forces
-                        + dipole_forces
-                    )
+
+                forces_out = (
+                    field_forces + bond_forces + angle_forces
+                    + dihedral_forces + reconstructed_forces
+                )
                 store_data(
                     out_dataset, step, frame, indices, positions, velocities,
                     forces_out if args.force_output else None, config.box_size,
@@ -822,11 +820,10 @@ def main():
         )
         if args.disable_field:
             field_energy = 0.0
-        if args.force_output:
-            forces_out = (
-                field_forces + bond_forces + angle_forces + dihedral_forces
-                + reconstructed_forces + dipole_forces
-            )
+        forces_out = (
+            field_forces + bond_forces + angle_forces + dihedral_forces
+            + reconstructed_forces
+        )
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
             forces_out if args.force_output else None, config.box_size,
