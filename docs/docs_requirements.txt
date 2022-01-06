@@ -3,3 +3,4 @@ sphinx-rtd-theme
 sphinxcontrib.bibtex
 matplotlib
 numpy
+numpydoc

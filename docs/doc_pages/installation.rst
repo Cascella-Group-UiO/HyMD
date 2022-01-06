@@ -51,3 +51,36 @@ A docker image with build essentials setup is available at `dockerhub`_ with tag
 
 .. _dockerhub:
    https://hub.docker.com/repository/docker/mortele/hymd
+
+
+Common build issues
+===================
+
+Numpy errors while importing the Fortran force kernels
+------------------------------------------------------
+
+.. code-block:: python3
+
+    RuntimeError: module compiled against API version 0xe but this version of numpy is 0xd
+
+    Traceback (most recent call last):
+
+      (...)
+
+    File "/..../HyMD/hymd/__init__.py", line 2, in <module>
+      from .main import main  # noqa: F401
+    File "/..../HyMD/hymd/main.py", line 10, in <module>
+      from .configure_runtime import configure_runtime
+    File "/..../hymd/configure_runtime.py", line 12, in <module>
+      from .input_parser import read_config_toml, parse_config_toml
+    File "/..../HyMD/hymd/input_parser.py", line 12, in <module>
+      from .force import Bond, Angle, Dihedral, Chi
+    File "/..../HyMD/hymd/force.py", line 8, in <module>
+      from force_kernels import (  # noqa: F401
+    ImportError: numpy.core.multiarray failed to import
+
+can normally be fixed by updating numpy versions,
+
+.. code-block:: bash
+
+    python3 -m pip install -U numpy

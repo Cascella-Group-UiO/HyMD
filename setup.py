@@ -41,6 +41,11 @@ setup(
     packages=["hymd"],
     version=find_version("hymd/version.py"),
     ext_modules=[force_kernels],
+    setup_requires=[
+        "cython",
+        "numpy",
+        "mpi4py",
+    ],
     install_requires=[
         "cython",
         "h5py",

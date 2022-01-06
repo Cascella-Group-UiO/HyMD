@@ -13,22 +13,19 @@ jobs:
     container: debian:buster-slim
 
     steps:
-    - name: prereqs
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install build requirements
+      shell: bash
       run: |
         apt-get update
         apt-get install -y git
-        # git clone --depth 1 "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
-        git clone "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
-        ls -lha
-        git status
-      shell: bash
 
-    - name: Execute script to build our documentation and update pages
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build docs and update gh-pages
+      shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         ls -lha
         docs/buildDocs.sh
-      shell: bash

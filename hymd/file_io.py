@@ -96,7 +96,7 @@ def setup_time_dependent_element(
     ----------
     H5MD specification :
         https://www.nongnu.org/h5md/h5md.html
-    """
+    """  # noqa: E501
     group = parent_group.create_group(name)
     step = group.create_dataset("step", (n_frames,), "int32")
     time = group.create_dataset("time", (n_frames,), "float32")
