@@ -19,7 +19,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/docs/buildDocs.sh') }}
         restore-keys: |
           ${{ runner.os }}-pip-
           ${{ runner.os }}-
@@ -27,7 +27,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y python3-mpi4py python3-numpy
-        sudo apt-get install -y libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
+        sudo apt-get install -y libhdf5-openmpi-dev
     - name: Install python dependencies
       run: |
         python3 -m pip install --upgrade pip
@@ -36,18 +36,14 @@ jobs:
     - name: Install package
       run: |
         python3 -m pip install .
-    - name: Build docs and update gh-pages
+    - name: Build docs
+      shell: bash
+      run: |
+        docs/buildDocs.sh
+    - name: Publish docs to gh-pages
+      if: github.event_name == 'push'
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        set -x
-        ls -lha
-        pwd
-        python3 -c "import sys; print(sys.path)"
-        cd hymd
-        python3 -c "import force_kernels"
-        cd ..
-        python3 -c "import force_kernels"
-        ls -lha
-        docs/buildDocs.sh
+        docs/publishDocs.sh

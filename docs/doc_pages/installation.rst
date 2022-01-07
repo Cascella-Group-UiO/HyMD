@@ -45,13 +45,31 @@ A docker image with build essentials setup is available at `dockerhub`_ with tag
 
 .. code-block:: bash
 
-   docker pull mortele/hymd:1.0
-   docker run -it mortele/hynd:1.0
-   /app# python3 -m pip install hymd
-   /app# python3 -m hymd [CONFIGURATION_FILE] [TOPOLOGY_FILE]
+   docker pull mortele/hymd:latest
+   docker run -it mortele/hymd
+   /app$ python3 -m pip install hymd
+
+   # Grab example input files
+   /app$ curl -O https://raw.githubusercontent.com/Cascella-Group-UiO/HyMD-tutorial/main/ideal_chain/ideal_chain.toml
+   /app$ curl -O https://raw.githubusercontent.com/Cascella-Group-UiO/HyMD-tutorial/main/ideal_chain/ideal_chain.HDF5
+
+   # Run simulation
+   /app$ python3 -m hymd ideal_chain.toml ideal_chain.HDF5 --verbose
 
 .. _dockerhub:
    https://hub.docker.com/repository/docker/mortele/hymd
+
+
+Run interactively in Google Colaboratory
+========================================
+A `Google Colaboratory`_ jupyter notebook is setup `here`_ with a working HyMD
+fully installed and executable in the browser. We do not recommend running
+large-scale simulations in colab for pretty obvious reasons.
+
+.. _`Google colaboratory` :
+   https://colab.research.google.com/
+.. _`here` :
+   https://colab.research.google.com/drive/1jfzRaXjL3q53J4U8OrCgADepmf_HuCOh?usp=sharing
 
 
 Common issues
@@ -60,7 +78,7 @@ Common issues
 Numpy errors while importing the Fortran force kernels
 ------------------------------------------------------
 
-.. code-block:: python3
+.. code-block:: python
 
     RuntimeError: module compiled against API version 0xe but this version of numpy is 0xd
 
@@ -90,7 +108,7 @@ can normally be fixed by updating numpy versions,
 Error building pfft-python due to missing curl/wget
 ---------------------------------------------------
 
-.. code-block:: python3
+.. code-block:: python
 
     Building wheel for pfft-python (setup.py) ... error
     ERROR: Command errored out with exit status 1:
