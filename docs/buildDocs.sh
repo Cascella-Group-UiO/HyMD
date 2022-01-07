@@ -5,12 +5,12 @@ set -e
 # File:    buildDocs.sh
 # Purpose: Script that builds our documentation using sphinx and updates GitHub
 #          Pages. This script is executed by:
-#            .github/workflows/docs_pages_workflow.yml
+#            .github/workflows/docs_pages.yml
 #
 # Authors: Michael Altfield <michael@michaelaltfield.net>
 # Created: 2020-07-17
-# Updated: 2020-07-17
-# Version: 0.1
+# Updated: 2022-01-07
+# Version: 0.1.1
 ################################################################################
 
 ###################
@@ -24,14 +24,6 @@ python3 -m pip install -U cython numpy mpi4py
 python3 -m pip install -r requirements.txt
 python3 -m pip install -r docs/docs_requirements.txt
 python3 -m pip install .
-
-#####################
-# DECLARE VARIABLES #
-#####################
-
-pwd
-ls -lah
-export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 
 ##############
 # BUILD DOCS #

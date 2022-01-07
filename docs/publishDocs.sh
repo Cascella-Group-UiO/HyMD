@@ -2,16 +2,22 @@
 set -x
 set -e
 ################################################################################
-# File:    buildDocs.sh
+# File:    publishDocs.sh
 # Purpose: Script that builds our documentation using sphinx and updates GitHub
 #          Pages. This script is executed by:
-#            .github/workflows/docs_pages_workflow.yml
+#            .github/workflows/docs_pages.yml
 #
 # Authors: Michael Altfield <michael@michaelaltfield.net>
 # Created: 2020-07-17
-# Updated: 2020-07-17
-# Version: 0.1
+# Updated: 2022-01-07
+# Version: 0.1.1
 ################################################################################
+
+#####################
+# DECLARE VARIABLES #
+#####################
+
+export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 
 #######################
 # Update GitHub Pages #
