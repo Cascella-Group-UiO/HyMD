@@ -430,12 +430,12 @@ def main():
         )
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
-            forces_out if args.force_output else None, config.box_size,
-            temperature, kinetic_energy, bond_energy, angle_energy,
-            dihedral_energy, field_energy, field_q_energy, config.time_step,
-            config, velocity_out=args.velocity_output,
-            force_out=args.force_output, charge_out=charges_flag,
-            dump_per_particle=args.dump_per_particle, comm=comm,
+            forces_out, config.box_size, temperature, kinetic_energy,
+            bond_energy, angle_energy, dihedral_energy, field_energy,
+            field_q_energy, config.time_step, config,
+            velocity_out=args.velocity_output, force_out=args.force_output,
+            charge_out=charges_flag, dump_per_particle=args.dump_per_particle,
+            comm=comm,
         )
 
     if rank == 0:
@@ -758,11 +758,10 @@ def main():
                 )
                 store_data(
                     out_dataset, step, frame, indices, positions, velocities,
-                    forces_out if args.force_output else None, config.box_size,
-                    temperature, kinetic_energy, bond_energy, angle_energy,
-                    dihedral_energy, field_energy, field_q_energy,
-                    config.respa_inner * config.time_step, config,
-                    velocity_out=args.velocity_output,
+                    forces_out, config.box_size, temperature, kinetic_energy,
+                    bond_energy, angle_energy, dihedral_energy, field_energy,
+                    field_q_energy, config.respa_inner * config.time_step,
+                    config, velocity_out=args.velocity_output,
                     force_out=args.force_output, charge_out=charges_flag,
                     dump_per_particle=args.dump_per_particle, comm=comm,
                 )
@@ -826,10 +825,9 @@ def main():
         )
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
-            forces_out if args.force_output else None, config.box_size,
-            temperature, kinetic_energy, bond_energy, angle_energy,
-            dihedral_energy, field_energy, field_q_energy,
-            config.respa_inner * config.time_step, config,
+            forces_out, config.box_size, temperature, kinetic_energy,
+            bond_energy, angle_energy, dihedral_energy, field_energy,
+            field_q_energy, config.respa_inner * config.time_step, config,
             velocity_out=args.velocity_output, force_out=args.force_output,
             charge_out=charges_flag, dump_per_particle=args.dump_per_particle,
             comm=comm,
