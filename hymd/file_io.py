@@ -622,7 +622,7 @@ def store_data(
         H_tilde = 0.0
 
     header = header_.format(*fmt_)
-    data_fmt = f'{"{:13}"}{15 * "{:13.5g}" }'
+    data_fmt = f'{"{:13}"}{14 * "{:13.5g}" }'
     data = data_fmt.format(
         step,
         time_step * step,
