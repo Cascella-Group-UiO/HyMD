@@ -58,6 +58,17 @@ For more information and **required dependencies**, see
 .. _pip:
    http://www.pip-installer.org/en/latest/index.html
 
+
+Run in Google colab
+-------------------
+Run HyMD interactively in `Google Colaboratory`_ jupyter notebook `here`_.
+
+.. _`Google colaboratory` :
+   https://colab.research.google.com/
+.. _`here` :
+   https://colab.research.google.com/drive/1jfzRaXjL3q53J4U8OrCgADepmf_HuCOh?usp=sharing
+
+
 Source Code
 ===========
 **Source code** is available from
