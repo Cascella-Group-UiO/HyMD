@@ -1,5 +1,5 @@
 ---
-title: 'HylleraasMD: Massively parallel hybrid particle-field molecular dynamics in python'
+title: 'HylleraasMD: Massively parallel hybrid particle-field molecular dynamics in Python'
 tags:
   - chemistry
   - physics
@@ -26,9 +26,9 @@ authors:
     orcid: 0000-0002-8620-4885
     affiliation: 2
 affiliations:
-  - name: Department of Chemistry, and Hylleraas Centre for Quantum Molecular Sciences,University of Oslo, PO Box 1033 Blindern, 0315 Oslo, Norway
+  - name: Department of Chemistry, and Hylleraas Centre for Quantum Molecular Sciences, University of Oslo, PO Box 1033 Blindern, 0315 Oslo, Norway
     index: 1
-  - name: Department of Chemistry and Biochemistry, University of California San Diego, La Jolla,California 92093, United States
+  - name: Department of Chemistry and Biochemistry, University of California San Diego, La Jolla, California 92093, United States
     index: 2
 date: 7 January 2022
 bibliography: paper.bib
@@ -36,9 +36,9 @@ bibliography: paper.bib
 
 # Summary
 
-Molecular dynamics (MD) is a computational methodology in which the dynamical behavior of systems of interacting atoms and molecules is investigated by integrating the corresponding classical equations of motion. The analysis of the molecular trajectories yields an incredibly powerful computational microscope with atomic resolution. While prominent examples of molecular dynamics involving all-atom models exist, many systems operate on time- and lengths scales too large, precluding the use of such an approach. The intrinsic complexity of biological soft matter systems has necessitated the development of *coarse-grained* (CG) MD models wherein groups of atoms are treated as individual entities. To probe experimentally relevant length- (nm&ndash;$\mathrm{mu}$m) and time- (ps&ndash;ms) scales, further reduction of computational complexity may be warranted through the removal of explicit particle\textendash particle interactions in favor of particle\textendash density field interactions. Such *hybrid particle&ndash;field* (hPF) models recast the interactions between particle pairs into a system of free particles interacting with an external potential dependent on the density, in analogy with self-consistent field theories.
+Molecular dynamics (MD) is a computational methodology in which the dynamical behavior of systems of interacting atoms and molecules is investigated by integrating the corresponding classical equations of motion. The analysis of the molecular trajectories yields an incredibly powerful computational microscope with atomic resolution. While prominent examples of molecular dynamics involving all-atom models exist, many systems operate on time- and lengths scales too large, precluding the use of such an approach. The intrinsic complexity of biological soft matter systems has necessitated the development of *coarse-grained* (CG) MD models wherein groups of atoms are treated as individual entities. To probe experimentally relevant length- (nm&ndash;\textmu m) and time- (ps&ndash;ms) scales, further reduction of computational complexity may be warranted through the removal of explicit particle\textendash particle interactions in favor of particle&ndash;density field interactions. Such *hybrid particle&ndash;field* (hPF) models recast the interactions between particle pairs into a system of free particles interacting with an external potential dependent on the density, in analogy with self-consistent field theories.
 
-HylleraasMD (named after our affiliate centre, the *Hylleraas Centre for Quantum Molecular Sciences*) (HyMD) is a python package capable of highly parallel hPF-MD simulations of a wide range of surfactants and other biological systems in a CG representation. At present, it is the only open source implementation of the hPF formalism freely available to computational researchers.
+HylleraasMD (named after our affiliate centre, the *Hylleraas Centre for Quantum Molecular Sciences*) (HyMD) is a Python package capable of highly parallel hPF-MD simulations of a wide range of surfactants and other biological systems in a CG representation. At present, it is the only open source implementation of the hPF formalism freely available to computational researchers.
 
 # Theoretical background
 
@@ -54,7 +54,7 @@ HyMD is, to date, the only available open-source hPF simulation software. Furthe
 
 # Features
 
-Apart from a minimal set of high-performance Fortran kernels, the entirety of HyMD is written in python. This makes extending the software with new functionality easy, enabling fast prototyping of new features. The key components of HyMD include:
+Apart from a minimal set of high-performance Fortran kernels, the entirety of HyMD is written in Python. This makes extending the software with new functionality easy, enabling fast prototyping of new features. The key components of HyMD include:
 
 - Standard hPF interaction functionals, with the option to specify *any* (local or otherwise) functional, which is automatically handled through symbolic differentiation and numpy vectorization.
 - Density filtering (with any user-provided filter function), enabling canonical hPF or HhPF simulations with tunable coarse-graining scale which can be changed *on-the-fly*.
