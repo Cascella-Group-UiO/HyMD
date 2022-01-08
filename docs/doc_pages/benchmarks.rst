@@ -79,12 +79,12 @@ the energy conservation precision of the method.
     mesh_64_cpus = [64,       32,       16,       8,        4,        2,        1,        ]
     mesh_64_time = [0.012815, 0.018162, 0.018430, 0.037648, 0.037949, 0.055399, 0.093687, ]
 
-    plt.loglog(mesh_2048_cpus, mesh_2048_time, "r-x", label="2048²")
-    plt.loglog(mesh_1024_cpus, mesh_1024_time, "b-o", label="1024²")
-    plt.loglog(mesh_512_cpus, mesh_512_time, "k-^", label="512²")
-    plt.loglog(mesh_256_cpus, mesh_256_time, "c-v", label="256²")
-    plt.loglog(mesh_128_cpus, mesh_128_time, "y-8", label="128²")
-    plt.loglog(mesh_64_cpus, mesh_64_time, "g->", label="64²")
+    plt.loglog(mesh_2048_cpus, mesh_2048_time, "r-x", label="2048³")
+    plt.loglog(mesh_1024_cpus, mesh_1024_time, "b-o", label="1024³")
+    plt.loglog(mesh_512_cpus, mesh_512_time, "k-^", label="512³")
+    plt.loglog(mesh_256_cpus, mesh_256_time, "c-v", label="256³")
+    plt.loglog(mesh_128_cpus, mesh_128_time, "y-8", label="128³")
+    plt.loglog(mesh_64_cpus, mesh_64_time, "g->", label="64³")
     plt.xlabel("CPUs", fontsize=15)
     plt.xscale('log', base=2)
     plt.yscale('log', base=2)
