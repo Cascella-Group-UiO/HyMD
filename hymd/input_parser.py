@@ -841,13 +841,49 @@ def check_tau(config, comm=MPI.COMM_WORLD):
 
 
 def check_start_and_target_temperature(config, comm=MPI.COMM_WORLD):
+    """Validate provided starting and target thermostat temperatures
+
+    Assesses the provided temperature target and ensures it is a non-negative
+    floating point number or :code:`False`. Ensures the starting temperature is
+    a non-negative floating point number or :code:`False`.
+
+    If the value for either is :code:`None`, the returned configuration object
+    has the values defaulted to :code:`False` in each case.
+
+    Parameters
+    ----------
+    config : Config
+        Configuration object.
+
+    Returns
+    -------
+    validated_config : Config
+        Configuration object with validated :code:`target_temperature` and
+        :code:`start_temperature`.
+    """
     for t in ("start_temperature", "target_temperature"):
-        if getattr(config, t) < 0:
-            warn_str = "t set to negative value, defaulting 0"
-            setattr(config, t, 0.0)
-            Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0:
-                warnings.warn(warn_str)
+        if getattr(config, t) is not None:
+            try:
+                if getattr(config, t) < 0:
+                    warn_str = (
+                        f"{t} set to negative value ({getattr(config, t)}), "
+                        f"defaulting to False"
+                    )
+                    setattr(config, t, False)
+                    Logger.rank0.log(logging.WARNING, warn_str)
+                    if comm.Get_rank() == 0:
+                        warnings.warn(warn_str)
+            except TypeError as e:
+                err_str = (
+                    f"Could not interpret {t} = {repr(getattr(config, t))} as "
+                    f"a number."
+                )
+                raise TypeError(err_str) from e
+
+    if config.start_temperature is None:
+        config.start_temperature = False
+    if config.target_temperature is None:
+        config.target_temperature = False
     return config
 
 
