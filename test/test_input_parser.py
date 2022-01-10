@@ -18,6 +18,7 @@ from hymd.input_parser import (
     check_integrator,
     check_thermostat_coupling_groups,
     check_cancel_com_momentum,
+    check_start_and_target_temperature,
 )
 
 
@@ -480,4 +481,60 @@ def test_input_parser_check_cancel_com_momentum(config_toml, caplog):
         config.cancel_com_momentum = t
         config_ = check_cancel_com_momentum(config)
         assert config_.cancel_com_momentum is False
+    caplog.clear()
+
+
+def test_input_parser_check_start_and_target_temperature(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    for t in (
+        "hello",
+        MPI.COMM_WORLD,
+        config_toml,
+        [1],
+    ):
+        config.start_temperature = t
+        with pytest.raises(TypeError) as recorded_error:
+            _ = check_start_and_target_temperature(config)
+            log = caplog.text
+            assert all([(s in log) for s in ("not interpret", "a number")])
+        message = str(recorded_error.value)
+        assert all([(s in message) for s in ("not interpret", "a number")])
+        caplog.clear()
+
+        config.target_temperature = t
+        with pytest.raises(TypeError) as recorded_error:
+            _ = check_start_and_target_temperature(config)
+            log = caplog.text
+            assert all([(s in log) for s in ("not interpret", "a number")])
+        message = str(recorded_error.value)
+        assert all([(s in message) for s in ("not interpret", "a number")])
+        caplog.clear()
+
+    config = parse_config_toml(config_toml_str)
+
+    config.start_temperature = None
+    assert check_start_and_target_temperature(config).start_temperature is False  # noqa: E501
+    config.target_temperature = None
+    assert check_start_and_target_temperature(config).target_temperature is False  # noqa: E501
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.start_temperature = -6.2985252885781357
+        config = check_start_and_target_temperature(config)
+        assert config.start_temperature is False
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        assert all([(s in message) for s in ("to negative", "defaulting to")])
+        assert all([(s in log) for s in ("to negative", "defaulting to")])
+    caplog.clear()
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.target_temperature = -0.000025892857873
+        config = check_start_and_target_temperature(config)
+        assert config.target_temperature is False
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        assert all([(s in message) for s in ("to negative", "defaulting to")])
+        assert all([(s in log) for s in ("to negative", "defaulting to")])
     caplog.clear()
