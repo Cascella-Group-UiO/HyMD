@@ -25,6 +25,12 @@ from force_kernels import (  # noqa: F401
 )
 
 
+@dataclass # unsure if this is at all needed (?)
+class Dielectric_type:
+    atom_1: str
+    dielectric_value: float
+
+
 @dataclass
 class Bond:
     """Dataclass representing a single two-particle bond type

@@ -9,7 +9,7 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
-from .force import Bond, Angle, Dihedral, Chi
+from .force import Bond, Angle, Dihedral, Chi, Dielectric_type
 from .logger import Logger
 
 
@@ -182,7 +182,11 @@ class Config:
     initial_energy: float = None
     cancel_com_momentum: Union[int, bool] = False
     coulombtype: str = None
+    convergence_type: str = None
+    pol_mixing: float = None
     dielectric_const: float = None
+    conv_crit: float = None
+    dielectric_type: List[Dielectric_type] = field(default_factory=list)
 
     def __str__(self):
         bonds_str = "\tbonds:\n" + "".join(
@@ -242,6 +246,15 @@ class Config:
                 for k in self.chi
             ]
         )
+        """ If you want to print out dielectric type to terminal
+            dielectric_type_str = "\tdielectric_type:\n" + "".join(
+                    [
+                        (f"\t\t{k.atom_1}: " + f"{k.dielectric_value}\n")
+                        for k in self.dielectric_type
+                    ]
+                )
+
+        """
         thermostat_coupling_groups_str = ""
         if any(self.thermostat_coupling_groups):
             thermostat_coupling_groups_str = (
@@ -262,7 +275,7 @@ class Config:
                 "dihedrals",
                 "chi",
                 "thermostat_coupling_groups",
-            ):
+            ):          #, "dielectric_type"):
                 ret_str += f"\t{k}: {v}\n"
         ret_str += (
             bonds_str
@@ -270,7 +283,7 @@ class Config:
             + dihedrals_str
             + chi_str
             + thermostat_coupling_groups_str
-        )
+        ) # #  + dielectric_type_str
         return ret_str
 
 
@@ -346,12 +359,16 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "n_particles",
         "max_molecule_size",
         "coulombtype",
+        "convergence_type",
         "dielectric_const",
+        "pol_mixing",
+        "conv_crit",
+        "dielectric_type",
     ):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "tags"):
+    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "tags","dielectric_type"):
         config_dict[n] = []
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
@@ -446,6 +463,15 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                 config_dict["chi"][i] = Chi(
                     atom_1=c_[0], atom_2=c_[1], interaction_energy=c[2]
                 )
+        """
+        if k == "dielectric_type":
+            config_dict["dielectric_type"] = [None] * len(v)
+            for i, c in enumerate(v):
+                c_ = sorted([c[0][0]])
+                config_dict["dielectric_type"][i] = Dielectric_type(
+                    atom_1=c_[0], dielectric_value=c[1][0]
+                )
+        """
 
     if file_path is not None:
         config_dict["file_name"] = file_path
@@ -1005,6 +1031,35 @@ def check_cancel_com_momentum(config, comm=MPI.COMM_WORLD):
         raise ValueError(err_str)
     return config
 
+def sort_dielectric_by_type_id(config, charges,types):
+    dielectric_val = np.zeros(config.n_types)
+    for j in range(config.n_types):
+        name = config.dielectric_type[j][0][0]
+        type_id = config.name_to_type_map[name]
+        dielectric_val[type_id] = config.dielectric_type[j][1][0]
+    config.dielectric_type = dielectric_val.copy()
+
+    N = len(charges)
+    len_list = np.zeros(config.n_types)
+    dielectric_by_types = np.zeros(N)
+    for i in range(N):
+        dielectric_by_types[i] = dielectric_val[types[i]]
+    return dielectric_by_types # by types with each particle id
+
+def check_dielectric(config, comm = MPI.COMM_WORLD):
+    err_str_const = "Dielectric constant not given."
+    if config.coulombtype == 'PIC_Spectral':
+        assert config.dielectric_const != None,err_str_const
+
+    err_str = "Dielectric list is empty."
+    if config.coulombtype == 'PIC_Spectral_GPE':
+        assert len(config.dielectric_type) != 0,err_str
+        #default values
+        if config.pol_mixing is None:
+                config.pol_mixing = 0.6
+        if config.conv_crit is None:
+            config.conv_crit = 1e-6
+    return config
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     """Performs various checks on the specfied config to ensure consistency
@@ -1047,4 +1102,5 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_hamiltonian(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     config = check_cancel_com_momentum(config, comm=comm)
+    config = check_dielectric(config,comm=comm)
     return config

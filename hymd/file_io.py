@@ -109,7 +109,7 @@ def setup_time_dependent_element(
 def store_static(
     h5md, rank_range, names, types, indices, config, bonds_2_atom1,
     bonds_2_atom2, molecules=None, velocity_out=False, force_out=False,
-    charges=False, comm=MPI.COMM_WORLD,
+    charges=False, dielectrics = False, comm=MPI.COMM_WORLD,
 ):
     """Outputs all static time-independent quantities to the HDF5 output file
 
@@ -206,6 +206,11 @@ def store_static(
             "charge", (config.n_particles,), dtype="float32"
         )
         charge[indices] = charges
+    if dielectrics is not False:
+        dielectric = h5md.all_particles.create_dataset(
+            "dielectric", config.n_particles,), dtype="float32"
+        )
+        dielectric[indices] = dielectrics # need to be sure this is correctly inputed
 
     box = h5md.all_particles.create_group("box")
     box.attrs["dimension"] = 3
@@ -331,6 +336,9 @@ def store_static(
         ) = setup_time_dependent_element(
             "field_q_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
         )  # <-------- xinmeng
+
+
+
     (
         _,
         h5md.total_momentum_step,

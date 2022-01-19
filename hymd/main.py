@@ -9,12 +9,13 @@ import pmesh.pm as pmesh
 import warnings
 from .configure_runtime import configure_runtime
 from .hamiltonian import DefaultNoChi, DefaultWithChi, SquaredPhi
-from .input_parser import check_config
+from .input_parser import check_config, sort_dielectric_by_type_id,
 from .logger import Logger, format_timedelta
 from .file_io import distribute_input, OutDataset, store_static, store_data
 from .field import (compute_field_force, update_field,
                     compute_field_and_kinetic_energy, domain_decomposition,
-                    update_field_force_q, compute_field_energy_q,)
+                    update_field_force_q, compute_field_energy_q,
+                    update_field_force_q_GPE, compute_field_energy_q_GPE)
 from .thermostat import (csvr_thermostat, cancel_com_momentum,
                          generate_initial_velocities)
 from .force import dipole_forces_redistribution, prepare_bonds
@@ -96,6 +97,38 @@ def main():
             charges_flag = False
 
     config = check_config(config, indices, names, types, comm=comm)
+
+    ## dielectric from toml
+    if config.coulombtype == 'PIC_Spectral_GPE':
+        dielectric_sorted = sort_dielectric_by_type_id(config,charges,types)
+        ###^----- only needed if dielectric given from toml.
+        dielectric_flag = True
+
+        if config.convergence_type is not None:
+            if config.convergence_type == 'csum':
+                def conv_fun(comm,diff_mesh):
+                    return diff_mesh.csum()
+
+            elif config.convergence_type == 'euclidean_norm':
+                def conv_fun(comm,diff_mesh):
+                    return diff_mesh.cnorm()
+
+            elif config.convergence_type == 'max_diff':
+                def conv_fun(comm,diffmesh):
+                    msg = np.max(diffmesh)
+                    res = comm.allreduce(sendobj=msg, op=MPI.MAX)
+                    return res
+
+        else: ## default choice is the max difference if not specified
+            config.convergence_type = 'max_diff'
+            def conv_fun(comm,diffmesh):
+                msg = np.max(diffmesh)
+                res = comm.allreduce(sendobj=msg, op=MPI.MAX)
+                return res
+
+    else:
+        dielectric_flag = False
+
     if config.n_print:
         if config.n_flush is None:
             config.n_flush = 10000 // config.n_print
@@ -191,6 +224,30 @@ def main():
             "complex", value=0.0
         )
 
+    if dielectric_flag  and config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh
+        phi_q = pm.create("real", value=0.0)
+        phi_q_fourier = pm.create("complex", value=0.0)
+        elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
+        elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
+        elec_energy_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
+
+        ## GPE relevant
+        phi_q_eps = pm.create("real", value = 0.0) ## real contrib of non-polarization part of GPE
+        phi_q_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi q eps
+        phi_q_effective_fourier = pm.create("complex", value = 0.0) ## fourier of non-polarization part of GPE
+        phi_eps = pm.create("real", value = 0.0) ## real contrib of the epsilon dielectric painted to grid
+        phi_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi eps
+        phi_eta = [pm.create("real", value = 0.0)for _ in range(_SPACE_DIM)] ## real contrib of factor in polarization charge density
+        phi_eta_fourier = [pm.create("complex", value = 0.0)for _ in range(_SPACE_DIM)] ## fourier of factor in polarization charge density
+        phi_pol = pm.create("real", value = 0.0) ## real contrib of the polarization charge
+        phi_pol_fourier = [pm.create("complex", value = 0.0) for _ in range(_SPACE_DIM)] # complex contrib of the polarization charge
+        phi_pol_temp = [pm.create("real", value = 0.0) for _ in range (_SPACE_DIM)] # complex contrib of the polarization charge
+        sum_fourier = pm.create("complex", value = 0.0)
+        phi_pol_prev = pm.create("real", value = 0.0)
+
+        ## Polarization force contribution
+        elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
+
     args_in = [
         velocities,
         indices,
@@ -220,6 +277,9 @@ def main():
         args_in.append(elec_forces)
         args_recv.append("charges")
         args_recv.append("elec_forces")
+    if dielectric_flag:
+        args_in.append(dielectric_sorted)
+        args_recv.append('dielectric_sorted')
     if molecules_flag:
         args_recv.append("bonds")
         args_recv.append("molecules")
@@ -259,17 +319,54 @@ def main():
             0.5 * config.mass * np.sum(velocities**2)
         )
 
-    if charges_flag and config.coulombtype == "PIC_Spectral":
+    if charges_flag:
         layout_q = pm.decompose(positions)
-        update_field_force_q(
-            charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field,
-            elec_forces, layout_q, pm, positions, config,
-        )
 
-        field_q_energy = compute_field_energy_q(
-            config, phi_q_fourier, elec_energy_field, field_q_energy,
-            comm=comm,
-        )
+        if dielectric_flag and config.coulombtype == 'PIC_Spectral_GPE':
+            elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
+                conv_fun, phi, types, charges,dielectric_sorted,
+                phi_q, phi_eps, phi_eps_fourier,phi_q_eps,
+                phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
+                phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
+                sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
+                elec_forces,elec_field_contrib, layout_q, layouts,
+                pm, positions,config,comm = comm,
+            )
+
+            field_q_energy =compute_field_energy_q_GPE(
+                config, phi_eps_fourier, elec_field_contrib,
+                phi_q_effective_fourier, phi_q_fourier,elec_energy_field,
+                field_q_energy,
+                comm=comm
+            )
+
+            #rank = comm.Get_rank()
+            #sum_elec = np.sum(elec_forces,axis = 0)
+            #if rank == 0:
+            #    sums = np.zeros_like(sum_elec)
+            #else:
+            #    sums = None
+            #comm.Barrier()
+            #comm.Reduce(sum_elec, sums,
+            #op=MPI.SUM, root=0)
+            #print("rank ", comm.Get_rank())
+            #print("sum elec_forces", np.sum(elec_forces,axis = 0))
+            #if rank == 0:
+            #    f = open("./sum_forces.txt", "w")
+            #    f.write("time step, sum forces x,y,z \n")
+            #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
+            #    print("here ",sums)
+            #print("sum elec_forces", np.sum(elec_forces,axis = 0))
+        if config.coulombtype == "PIC_Spectral":
+            update_field_force_q(
+                charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field,
+                elec_forces, layout_q, pm, positions, config,
+            )
+
+            field_q_energy = compute_field_energy_q(
+                config, phi_q_fourier, elec_energy_field, field_q_energy,
+                comm=comm,
+            )
 
     if molecules_flag:
         if not (args.disable_bonds
@@ -405,7 +502,9 @@ def main():
         out_dataset, rank_range, names, types, indices, config, bonds_2_atom1,
         bonds_2_atom2, molecules=molecules if molecules_flag else None,
         velocity_out=args.velocity_output, force_out=args.force_output,
-        charges=charges if charges_flag else False, comm=comm,
+        charges= charges if charges_flag else False,
+        dielectrics = dielectric_sorted if dielectric_flag else False,
+        comm=comm,
     )
 
     if config.n_print > 0:
@@ -488,11 +587,14 @@ def main():
             velocities, field_forces / config.mass,
             config.respa_inner * config.time_step,
         )
-        if charges_flag and config.coulombtype == "PIC_Spectral":
+
+        if charges_flag and (config.coulombtype == "PIC_Spectral" \
+                    or config.coulombtype == "PIC_Spectral_GPE"):
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass,
                 config.respa_inner * config.time_step,
             )
+
         if protein_flag:
             velocities = integrate_velocity(
                 velocities, reconstructed_forces / config.mass,
@@ -559,16 +661,45 @@ def main():
                 config.n_types,
             )
 
-            if charges_flag and config.coulombtype == "PIC_Spectral":
+            if charges_flag:
                 layout_q = pm.decompose(positions)
-                update_field_force_q(
-                    charges, phi_q, phi_q_fourier, elec_field_fourier,
-                    elec_field, elec_forces, layout_q, pm, positions, config,
-                )
-                field_q_energy = compute_field_energy_q(
-                    config, phi_q_fourier, elec_energy_field, field_q_energy,
-                    comm=comm,
-                )
+                if dielectric_flag and config.coulombtype == "PIC_Spectral_GPE":
+                    elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
+                        conv_fun, phi, types, charges,dielectric_sorted,
+                        phi_q, phi_eps, phi_eps_fourier,phi_q_eps,
+                        phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
+                        phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
+                        sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
+                        elec_forces,elec_field_contrib, layout_q, layouts,
+                        pm, positions,config,comm = comm,
+                    )
+
+                    field_q_energy = compute_field_energy_q_GPE(
+                        config, phi_eps_fourier, elec_field_contrib,
+                        phi_q_effective_fourier, phi_q_fourier,elec_energy_field,
+                        field_q_energy,
+                        comm=comm
+                    )
+
+                    #sum_elec = np.sum(elec_forces,axis = 0)
+                    #rank = comm.Get_rank()
+                    #comm.Reduce(sum_elec, sums,
+                    #op=MPI.SUM, root=0)
+                    #print("rank ", comm.Get_rank())
+                    #print("sum elec_forces", np.sum(elec_forces,axis = 0))
+
+                    #if rank == 0:
+                    #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
+
+                if config.coulombtype == "PIC_Spectral":
+                    update_field_force_q(
+                        charges, phi_q, phi_q_fourier, elec_field_fourier,
+                        elec_field, elec_forces, layout_q, pm, positions, config,
+                    )
+                    field_q_energy = compute_field_energy_q(
+                        config, phi_q_fourier, elec_energy_field, field_q_energy,
+                        comm=comm,
+                    )
 
             if protein_flag and not args.disable_dipole:
                 dipole_positions = np.reshape(
@@ -601,7 +732,7 @@ def main():
             config.respa_inner * config.time_step,
         )
 
-        if charges_flag and config.coulombtype == "PIC_Spectral":
+        if charges_flag and (config.coulombtype == "PIC_Spectral" or config.coulombtype == "PIC_Spectral_GPE"):
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass,
                 config.respa_inner * config.time_step,
@@ -736,11 +867,19 @@ def main():
                         config, layouts, comm=comm,
                     )
 
-                    if charges_flag and config.coulombtype == "PIC_Spectral":
-                        field_q_energy = compute_field_energy_q(
-                            config, phi_q_fourier, elec_energy_field,
-                            field_q_energy, comm=comm,
-                        )
+                    if charges_flag:
+                        if config.coulombtype == "PIC_Spectral_GPE":
+                            field_q_energy = compute_field_energy_q_GPE(
+                                config, phi_eps_fourier, elec_field_contrib,
+                                phi_q_effective_fourier, phi_q_fourier,elec_energy_field,
+                                field_q_energy,
+                                comm=comm
+                            )
+                        if config.coulombtype == "PIC_Spectral":
+                            field_q_energy = compute_field_energy_q(
+                                config, phi_q_fourier, elec_energy_field,
+                                field_q_energy, comm=comm,
+                            )
                 else:
                     kinetic_energy = comm.allreduce(
                         0.5 * config.mass * np.sum(velocities ** 2)
@@ -796,17 +935,47 @@ def main():
                 layouts, comm=comm,
             )
 
-            if charges_flag and config.coulombtype == "PIC_Spectral":
+            if charges_flag:
                 layout_q = pm.decompose(positions)
-                update_field_force_q(
-                    charges, phi_q, phi_q_fourier, elec_field_fourier,
-                    elec_field, elec_forces, layout_q, pm, positions, config,
-                )
+                if config.coulombtype == "PIC_Spectral_GPE":
+                    elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
+                        conv_fun, phi, types, charges,dielectric_sorted,
+                        phi_q, phi_eps, phi_eps_fourier,phi_q_eps,
+                        phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
+                        phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
+                        sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
+                        elec_forces,elec_field_contrib, layout_q, layouts,
+                        pm, positions,config,comm = comm,
+                    )
 
-                field_q_energy = compute_field_energy_q(
-                    config, phi_q_fourier, elec_energy_field, field_q_energy,
-                    comm=comm,
-                )
+                    field_q_energy = compute_field_energy_q_GPE(
+                        config, phi_eps_fourier, elec_field_contrib,
+                        phi_q_effective_fourier, phi_q_fourier,elec_energy_field,
+                        field_q_energy,
+                        comm=comm
+                    )
+
+                    #sum_elec = np.sum(elec_forces,axis = 0)
+                    #rank = comm.Get_rank()
+                    #comm.Reduce(sum_elec, sums,
+                    #op=MPI.SUM, root=0)
+                    #print("rank ", comm.Get_rank())
+                    #print("sum elec_forces", np.sum(elec_forces,axis = 0))
+
+                    #if rank == 0:
+                    #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
+                    #    f.close()
+
+                if config.coulombtype == "PIC_Spectral":
+                    update_field_force_q(
+                        charges, phi_q, phi_q_fourier, elec_field_fourier,
+                        elec_field, elec_forces, layout_q, pm, positions, config,
+                    )
+
+                    field_q_energy = compute_field_energy_q(
+                        config, phi_q_fourier, elec_energy_field, field_q_energy,
+                        comm=comm,
+                    )
 
         else:
             kinetic_energy = comm.allreduce(
