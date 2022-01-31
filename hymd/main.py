@@ -682,6 +682,58 @@ if __name__ == "__main__":
                 config.time_step / config.respa_inner,
             )
 
+        # Berendsen Barostat
+        if config.barostat:
+            if config.barostat.lower() == 'isotropic':
+                pm_stuff, change = isotropic(
+                     pmesh,
+                     pm_stuff,
+                     phi,
+                     phi_gradient,
+                     hamiltonian,
+                     positions,
+                     velocities,
+                     config,
+                     phi_fourier,
+                     phi_laplacian,
+                     phi_transfer,
+                     phi_grad_lap_fourier,
+                     phi_grad_lap,
+                     bond_forces,
+                     angle_forces,
+                     args,
+                     bond_pr_,
+                     angle_pr_,
+                     step,
+                     comm=comm
+                )
+
+            elif config.barostat.lower() == 'semiisotropic':
+                pm_stuff, change = semiisotropic(
+                     pmesh,
+                     pm_stuff,
+                     phi,
+                     phi_gradient,
+                     hamiltonian,
+                     positions,
+                     velocities,
+                     config,
+                     phi_fourier,
+                     phi_laplacian,
+                     phi_transfer,
+                     phi_grad_lap_fourier,
+                     phi_grad_lap,
+                     bond_forces,
+                     angle_forces,
+                     args,
+                     bond_pr_,
+                     angle_pr_,
+                     step,
+                     comm=comm
+                )
+            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
+            phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
+
         # Update slow forces
         if not args.disable_field:
             #should compute_field_energy be here?
@@ -808,100 +860,6 @@ if __name__ == "__main__":
         if config.target_temperature and np.mod(step, config.n_b)==0:
             csvr_thermostat(velocities, names, config, comm=comm)
 
-        # Berendsen Barostat
-        if config.barostat:
-            if config.barostat.lower() == 'isotropic':
-                pm_stuff, change = isotropic(
-                     pmesh,
-                     pm_stuff,
-                     phi,
-                     phi_gradient,
-                     hamiltonian,
-                     positions,
-                     velocities,
-                     config,
-                     phi_fourier,
-                     phi_laplacian,
-                     phi_transfer,
-                     phi_grad_lap_fourier,
-                     phi_grad_lap,
-                     bond_forces,
-                     angle_forces,
-                     args,
-                     bond_pr_,
-                     angle_pr_,
-                     step,
-                     comm=comm
-                )
-
-            elif config.barostat.lower() == 'semiisotropic':
-                pm_stuff, change = semiisotropic(
-                     pmesh,
-                     pm_stuff,
-                     phi,
-                     phi_gradient,
-                     hamiltonian,
-                     positions,
-                     velocities,
-                     config,
-                     phi_fourier,
-                     phi_laplacian,
-                     phi_transfer,
-                     phi_grad_lap_fourier,
-                     phi_grad_lap,
-                     bond_forces,
-                     angle_forces,
-                     args,
-                     bond_pr_,
-                     angle_pr_,
-                     step,
-                     comm=comm
-                )
-            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
-            phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
-            if (change and not args.disable_field):
-                layouts = [
-                    pm.decompose(positions[types == t]) for t in range(config.n_types)
-                ]
-                update_field(
-                    phi,
-                    phi_gradient,
-                    phi_laplacian,
-                    phi_transfer,
-                    phi_grad_lap_fourier,
-                    phi_grad_lap,
-                    layouts,
-                    force_on_grid,
-                    hamiltonian,
-                    pm,
-                    positions,
-                    types,
-                    config,
-                    v_ext,
-                    phi_fourier,
-                    phi_lap_filtered_fourier,
-                    v_ext_fourier,
-                    phi_lap_filtered,
-                    v_ext1,
-                    config.m,
-                    compute_potential=True,
-                )
-                field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-                    phi,
-                    phi_gradient,
-                    velocities,
-                    hamiltonian,
-                    positions,
-                    types,
-                    v_ext,
-                    config,
-                    layouts,
-                    comm=comm,
-                )
-                compute_field_force(
-                    layouts, positions, force_on_grid, field_forces, types, config.n_types
-                )
-        
         # Print trajectory
         if config.n_print > 0:
             if np.mod(step, config.n_print) == 0 and step != 0:

@@ -61,10 +61,11 @@ def isotropic(
         )
 
         #Total pressure across all ranks
-        P = np.average(pressure[-3:-1])
+        P = np.average(pressure[-3:-1]) #kJ/(mol nm^3)
+        P = P * 16.61 #bar
 
         #scaling factor                                                                                        
-        alpha = 1 - config.time_step / config.tau_p * beta * (config.target_pressure.P_L - P)
+        alpha = 1 - config.time_step * config.n_b/ config.tau_p * beta * (config.target_pressure.P_L - P)
 
         #length scaling
         L0 = alpha**(1/3) * config.box_size[0]
@@ -133,14 +134,16 @@ def semiisotropic(
         #Total pressure across all ranks
         #L: Lateral; N: Normal
         [PL, PN] = [0, 0]
-        PL = (pressure[-3] + pressure[-2])/2
-        PN = pressure[-1]
+        PL = (pressure[-3] + pressure[-2])/2 #kJ/(mol nm^3)
+        PN = pressure[-1] #kJ/(mol nm^3)
+        PL = PL * 16.61 #bar
+        PN = PN * 16.61 #bar
         alphaL = 1.0
         alphaN = 1.0
 
         if config.target_pressure.P_L:
             #scaling factor                                                                                        
-            alphaL = 1 - config.time_step / config.tau_p * beta * (config.target_pressure.P_L - PL)
+            alphaL = 1 - config.time_step  * config.n_b/ config.tau_p * beta * (config.target_pressure.P_L - PL)
             #length scaling
             config.box_size[0] = alphaL**(1/3) * config.box_size[0]
             config.box_size[1] = alphaL**(1/3) * config.box_size[1]
@@ -148,7 +151,7 @@ def semiisotropic(
                 positions[i][0:2] = alphaL**(1/3) * positions[i][0:2]
         if config.target_pressure.P_N:
             #scaling factor                                                                                        
-            alphaN = 1 - config.time_step / config.tau_p * beta * (config.target_pressure.P_N - PN)
+            alphaN = 1 - config.time_step  * config.n_b/ config.tau_p * beta * (config.target_pressure.P_N - PN)
             #length scaling
             config.box_size[2] = alphaN**(1/3) * config.box_size[2]
             for i in range(len(positions)):
