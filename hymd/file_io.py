@@ -208,7 +208,7 @@ def store_static(
         charge[indices] = charges
     if dielectrics is not False:
         dielectric = h5md.all_particles.create_dataset(
-            "dielectric", config.n_particles,), dtype="float32"
+            "dielectric", (config.n_particles,), dtype="float32"
         )
         dielectric[indices] = dielectrics # need to be sure this is correctly inputed
 
