@@ -30,7 +30,7 @@ def configure_runtime(comm):
     ap = ArgumentParser()
 
     ap.add_argument(
-        "-v", "--verbose", default=0, type=int, nargs="?",
+        "-v", "--verbose", default=1, type=int, nargs="?",
         help="Increase logging verbosity",
     )
     ap.add_argument(
@@ -99,11 +99,6 @@ def configure_runtime(comm):
     )
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args()
-
-    # Given as '--verbose' or '-v' without a specific value specified,
-    # default to 1
-    if args.verbose is None:
-        args.verbose = 1
 
     if comm.rank == 0:
         os.makedirs(args.destdir, exist_ok=True)
