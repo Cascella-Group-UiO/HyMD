@@ -321,11 +321,10 @@ def main():
 
     if charges_flag:
         layout_q = pm.decompose(positions)
-
         if dielectric_flag and config.coulombtype == 'PIC_Spectral_GPE':
             elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
                 conv_fun, phi, types, charges,dielectric_sorted,
-                phi_q, phi_eps, phi_eps_fourier,phi_q_eps,
+                phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                 phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
                 phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
                 sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
@@ -666,7 +665,7 @@ def main():
                 if dielectric_flag and config.coulombtype == "PIC_Spectral_GPE":
                     elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
                         conv_fun, phi, types, charges,dielectric_sorted,
-                        phi_q, phi_eps, phi_eps_fourier,phi_q_eps,
+                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                         phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
                         phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
                         sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
@@ -769,6 +768,9 @@ def main():
                 if charges_flag:
                     args_in.append(charges)
                     args_in.append(elec_forces)
+
+                if dielectric_flag: ## add dielectric related
+                    args_in.append(dielectric_sorted)
 
                 dd = domain_decomposition(  # noqa: F841
                     positions, pm, *tuple(args_in),
@@ -940,13 +942,14 @@ def main():
                 if config.coulombtype == "PIC_Spectral_GPE":
                     elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
                         conv_fun, phi, types, charges,dielectric_sorted,
-                        phi_q, phi_eps, phi_eps_fourier,phi_q_eps,
+                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                         phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
                         phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
                         sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
                         elec_forces,elec_field_contrib, layout_q, layouts,
                         pm, positions,config,comm = comm,
                     )
+
 
                     field_q_energy = compute_field_energy_q_GPE(
                         config, phi_eps_fourier, elec_field_contrib,
