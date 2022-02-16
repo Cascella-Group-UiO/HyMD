@@ -211,7 +211,7 @@ def main():
 
     # Initialize charge density fields
     _SPACE_DIM = 3
-    if charges_flag and config.coulombtype == "PIC_Spectral":
+    if config.coulombtype == "PIC_Spectral": # charges_flag and
         phi_q = pm.create("real", value=0.0)
         phi_q_fourier = pm.create("complex", value=0.0)
         elec_field_fourier = [
@@ -224,7 +224,7 @@ def main():
             "complex", value=0.0
         )
 
-    if dielectric_flag  and config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh
+    if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
         phi_q = pm.create("real", value=0.0)
         phi_q_fourier = pm.create("complex", value=0.0)
         elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
@@ -321,7 +321,7 @@ def main():
 
     if charges_flag:
         layout_q = pm.decompose(positions)
-        if dielectric_flag and config.coulombtype == 'PIC_Spectral_GPE':
+        if config.coulombtype == 'PIC_Spectral_GPE': #dielectric_flag
             elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
                 conv_fun, phi, types, charges,dielectric_sorted,
                 phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
@@ -340,16 +340,17 @@ def main():
             )
 
             #rank = comm.Get_rank()
-            #sum_elec = np.sum(elec_forces,axis = 0)
-            #if rank == 0:
-            #    sums = np.zeros_like(sum_elec)
-            #else:
-            #    sums = None
-            #comm.Barrier()
-            #comm.Reduce(sum_elec, sums,
-            #op=MPI.SUM, root=0)
-            #print("rank ", comm.Get_rank())
-            #print("sum elec_forces", np.sum(elec_forces,axis = 0))
+            #print("main",elec_forces[:,2])
+            sum_elec = np.sum(elec_forces,axis = 0)
+            if rank == 0:
+                sums = np.zeros_like(sum_elec)
+            else:
+                sums = None
+            comm.Barrier()
+            comm.Reduce(sum_elec, sums,
+            op=MPI.SUM, root=0)
+            print("rank ", comm.Get_rank())
+            print("sum elec_forces", np.sum(elec_forces,axis = 0))
             #if rank == 0:
             #    f = open("./sum_forces.txt", "w")
             #    f.write("time step, sum forces x,y,z \n")
@@ -662,7 +663,7 @@ def main():
 
             if charges_flag:
                 layout_q = pm.decompose(positions)
-                if dielectric_flag and config.coulombtype == "PIC_Spectral_GPE":
+                if config.coulombtype == "PIC_Spectral_GPE": # dielectric_flag and
                     elec_field_contrib, phi_eps_fourier = update_field_force_q_GPE(
                         conv_fun, phi, types, charges,dielectric_sorted,
                         phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
