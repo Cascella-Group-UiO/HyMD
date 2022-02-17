@@ -34,7 +34,7 @@ from force_kernel import <routine_name>
 and use the imported module to manipulate NumPy arrays.
 
 ## Code style
-For python files we follow the PEP8 guidelines, so please adapt to them when implementing new code. 
+For python files we follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) guidelines, so please adapt to them when implementing new code. 
 
 The most important stylistic requirements are:
 
@@ -43,10 +43,10 @@ The most important stylistic requirements are:
     name variables and functions all lowercase with underscore as a separator (e.g. some_variable)
     name classes with starting letters capitalized and no separator (e.g. SomeClass)
 
-While for FORTRAN the requirements are:
+While for FORTRAN the basic requirements are:
 
     use 2 spaces for indentation
     wrap lines to max 80 characters whenever possible
-    do not use GOTO
-    use the existing files as reference for variable declaration
+    do not use GOTO statements
+    use lowercase for commands and functions
 
