@@ -256,12 +256,14 @@ class Chi:
     interaction_energy: float
 
 
-def findPathsNoLC(G, u, n):
+def find_all_paths(G, u, n):
+    """Helper function that recursively finds all paths of given lenght 'n + 1' inside a network 'G'.
+    Adapted from https://stackoverflow.com/a/28103735."""
     if n == 0:
         return [[u]]
     paths = []
     for neighbor in G.neighbors(u):
-        for path in findPathsNoLC(G, neighbor, n - 1):
+        for path in find_all_paths(G, neighbor, n - 1):
             if u not in path:
                 paths.append([u] + path)
     return paths
@@ -409,7 +411,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                 ]
                             )
 
-            all_paths_len_four = findPathsNoLC(bond_graph, i, 3)
+            all_paths_len_four = find_all_paths(bond_graph, i, 3)
             for p in all_paths_len_four:
                 name_i = bond_graph.nodes()[i]["name"]
                 name_mid_1 = bond_graph.nodes()[p[1]]["name"]
