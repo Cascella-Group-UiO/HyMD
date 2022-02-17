@@ -625,19 +625,19 @@ def compute_field_energy_q_GPE(
 
     #COULK_GMX = 138.935458 # 1/(4pi eps0) config.dielectric_const
 
-    intermediate = np.abs(phi_q_fourier)*np.abs(phi_q_effective_fourier)
+    #intermediate = np.abs(phi_q_fourier)*np.abs(phi_q_effective_fourier)
     ## ^ ----- For some reason it won't do this inside the transfer function
     ### even though they have the same shape
 
-    def transfer_energy(k,v):  ### potential field is electric field / (-ik)  --> potential field * q -->
-        return 4.0 * np.pi * config.coulomb_constant * v / k.normp(p=2,zeromode=1)
+    #def transfer_energy(k,v):  ### potential field is electric field / (-ik)  --> potential field * q -->
+    #    return 4.0 * np.pi * config.coulomb_constant * v / k.normp(p=2,zeromode=1)
 
-    intermediate.apply(transfer_energy,  kind='wavenumber', out=elec_energy_field)
+    #intermediate.apply(transfer_energy,  kind='wavenumber', out=elec_energy_field)
 
     V = np.prod(config.box_size)
 
-    field_q_energy = 0.5 * V * comm.allreduce(np.sum(elec_energy_field.value))
-
+    #field_q_energy = 0.5 * V * comm.allreduce(np.sum(elec_energy_field.value))
+    #print("field_q_E",field_q_energy)
     ### Add contribution from polarization
     #pol_energy = -0.5*(dielectric-phi_eps.readout(positions, layout=layout_q))*(elec_field_contrib.readout(positions, layout=layout_q))
     #pol_energy = comm.allreduce(np.sum(pol_energy))
@@ -646,6 +646,7 @@ def compute_field_energy_q_GPE(
 
     pol_energy = 0.0
     eps_check = 1e-5 # to avoid invalid value in divide
+    eps_0 = 1.0/config.coulomb_constant
     if eps_check < np.abs(np.min(phi_eps_fourier)):
         def transfer_pol_energy(k,v,epsk = phi_eps_fourier):
             return np.abs(v)**2  / (k.normp(p=2,zeromode=1))
@@ -653,10 +654,10 @@ def compute_field_energy_q_GPE(
         phi_q_fourier.apply(transfer_pol_energy,out = elec_energy_field)
         elec_energy_field = elec_energy_field/phi_eps_fourier
         elec_energy_field.c2r
-        pol_energy = 0.5 * V * comm.allreduce(np.sum(elec_energy_field.value))
+        pol_energy = (0.5/eps_0) * V * comm.allreduce(np.sum(elec_energy_field.value))
     ### ^---- Alternative 2: From W_{ext}
-
-    return field_q_energy.real + pol_energy.real
+        #print("pol_E",pol_energy.real)
+    return pol_energy.real # field_q_energy.real + pol_energy.real
 
 def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     phi_q_fourier,phi_eps, phi_eps_fourier,phi_q_eps, phi_q_eps_fourier,
@@ -715,6 +716,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
         denom_phi_tot = denom_phi_tot + phi[t_]
     phi_eps = num_types/denom_phi_tot
 
+    #print("shapes: denom, phi", np.shape(denom_phi_tot), np.shape(phi))
     #print("rank {:d} : max eps {:2f} , min eps {:2f}".format(comm.Get_rank(), np.max(phi_eps), np.min(phi_eps)))
     #print("mean", np.mean(phi_eps), "rank ", comm.Get_rank())
     phi_eps.r2c(out=phi_eps_fourier)
@@ -775,7 +777,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     ###  with modified charge density
     ## electric field via solving poisson equation
     ## old protol in poisson_solver
-
+    #compute_potential = True
     if compute_potential == True:
         def k_norm_divide(k, potential):
             return potential/k.normp(p=2, zeromode = 1)
@@ -791,6 +793,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
         ### ^ electrostatic potential for the GPE
 
         ## calculate the electric field --> forces on the particles
+        #E_field_from_potential = True
         if E_field_from_potential == True:
             for _d in np.arange(_SPACE_DIM):
                 def gradient_transfer_function(k,x, d =_d):
@@ -825,37 +828,34 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
 
 
     eps0_inv = config.coulomb_constant*4*np.pi
-    sums = np.zeros(3)
+    #sums = np.zeros((config.n_types,3))
+    #elec_forces2 = np.zeros_like(positions) # check difference
     #if comm.Get_rank() == 0:
 
     for _d in np.arange(_SPACE_DIM):
-         #elec_forces[:,_d] =  charges*(elec_field[_d].readout(positions, layout=layout_q)) \
-        #                            + (1./eps0_inv)* (- 0.5 * ((phi_eps_grad[_d].readout(positions, layout=layout_q)) \
-        #                            * (elec_field_contrib).readout(positions, layout=layout_q)) \
-        #                            + 0.5 * ((dielectric - (phi_eps.readout(positions, layout=layout_q))) \
-        #                            * (elec_field_contrib_grad[_d]).readout(positions, layout=layout_q)))
+        elec_forces[:,_d] =  charges*(elec_field[_d].readout(positions, layout=layout_q)) \
+                                + (0.5 / eps0_inv) * (- ((phi_eps_grad[_d].readout(positions, layout=layout_q)) \
+                                   * (elec_field_contrib).readout(positions, layout=layout_q)) \
+                                    +  ((dielectric - (phi_eps.readout(positions, layout=layout_q))) \
+                                    * (elec_field_contrib_grad[_d]).readout(positions, layout=layout_q)))
 
-            for t_ in range(config.n_types):
-                if t_ in types:
-                    elec_forces[types == t_,_d] =  ((charges[types == t_][0])*elec_field[_d] \
-                                        + (1./eps0_inv)*(- 0.5 *(phi_eps_grad[_d] \
-                                        * elec_field_contrib) \
-                                        + 0.5 * (config.dielectric_type[t_] - phi_eps) \
-                                        * (elec_field_contrib_grad[_d]))).readout(positions[types == t_], layout=layout[t_])
-                else: # just to use layout and avoid error
-                   elec_forces[types == t_,_d] =  (0.0*elec_field[_d]).readout(positions[types == t_], layout=layout[t_])
-
-
-        #sums[_d] += np.sum((charges[types == t_][0])*elec_field[_d] + (1/eps0_inv)*(- 0.5 *(phi_eps_grad[_d] \
-        #                        * elec_field_contrib) \
-        #                        + 0.5 * (dielectric[types == t_][0] - phi_eps) \
-        #                        * (elec_field_contrib_grad[_d])))
+    #print(np.shape(dielectric[types == 3]))
+    #print(np.shape(charges[types == 3]))
     #print(types == 4)
-    #print("sums", sums)
+    #print(config.name_to_type_map)
+    #for t_ in range(config.n_types):
+    #    sum_elec_mesh = np.zeros(3)
+    #    rank = comm.Get_rank()
+    #    comm.Reduce(sums[t_,:], sum_elec_mesh,
+    #    op=MPI.SUM, root=0)
+    #    #print("sums", sums)
+    #    if rank == 0:
+    #        print("type",t_)
+    #        print("total sums", sum_elec_mesh)
 
     #print(np.shape(elec_forces[:,2]))
     ###^------ here the use the column, as the elec_forces are defined as (N,3) dimension
-    #print(np.shape(elec_forces))
+    #print("field",elec_forces[:,2])
     #print(config.particles_id)
 
     return elec_field_contrib, phi_eps_fourier

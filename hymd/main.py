@@ -341,22 +341,23 @@ def main():
 
             #rank = comm.Get_rank()
             #print("main",elec_forces[:,2])
-            sum_elec = np.sum(elec_forces,axis = 0)
-            if rank == 0:
-                sums = np.zeros_like(sum_elec)
-            else:
-                sums = None
-            comm.Barrier()
-            comm.Reduce(sum_elec, sums,
-            op=MPI.SUM, root=0)
-            print("rank ", comm.Get_rank())
-            print("sum elec_forces", np.sum(elec_forces,axis = 0))
+            #sum_elec = np.sum(elec_forces,axis = 0)
+            #if rank == 0:
+            #    sums = np.zeros_like(sum_elec)
+            #else:
+            #    sums = None
+            #comm.Barrier()
+            #comm.Reduce(sum_elec, sums,
+            #op=MPI.SUM, root=0)
+            #print("rank ", comm.Get_rank())
+            #print("sum elec_forces", np.sum(elec_forces,axis = 0))
             #if rank == 0:
             #    f = open("./sum_forces.txt", "w")
             #    f.write("time step, sum forces x,y,z \n")
             #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
             #    print("here ",sums)
-            #print("sum elec_forces", np.sum(elec_forces,axis = 0))
+            #    #print(sum_elec)
+            #    print("sum elec_forces", np.sum(elec_forces,axis = 0))
         if config.coulombtype == "PIC_Spectral":
             update_field_force_q(
                 charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field,
@@ -687,6 +688,7 @@ def main():
                     #op=MPI.SUM, root=0)
                     #print("rank ", comm.Get_rank())
                     #print("sum elec_forces", np.sum(elec_forces,axis = 0))
+                    #print("here", sums)
 
                     #if rank == 0:
                     #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
@@ -965,7 +967,7 @@ def main():
                     #op=MPI.SUM, root=0)
                     #print("rank ", comm.Get_rank())
                     #print("sum elec_forces", np.sum(elec_forces,axis = 0))
-
+                    #print("here",sums)
                     #if rank == 0:
                     #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
                     #    f.close()
