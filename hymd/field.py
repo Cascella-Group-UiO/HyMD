@@ -613,8 +613,8 @@ def compute_field_and_kinetic_energy(
     return field_energy, kinetic_energy
 
 def compute_field_energy_q_GPE(
-    config,phi_eps_fourier,elec_field_contrib,phi_q_effective_fourier,
-    phi_q_fourier,elec_energy_field, field_q_energy, comm=MPI.COMM_WORLD,
+    config,phi_eps_fourier, phi_q_fourier,elec_energy_field,
+     field_q_energy, comm=MPI.COMM_WORLD,
 ):
     """
     - added for general poisson equation (GPE)
@@ -623,41 +623,21 @@ def compute_field_energy_q_GPE(
     - PS: One can use the potential directly --> U = g*elec_potential
     """
 
-    #COULK_GMX = 138.935458 # 1/(4pi eps0) config.dielectric_const
-
-    #intermediate = np.abs(phi_q_fourier)*np.abs(phi_q_effective_fourier)
-    ## ^ ----- For some reason it won't do this inside the transfer function
-    ### even though they have the same shape
-
-    #def transfer_energy(k,v):  ### potential field is electric field / (-ik)  --> potential field * q -->
-    #    return 4.0 * np.pi * config.coulomb_constant * v / k.normp(p=2,zeromode=1)
-
-    #intermediate.apply(transfer_energy,  kind='wavenumber', out=elec_energy_field)
-
     V = np.prod(config.box_size)
 
-    #field_q_energy = 0.5 * V * comm.allreduce(np.sum(elec_energy_field.value))
-    #print("field_q_E",field_q_energy)
-    ### Add contribution from polarization
-    #pol_energy = -0.5*(dielectric-phi_eps.readout(positions, layout=layout_q))*(elec_field_contrib.readout(positions, layout=layout_q))
-    #pol_energy = comm.allreduce(np.sum(pol_energy))
-    ### ^---- Alternative 1: From V_ext
-    #print(pol_energy)
+    eps_check = 1e-12 # to avoid invalid value in divide
+    eps_0 = 1.0/(config.coulomb_constant*4*np.pi)
 
-    pol_energy = 0.0
-    eps_check = 1e-5 # to avoid invalid value in divide
-    eps_0 = 1.0/config.coulomb_constant
-    if eps_check < np.abs(np.min(phi_eps_fourier)):
-        def transfer_pol_energy(k,v,epsk = phi_eps_fourier):
-            return np.abs(v)**2  / (k.normp(p=2,zeromode=1))
-        ##  ^----- Alternative 2: From its functional form W
-        phi_q_fourier.apply(transfer_pol_energy,out = elec_energy_field)
-        elec_energy_field = elec_energy_field/phi_eps_fourier
-        elec_energy_field.c2r
-        pol_energy = (0.5/eps_0) * V * comm.allreduce(np.sum(elec_energy_field.value))
-    ### ^---- Alternative 2: From W_{ext}
-        #print("pol_E",pol_energy.real)
-    return pol_energy.real # field_q_energy.real + pol_energy.real
+    def transfer_pol_energy(k,v,epsk = phi_eps_fourier):
+        return np.abs(v)**2  / (k.normp(p=2,zeromode=1))
+    ##  ^----- Alternative 2: From its functional form W
+    phi_q_fourier.apply(transfer_pol_energy,out = elec_energy_field)
+    field_divided = np.divide(elec_energy_field,phi_eps_fourier,
+                where = np.abs(phi_eps_fourier) > eps_check,
+                out = np.zeros_like(elec_energy_field))
+    field_q_energy = (0.5/eps_0) * V * comm.allreduce(np.sum(field_divided.value))
+
+    return field_q_energy.real
 
 def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     phi_q_fourier,phi_eps, phi_eps_fourier,phi_q_eps, phi_q_eps_fourier,
@@ -858,7 +838,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     #print("field",elec_forces[:,2])
     #print(config.particles_id)
 
-    return elec_field_contrib, phi_eps_fourier
+    return phi_eps_fourier, phi_q_fourier
 
 
 
