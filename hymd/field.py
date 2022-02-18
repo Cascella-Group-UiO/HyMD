@@ -613,29 +613,18 @@ def compute_field_and_kinetic_energy(
     return field_energy, kinetic_energy
 
 def compute_field_energy_q_GPE(
-    config,phi_eps_fourier, phi_q_fourier,elec_energy_field,
-     field_q_energy, comm=MPI.COMM_WORLD,
+    config,phi_eps_fourier, field_q_energy, elec_field_contrib_fourier, comm=MPI.COMM_WORLD,
 ):
     """
     - added for general poisson equation (GPE)
-    - used phi_q_effective_fourier (from iterative method) to calculate E_field, thus needed
-    - multiply with actual charge density
-    - PS: One can use the potential directly --> U = g*elec_potential
+    - used phi_q_effective_fourier (from iterative method) to calculate E_field
     """
 
     V = np.prod(config.box_size)
 
-    eps_check = 1e-12 # to avoid invalid value in divide
     eps_0 = 1.0/(config.coulomb_constant*4*np.pi)
 
-    def transfer_pol_energy(k,v,epsk = phi_eps_fourier):
-        return np.abs(v)**2  / (k.normp(p=2,zeromode=1))
-    ##  ^----- Alternative 2: From its functional form W
-    phi_q_fourier.apply(transfer_pol_energy,out = elec_energy_field)
-    field_divided = np.divide(elec_energy_field,phi_eps_fourier,
-                where = np.abs(phi_eps_fourier) > eps_check,
-                out = np.zeros_like(elec_energy_field))
-    field_q_energy = (0.5/eps_0) * V * comm.allreduce(np.sum(field_divided.value))
+    field_q_energy = (0.5 * eps_0) * V * comm.allreduce(np.sum(phi_eps_fourier*elec_field_contrib_fourier))
 
     return field_q_energy.real
 
@@ -793,8 +782,10 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     phi_eps_grad =  [pm.create("real",value = 0.0) for _ in range(_SPACE_DIM)]
     elec_field_contrib_grad = [pm.create("real",value = 0.0) for _ in range(_SPACE_DIM)]
 
-    elec_field_contrib = (elec_field[0]*elec_field[0] + \
-                 elec_field[1]*elec_field[1] +  elec_field[2]*elec_field[2])/denom_phi_tot;
+    elec_dot = (elec_field[0]*elec_field[0] + \
+                 elec_field[1]*elec_field[1] +  elec_field[2]*elec_field[2]); # needed for energy calculations
+
+    elec_field_contrib = elec_dot/denom_phi_tot;
     #print("max E field val {:.2f} rank {:d}".format(np.max(elec_field),comm.Get_rank()))
     elec_field_contrib.r2c(out = elec_field_contrib_fourier)
 
@@ -837,9 +828,11 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     ###^------ here the use the column, as the elec_forces are defined as (N,3) dimension
     #print("field",elec_forces[:,2])
     #print(config.particles_id)
+    # for energy_calculations
+    elec_dot.r2c(out = elec_field_contrib_fourier) # for energy calculations
+    #print(type(elec_dot))
 
-    return phi_eps_fourier, phi_q_fourier
-
+    return phi_eps_fourier, elec_field_contrib_fourier
 
 
 def domain_decomposition(

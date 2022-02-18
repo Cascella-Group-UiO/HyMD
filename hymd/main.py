@@ -248,6 +248,7 @@ def main():
 
         ## Polarization force contribution
         elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
+        #elec_energy_field_real = pm.create("real", value=0.0)
 
     args_in = [
         velocities,
@@ -323,7 +324,7 @@ def main():
     if charges_flag:
         layout_q = pm.decompose(positions)
         if config.coulombtype == 'PIC_Spectral_GPE': #dielectric_flag
-            phi_eps_fourier, phi_q_fourier = update_field_force_q_GPE(
+            phi_eps_fourier, elec_field_contrib_fourier = update_field_force_q_GPE(
                 conv_fun, phi, types, charges,dielectric_sorted,
                 phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                 phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
@@ -334,8 +335,8 @@ def main():
             )
 
             field_q_energy =compute_field_energy_q_GPE(
-                config, phi_eps_fourier, phi_q_fourier,elec_energy_field,
-                field_q_energy,
+                config, phi_eps_fourier,
+                field_q_energy,elec_field_contrib_fourier,
                 comm=comm
             )
 
@@ -665,7 +666,7 @@ def main():
             if charges_flag:
                 layout_q = pm.decompose(positions)
                 if config.coulombtype == "PIC_Spectral_GPE": # dielectric_flag and
-                    phi_eps_fourier, phi_q_fourier = update_field_force_q_GPE(
+                    phi_eps_fourier,elec_field_contrib_fourier = update_field_force_q_GPE(
                         conv_fun, phi, types, charges,dielectric_sorted,
                         phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                         phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
@@ -676,8 +677,8 @@ def main():
                     )
 
                     field_q_energy = compute_field_energy_q_GPE(
-                        config, phi_eps_fourier, phi_q_fourier,elec_energy_field,
-                        field_q_energy,
+                        config, phi_eps_fourier,
+                        field_q_energy,elec_field_contrib_fourier,
                         comm=comm
                     )
 
@@ -874,8 +875,8 @@ def main():
                     if charges_flag:
                         if config.coulombtype == "PIC_Spectral_GPE":
                             field_q_energy = compute_field_energy_q_GPE(
-                                config, phi_eps_fourier, phi_q_fourier,elec_energy_field,
-                                field_q_energy,
+                                config, phi_eps_fourier,
+                                field_q_energy,elec_field_contrib_fourier,
                                 comm=comm
                             )
                         if config.coulombtype == "PIC_Spectral":
@@ -941,7 +942,7 @@ def main():
             if charges_flag:
                 layout_q = pm.decompose(positions)
                 if config.coulombtype == "PIC_Spectral_GPE":
-                    phi_eps_fourier, phi_q_fourier = update_field_force_q_GPE(
+                    phi_eps_fourier, elec_field_contrib_fourier = update_field_force_q_GPE(
                         conv_fun, phi, types, charges,dielectric_sorted,
                         phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                         phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
@@ -953,8 +954,8 @@ def main():
 
 
                     field_q_energy = compute_field_energy_q_GPE(
-                        config, phi_eps_fourier, phi_q_fourier,elec_energy_field,
-                        field_q_energy,
+                        config, phi_eps_fourier,
+                        field_q_energy,elec_field_contrib_fourier,
                         comm=comm
                     )
 
