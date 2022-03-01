@@ -1044,6 +1044,10 @@ def sort_dielectric_by_type_id(config, charges,types):
     dielectric_by_types = np.zeros(N)
     for i in range(N):
         dielectric_by_types[i] = dielectric_val[types[i]]
+    #print("types ", types)
+    #print("diel  val", dielectric_by_types)
+    #print("charges", charges)
+    #print(config.name_to_type_map)
     return dielectric_by_types # by types with each particle id
 
 def check_dielectric(config, comm = MPI.COMM_WORLD):
@@ -1058,7 +1062,7 @@ def check_dielectric(config, comm = MPI.COMM_WORLD):
         if config.pol_mixing is None:
                 config.pol_mixing = 0.6
         if config.conv_crit is None:
-            config.conv_crit = 1e-6
+            config.conv_crit = 1e-15
     return config
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):

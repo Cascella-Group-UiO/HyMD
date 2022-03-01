@@ -669,8 +669,8 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     ## ^------ tbr; phi_transfer_funciton by hamiltonian.H ??
     phi_q_fourier.c2r(out=phi_q) ## this phi_q is after applying the smearing function
 
-    denom_phi_tot =  pm.create("real", value=0.0)
-    num_types =  pm.create("real", value=0.0)
+    denom_phi_tot =  pm.create("real", value= 0.0)
+    num_types =  pm.create("real", value = 0.0)
 
     #print("rank {:d} and phi shape {:}".format(comm.Get_rank(), np.shape(phi)))
     #for t_ in range(config.n_types):
@@ -680,15 +680,22 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     ### ^ ----- Calculate the relative dielectric (permittivity) to field
     ### ------- from a mean contribution of particle number densities
 
+    eps0_inv =  4.0 * np.pi * config.coulomb_constant
+
     for t_ in range(config.n_types): # do this with painting? (possible?)
         num_types = num_types  + (config.dielectric_type[t_])*phi[t_] #+ phi[t_].apply(dielectric_transfer_function, out = phi_eps)
         denom_phi_tot = denom_phi_tot + phi[t_]
-    phi_eps = num_types/denom_phi_tot
-
-    #print("shapes: denom, phi", np.shape(denom_phi_tot), np.shape(phi))
+    phi_eps = np.divide(num_types*eps0_inv,denom_phi_tot,
+                        where = np.abs(denom_phi_tot > 1e-15),
+                        out = np.zeros_like(phi_q))
+    # print("names ",config.name_to_type_map)
+    #print(dielectric)
+    # print("shapes: denom, phi", np.shape(denom_phi_tot), np.shape(phi))
     #print("rank {:d} : max eps {:2f} , min eps {:2f}".format(comm.Get_rank(), np.max(phi_eps), np.min(phi_eps)))
     #print("mean", np.mean(phi_eps), "rank ", comm.Get_rank())
     phi_eps.r2c(out=phi_eps_fourier)
+    #phi_eps_fourier.apply(phi_transfer_function, out=phi_eps_fourier)
+    #phi_eps_fourier.c2r(out=phi_eps)
     ###  ^ ------  Alternatively with dielectric given by id list
 
     phi_q_eps = (phi_q/phi_eps)
@@ -713,7 +720,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     def iterate_apply_k_vec(k,additive_terms,d = _d):
         return additive_terms * (- 1j * k[_d]) / k.normp(p=2, zeromode=1)
 
-    max_iter = 100; i = 0; delta = 1.0
+    max_iter = 200; i = 0; delta = 1.0
     #phi_pol_prev = pm.create("real", value = 0.0)
     ### ^------ set to zero before each iterative procedure or soft start
     conv_criteria = config.conv_crit # conv. criteria (default 1e-6)
@@ -733,12 +740,13 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
         delta = conv_fun(comm,diff) # decided from toml input
         phi_pol_prev = phi_pol.copy()
         i = i + 1
-    #print("Stopping after iteration {:d} with stop crit {:.2e}, delta {:.2e}".format(i,conv_criteria,delta))
+
+    print("Stopping after iteration {:d} with stop crit {:.2e}, delta {:.2e}, rank: ".format(i,conv_criteria,delta, comm.Get_rank()))
 
     (phi_q_eps + phi_pol).r2c(out = phi_q_effective_fourier)
     for _d in np.arange(_SPACE_DIM):
         def poisson_transfer_function(k, v, d=_d): # fourier solution
-            return - 1j * k[_d] * 4.0 * np.pi * config.coulomb_constant * v / k.normp(p=2,zeromode=1)
+            return - 1j * k[_d] * v / k.normp(p=2,zeromode=1)
             ######return - 1j * k[_d] * 4.0 * np.pi * v /k.normp(p=2) #hymd.py:173: RuntimeWarning: invalid value encountered in true_divide
         phi_q_effective_fourier.apply(poisson_transfer_function, out = elec_field_fourier[_d])
         elec_field_fourier[_d].c2r(out=elec_field[_d])
@@ -752,11 +760,11 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
             return potential/k.normp(p=2, zeromode = 1)
 
         ## > Electrostatic potential
-        eps0_inv = config.coulomb_constant*4*np.pi
+        #eps0_inv = config.coulomb_constant*4*np.pi
         ## ^ the 1/(4pi eps0)*4*pi = 1/eps0
         elec_potential_fourier =  pm.create("complex", value = 0.0)
         elec_potential = pm.create("real", value = 0.0)
-        ((eps0_inv)*(phi_q_eps + phi_pol)).r2c(out = elec_potential_fourier)
+        (phi_q_eps + phi_pol).r2c(out = elec_potential_fourier)
         elec_potential_fourier.apply(k_norm_divide, out = elec_potential_fourier)
         elec_potential_fourier.c2r(out = elec_potential)
         ### ^ electrostatic potential for the GPE
@@ -785,7 +793,10 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     elec_dot = (elec_field[0]*elec_field[0] + \
                  elec_field[1]*elec_field[1] +  elec_field[2]*elec_field[2]); # needed for energy calculations
 
-    elec_field_contrib = elec_dot/denom_phi_tot;
+    #elec_field_contrib = elec_dot/denom_phi_tot;
+    elec_field_contrib = np.divide(elec_dot,denom_phi_tot,
+                        where = np.abs(denom_phi_tot > 1e-15),
+                        out = np.zeros_like(elec_dot))
     #print("max E field val {:.2f} rank {:d}".format(np.max(elec_field),comm.Get_rank()))
     elec_field_contrib.r2c(out = elec_field_contrib_fourier)
 
@@ -798,14 +809,15 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
         phi_eps_fgrad[_d].c2r(phi_eps_grad[_d])
 
 
-    eps0_inv = config.coulomb_constant*4*np.pi
+    #eps0_inv = config.coulomb_constant*4*np.pi
     #sums = np.zeros((config.n_types,3))
     #elec_forces2 = np.zeros_like(positions) # check difference
     #if comm.Get_rank() == 0:
+    #print("min ro phi_eps", np.min(phi_eps.readout(positions, layout=layout_q)))
 
     for _d in np.arange(_SPACE_DIM):
         elec_forces[:,_d] =  charges*(elec_field[_d].readout(positions, layout=layout_q)) \
-                                + (0.5 / eps0_inv) * (- ((phi_eps_grad[_d].readout(positions, layout=layout_q)) \
+                                + 0.5 * (- ((phi_eps_grad[_d].readout(positions, layout=layout_q)) \
                                    * (elec_field_contrib).readout(positions, layout=layout_q)) \
                                     +  ((dielectric - (phi_eps.readout(positions, layout=layout_q))) \
                                     * (elec_field_contrib_grad[_d]).readout(positions, layout=layout_q)))
