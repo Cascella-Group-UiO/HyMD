@@ -1062,7 +1062,7 @@ def check_dielectric(config, comm = MPI.COMM_WORLD):
         if config.pol_mixing is None:
                 config.pol_mixing = 0.6
         if config.conv_crit is None:
-            config.conv_crit = 1e-15
+            config.conv_crit = 1e-7
     return config
 
 def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):

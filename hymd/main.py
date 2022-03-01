@@ -340,26 +340,26 @@ def main():
                 comm=comm
             )
 
-            rank = comm.Get_rank()
+            #rank = comm.Get_rank()
             #print(charges)
             #print("main",elec_forces[:,2])
-            sum_elec = np.sum(elec_forces,axis = 0)
-            if rank == 0:
-                sums = np.zeros_like(sum_elec)
-            else:
-                sums = None
+            #sum_elec = np.sum(elec_forces,axis = 0)
+            #if rank == 0:
+            #    sums = np.zeros_like(sum_elec)
+            #else:
+            #    sums = None
             #comm.Barrier()
-            comm.Reduce(sum_elec, sums,
-            op=MPI.SUM, root=0)
+            #comm.Reduce(sum_elec, sums,
+            #op=MPI.SUM, root=0)
             #print("rank ", comm.Get_rank())
             #print("sum elec_forces", np.sum(elec_forces,axis = 0))
-            if rank == 0:
-                #    f = open("./sum_forces.txt", "w")
-                #    f.write("time step, sum forces x,y,z \n")
-                #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
-                print("here ",sums)
-                #    #print(sum_elec)
-                #    print("sum elec_forces", np.sum(elec_forces,axis = 0))
+            #if rank == 0:
+            #    f = open("./sum_forces.txt", "w")
+            #    f.write("time step, sum forces x,y,z \n")
+            #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
+            #print("here ",sums)
+            #    #print(sum_elec)
+            #    print("sum elec_forces", np.sum(elec_forces,axis = 0))
 
         if config.coulombtype == "PIC_Spectral":
             update_field_force_q(
@@ -372,21 +372,21 @@ def main():
                 comm=comm,
             )
 
-            sum_elec = np.sum(elec_forces,axis = 0)
-            rank = comm.Get_rank()
-            if rank == 0:
-                sums = np.zeros_like(sum_elec)
-            else:
-                sums = None
+            #sum_elec = np.sum(elec_forces,axis = 0)
+            #rank = comm.Get_rank()
+            #if rank == 0:
+            #    sums = np.zeros_like(sum_elec)
+            #else:
+            #    sums = None
             #comm.Barrier()
-            comm.Reduce(sum_elec, sums,
-            op=MPI.SUM, root=0)
+            #comm.Reduce(sum_elec, sums,
+            #op=MPI.SUM, root=0)
             #print("rank ", comm.Get_rank())
             #print("sum elec_forces", np.sum(elec_forces,axis = 0))
             #print("here", sums)
 
-            if rank == 0:
-                print("sum elec forces", sums)
+            #if rank == 0:
+            #    print("sum elec forces", sums)
             #print(config.type_to_name_map)
             #print(charges[types == 4])
 
@@ -704,16 +704,16 @@ def main():
                         comm=comm
                     )
 
-                    sum_elec = np.sum(elec_forces,axis = 0)
-                    rank = comm.Get_rank()
-                    comm.Reduce(sum_elec, sums,
-                    op=MPI.SUM, root=0)
+                    #sum_elec = np.sum(elec_forces,axis = 0)
+                    #rank = comm.Get_rank()
+                    #comm.Reduce(sum_elec, sums,
+                    #op=MPI.SUM, root=0)
                     #print("rank ", comm.Get_rank())
                     #print("sum elec_forces", np.sum(elec_forces,axis = 0))
                     #print("here", sums)
 
-                    if rank == 0:
-                        print("sum elec forces", sums)
+                    #if rank == 0:
+                    #    print("sum elec forces", sums)
                     #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
 
                 if config.coulombtype == "PIC_Spectral":
@@ -726,16 +726,16 @@ def main():
                         comm=comm,
                     )
 
-                    sum_elec = np.sum(elec_forces,axis = 0)
-                    rank = comm.Get_rank()
-                    comm.Reduce(sum_elec, sums,
-                    op=MPI.SUM, root=0)
+                    #sum_elec = np.sum(elec_forces,axis = 0)
+                    #rank = comm.Get_rank()
+                    #comm.Reduce(sum_elec, sums,
+                    #op=MPI.SUM, root=0)
                     #print("rank ", comm.Get_rank())
                     #print("sum elec_forces", np.sum(elec_forces,axis = 0))
                     #print("here", sums)
 
-                    if rank == 0:
-                        print("sum elec forces", sums)
+                    #if rank == 0:
+                    #    print("sum elec forces", sums)
 
             if protein_flag and not args.disable_dipole:
                 dipole_positions = np.reshape(

@@ -622,9 +622,7 @@ def compute_field_energy_q_GPE(
 
     V = np.prod(config.box_size)
 
-    eps_0 = 1.0/(config.coulomb_constant*4*np.pi)
-
-    field_q_energy = (0.5 * eps_0) * V * comm.allreduce(np.sum(phi_eps_fourier*elec_field_contrib_fourier))
+    field_q_energy = 0.5 * V * comm.allreduce(np.sum(phi_eps_fourier.value*elec_field_contrib_fourier.value))
 
     return field_q_energy.real
 
@@ -741,7 +739,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
         phi_pol_prev = phi_pol.copy()
         i = i + 1
 
-    print("Stopping after iteration {:d} with stop crit {:.2e}, delta {:.2e}, rank: ".format(i,conv_criteria,delta, comm.Get_rank()))
+    #print("Stopping after iteration {:d} with stop crit {:.2e}, delta {:.2e}, rank: ".format(i,conv_criteria,delta, comm.Get_rank()))
 
     (phi_q_eps + phi_pol).r2c(out = phi_q_effective_fourier)
     for _d in np.arange(_SPACE_DIM):
