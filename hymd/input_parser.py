@@ -9,7 +9,8 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
-from .force import Bond, Angle, Dihedral, Chi, Dielectric_type
+from .force import Bond, Angle, Dihedral, Chi, Dielectric_type, K_Coupl
+from .barostat import Target_pressure
 from .logger import Logger
 
 
@@ -157,7 +158,12 @@ class Config:
     mesh_size: Union[Union[List[int], np.ndarray], int]
     sigma: float
     kappa: float
+    rho_0: float
+    a: float
+    pressure: bool
+    plot: bool = False
 
+    #box_size: Union[List[float], np.ndarray] = None
     n_print: int = None
     tau: float = None
     start_temperature: Union[float, bool] = None
@@ -174,6 +180,7 @@ class Config:
     angle_bonds: List[Angle] = field(default_factory=list)
     dihedrals: List[Dihedral] = field(default_factory=list)
     chi: List[Chi] = field(default_factory=list)
+    K_coupl: List[K_Coupl] = field(default_factory=list)
     n_particles: int = None
     max_molecule_size: int = None
     n_flush: int = None
@@ -181,6 +188,7 @@ class Config:
     thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: Union[int, bool] = False
+    ## samirans version cancel_com_momentum: bool = False
     coulombtype: str = None
     convergence_type: str = None
     pol_mixing: float = None
@@ -188,7 +196,21 @@ class Config:
     conv_crit: float = None
     dielectric_type: List[Dielectric_type] = field(default_factory=list)
 
+    squaregradient: bool = False
+
+    #For NPT runs
+    barostat: str = None
+    tau_p: float = None
+    target_pressure : List[Target_pressure] = field(default_factory=list)
+    alpha_0: float = None
+    n_b: int = None
+    m: List[float] = field(default_factory=list)
+
     def __str__(self):
+        target_pressure_str = "\ttarget_pressure:\n" + "".join(
+                "\t\tP_L: " + f"{self.target_pressure.P_L}\n" +
+                "\t\tP_N: " + f"{self.target_pressure.P_N}\n"
+        )
         bonds_str = "\tbonds:\n" + "".join(
             [
                 (
@@ -255,6 +277,14 @@ class Config:
                 )
 
         """
+
+        K_coupl_str = "\tK_coupl:\n" + "".join(
+            [
+                    (f"\t\t{k.atom_1} {k.atom_2}: " + f"{k.squaregradient_energy}\n")
+                    for k in self.K_coupl
+            ]
+        )
+
         thermostat_coupling_groups_str = ""
         if any(self.thermostat_coupling_groups):
             thermostat_coupling_groups_str = (
@@ -269,22 +299,14 @@ class Config:
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            if k not in (
-                "bonds",
-                "angle_bonds",
-                "dihedrals",
-                "chi",
-                "thermostat_coupling_groups",
-            ):          #, "dielectric_type"):
+
+        #, "dielectric_type") below possibility:
+        if k not in ("target_pressure", "bonds", "angle_bonds", "chi", "K_coupl", "thermostat_coupling_groups"):
                 ret_str += f"\t{k}: {v}\n"
-        ret_str += (
-            bonds_str
-            + angle_str
-            + dihedrals_str
-            + chi_str
-            + thermostat_coupling_groups_str
-        ) # #  + dielectric_type_str
+        ret_str += target_pressure_str + bonds_str + angle_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
+        #   + dielectric_type_str
         return ret_str
+
 
 
 def read_config_toml(file_path):
@@ -364,12 +386,24 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "pol_mixing",
         "conv_crit",
         "dielectric_type",
+        "alpha_0",
+        "n_b",
+        "box_size",
+        "alpha_0",
+        "n_b",
+        "box_size"
     ):
         config_dict[n] = None
 
     # Defaults = []
-    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "tags","dielectric_type"):
+
+    ### note: check if order makes sense in how it is parsed
+    ## in denfac
+    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "K_coupl", "tags","m","dielectric_type,target_pressure"):
         config_dict[n] = []
+
+    # Defaults: bool
+    config_dict["pressure"] = False
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
     # any).
@@ -472,12 +506,32 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_1=c_[0], dielectric_value=c[1][0]
                 )
         """
+            if k == "K_coupl":
+                config_dict["K_coupl"] = [None] * len(v)
+                for i, c in enumerate(v):
+                    c_ = sorted([c[0], c[1]])
+                    config_dict["K_coupl"][i] = K_Coupl(
+                        atom_1=c_[0], atom_2=c_[1], squaregradient_energy=c[2]
+                    )
+            if k == "target_pressure":
+                if len(v) == 2:
+                    config_dict["target_pressure"] = Target_pressure(
+                        P_L = v[0], P_N = v[1] # check condition # V array (still read as array?)
+                    )
+                elif len(v) == 1:
+                    config_dict["target_pressure"] = Target_pressure(
+                        P_L = v[0], P_N = None
+                    )
+                else:
+                    config_dict["target_pressure"] = Target_pressure(
+                        P_L = None, P_N = None
+                    )
 
     if file_path is not None:
         config_dict["file_name"] = file_path
 
     for n in (
-        "n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa"
+        "n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa","rho_0", "a", "pressure"
     ):
         if n not in config_dict:
             err_str = (
@@ -733,8 +787,59 @@ def check_chi(config, names, comm=MPI.COMM_WORLD):
                     warnings.warn(warn_str)
     return config
 
+def check_K_coupl(config, names, comm=MPI.COMM_WORLD):
+    if not hasattr(config, "unique_names"):
+        config = _find_unique_names(config, names)
+    unique_names = config.unique_names
+    #add warnings and error remarks here
+    return config
 
-def check_box_size(config, comm=MPI.COMM_WORLD):
+def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
+    if config.box_size:
+        config.box_size = np.array(config.box_size, dtype=np.float32)
+        if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
+            err_str = (
+                f"Box size specified in {config.file_name}: "
+                f"{config.box_size} does not match input box:"
+                f"{input_box}"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+    else:
+        if input_box.all():
+            config.box_size = input_box
+        else:
+            err_str = (
+                f"No box information found"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+
+def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
+    if config.box_size:
+        config.box_size = np.array(config.box_size, dtype=np.float32)
+        if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
+            err_str = (
+                f"Box size specified in {config.file_name}: "
+                f"{config.box_size} does not match input box:"
+                f"{input_box}"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+    else:
+        if input_box.all():
+            config.box_size = input_box
+        else:
+            err_str = (
+                f"No box information found"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ValueError(err_str)
+
     for b in config.box_size:
         if b <= 0.0:
             err_str = (
@@ -744,7 +849,6 @@ def check_box_size(config, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
                 raise ValueError(err_str)
-    config.box_size = np.array(config.box_size, dtype=np.float64)
     return config
 
 
@@ -979,6 +1083,37 @@ def check_name(config, comm=MPI.COMM_WORLD):
             config.name = "sim" + current_time
     return config
 
+def check_barostat(config, comm=MPI.COMM_WORLD):
+    if config.barostat is None and (config.tau_p is not None or config.target_pressure.P_L is not None):
+        err_str = "barostat not specified but config.tau_p "\
+                  "or config.target_pressure specified, cannot start simulation {config.barostat}"
+        Logger.rank0.log(logging.ERROR, err_str)
+        if comm.Get_rank() == 0:
+            raise TypeError(err_str)
+    if config.barostat is not None:
+        if (config.barostat != 'isotropic' and config.barostat != 'semiisotropic'):
+            err_str = "barostat option not recognised. Valid options: isotropic, semiisotropic"
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise TypeError(err_str)
+        if config.target_pressure.P_L is None:
+            config.target_pressure.P_L = 1.0 #bar
+            config.target_pressure.P_N = None
+            if config.barostat == 'semiisotropic':
+                config.target_pressure.P_N = 1.0 #bar
+            warn_str = "barostat specified but no target_pressure, defaulting to 1.0 bar"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+        if config.tau_p is None:
+            if config.tau <= 0.1:
+                config.tau_p = config.tau * 10.0
+            else:
+                config.tau_p = 1.0
+            warn_str = "barostat specified but no tau_p, defaulting to "+str(config.tau_p)
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+
+    return config
 
 def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
     if any(config.thermostat_coupling_groups):
@@ -1018,6 +1153,26 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                     raise ValueError(err_str)
     return config
 
+def check_alpha_0(config, comm = MPI.COMM_WORLD):
+    if config.alpha_0 is None:
+        config.alpha_0 = 0.9999999
+    return config
+
+def check_m(config, comm = MPI.COMM_WORLD):
+    if config.m==[]:
+        config.m = [1.0 for t in range(config.n_types)]
+    return config
+
+def check_n_b(config, comm = MPI.COMM_WORLD):
+    if config.n_b is None:
+        warn_str = (
+        f"config.n_b not specified."
+        "Defaulting to 1"
+        )
+        config.n_b = 1
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0: warnings.warn(warn_str)
+    return config
 
 def check_cancel_com_momentum(config, comm=MPI.COMM_WORLD):
     if isinstance(config.cancel_com_momentum, int):
@@ -1065,7 +1220,8 @@ def check_dielectric(config, comm = MPI.COMM_WORLD):
             config.conv_crit = 1e-6
     return config
 
-def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
+def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
+    ## Note input_box from pressure
     """Performs various checks on the specfied config to ensure consistency
 
     Parameters
@@ -1090,7 +1246,7 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
         config = _setup_type_to_name_map(config, names, types, comm=comm)
-    config = check_box_size(config, comm=comm)
+    config = check_box_size(config, input_box, comm=comm)
     config = check_integrator(config, comm=comm)
     config = check_max_molecule_size(config, comm=comm)
     config = check_tau(config, comm=comm)
@@ -1100,10 +1256,15 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_name(config, comm=comm)
     config = check_n_particles(config, indices, comm=comm)
     config = check_chi(config, names, comm=comm)
+    config = check_K_coupl(config, names, comm=comm)
     config = check_bonds(config, names, comm=comm)
     config = check_angles(config, names, comm=comm)
     config = check_dihedrals(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
+    config = check_barostat(config, comm=comm)
+    config = check_alpha_0(config, comm=comm)
+    config = check_n_b(config, comm=comm)
+    config = check_m(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     config = check_cancel_com_momentum(config, comm=comm)
     config = check_dielectric(config,comm=comm)

@@ -261,6 +261,11 @@ class Chi:
     atom_2: str
     interaction_energy: float
 
+@dataclass
+class K_Coupl:
+    atom_1: str
+    atom_2: str
+    squaregradient_energy: float
 
 def findPathsNoLC(G, u, n):
     if n == 0:

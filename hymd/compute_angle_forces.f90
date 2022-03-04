@@ -1,41 +1,24 @@
-subroutine caf(f, r, box, a, b, c, t0, k, energy)
-    ! Compute three-particle bond forces and energy
-    !
-    ! Parameters
-    ! ---------
-    ! f : (N,D) numpy.ndarray
-    !     Forces for N particles in D dimensions. Changed in place.
-    ! r : (N,D) numpy.ndarray
-    !     Positions for N particles in D dimensions.
-    ! box : (D,) numpy.ndarray
-    !     D-dimensional simulation box size.
-    ! a : (M,) numpy.ndarray
-    !     Index of particle 1 for M individual three-particle bonds.
-    ! b : (M,) numpy.ndarray
-    !     Index of particle 2 for M individual three-particle bonds.
-    ! c : (M,) numpy.ndarray
-    !     Index of particle 3 for M individual three-particle bonds.
-    ! t0 : (M,) numpy.ndarray
-    !     Equilibrium bond angle for M individual three-particle bonds.
-    ! k : (M,) numpy.ndarray
-    !     Bond strength for M individual three-particle bonds.
-    !
-    ! Returns
-    ! -------
-    ! energy : float
-    !     Total energy of all two-particle bonds.
-    !
+subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
+! ==============================================================================
+! compute_angle_forces() speedup attempt.
+!
+! Compile:
+!   f2py3 --f90flags="-Ofast" -c compute_angle_forces.f90 -m compute_angle_forces
+! Import:
+!   from compute_angle_forces import caf as compute_angle_forces__fortran
+! ==============================================================================
     implicit none
 
-    real(4), dimension(:,:),     intent(in out) :: f
-    real(4), dimension(:,:),     intent(in)     :: r
-    real(8), dimension(:),       intent(in)     :: box
-    integer, dimension(:),       intent(in)     :: a
-    integer, dimension(:),       intent(in)     :: b
-    integer, dimension(:),       intent(in)     :: c
-    real(8), dimension(:),       intent(in)     :: t0
-    real(8), dimension(:),       intent(in)     :: k
-    real(8),                    intent(out)     :: energy
+    real(4), dimension(:,:), intent(in out) :: f
+    real(4), dimension(:,:), intent(in)     :: r
+    real(8), dimension(:),   intent(in)     :: box
+    integer, dimension(:),   intent(in)     :: a
+    integer, dimension(:),   intent(in)     :: b
+    integer, dimension(:),   intent(in)     :: c
+    real(8), dimension(:),   intent(in)     :: t0
+    real(8), dimension(:),   intent(in)     :: k
+    real(8),                 intent(out)    :: energy
+    real(8), dimension(3),   intent(out)    :: angle_pr
 
     integer :: ind, aa, bb, cc
     real(8), dimension(3) :: ra, rc, ea, ec, fa, fc
@@ -44,6 +27,7 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
     real(8) :: cosphi, cosphi2, sinphi, theta
 
     energy = 0.0d00
+    angle_pr = 0.0d00
     f = 0.0d00
 
     do ind = 1, size(a)
@@ -82,7 +66,12 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy)
         f(cc, :) = f(cc, :) - fc
         f(bb, :) = f(bb, :) + fa + fc
 
-        energy = energy + 0.5d0 * ff * d
+        energy = energy - 0.5d0 * ff * d
+
+        angle_pr(1) = angle_pr(1) + (fa_x * ra_x) + (fc_x * rc_x)
+        angle_pr(2) = angle_pr(2) + (fa_y * ra_y) + (fc_y * rc_y)
+        angle_pr(3) = angle_pr(3) + (fa_z * ra_z) + (fc_z * rc_z)
+
       end if
     end do
 end subroutine

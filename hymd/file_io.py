@@ -101,6 +101,7 @@ def setup_time_dependent_element(
     step = group.create_dataset("step", (n_frames,), "int32")
     time = group.create_dataset("time", (n_frames,), "float32")
     value = group.create_dataset("value", (n_frames, *shape), dtype)
+
     if units is not None:
         group.attrs["units"] = units
     return group, step, time, value
@@ -217,8 +218,6 @@ def store_static(
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    h5md.edges = box.create_dataset("edges", (3,), dtype)
-    h5md.edges[:] = np.array(config.box_size)
 
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
@@ -394,6 +393,22 @@ def store_static(
     ) = setup_time_dependent_element(
         "thermostat_work", h5md.observables, n_frames, (1,), "float32", units="kJ mol-1"  # noqa: E501
     )
+    (
+        _,
+        h5md.pressure_step,
+        h5md.pressure_time,
+        h5md.pressure,
+    ) = setup_time_dependent_element(
+        "pressure", h5md.observables, n_frames, (25,), "float32", units="Bar"
+    )
+    (
+        _,
+        h5md.box_step,
+        h5md.box_time,
+        h5md.box_value,
+    ) = setup_time_dependent_element(
+        "edges", box, n_frames, (3,3), "float32", units="nm"
+    )
 
     ind_sort = np.argsort(indices)
     for i in ind_sort:
@@ -444,12 +459,34 @@ def store_static(
     if molecules is not None:
         resid_dataset[indices[ind_sort]] = molecules
 
+# store data old vs
+"""
+h5md, step, frame, indices, positions, velocities, forces, box_size,
+temperature, kinetic_energy, bond2_energy, bond3_energy, bond4_energy,
+field_energy, field_q_energy, time_step, config, velocity_out=False,
+force_out=False, charge_out=False, dump_per_particle=False,
+"""
 
 def store_data(
-    h5md, step, frame, indices, positions, velocities, forces, box_size,
-    temperature, kinetic_energy, bond2_energy, bond3_energy, bond4_energy,
-    field_energy, field_q_energy, time_step, config, velocity_out=False,
-    force_out=False, charge_out=False, dump_per_particle=False,
+    h5md,
+    step,
+    frame,
+    indices,
+    positions,
+    velocities,
+    forces,
+    box_size,
+    temperature,
+    pressure,
+    kinetic_energy,
+    bond2_energy,
+    bond3_energy,
+    field_energy,
+    time_step,
+    config,
+    velocity_out=False,
+    force_out=False,
+    dump_per_particle=False,
     comm=MPI.COMM_WORLD,
 ):
     """Writes time-step data to HDF5 output file
@@ -523,7 +560,9 @@ def store_data(
         h5md.angular_momentum_step,
         h5md.torque_step,
         h5md.temperature_step,
-        h5md.thermostat_work_step,
+        h5md.pressure_step,
+        h5md.box_step,
+        h5md.thermostat_work_step
     ):
         dset[frame] = step
 
@@ -540,7 +579,9 @@ def store_data(
         h5md.angular_momentum_time,
         h5md.torque_time,
         h5md.temperature_time,
-        h5md.thermostat_work_time,
+        h5md.pressure_time,
+        h5md.box_time,
+        h5md.thermostat_work_time
     ):
         dset[frame] = step * time_step
 
@@ -589,6 +630,9 @@ def store_data(
     h5md.angular_momentum[frame, :] = angular_momentum
     h5md.torque[frame, :] = torque
     h5md.temperature[frame] = temperature
+    h5md.pressure[frame] = pressure
+    for d in range(3):
+        h5md.box_value[frame,d,d] = box_size[d]
     h5md.thermostat_work[frame] = config.thermostat_work
 
     header_ = 15 * "{:>13}"

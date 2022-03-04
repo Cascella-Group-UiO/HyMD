@@ -15,11 +15,14 @@ from .file_io import distribute_input, OutDataset, store_static, store_data
 from .field import (compute_field_force, update_field,
                     compute_field_and_kinetic_energy, domain_decomposition,
                     update_field_force_q, compute_field_energy_q,
-                    update_field_force_q_GPE, compute_field_energy_q_GPE)
+                    update_field_force_q_GPE, compute_field_energy_q_GPE,
+                    initialize_pm)
 from .thermostat import (csvr_thermostat, cancel_com_momentum,
                          generate_initial_velocities)
 from .force import dipole_forces_redistribution, prepare_bonds
 from .integrator import integrate_velocity, integrate_position
+from .pressure import comp_pressure
+from .barostat import isotropic, semiisotropic
 
 
 def main():
@@ -96,7 +99,12 @@ def main():
         else:
             charges_flag = False
 
-    config = check_config(config, indices, names, types, comm=comm)
+        if "box" in in_file:
+            input_box = in_file["box"][:]
+        else:
+            input_box = np.array( [None, None, None] )
+
+    config = check_config(config, indices, names, types, input_box, comm=comm)
 
     ## dielectric from toml
     if config.coulombtype == 'PIC_Spectral_GPE':
@@ -196,6 +204,9 @@ def main():
         if rank == 0:
             raise NotImplementedError(err_str)
 
+    pm_stuff  = initialize_pm(pmesh, config, comm)
+    (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
+    phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
     # Initialize density fields
@@ -306,13 +317,43 @@ def main():
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]  # noqa: E501
         update_field(
-            phi, layouts, force_on_grid, hamiltonian, pm, positions, types,
-            config, v_ext, phi_fourier, v_ext_fourier, compute_potential=True,
-        )
+            phi,
+            phi_gradient,
+            phi_laplacian,
+            phi_transfer,
+            phi_grad_lap_fourier,
+            phi_grad_lap,
+            layouts,
+            force_on_grid,
+            hamiltonian,
+            pm,
+            positions,
+            types,
+            config,
+            v_ext,
+            phi_fourier,
+            phi_lap_filtered_fourier,
+            v_ext_fourier,
+            phi_lap_filtered,
+            v_ext1,
+            config.m,
+            compute_potential=True,
+        ) ## Old input: phi, layouts, force_on_grid, hamiltonian, pm, positions, types,   ##config, v_ext, phi_fourier, v_ext_fourier, compute_potential=True,
+
+
         field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-            phi, velocities, hamiltonian, positions, types, v_ext, config,
-            layouts, comm=comm,
-        )
+            phi,
+            phi_gradient,
+            velocities,
+            hamiltonian,
+            positions,
+            types,
+            v_ext,
+            config,
+            layouts,
+            comm=comm,
+        ) ##   old input  phi, velocities, hamiltonian, positions, types, v_ext, config,    layouts, comm=comm,
+
         compute_field_force(
             layouts, positions, force_on_grid, field_forces, types,
             config.n_types
@@ -464,7 +505,7 @@ def main():
         transfer_matrices = np.asfortranarray(transfer_matrices)
 
         if not args.disable_bonds:
-            bond_energy_ = compute_bond_forces(
+            bond_energy_, bond_pr_ = compute_bond_forces(
                 bond_forces, positions, config.box_size, bonds_2_atom1,
                 bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength,
             )
@@ -472,12 +513,14 @@ def main():
         else:
             bonds_2_atom1, bonds_2_atom2 = [], []
         if not args.disable_angle_bonds:
-            angle_energy_ = compute_angle_forces(
+            angle_energy_, angle_pr_ = compute_angle_forces(
                 angle_forces, positions, config.box_size, bonds_3_atom1,
                 bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium,
                 bonds_3_stength,
             )
             angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+            #angle_pr = comm.allreduce(angle_pr_, MPI.SUM)
+
         if not args.disable_dihedrals:
             dihedral_energy_ = compute_dihedral_forces(
                 dihedral_forces, positions, dipole_positions,
@@ -509,6 +552,7 @@ def main():
             )
 
     else:
+        #bonds_2_atom1, bonds_2_atom2 = None, None
         bonds_2_atom1, bonds_2_atom2 = [], []
 
     config.initial_energy = (
@@ -535,7 +579,7 @@ def main():
         frame = 0
         if not args.disable_field:
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-                phi, velocities, hamiltonian, positions, types, v_ext, config,
+                phi, phi_gradient, velocities, hamiltonian, positions, types, v_ext, config,
                 layouts, comm=comm,
             )
         else:
@@ -543,16 +587,46 @@ def main():
                 0.5 * config.mass * np.sum(velocities ** 2)
             )
 
+
         temperature = (
             (2 / 3) * kinetic_energy / (config.gas_constant * config.n_particles)  # noqa: E501
         )
+
+        if config.pressure or config.barostat:
+            pressure = comp_pressure(
+                    phi,
+                    phi_gradient,
+                    hamiltonian,
+                    velocities,
+                    config,
+                    phi_fourier,
+                    phi_laplacian,
+                    phi_transfer,
+                    phi_grad_lap_fourier,
+                    phi_grad_lap,
+                    args,
+                    bond_forces,
+                    angle_forces,
+                    positions,
+                    bond_pr_,
+                    angle_pr_,
+                    comm=comm
+            )
+
+            #if rank ==0 : print(pressure[9:12])
+            #print('phi_fft after pressure call: phi_fft[d=0]',phi_fft[0].value[0][0][0:2])
+        else:
+            pressure = 0.0 #0.0 indicates not calculated. To be changed.
+
         forces_out = (
             field_forces + bond_forces + angle_forces + dihedral_forces
             + reconstructed_forces
         )
+
+
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
-            forces_out, config.box_size, temperature, kinetic_energy,
+            forces_out, config.box_size, temperature, pressure, kinetic_energy,
             bond_energy, angle_energy, dihedral_energy, field_energy,
             field_q_energy, config.time_step, config,
             velocity_out=args.velocity_output, force_out=args.force_output,
@@ -640,12 +714,12 @@ def main():
             # Update fast forces
             if molecules_flag:
                 if not args.disable_bonds:
-                    bond_energy_ = compute_bond_forces(
+                    bond_energy, bond_pr_ = compute_bond_forces(
                         bond_forces, positions, config.box_size, bonds_2_atom1,
                         bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength,
                     )
                 if not args.disable_angle_bonds:
-                    angle_energy_ = compute_angle_forces(
+                    angle_energy_, angle_pr_  = compute_angle_forces(
                         angle_forces, positions, config.box_size,
                         bonds_3_atom1, bonds_3_atom2, bonds_3_atom3,
                         bonds_3_equilibrium, bonds_3_stength,
@@ -671,6 +745,58 @@ def main():
                 config.time_step,
             )
 
+        # Berendsen Barostat
+        if config.barostat:
+            if config.barostat.lower() == 'isotropic':
+                pm_stuff, change = isotropic(
+                     pmesh,
+                     pm_stuff,
+                     phi,
+                     phi_gradient,
+                     hamiltonian,
+                     positions,
+                     velocities,
+                     config,
+                     phi_fourier,
+                     phi_laplacian,
+                     phi_transfer,
+                     phi_grad_lap_fourier,
+                     phi_grad_lap,
+                     bond_forces,
+                     angle_forces,
+                     args,
+                     bond_pr_,
+                     angle_pr_,
+                     step,
+                     comm=comm
+                )
+
+            elif config.barostat.lower() == 'semiisotropic':
+                pm_stuff, change = semiisotropic(
+                     pmesh,
+                     pm_stuff,
+                     phi,
+                     phi_gradient,
+                     hamiltonian,
+                     positions,
+                     velocities,
+                     config,
+                     phi_fourier,
+                     phi_laplacian,
+                     phi_transfer,
+                     phi_grad_lap_fourier,
+                     phi_grad_lap,
+                     bond_forces,
+                     angle_forces,
+                     args,
+                     bond_pr_,
+                     angle_pr_,
+                     step,
+                     comm=comm
+                )
+            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
+            phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
+
         # Update slow forces
         if not args.disable_field:
             #print("update phi w rank", comm.Get_rank())
@@ -678,8 +804,10 @@ def main():
                 pm.decompose(positions[types == t]) for t in range(config.n_types)  # noqa: E501
             ]
             update_field(
-                phi, layouts, force_on_grid, hamiltonian, pm, positions, types,
-                config, v_ext, phi_fourier, v_ext_fourier,
+                phi,phi_gradient, phi_laplacian, phi_transfer,phi_grad_lap_fourier, phi_grad_lap, layouts,
+             , force_on_grid, hamiltonian, pm, positions, types,
+                config, v_ext, phi_fourier, phi_lap_filtered_fourier, v_ext_fourier, phi_lap_filtered,
+                v_ext1, config.m,
             )
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types,
@@ -889,7 +1017,7 @@ def main():
                 )
 
         # Thermostat
-        if config.target_temperature:
+        if config.target_temperature and np.mod(step, config.n_b)==0:
             csvr_thermostat(velocities, names, config, comm=comm)
 
         # Remove total linear momentum
@@ -902,10 +1030,34 @@ def main():
             if np.mod(step, config.n_print) == 0 and step != 0:
                 frame = step // config.n_print
                 if not args.disable_field:
+                    layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]
+                    update_field(
+                        phi,
+                        phi_gradient,
+                        phi_laplacian,
+                        phi_transfer,
+                        phi_grad_lap_fourier,
+                        phi_grad_lap,
+                        layouts,
+                        force_on_grid,
+                        hamiltonian,
+                        pm,
+                        positions,
+                        types,
+                        config,
+                        v_ext,
+                        phi_fourier,
+                        phi_lap_filtered_fourier,
+                        v_ext_fourier,
+                        phi_lap_filtered,
+                        v_ext1,
+                        config.m,
+                        compute_potential=True,
+                    )
                     (
                         field_energy, kinetic_energy,
                     ) = compute_field_and_kinetic_energy(
-                        phi, velocities, hamiltonian, positions, types, v_ext,
+                        phi, phi_gradient, velocities, hamiltonian, positions, types, v_ext,
                         config, layouts, comm=comm,
                     )
 
@@ -932,13 +1084,36 @@ def main():
                 if args.disable_field:
                     field_energy = 0.0
 
+                if config.pressure:
+                    pressure = comp_pressure(
+                            phi,
+                            phi_gradient,
+                            hamiltonian,
+                            velocities,
+                            config,
+                            phi_fourier,
+                            phi_laplacian,
+                            phi_transfer,
+                            phi_grad_lap_fourier,
+                            phi_grad_lap,
+                            args,
+                            bond_forces,
+                            angle_forces,
+                            positions,
+                            bond_pr_,
+                            angle_pr_,
+                            comm=comm
+                    )
+                else:
+                    pressure = 0.0 #0.0 indicates not calculated. To be changed.
+
                 forces_out = (
                     field_forces + bond_forces + angle_forces
                     + dihedral_forces + reconstructed_forces
                 )
                 store_data(
                     out_dataset, step, frame, indices, positions, velocities,
-                    forces_out, config.box_size, temperature, kinetic_energy,
+                    forces_out, config.box_size, temperature, pressure, kinetic_energy,
                     bond_energy, angle_energy, dihedral_energy, field_energy,
                     field_q_energy, config.respa_inner * config.time_step,
                     config, velocity_out=args.velocity_output,
@@ -967,13 +1142,39 @@ def main():
     if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
         if not args.disable_field:
             update_field(
-                phi, layouts, force_on_grid, hamiltonian, pm, positions, types,
-                config, v_ext, phi_fourier, v_ext_fourier,
+                phi,
+                phi_gradient,
+                phi_laplacian,
+                phi_transfer,
+                phi_grad_lap_fourier,
+                phi_grad_lap,
+                layouts,
+                force_on_grid,
+                hamiltonian,
+                pm,
+                positions,
+                types,
+                config,
+                v_ext,
+                phi_fourier,
+                phi_lap_filtered_fourier,
+                v_ext_fourier,
+                phi_lap_filtered,
+                v_ext1,
+                config.m,
                 compute_potential=True,
             )
             field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-                phi, velocities, hamiltonian, positions, types, v_ext, config,
-                layouts, comm=comm,
+                phi,
+                phi_gradient,
+                velocities,
+                hamiltonian,
+                positions,
+                types,
+                v_ext,
+                config,
+                layouts,
+                comm=comm,
             )
 
             if charges_flag:
@@ -1029,18 +1230,42 @@ def main():
         )
         if args.disable_field:
             field_energy = 0.0
+
+        if config.pressure:
+            pressure = comp_pressure(
+                    phi,
+                    phi_gradient,
+                    hamiltonian,
+                    velocities,
+                    config,
+                    phi_fourier,
+                    phi_laplacian,
+                    phi_transfer,
+                    phi_grad_lap_fourier,
+                    phi_grad_lap,
+                    args,
+                    bond_forces,
+                    angle_forces,
+                    positions,
+                    bond_pr_,
+                    angle_pr_,
+                    comm=comm
+            )
+        else:
+            pressure = 0.0 #0.0 indicates not calculated. To be changed.
+
         forces_out = (
             field_forces + bond_forces + angle_forces + dihedral_forces
             + reconstructed_forces
         )
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
-            forces_out, config.box_size, temperature, kinetic_energy,
+            forces_out, config.box_size, temperature, pressure, kinetic_energy,
             bond_energy, angle_energy, dihedral_energy, field_energy,
             field_q_energy, config.respa_inner * config.time_step, config,
             velocity_out=args.velocity_output, force_out=args.force_output,
             charge_out=charges_flag, dump_per_particle=args.dump_per_particle,
             comm=comm,
-        )
+        ) ## added pressure after temperature
 
     out_dataset.close_file()
