@@ -691,7 +691,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
 
     #print("shapes: denom, phi", np.shape(denom_phi_tot), np.shape(phi))
     #print("rank {:d} : max eps {:2f} , min eps {:2f}".format(comm.Get_rank(), np.max(phi_eps), np.min(phi_eps)))
-    print("mean", np.mean(phi_eps), "rank ", comm.Get_rank())
+    #print("mean", np.mean(phi_eps), "rank ", comm.Get_rank())
     phi_eps.r2c(out=phi_eps_fourier)
     ###  ^ ------  Alternatively with dielectric given by id list
 
@@ -745,7 +745,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
         phi_pol_prev = phi_pol.copy()
         i = i + 1
     #print("Stopping after iteration {:d} with stop crit {:.2e}, delta {:.2e}".format(i,conv_criteria,delta))
-
+    #+ phi_pol
     (phi_q_eps + phi_pol).r2c(out = phi_q_effective_fourier)
     for _d in np.arange(_SPACE_DIM):
         def poisson_transfer_function(k, v, d=_d): # fourier solution
@@ -772,6 +772,9 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
         elec_potential_fourier.c2r(out = elec_potential)
         ### ^ electrostatic potential for the GPE
 
+        ## elec p to txt
+        #halfway = int(config.mesh_size[0]/2) - 1
+        #np.save('./analysis/potential',elec_potential)#[halfway,halfway,:])
         ## calculate the electric field --> forces on the particles
         #E_field_from_potential = True
         if E_field_from_potential == True:
@@ -825,7 +828,13 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
                                     * (elec_field_contrib_grad[_d]).readout(positions, layout=layout_q)))
 
     #print(np.shape(dielectric[types == 3]))
-    #print(np.shape(charges[types == 3]))
+    #print(charges[types == 0])
+    #ind = 5
+    #dielectric_test = np.zeros(len(dielectric[types == ind])) + config.dielectric_type[ind]
+    #print(dielectric_test)
+    #print(dielectric[types == ind])
+    #boola = (dielectric[types ==ind] == dielectric_test)
+    #print(np.all(boola))
     #print(types == 4)
     #print(config.name_to_type_map)
     #for t_ in range(config.n_types):
@@ -845,6 +854,30 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     # for energy_calculations
     elec_dot.r2c(out = elec_field_contrib_fourier) # for energy calculations
     #print(type(elec_dot))
+
+    #################################################
+    # plot analysis write to file
+    ## write to txt
+    ## epsilon
+    #print(config.mesh_size)
+    """
+    #halfway = int(config.mesh_size[0]/2) - 1
+    np.save('./analysis/epsilon',phi_eps) #[halfway,:,halfway])# delimiter = ',')
+    ## gradient of epsilon
+    np.save('./analysis/grad_e',phi_eps_grad)# [1][halfway,:,halfway])
+
+    ## phi_q
+    np.save('./analysis/phi_q',phi_q) #[halfway,:,halfway])
+
+    ## phi_q_eps
+    np.save('./analysis/q_e',phi_q_eps) #[halfway,:,halfway])
+
+    ## phi_pol
+    np.save('./analysis/q_pol',phi_pol) #[halfway,:,halfway])
+
+    ## electric field z
+    np.save('./analysis/E_field',elec_field) #[2][halfway,halfway,:])
+    """
 
     return phi_eps_fourier, elec_field_contrib_fourier
 
