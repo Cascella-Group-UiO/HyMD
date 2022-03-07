@@ -1,29 +1,44 @@
-
 subroutine cbf(f, r, box, i, j, r0, k, energy, bond_pr)
-! ==============================================================================
-! compute_bond_forces() speedup attempt.
-!
-! Compile:
-!   f2py3 --f90flags="-Ofast" -c compute_bond_forces.f90 -m compute_bond_forces
-! Import:
-!   from compute_bond_forces import cbf as compute_bond_forces__fortran
-! ==============================================================================
+    ! Compute two-particle bond forces and energy
+    !
+    ! Parameters
+    ! ---------
+    ! f : (N,D) numpy.ndarray
+    !     Forces for N particles in D dimensions. Changed in place.
+    ! r : (N,D) numpy.ndarray
+    !     Positions for N particles in D dimensions.
+    ! box : (D,) numpy.ndarray
+    !     D-dimensional simulation box size.
+    ! a : (M,) numpy.ndarray
+    !     Index of particle 1 for M individual two-particle bonds.
+    ! b : (M,) numpy.ndarray
+    !     Index of particle 2 for M individual two-particle bonds.
+    ! r0 : (M,) numpy.ndarray
+    !     Equilibrium bond distance for M individual two-particle bonds.
+    ! k : (M,) numpy.ndarray
+    !     Bond strength for M individual two-particle bonds.
+    !
+    ! Returns
+    ! -------
+    ! energy : float
+    !     Total energy of all two-particle bonds.
+    !
     implicit none
 
     real(4), dimension(:,:), intent(in out) :: f
     real(4), dimension(:,:), intent(in)     :: r
-    real(4), dimension(:),   intent(in)     :: box
+    real(8), dimension(:),   intent(in)     :: box
     integer, dimension(:),   intent(in)     :: i
     integer, dimension(:),   intent(in)     :: j
-    real(4), dimension(:),   intent(in)     :: r0
-    real(4), dimension(:),   intent(in)     :: k
-    real(4),                 intent(out)    :: energy
-    real(8), dimension(3),   intent(out)    :: bond_pr
+    real(8), dimension(:),   intent(in)     :: r0
+    real(8), dimension(:),   intent(in)     :: k
+    real(8),                 intent(out)    :: energy
+    real(4), dimension(3),   intent(out)    :: bond_pr
 
     integer :: ind, ii, jj
-    real(4) :: rij, rij_x, rij_y, rij_z
-    real(4) :: df
-    real(4) :: bx, by, bz
+    real(8) :: rij, rij_x, rij_y, rij_z
+    real(8) :: df
+    real(8) :: bx, by, bz
 
     energy = 0.0d00
     bond_pr = 0.0d00 !Set x, y, z components to 0
@@ -33,26 +48,30 @@ subroutine cbf(f, r, box, i, j, r0, k, energy, bond_pr)
     by = 1.0d00 / box(2)
     bz = 1.0d00 / box(3)
 
-    integer :: ind, aa, bb
-    real(8), dimension(3) :: rab, fa
-    real(8) :: df, rab_norm
+    do ind = 1, size(i)
+      ii = i(ind) + 1
+      jj = j(ind) + 1
 
-    energy = 0.0d00
-    f = 0.0d00
+      rij_x = r(jj, 1) - r(ii, 1)
+      rij_x = rij_x - box(1) * nint(rij_x * bx)
 
-    do ind = 1, size(a)
-      aa = a(ind) + 1
-      bb = b(ind) + 1
+      rij_y = r(jj, 2) - r(ii, 2)
+      rij_y = rij_y - box(2) * nint(rij_y * by)
 
-      rab = r(bb, :) - r(aa, :)
-      rab = rab - box * nint(rab / box)
-      rab_norm = norm2(rab)
+      rij_z = r(jj, 3) - r(ii, 3)
+      rij_z = rij_z - box(3) * nint(rij_z * bz)
 
-      df = k(ind) * (rab_norm - r0(ind))
-      fa = -df * rab / rab_norm
+      rij = sqrt(rij_x * rij_x + rij_y * rij_y + rij_z * rij_z)
+      df = -k(ind) * (rij - r0(ind))
 
-      f(aa, :) = f(aa, :) - fa
-      f(bb, :) = f(bb, :) + fa
+      f(ii, 1) = f(ii, 1) - df * rij_x / rij
+      f(jj, 1) = f(jj, 1) + df * rij_x / rij
+
+      f(ii, 2) = f(ii, 2) - df * rij_y / rij
+      f(jj, 2) = f(jj, 2) + df * rij_y / rij
+
+      f(ii, 3) = f(ii, 3) - df * rij_z / rij
+      f(jj, 3) = f(jj, 3) + df * rij_z / rij
 
       energy = energy + 0.5d00 * k(ind) * (rij - r0(ind))**2
 

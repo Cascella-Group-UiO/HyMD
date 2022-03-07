@@ -268,6 +268,7 @@ class Config:
                 for k in self.chi
             ]
         )
+
         """ If you want to print out dielectric type to terminal
             dielectric_type_str = "\tdielectric_type:\n" + "".join(
                     [
@@ -300,9 +301,9 @@ class Config:
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
             #, "dielectric_type") below possibility:
-            if k not in ("target_pressure", "bonds", "angle_bonds", "chi", "K_coupl", "thermostat_coupling_groups"):
+            if k not in ("target_pressure", "bonds", "angle_bonds", "dihedrals", "chi", "K_coupl", "thermostat_coupling_groups"):
                     ret_str += f"\t{k}: {v}\n"
-        ret_str += target_pressure_str + bonds_str + angle_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
+        ret_str += target_pressure_str + bonds_str + angle_str + dihedrals_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
         #   + dielectric_type_str
         return ret_str
 
@@ -398,7 +399,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
 
     ### note: check if order makes sense in how it is parsed
     ## in denfac
-    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "K_coupl", "tags","m","dielectric_type,target_pressure"):
+    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "K_coupl", "tags","m","dielectric_type","target_pressure"):
         config_dict[n] = []
 
     # Defaults: bool
@@ -793,8 +794,9 @@ def check_K_coupl(config, names, comm=MPI.COMM_WORLD):
     #add warnings and error remarks here
     return config
 
+"""
 def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
-    if config.box_size:
+    if config.box_size is not None:
         config.box_size = np.array(config.box_size, dtype=np.float32)
         if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
             err_str = (
@@ -815,9 +817,10 @@ def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
                 raise ValueError(err_str)
+"""
 
 def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
-    if config.box_size:
+    if config.box_size is not None:
         config.box_size = np.array(config.box_size, dtype=np.float32)
         if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
             err_str = (
