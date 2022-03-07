@@ -3,8 +3,8 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass
 from typing import Union
-from pressure import comp_pressure
-from field import initialize_pm
+from .pressure import comp_pressure
+from .field import initialize_pm
 
 @dataclass
 class Target_pressure:
@@ -64,7 +64,7 @@ def isotropic(
         P = np.average(pressure[-3:-1]) #kJ/(mol nm^3)
         P = P * 16.61 #bar
 
-        #scaling factor                                                                                        
+        #scaling factor
         alpha = 1 - config.time_step * config.n_b/ config.tau_p * beta * (config.target_pressure.P_L - P)
 
         #length scaling
@@ -142,7 +142,7 @@ def semiisotropic(
         alphaN = 1.0
 
         if config.target_pressure.P_L:
-            #scaling factor                                                                                        
+            #scaling factor
             alphaL = 1 - config.time_step  * config.n_b/ config.tau_p * beta * (config.target_pressure.P_L - PL)
             #length scaling
             config.box_size[0] = alphaL**(1/3) * config.box_size[0]
@@ -150,7 +150,7 @@ def semiisotropic(
             for i in range(len(positions)):
                 positions[i][0:2] = alphaL**(1/3) * positions[i][0:2]
         if config.target_pressure.P_N:
-            #scaling factor                                                                                        
+            #scaling factor
             alphaN = 1 - config.time_step  * config.n_b/ config.tau_p * beta * (config.target_pressure.P_N - PN)
             #length scaling
             config.box_size[2] = alphaN**(1/3) * config.box_size[2]

@@ -805,7 +805,7 @@ def main():
             ]
             update_field(
                 phi,phi_gradient, phi_laplacian, phi_transfer,phi_grad_lap_fourier, phi_grad_lap, layouts,
-             , force_on_grid, hamiltonian, pm, positions, types,
+                force_on_grid, hamiltonian, pm, positions, types,
                 config, v_ext, phi_fourier, phi_lap_filtered_fourier, v_ext_fourier, phi_lap_filtered,
                 v_ext1, config.m,
             )

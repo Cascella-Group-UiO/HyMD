@@ -299,10 +299,9 @@ class Config:
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-
-        #, "dielectric_type") below possibility:
-        if k not in ("target_pressure", "bonds", "angle_bonds", "chi", "K_coupl", "thermostat_coupling_groups"):
-                ret_str += f"\t{k}: {v}\n"
+            #, "dielectric_type") below possibility:
+            if k not in ("target_pressure", "bonds", "angle_bonds", "chi", "K_coupl", "thermostat_coupling_groups"):
+                    ret_str += f"\t{k}: {v}\n"
         ret_str += target_pressure_str + bonds_str + angle_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
         #   + dielectric_type_str
         return ret_str
@@ -506,26 +505,26 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     atom_1=c_[0], dielectric_value=c[1][0]
                 )
         """
-            if k == "K_coupl":
-                config_dict["K_coupl"] = [None] * len(v)
-                for i, c in enumerate(v):
-                    c_ = sorted([c[0], c[1]])
-                    config_dict["K_coupl"][i] = K_Coupl(
-                        atom_1=c_[0], atom_2=c_[1], squaregradient_energy=c[2]
-                    )
-            if k == "target_pressure":
-                if len(v) == 2:
-                    config_dict["target_pressure"] = Target_pressure(
-                        P_L = v[0], P_N = v[1] # check condition # V array (still read as array?)
-                    )
-                elif len(v) == 1:
-                    config_dict["target_pressure"] = Target_pressure(
-                        P_L = v[0], P_N = None
-                    )
-                else:
-                    config_dict["target_pressure"] = Target_pressure(
-                        P_L = None, P_N = None
-                    )
+        if k == "K_coupl":
+            config_dict["K_coupl"] = [None] * len(v)
+            for i, c in enumerate(v):
+                c_ = sorted([c[0], c[1]])
+                config_dict["K_coupl"][i] = K_Coupl(
+                    atom_1=c_[0], atom_2=c_[1], squaregradient_energy=c[2]
+                )
+        if k == "target_pressure":
+            if len(v) == 2:
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = v[0], P_N = v[1] # check condition # V array (still read as array?)
+                )
+            elif len(v) == 1:
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = v[0], P_N = None
+                )
+            else:
+                config_dict["target_pressure"] = Target_pressure(
+                    P_L = None, P_N = None
+                )
 
     if file_path is not None:
         config_dict["file_name"] = file_path

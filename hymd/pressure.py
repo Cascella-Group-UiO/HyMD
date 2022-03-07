@@ -1,9 +1,9 @@
 import logging
 import numpy as np
 from mpi4py import MPI
-from logger import Logger
+from .logger import Logger
 import sympy
-from field import comp_laplacian
+from .field import comp_laplacian
 
 def comp_pressure(
         phi,
@@ -42,7 +42,7 @@ def comp_pressure(
 
     #Term 1
     p0 = -1/V * np.sum(w)
-  
+
     #Term 2
     V_bar_tuple = [
         hamiltonian.V_bar[k](phi) for k in range(config.n_types)
@@ -56,7 +56,7 @@ def comp_pressure(
     ]
     p1 = [np.sum(p1[i].value) for i in range(config.n_types)]
     p1 = np.sum(p1)
-    
+
     #Term 3
     comp_laplacian(
             phi_fourier,
@@ -134,24 +134,24 @@ def comp_pressure(
 
     #Dihedral angle force term: linking 4 atoms
     p_dihedral = {
-              'x': 0.0,                                              
+              'x': 0.0,
               'y': 0.0,
               'z': 0.0
-                  } 
-    
+                  }
+
     #Add formal parameter dihedral_forces as: comp_pressure(..., dihedral_forces)
     #Define dictionary:
-    #forces = {                                                                                                         
-    #          'x': dihedral_forces[:,0],                                                                                    
-    #          'y': dihedral_forces[:,1],                                                                                    
-    #          'z': dihedral_forces[:,2]                                                                                     
-    #           }                                                                                                         
-    # Compute the pressure due to dihedrals as:                                                                                                                     
+    #forces = {
+    #          'x': dihedral_forces[:,0],
+    #          'y': dihedral_forces[:,1],
+    #          'z': dihedral_forces[:,2]
+    #           }
+    # Compute the pressure due to dihedrals as:
     #p_dihedral = {
-    #          'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),                                              
-    #          'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),                                              
-    #          'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)                                               
-    #              } 
+    #          'x': np.sum( np.multiply(forces['x'],positions[:,0]) )*(1/V),
+    #          'y': np.sum( np.multiply(forces['y'],positions[:,1]) )*(1/V),
+    #          'z': np.sum( np.multiply(forces['z'],positions[:,2]) )*(1/V)
+    #              }
 
 
 
