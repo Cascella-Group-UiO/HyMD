@@ -305,7 +305,7 @@ def update_field_force_q(
             elec_field[_d].readout(positions, layout=layout_q)
         )
 
-    print("elec_field PE", elec_field[2][0,0,0])
+    #print("elec_field PE", elec_field[2][0,0,0])
 
 def update_field_force_energy_q(
     charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_forces,
