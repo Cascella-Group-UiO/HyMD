@@ -9,7 +9,7 @@ subroutine cbf(f, r, box, i, j, r0, k, energy, bond_pr)
     !     Positions for N particles in D dimensions.
     ! box : (D,) numpy.ndarray
     !     D-dimensional simulation box size.
-    ! a : (M,) numpy.ndarray
+    ! a : (M,) numpys.ndarray
     !     Index of particle 1 for M individual two-particle bonds.
     ! b : (M,) numpy.ndarray
     !     Index of particle 2 for M individual two-particle bonds.

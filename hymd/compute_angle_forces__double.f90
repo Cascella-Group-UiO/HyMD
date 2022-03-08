@@ -1,4 +1,4 @@
-subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
+subroutine caf_d(f, r, box, a, b, c, t0, k, energy, angle_pr)
     ! Compute three-particle bond forces and energy
     !
     ! Parameters

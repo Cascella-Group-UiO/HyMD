@@ -1,4 +1,4 @@
-subroutine cbf(f, r, box, i, j, r0, k, energy, bond_pr)
+subroutine cbf_d(f, r, box, i, j, r0, k, energy, bond_pr)
     ! Compute two-particle bond forces and energy
     !
     ! Parameters
