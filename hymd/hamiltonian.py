@@ -139,7 +139,7 @@ class SquaredPhi(Hamiltonian):
             return 0.5 / (kappa * rho0) * (sum(phi)) ** 2
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
@@ -198,7 +198,7 @@ class DefaultNoChi(Hamiltonian):
             return 0.5 / (kappa * rho0) * (sum(phi) - rho0) ** 2
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
@@ -289,7 +289,7 @@ class DefaultWithChi(Hamiltonian):
             return incompressibility + interaction
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))

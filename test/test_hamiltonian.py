@@ -2,8 +2,6 @@ from mpi4py import MPI
 import pytest
 import logging
 import pmesh
-import sympy
-from types import ModuleType
 import numpy as np
 from hymd.hamiltonian import (
     Hamiltonian, DefaultNoChi, DefaultWithChi, SquaredPhi,
@@ -27,7 +25,7 @@ def test_DefaultNoChi_window_function(
 ):
     caplog.set_level(logging.INFO)
     sigma, filter = filter
-    print(sigma, filter)
+    # print(sigma, filter)
     indices, _, names, _, r, _ = dppc_single
     conf_file_name, _ = config_toml
     file_contents = read_config_toml(conf_file_name)
@@ -261,8 +259,8 @@ def test_Hamiltonian_no_chi_gaussian_core(v_ext, caplog):
 @pytest.mark.parametrize(
     ["types", "kappa", "rho0", "sigma"],
     [
-        (["A", "B", "C"], 0.029230985982, 0.0014814814814814814, 0.2988365823859701),
-        (["A", "B", "C"], 1.299759825895, 0.0014814814814814814, 1.2095870248085025),
+        (["A", "B", "C"], 0.029230985982, 0.0014814814814814814, 0.2988365823859701),  # noqa: E501
+        (["A", "B", "C"], 1.299759825895, 0.0014814814814814814, 1.2095870248085025),  # noqa: E501
     ],
 )
 def test_Hamiltonian_with_chi_gaussian_core(v_ext, caplog):
@@ -350,7 +348,7 @@ def test_Hamiltonian_with_chi_gaussian_core(v_ext, caplog):
                 rij2 = np.dot(rij, rij)
                 c_ = 2 * config.kappa * chi_dict[tuple(sorted([ni, nj]))] / c
                 interaction_energy += (
-                    c_ * np.exp(- rij2 / (4.0 * config.sigma**2))
+                    c_ * np.exp(-rij2 / (4.0 * config.sigma**2))
                 )
     E = E + interaction_energy
     assert w == pytest.approx(E, abs=1e-6)
