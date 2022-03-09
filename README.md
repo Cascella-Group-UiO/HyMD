@@ -18,6 +18,10 @@ Run simulations by
 ```bash
 python3 -m hymd [CONFIGURATION_FILE] [TOPOLOGY_FILE] (--OPTIONAL_ARGS)
 ```
+A typical command would look like:
+```bash
+mpirun -n 4 python3 -m hymd config.tomli dppc.h5 --verbose --logfile log.txt
+```
 
 #### Run interactively in Google Colaboratory
 A [Google Colaboratory](https://colab.research.google.com/) jupyter notebook is setup [here](https://colab.research.google.com/drive/1jfzRaXjL3q53J4U8OrCgADepmf_HuCOh?usp=sharing) with a working HyMD fully installed and executable in the browser.
@@ -27,6 +31,12 @@ Install HyMD with `pip` by
 ```bash
 python3 -m pip install --upgrade numpy mpi4py cython
 python3 -m pip install hymd
+```
+To install a developer's version:
+```bash
+git clone https://github.com/Cascella-Group-UiO/HyMD.git hymd
+cd hymd
+python3 -m pip install -e . 
 ```
 See [HyMD docs](https://cascella-group-uio.github.io/HyMD/index.html) for more information.
 
