@@ -160,3 +160,44 @@ can be fixed by installing either `curl`_ or `wget`_
 
 .. _`wget`:
    https://www.gnu.org/software/wget/
+
+
+Error running parallel HyMD without MPI-enabled h5py
+----------------------------------------------------
+
+.. code-block:: python
+
+   Traceback (most recent call last):
+     File "/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+   Traceback (most recent call last):
+     File "/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+       return _run_code(code, main_globals, None,
+     File "/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+       return _run_code(code, main_globals, None,
+     File "/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+       exec(code, run_globals)
+     File "/usr/local/lib/python3.9/site-packages/hymd/__main__.py", line 2, in <module>
+       exec(code, run_globals)
+     File "/usr/local/lib/python3.9/site-packages/hymd/__main__.py", line 2, in <module>
+       main()
+     File "/usr/local/lib/python3.9/site-packages/hymd/main.py", line 64, in main
+       with h5py.File(args.input, "r", **_kwargs) as in_file:
+     File "/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py", line 502, in __init__
+       with h5py.File(args.input, "r", **_kwargs) as in_file:
+       fapl = make_fapl(driver, libver, rdcc_nslots, rdcc_nbytes, rdcc_w0,
+     File "/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py", line 166, in make_fapl
+       fapl = make_fapl(driver, libver, rdcc_nslots, rdcc_nbytes, rdcc_w0,
+     File "/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py", line 166, in make_fapl
+       set_fapl(plist, **kwds)
+     File "/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py", line 52, in _set_fapl_mpio
+       set_fapl(plist, **kwds)
+     File "/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py", line 52, in _set_fapl_mpio
+       raise ValueError("h5py was built without MPI support, can't use mpio driver")
+   ValueError: h5py was built without MPI support, can't use mpio driver
+
+Can be fixed by installing a MPI-enabled :code:`h5py` through
+
+.. code-block:: bash
+
+   python3 -m pip uninstall -y h5py
+   HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
