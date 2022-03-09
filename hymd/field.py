@@ -789,7 +789,7 @@ def compute_field_and_kinetic_energy(
     return field_energy, kinetic_energy
 
 def compute_field_energy_q_GPE(
-    config,phi_eps_fourier, field_q_energy, elec_field_contrib_fourier, comm=MPI.COMM_WORLD,
+    config,phi_eps, field_q_energy, dot_elec, comm=MPI.COMM_WORLD,
 ):
     """
     - added for general poisson equation (GPE)
@@ -800,9 +800,10 @@ def compute_field_energy_q_GPE(
 
     eps_0 = 1.0/(config.coulomb_constant*4*np.pi)
 
-    field_q_energy = (0.5 * eps_0) * V * comm.allreduce(np.sum(phi_eps_fourier*elec_field_contrib_fourier))
+    #field_q_energy = (0.5 * eps_0) * V * comm.allreduce(np.sum(phi_eps_fourier*elec_field_contrib_fourier))
+    field_q_energy = (0.5 * eps_0) * V * comm.allreduce(np.sum(phi_eps*dot_elec))
 
-    return field_q_energy.real
+    return field_q_energy
 
 def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     phi_q_fourier,phi_eps, phi_eps_fourier,phi_q_eps, phi_q_eps_fourier,
@@ -1027,7 +1028,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     #print("field",elec_forces[:,2])
     #print(config.particles_id)
     # for energy_calculations
-    elec_dot.r2c(out = elec_field_contrib_fourier) # for energy calculations
+    #elec_dot.r2c(out = elec_field_contrib_fourier) # for energy calculations
     #print(type(elec_dot))
 
     #################################################
@@ -1054,7 +1055,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     np.save('./analysis/E_field',elec_field) #[2][halfway,halfway,:])
     """
 
-    return phi_eps_fourier, elec_field_contrib_fourier
+    return phi_eps, elec_dot
 
 def domain_decomposition(
     positions, pm, *args, molecules=None, bonds=None, verbose=0,
