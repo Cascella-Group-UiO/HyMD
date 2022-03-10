@@ -8,7 +8,7 @@ mass = 72.0
 max_molecule_size = 15
 
 [simulation]
-n_steps = 3 
+n_steps = 2 
 n_print = 1
 n_flush = 1
 time_step = 0.03
@@ -31,7 +31,7 @@ barostat = 'semiisotropic'
 mesh_size = [50, 50, 50]
 kappa = 0.05
 sigma = 0.5
-rho_0 = 8.86
+rho0 = 8.86
 a = 9.21
 m = [1.0, 1.0, 1.0, 1.0, 1.0]
 chi = [
