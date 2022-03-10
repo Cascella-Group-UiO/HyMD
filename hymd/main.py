@@ -174,19 +174,6 @@ def main():
     kinetic_energy = 0.0
     field_q_energy = 0.0
 
-    # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
-    # ragged nested sequences until it is fixed in pmesh
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            action="ignore",
-            category=np.VisibleDeprecationWarning,
-            message=r"Creating an ndarray from ragged nested sequences",
-        )
-        pm = pmesh.ParticleMesh(
-            config.mesh_size, BoxSize=config.box_size,
-            dtype="f4" if dtype == np.float32 else np.float64, comm=comm
-        )
-
     if config.hamiltonian.lower() == "defaultnochi":
         hamiltonian = DefaultNoChi(config)
     elif config.hamiltonian.lower() == "defaultwithchi":
@@ -205,62 +192,23 @@ def main():
             raise NotImplementedError(err_str)
 
     pm_stuff  = initialize_pm(pmesh, config, comm)
-    (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
-    phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
+    (pm, field_list, coulomb_list) = pm_stuff
+    [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
+            phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
+            phi_grad_lap_fourier, phi_grad_lap, v_ext1
+            ] = field_list
+    if len(coulomb_list)==5:
+        [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field
+                ] = coulomb_list
+    elif len(coulomb_list)==18:
+        [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
+                phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
+                phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier, phi_pol_temp, sum_fourier,
+                phi_pol_prev, elec_dot
+                ] = coulomb_list
+
+
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
-
-    # Initialize density fields
-    phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-    phi_fourier = [
-        pm.create("complex", value=0.0) for _ in range(config.n_types)
-    ]  # noqa: E501
-    force_on_grid = [
-        [pm.create("real", value=0.0) for _ in range(3)] for _ in range(config.n_types)  # noqa: E501
-    ]
-    v_ext_fourier = [pm.create("complex", value=0.0) for _ in range(4)]
-    v_ext = [pm.create("real", value=0.0) for _ in range(config.n_types)]
-
-    # Initialize charge density fields
-    _SPACE_DIM = 3
-    if config.coulombtype == "PIC_Spectral": # charges_flag and
-        phi_q = pm.create("real", value=0.0)
-        phi_q_fourier = pm.create("complex", value=0.0)
-        elec_field_fourier = [
-            pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
-        ]  # for force calculation
-        elec_field = [
-            pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
-        ]  # for force calculation
-        elec_energy_field = pm.create(
-            "complex", value=0.0
-        )
-
-    if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
-        phi_q = pm.create("real", value=0.0)
-        phi_q_fourier = pm.create("complex", value=0.0)
-        elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
-        elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
-        elec_energy_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
-        elec_energy_field_real = pm.create("real", value=0.0)
-
-        ## GPE relevant
-        phi_q_eps = pm.create("real", value = 0.0) ## real contrib of non-polarization part of GPE
-        phi_q_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi q eps
-        phi_q_effective_fourier = pm.create("complex", value = 0.0) ## fourier of non-polarization part of GPE
-        phi_eps = pm.create("real", value = 0.0) ## real contrib of the epsilon dielectric painted to grid
-        phi_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi eps
-        phi_eta = [pm.create("real", value = 0.0)for _ in range(_SPACE_DIM)] ## real contrib of factor in polarization charge density
-        phi_eta_fourier = [pm.create("complex", value = 0.0)for _ in range(_SPACE_DIM)] ## fourier of factor in polarization charge density
-        phi_pol = pm.create("real", value = 0.0) ## real contrib of the polarization charge
-        phi_pol_fourier = [pm.create("complex", value = 0.0) for _ in range(_SPACE_DIM)] # complex contrib of the polarization charge
-        phi_pol_temp = [pm.create("real", value = 0.0) for _ in range (_SPACE_DIM)] # complex contrib of the polarization charge
-        sum_fourier = pm.create("complex", value = 0.0)
-        phi_pol_prev = pm.create("real", value = 0.0)
-        elec_dot = pm.create("real", value = 0.0)
-
-        ## Polarization force contribution
-        elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
-        #elec_energy_field_real = pm.create("real", value=0.0)
 
     args_in = [
         velocities,
@@ -794,8 +742,20 @@ def main():
                      step,
                      comm=comm
                 )
-            (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer, phi_gradient, phi_laplacian,
-            phi_lap_filtered_fourier, phi_lap_filtered, phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list) = pm_stuff
+            (pm, field_list, coulomb_list) = pm_stuff
+            [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
+                    phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
+                    phi_grad_lap_fourier, phi_grad_lap, v_ext1
+                    ] = field_list
+            if len(coulomb_list) == 5:
+                [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field
+                        ] = coulomb_list
+            elif len(coulomb_list) == 18:
+                [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
+                        phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
+                        phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier, phi_pol_temp, sum_fourier,
+                        phi_pol_prev, elec_dot
+                        ] = coulomb_list
 
         # Update slow forces
         if not args.disable_field:

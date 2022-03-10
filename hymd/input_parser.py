@@ -154,16 +154,11 @@ class Config:
 
     n_steps: int
     time_step: float
-    box_size: Union[List[float], np.ndarray]
     mesh_size: Union[Union[List[int], np.ndarray], int]
     sigma: float
     kappa: float
-    rho_0: float
-    a: float
-    pressure: bool
-    plot: bool = False
 
-    #box_size: Union[List[float], np.ndarray] = None
+    box_size: Union[List[float], np.ndarray] = None
     n_print: int = None
     tau: float = None
     start_temperature: Union[float, bool] = None
@@ -199,6 +194,9 @@ class Config:
     squaregradient: bool = False
 
     #For NPT runs
+    rho0: float = None
+    a: float = None
+    pressure: bool = False
     barostat: str = None
     tau_p: float = None
     target_pressure : List[Target_pressure] = field(default_factory=list)
@@ -399,7 +397,8 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
 
     ### note: check if order makes sense in how it is parsed
     ## in denfac
-    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "K_coupl", "tags","m","dielectric_type","target_pressure"):
+    for n in ("bonds", "angle_bonds", "dihedrals", "chi", "K_coupl",
+            "tags", "m","dielectric_type","target_pressure"):
         config_dict[n] = []
 
     # Defaults: bool
@@ -531,7 +530,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict["file_name"] = file_path
 
     for n in (
-        "n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa","rho_0", "a", "pressure"
+        "n_steps", "time_step", "box_size", "mesh_size", "sigma", "kappa",
     ):
         if n not in config_dict:
             err_str = (
@@ -1085,13 +1084,29 @@ def check_name(config, comm=MPI.COMM_WORLD):
             config.name = "sim" + current_time
     return config
 
-def check_barostat(config, comm=MPI.COMM_WORLD):
-    if config.barostat is None and (config.tau_p is not None or config.target_pressure.P_L is not None):
-        err_str = "barostat not specified but config.tau_p "\
-                  "or config.target_pressure specified, cannot start simulation {config.barostat}"
-        Logger.rank0.log(logging.ERROR, err_str)
-        if comm.Get_rank() == 0:
-            raise TypeError(err_str)
+def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
+    """
+    Check validity of barostat, a, rho0, target_pressure, tau_p
+    """
+    if config.barostat is None:
+        if(config.tau_p is not None 
+                or (config.target_pressure.P_L and config.target_pressure.P_N) is not None):
+            err_str = "barostat not specified but config.tau_p "\
+                      "or config.target_pressure specified, cannot start simulation {config.barostat}"
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise TypeError(err_str)
+        if config.a:
+            warn_str = "a specified but no barostat,"\
+                    "setting a to average density"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+        if config.rho0:
+            warn_str = "rho0 specified but no barostat,"\
+                    "setting rho0 to average density"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+
     if config.barostat is not None:
         if (config.barostat != 'isotropic' and config.barostat != 'semiisotropic'):
             err_str = "barostat option not recognised. Valid options: isotropic, semiisotropic"
@@ -1114,6 +1129,17 @@ def check_barostat(config, comm=MPI.COMM_WORLD):
             warn_str = "barostat specified but no tau_p, defaulting to "+str(config.tau_p)
             Logger.rank0.log(logging.WARNING, warn_str)
             if comm.Get_rank() == 0: warnings.warn(warn_str)
+        if not config.a:
+            err_str = "a not specified; cannot start simulation {config.a}"
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise TypeError(err_str)
+        if not config.rho0:
+            warn_str = "rho0 not specified;"\
+                    "setting rho0 to average density"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: warnings.warn(warn_str)
+
 
     return config
 
@@ -1244,7 +1270,6 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config : Config
         Validated configuration object.
     """
-    config.box_size = np.array(config.box_size)
     config = _find_unique_names(config, names, comm=comm)
     if types is not None:
         config = _setup_type_to_name_map(config, names, types, comm=comm)
@@ -1263,7 +1288,7 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = check_angles(config, names, comm=comm)
     config = check_dihedrals(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
-    config = check_barostat(config, comm=comm)
+    config = check_NPT_conditions(config, comm=comm)
     config = check_alpha_0(config, comm=comm)
     config = check_n_b(config, comm=comm)
     config = check_m(config, comm=comm)

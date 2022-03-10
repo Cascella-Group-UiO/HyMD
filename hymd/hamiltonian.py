@@ -42,9 +42,15 @@ class Hamiltonian:
             self.config.simulation_volume = np.prod(
                 np.asarray(self.config.box_size)
             )
-        self.config.rho0 = (
-            self.config.n_particles / self.config.simulation_volume
-        )
+        if not self.config.barostat:
+            self.config.rho0 = (
+                self.config.n_particles / self.config.simulation_volume
+            )
+            self.config.a = self.config.rho0
+        if not self.config.rho0:
+            self.config.rho0 = (
+                self.config.n_particles / self.config.simulation_volume
+            )
         self.phi = sympy.var("phi:%d" % (len(self.config.unique_names)))
         k = sympy.var("k:%d" % (3))
 
