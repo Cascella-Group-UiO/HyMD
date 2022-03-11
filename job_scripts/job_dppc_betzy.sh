@@ -11,7 +11,6 @@ module load h5py/2.10.0-foss-2020a-Python-3.8.2
 module load pfft-python/0.1.21-foss-2020a-Python-3.8.2
 set -x
 
-
 export MPI_NUM_RANKS=32
 ERR_LOG="srun-${SLURM_JOB_ID}.err"
 
@@ -31,7 +30,7 @@ cp -r ${HYMD_PATH}/hymd/* hymd/.
 
 date
 srun --exclusive --ntasks ${MPI_NUM_RANKS}            \
-     python3 hymd/main.py config.toml input.h5        \
+     python3 -m hymd config.toml input.h5        \
      --logfile=log.txt --verbose 2 --seed 5           \
      --velocity-out                                         
      #--destdir ${DEST}                               \

@@ -48,11 +48,66 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     phi_laplacian = [
         [pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
     ]
+
+    # Initialize charge density fields
+    list_coulomb = []
+    _SPACE_DIM = 3
+    if config.coulombtype == "PIC_Spectral": # charges_flag and
+        phi_q = pm.create("real", value=0.0)
+        phi_q_fourier = pm.create("complex", value=0.0)
+        elec_field_fourier = [
+            pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
+        ]  # for force calculation
+        elec_field = [
+            pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
+        ]  # for force calculation
+        elec_energy_field = pm.create(
+            "complex", value=0.0
+        )
+        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field]
+
+    if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
+        
+        #samiran to lasse: can we write this block of creations just once
+        #if config.coulombtype: create these
+        phi_q = pm.create("real", value=0.0)
+        phi_q_fourier = pm.create("complex", value=0.0)
+        elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
+        elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
+        elec_energy_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
+        
+        #samiran to lasse: do you use this:
+        elec_energy_field_real = pm.create("real", value=0.0)
+
+        ## GPE relevant
+        phi_q_eps = pm.create("real", value = 0.0) ## real contrib of non-polarization part of GPE
+        phi_q_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi q eps
+        phi_q_effective_fourier = pm.create("complex", value = 0.0) ## fourier of non-polarization part of GPE
+        phi_eps = pm.create("real", value = 0.0) ## real contrib of the epsilon dielectric painted to grid
+        phi_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi eps
+        phi_eta = [pm.create("real", value = 0.0)for _ in range(_SPACE_DIM)] ## real contrib of factor in polarization charge density
+        phi_eta_fourier = [pm.create("complex", value = 0.0)for _ in range(_SPACE_DIM)] ## fourier of factor in polarization charge density
+        phi_pol = pm.create("real", value = 0.0) ## real contrib of the polarization charge
+        phi_pol_fourier = [pm.create("complex", value = 0.0) for _ in range(_SPACE_DIM)] # complex contrib of the polarization charge
+        phi_pol_temp = [pm.create("real", value = 0.0) for _ in range (_SPACE_DIM)] # complex contrib of the polarization charge
+        sum_fourier = pm.create("complex", value = 0.0)
+        phi_pol_prev = pm.create("real", value = 0.0)
+        elec_dot = pm.create("real", value = 0.0)
+
+        ## Polarization force contribution
+        elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
+        #elec_energy_field_real = pm.create("real", value=0.0)
+        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
+                phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
+                phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier, phi_pol_temp, sum_fourier,
+                phi_pol_prev, elec_dot
+                ]
+
     field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
-            phi_laplacian, phi_lap_filtered, v_ext1]
-    return (pm, phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
             phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
-            phi_grad_lap_fourier, phi_grad_lap, v_ext1, field_list)
+            phi_grad_lap_fourier, phi_grad_lap, v_ext1
+            ]
+    return (pm, field_list, list_coulomb)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     """Interpolate particle-field forces from the grid onto particle positions
