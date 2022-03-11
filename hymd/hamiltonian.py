@@ -250,14 +250,14 @@ class DefaultWithChi(Hamiltonian):
     .. math::
 
         w[\\tilde\\phi] =
-            \\frac{1}{2\\rho_0}
+            \\frac{1}{2\\phi_0}
                 \\sum_{k,l}\\chi_{kl} \\tilde\\phi_k \\tilde\\phi_l
             +
             \\frac{1}{2\\kappa} \\left(
-                \\sum_k \\tilde\\phi_k - \\rho_0
+                \\sum_k \\tilde\\phi_k - \\phi_0
             \\right)^2,
 
-    where :math:`\\kappa` is the incompressibility, :math:`\\rho_0` is the
+    where :math:`\\kappa` is the incompressibility, :math:`\\phi_0` is the
     average density of the fully homogenous system and :math:`\\chi_{ij}` is
     the Flory-Huggins-like inter-species mixing energy.
     """
@@ -332,7 +332,12 @@ class DefaultWithChi(Hamiltonian):
                     c = chi_type_dictionary[tuple(names)]
                     interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
-            return incompressibility + interaction
+
+            ###
+            ### eps_0 = 1.0/(config.coulomb_constant*4*np.pi)
+            ### (0.5 * eps_0)*(phi_eps_fourier*elec_field_contrib_fourier).c2r()
+
+            return incompressibility + interaction # + electrostatics
 
         def V_bar(
                 phi,
@@ -358,7 +363,10 @@ class DefaultWithChi(Hamiltonian):
                 #uncomment to count diagonal chi terms:
                 #c = chi_type_dictionary[tuple(names)]
                 V_interaction += c * phi[i] / rho0
-            return (V_interaction,V_incompressibility)
+
+            # add V_electrostatics
+
+            return (V_interaction,V_incompressibility) # add ,V_electrostatics
 
         self.V_bar = [
             sympy.lambdify([self.phi], V_bar(self.phi, k))
