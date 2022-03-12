@@ -1089,7 +1089,7 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
     Check validity of barostat, a, rho0, target_pressure, tau_p
     """
     if config.barostat is None:
-        if(config.tau_p is not None 
+        if(config.tau_p is not None
                 or (config.target_pressure.P_L and config.target_pressure.P_N) is not None):
             err_str = "barostat not specified but config.tau_p "\
                       "or config.target_pressure specified, cannot start simulation {config.barostat}"
@@ -1233,6 +1233,46 @@ def sort_dielectric_by_type_id(config, charges,types):
     #print(config.name_to_type_map)
     return dielectric_by_types # by types with each particle id
 
+def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
+    # in case no type t in rank
+    check_val = -100.0 # some random value that will never be encountered
+    charges_list = np.full(config.n_types, check_val) # gatherv cant handle None
+    rank = comm.Get_rank()
+    #print(charges_list)
+    for t_ in range(config.n_types):
+        if t_ in types:
+            charges_list[t_] = charges[types == t_][0]
+        #else:
+        #    print("type not in rank ", rank)
+    #print(charges_list)
+    #if rank == 0:
+    nprocs = int(comm.Get_size())
+    recv_charges = None
+    if rank == 0:
+        recv_charges = np.full(config.n_types*nprocs, check_val) # gatherv cant handle None
+    comm.Gather(charges_list, recv_charges,  root = 0)
+    #print(recv_charges)
+    ## make a charges list
+    if rank == 0:
+        config_charges = np.zeros(config.n_types)
+        for j in range(nprocs):
+            for i in range(config.n_types):
+                if recv_charges[i + j*config.n_types] != check_val:
+                    config_charges[i] = recv_charges[i + j*config.n_types]
+        #print(config_charges)
+        #print(config.name_to_type_map)
+        #print(charges[types == 0][0],charges[types == 1][0],charges[types == 2][0],charges[types == 3][0],
+        #        charges[types == 4][0])
+    else:
+        config_charges = np.zeros(config.n_types)
+
+    comm.Bcast(config_charges, root=0)
+    #print("config_charges", config_charges , "rank", rank)
+    #print(recv_charges)
+    #rank = comm.Get_rank()
+    #print(all_charges)
+    return config_charges
+
 def check_dielectric(config, comm = MPI.COMM_WORLD):
     err_str_const = "Dielectric constant not given."
     if config.coulombtype == 'PIC_Spectral':
@@ -1247,6 +1287,7 @@ def check_dielectric(config, comm = MPI.COMM_WORLD):
         if config.conv_crit is None:
             config.conv_crit = 1e-6
     return config
+
 
 def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     ## Note input_box from pressure
