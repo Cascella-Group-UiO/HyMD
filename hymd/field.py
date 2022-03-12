@@ -1025,7 +1025,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     #        V_bar[t_] = charges[types == t_][0] * elec_potential \
     #                        - 0.5 * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
     #    else:
-    #        V_bar[t_] = 0.0*elec_field_contrib ## <--- However, what about communication
+    #        Vbar_elec[t_] = 0.0*elec_field_contrib ## <--- However, safe wrt communication? doesnt seem so
 
     #Obtain Vext,k
     for t_ in range(config.n_types):
