@@ -200,11 +200,11 @@ def main():
     if len(coulomb_list)==5:
         [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field
                 ] = coulomb_list
-    elif len(coulomb_list)==18:
-        [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
+    elif len(coulomb_list)==20:
+        [phi_q, phi_q_fourier, elec_field_fourier, elec_field,
                 phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier, phi_pol_temp, sum_fourier,
-                phi_pol_prev, elec_dot
+                phi_pol_prev, elec_dot, elec_field_contrib, Vbar_elec, Vbar_elec_fourier
                 ] = coulomb_list
 
 
@@ -239,6 +239,48 @@ def main():
         args_in.append(elec_forces)
         args_recv.append("charges")
         args_recv.append("elec_forces")
+
+        # GPE
+        """ Check if needed """
+        # in case no type t in rank
+        check_val = -100.0
+        charges_list = np.full(config.n_types, check_val) # gatherv cant handle None
+        rank = comm.Get_rank()
+        #print(charges_list)
+        for t_ in range(config.n_types):
+            if t_ in types:
+                charges_list[t_] = charges[types == t_][0]
+            #else:
+            #    print("type not in rank ", rank)
+        #print(charges_list)
+        #if rank == 0:
+        nprocs = int(comm.Get_size())
+        recv_charges = None
+        if rank == 0:
+            recv_charges = np.full(config.n_types*nprocs, check_val) # gatherv cant handle None
+        comm.Gather(charges_list, recv_charges,  root = 0)
+        #print(recv_charges)
+        ## make a charges list
+        if rank == 0:
+            config_charges = np.zeros(config.n_types)
+            for j in range(nprocs):
+                for i in range(config.n_types):
+                    if recv_charges[i + j*config.n_types] != check_val:
+                        config_charges[i] = recv_charges[i + j*config.n_types]
+            #print(config_charges)
+            #print(config.name_to_type_map)
+            #print(charges[types == 0][0],charges[types == 1][0],charges[types == 2][0],charges[types == 3][0],
+            #        charges[types == 4][0])
+        else:
+            config_charges = np.zeros(config.n_types)
+
+        comm.Bcast(config_charges, root=0)
+        #print("config_charges", config_charges , "rank", rank)
+        #print(recv_charges)
+        #rank = comm.Get_rank()
+        #print(all_charges)
+
+
     if dielectric_flag:
         args_in.append(dielectric_sorted)
         args_recv.append('dielectric_sorted')
@@ -315,13 +357,13 @@ def main():
         layout_q = pm.decompose(positions)
         if config.coulombtype == 'PIC_Spectral_GPE': #dielectric_flag
             phi_eps, elec_dot = update_field_force_q_GPE(
-                conv_fun, phi, types, charges,dielectric_sorted,
+                conv_fun, phi, types, charges,config_charges,dielectric_sorted,
                 phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                 phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
                 phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
                 sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
-                elec_forces,elec_field_contrib, layout_q, layouts,
-                pm, positions,config,comm = comm,
+                elec_forces,elec_field_contrib, Vbar_elec, Vbar_elec_fourier, hamiltonian,
+                layout_q, layouts, pm, positions,config,comm = comm,
                 )
 
             field_q_energy = compute_field_energy_q_GPE(
@@ -330,26 +372,26 @@ def main():
                 comm=comm
                 )
 
-            #rank = comm.Get_rank()
+            rank = comm.Get_rank()
             #print(charges)
             #print("main",elec_forces[:,2])
-            #sum_elec = np.sum(elec_forces,axis = 0)
-            #if rank == 0:
-            #    sums = np.zeros_like(sum_elec)
-            #else:
-            #    sums = None
+            sum_elec = np.sum(elec_forces,axis = 0)
+            if rank == 0:
+                sums = np.zeros_like(sum_elec)
+            else:
+                sums = None
             #comm.Barrier()
-            #comm.Reduce(sum_elec, sums,
-            #op=MPI.SUM, root=0)
+            comm.Reduce(sum_elec, sums,
+            op=MPI.SUM, root=0)
             #print("rank ", comm.Get_rank())
             #print("sum elec_forces", np.sum(elec_forces,axis = 0))
-            #if rank == 0:
-            #    #    f = open("./sum_forces.txt", "w")
-            #    #    f.write("time step, sum forces x,y,z \n")
-            #    #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
-            #    print("here ",sums)
-            #    #    #print(sum_elec)
-            #    #    print("sum elec_forces", np.sum(elec_forces,axis = 0))
+            if rank == 0:
+                #    f = open("./sum_forces.txt", "w")
+                #    f.write("time step, sum forces x,y,z \n")
+                #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
+                print("here ",sums)
+                #    #print(sum_elec)
+                #    print("sum elec_forces", np.sum(elec_forces,axis = 0))
 
         if config.coulombtype == "PIC_Spectral":
             update_field_force_q(
@@ -779,13 +821,13 @@ def main():
                 if config.coulombtype == "PIC_Spectral_GPE": # dielectric_flag and
                     #print("update elec forces  w rank", comm.Get_rank())
                     phi_eps, elec_dot = update_field_force_q_GPE(
-                    conv_fun, phi, types, charges,dielectric_sorted,
+                    conv_fun, phi, types, charges,config_charges,dielectric_sorted,
                     phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                     phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
                     phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
                     sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
-                    elec_forces,elec_field_contrib, layout_q, layouts,
-                    pm, positions,config,comm = comm,
+                    elec_forces,elec_field_contrib,Vbar_elec, Vbar_elec_fourier, hamiltonian,
+                    layout_q, layouts, pm, positions,config,comm = comm,
                     )
 
                     field_q_energy =compute_field_energy_q_GPE(
@@ -794,16 +836,16 @@ def main():
                         comm=comm
                     )
 
-                    #sum_elec = np.sum(elec_forces,axis = 0)
-                    #rank = comm.Get_rank()
-                    #comm.Reduce(sum_elec, sums,
-                    #op=MPI.SUM, root=0)
+                    sum_elec = np.sum(elec_forces,axis = 0)
+                    rank = comm.Get_rank()
+                    comm.Reduce(sum_elec, sums,
+                    op=MPI.SUM, root=0)
                     #print("rank ", comm.Get_rank())
                     #print("sum elec_forces", np.sum(elec_forces,axis = 0))
                     #print("here", sums)
 
-                    #if rank == 0:
-                    #    print("here", sums)
+                    if rank == 0:
+                        print("here", sums)
                     #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
 
                 if config.coulombtype == "PIC_Spectral":
@@ -1141,13 +1183,13 @@ def main():
                 layout_q = pm.decompose(positions)
                 if config.coulombtype == "PIC_Spectral_GPE":
                     phi_eps, elec_dot = update_field_force_q_GPE(
-                        conv_fun, phi, types, charges,dielectric_sorted,
+                        conv_fun, phi, types, charges,config_charges,dielectric_sorted,
                         phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
                         phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
                         phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
                         sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
-                        elec_forces,elec_field_contrib, layout_q, layouts,
-                        pm, positions,config,comm = comm,
+                        elec_forces,elec_field_contrib, Vbar_elec, Vbar_elec_fourier, hamiltonian,
+                        layout_q, layouts, pm, positions,config,comm = comm,
                     )
 
                     field_q_energy =compute_field_energy_q_GPE(
@@ -1156,17 +1198,17 @@ def main():
                         comm=comm
                     )
 
-                    #sum_elec = np.sum(elec_forces,axis = 0)
-                    #rank = comm.Get_rank()
-                    #comm.Reduce(sum_elec, sums,
-                    #op=MPI.SUM, root=0)
+                    sum_elec = np.sum(elec_forces,axis = 0)
+                    rank = comm.Get_rank()
+                    comm.Reduce(sum_elec, sums,
+                    op=MPI.SUM, root=0)
                     #print("rank ", comm.Get_rank())
                     #print("sum elec_forces", np.sum(elec_forces,axis = 0))
                     #print("here last step",sums)
-                    #if rank == 0:
+                    if rank == 0:
                     #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
                     #    f.close()
-                    #    print("here last step",sums)
+                        print("here last step",sums)
 
                 if config.coulombtype == "PIC_Spectral":
                     update_field_force_q(

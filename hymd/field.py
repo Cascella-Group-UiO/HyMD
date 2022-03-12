@@ -67,17 +67,13 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field]
 
     if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
-        
+
         #samiran to lasse: can we write this block of creations just once
         #if config.coulombtype: create these
         phi_q = pm.create("real", value=0.0)
         phi_q_fourier = pm.create("complex", value=0.0)
         elec_field_fourier= [pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
         elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
-        elec_energy_field = pm.create("complex", value=0.0) # for energy calculation --> complex form needed as its converted from complex field; Imaginary part as zero;
-        
-        #samiran to lasse: do you use this:
-        elec_energy_field_real = pm.create("real", value=0.0)
 
         ## GPE relevant
         phi_q_eps = pm.create("real", value = 0.0) ## real contrib of non-polarization part of GPE
@@ -94,13 +90,18 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         phi_pol_prev = pm.create("real", value = 0.0)
         elec_dot = pm.create("real", value = 0.0)
 
+        # Vbar elec needed before obtaining external potential
+        Vbar_elec = phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
+        Vbar_elec_fourier = [
+            pm.create("complex", value=0.0) for _ in range(config.n_types)
+        ]
+
         ## Polarization force contribution
         elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
-        #elec_energy_field_real = pm.create("real", value=0.0)
-        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
+        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field,
                 phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier, phi_pol_temp, sum_fourier,
-                phi_pol_prev, elec_dot
+                phi_pol_prev, elec_dot, elec_field_contrib, Vbar_elec, Vbar_elec_fourier
                 ]
 
     field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
@@ -860,12 +861,12 @@ def compute_field_energy_q_GPE(
 
     return field_q_energy
 
-def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
+def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, dielectric, phi_q,
     phi_q_fourier,phi_eps, phi_eps_fourier,phi_q_eps, phi_q_eps_fourier,
     phi_q_effective_fourier,phi_eta,  phi_eta_fourier, phi_pol_prev,
     phi_pol, phi_pol_fourier,sum_fourier,phi_pol_temp,elec_field_fourier,
-    elec_field,elec_forces,elec_field_contrib, layout_q, layout,pm,positions,
-    config,comm = MPI.COMM_WORLD, compute_potential = False,
+    elec_field,elec_forces,elec_field_contrib, Vbar_elec, Vbar_elec_fourier, hamiltonian,
+    layout_q, layouts,pm,positions,config,comm = MPI.COMM_WORLD, compute_potential = True,
     E_field_from_potential = False,
 ):
     """
@@ -893,10 +894,11 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     phi_q /= volume_per_cell
     phi_q.r2c(out=phi_q_fourier)
 
-    def phi_transfer_function(k, v):
-        return v * np.exp(-0.5*config.sigma**2*k.normp(p=2, zeromode=1))
+    #def phi_transfer_function(k, v):
+    #    return v * np.exp(-0.5*config.sigma**2*k.normp(p=2, zeromode=1))
+    # phi_transfer_function, same as hamiltonian.H ?
 
-    phi_q_fourier.apply(phi_transfer_function, out=phi_q_fourier)
+    phi_q_fourier.apply(hamiltonian.H, out=phi_q_fourier)
     ## ^------ use the same gaussian as the \kai interaciton
     ## ^------ tbr; phi_transfer_funciton by hamiltonian.H ??
     phi_q_fourier.c2r(out=phi_q) ## this phi_q is after applying the smearing function
@@ -1020,7 +1022,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
             ## If we assume no magnetic flux (magnetic induced fields)
 
 
-    ## calculate electric forces on particles
+    ## calculate electric d external potential
     elec_field_contrib_fourier = pm.create("complex", value=0.0)
     elec_field_contrib_fgrad = [pm.create("complex",value = 0.0) for _ in range(_SPACE_DIM)]
     phi_eps_fgrad = [pm.create("complex",value = 0.0) for _ in range(_SPACE_DIM)]
@@ -1037,6 +1039,47 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
     #print("max E field val {:.2f} rank {:d}".format(np.max(elec_field),comm.Get_rank()))
     elec_field_contrib.r2c(out = elec_field_contrib_fourier)
 
+    # Must be able to handle type not in rank
+    ## suggestion 1:
+    eps0_inv = config.coulomb_constant*4*np.pi
+
+    for t_ in range(config.n_types):
+        Vbar_elec[t_] = config_charges[t_] * elec_potential \
+                                - (0.5 / eps0_inv) * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
+    ## suggestion 2:
+    #print(config.charges)
+    ##    if t_ in types:
+    #  V_bar[t_] = config_charges[t_] * elec_potential \
+    #                        - 0.5 * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
+
+    #        V_bar[t_] = charges[types == t_][0] * elec_potential \
+    #                        - 0.5 * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
+    #    else:
+    #        V_bar[t_] = 0.0*elec_field_contrib ## <--- However, what about communication
+
+    #Obtain Vext,k
+    for t_ in range(config.n_types):
+        Vbar_elec[t_].r2c(out = Vbar_elec_fourier[t_])
+        Vbar_elec_fourier[t_].apply(hamiltonian.H, out = Vbar_elec_fourier[t_])
+
+    # force terms
+    # gradient F = - delta Vext
+
+    force_mesh_elec = [[pm.create("real", value=0.0) for d in range(3)] for _ in range(config.n_types)
+    ]
+    force_mesh_elec_fourier = [[pm.create("complex", value=0.0) for d in range(3)] for _ in range(config.n_types)
+    ]
+
+    for t_ in range(config.n_types):
+        for _d in np.arange(_SPACE_DIM):
+            def force_transfer_function(k,x, d =_d):
+                return  - 1j * k[_d] * x        ## derivative
+            Vbar_elec_fourier[t_].apply(force_transfer_function, out = force_mesh_elec_fourier[t_][_d])
+            force_mesh_elec_fourier[t_][_d].c2r(out = force_mesh_elec[t_][_d])
+            elec_forces[types == t_, _d] = force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
+
+    # PS: Can do this in update field (negative gradient) and compute field force (read out)?
+    """
     for _d in np.arange(_SPACE_DIM):
         def gradient_transfer_function(k,x, d =_d):
             return  1j * k[_d] * x        ## derivative
@@ -1057,7 +1100,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, dielectric, phi_q,
                                    * (elec_field_contrib).readout(positions, layout=layout_q)) \
                                     +  ((dielectric - (phi_eps.readout(positions, layout=layout_q))) \
                                     * (elec_field_contrib_grad[_d]).readout(positions, layout=layout_q)))
-
+    """
     #print(np.shape(dielectric[types == 3]))
     #print(charges[types == 0])
     #ind = 5
