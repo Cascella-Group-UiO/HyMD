@@ -1255,10 +1255,16 @@ def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     ## make a charges list
     if rank == 0:
         config_charges = np.zeros(config.n_types)
+        test_config = np.full(config.n_types, check_val)
         for j in range(nprocs):
             for i in range(config.n_types):
                 if recv_charges[i + j*config.n_types] != check_val:
                     config_charges[i] = recv_charges[i + j*config.n_types]
+            if np.any([test_config,config_charges]):
+                continue
+            else:
+                break
+
         #print(config_charges)
         #print(config.name_to_type_map)
         #print(charges[types == 0][0],charges[types == 1][0],charges[types == 2][0],charges[types == 3][0],
