@@ -30,6 +30,7 @@ def isotropic(
         args,
         bond_pr,
         angle_pr,
+        Vbar_elec,
         step,
         comm=MPI.COMM_WORLD
     ):
@@ -57,6 +58,7 @@ def isotropic(
                 positions,
                 bond_pr,
                 angle_pr,
+                Vbar_elec,
                 comm=comm
         )
 
@@ -101,6 +103,7 @@ def semiisotropic(
         args,
         bond_pr,
         angle_pr,
+        Vbar_elec,
         step,
         comm=MPI.COMM_WORLD
     ):
@@ -128,6 +131,7 @@ def semiisotropic(
                 positions,
                 bond_pr,
                 angle_pr,
+                Vbar_elec,
                 comm=comm
         )
 

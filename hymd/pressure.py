@@ -22,6 +22,7 @@ def comp_pressure(
         positions,
         bond_pr,
         angle_pr,
+        Vbar_elec,
         comm=MPI.COMM_WORLD
 ):
     rank = comm.Get_rank()
@@ -47,7 +48,11 @@ def comp_pressure(
     V_bar_tuple = [
         hamiltonian.V_bar[k](phi) for k in range(config.n_types)
     ]
+
     V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
+
+    V_bar += Vbar_elec # now with electrostatics
+
 
     p1 = [
         1/V

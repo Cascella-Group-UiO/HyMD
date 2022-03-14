@@ -88,7 +88,7 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         elec_potential = pm.create("real", value = 0.0)
 
         # External potential and force meshes
-        Vbar_elec = phi = [
+        Vbar_elec = [
                     pm.create("real", value=0.0) for _ in range(config.n_types)
         ]
 
@@ -734,7 +734,6 @@ def update_field(
         comp_laplacian(phi_fourier, phi_transfer, phi_laplacian, phi_grad_lap_fourier, phi_grad_lap, hamiltonian, config, phi_lap_filtered_fourier)
 
 
-
     # External potential
     if config.squaregradient:
         for t in range(config.n_types):
@@ -1017,6 +1016,8 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     for t_ in range(config.n_types):
         Vbar_elec[t_] = config_charges[t_] * elec_potential \
                                 - (0.5 / eps0_inv) * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
+
+    #print(np.shape(Vbar_elec))
     ## suggestion 2:
     #print(config.charges)
     ##    if t_ in types:
@@ -1033,7 +1034,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
         Vbar_elec_fourier[t_].apply(hamiltonian.H, out = Vbar_elec_fourier[t_])
 
     # force terms
-    # gradient F = - delta Vext
+    # gradient F = - grad Vext
     for t_ in range(config.n_types):
         for _d in np.arange(_SPACE_DIM):
             def force_transfer_function(k,x, d =_d):
@@ -1069,7 +1070,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     np.save('./analysis/E_field',elec_field) #[2][halfway,halfway,:])
     """
 
-    return phi_eps, elec_dot
+    return Vbar_elec, phi_eps, elec_dot
 
 def domain_decomposition(
     positions, pm, *args, molecules=None, bonds=None, verbose=0,

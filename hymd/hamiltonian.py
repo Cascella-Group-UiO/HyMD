@@ -71,6 +71,7 @@ class Hamiltonian:
         self.H = H
 
 
+
 class SquaredPhi(Hamiltonian):
     """Simple squared density interaction energy functional
 
@@ -339,11 +340,8 @@ class DefaultWithChi(Hamiltonian):
                     interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
 
-            ###
-            ### eps_0 = 1.0/(config.coulomb_constant*4*np.pi)
-            ### (0.5 * eps_0)*(phi_eps_fourier*elec_field_contrib_fourier).c2r()
 
-            return incompressibility + interaction # + electrostatics
+            return incompressibility + interaction
 
         def V_bar(
                 phi,
@@ -370,9 +368,7 @@ class DefaultWithChi(Hamiltonian):
                 #c = chi_type_dictionary[tuple(names)]
                 V_interaction += c * phi[i] / rho0
 
-            # add V_electrostatics
-
-            return (V_interaction,V_incompressibility) # add ,V_electrostatics
+            return (V_interaction,V_incompressibility)
 
         self.V_bar = [
             sympy.lambdify([self.phi], V_bar(self.phi, k))
