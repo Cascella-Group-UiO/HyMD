@@ -1040,10 +1040,12 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
                 return  - 1j * k[_d] * x        ## derivative
             Vbar_elec_fourier[t_].apply(force_transfer_function, out = force_mesh_elec_fourier[t_][_d])
             force_mesh_elec_fourier[t_][_d].c2r(out = force_mesh_elec[t_][_d])
-            elec_forces[types == t_, _d] = volume_per_cell*force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
+            elec_forces[types == t_, _d] = force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
 
     #print("max F", np.max(elec_forces))
     #in pressure dppc system, max forces  14 (w/o) ---> 2.0 (w/volume_per_cell)
+    # in lipid A pressure, goes from 7.78 to  0.061326362 <- seems a bit small ...
+    # PE F max is 9. something for lipid A system w pressure
     # will have a lot to say wrt accumulation of momentum in finer grids/sharp varying dielectric.
     # Note: electrostatics will be weaker
 
