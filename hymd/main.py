@@ -198,8 +198,9 @@ def main():
             phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
             phi_grad_lap_fourier, phi_grad_lap, v_ext1
             ] = field_list
-    if len(coulomb_list)==5:
-        [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field
+    if len(coulomb_list)==6:
+        [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
+        Vbar_elec
                 ] = coulomb_list
     elif len(coulomb_list)==20:
         [phi_q, phi_q_fourier, elec_field,
@@ -753,8 +754,9 @@ def main():
                     phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
                     phi_grad_lap_fourier, phi_grad_lap, v_ext1
                     ] = field_list
-            if len(coulomb_list) == 5:
-                [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field
+            if len(coulomb_list) == 6:
+                [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
+                Vbar_elec
                         ] = coulomb_list
             elif len(coulomb_list) == 20:
                 [phi_q, phi_q_fourier, elec_field,

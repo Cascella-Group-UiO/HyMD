@@ -64,7 +64,15 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         elec_energy_field = pm.create(
             "complex", value=0.0
         )
-        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field]
+
+        # Can run elecPE with pressure by adding this
+        Vbar_elec = [
+                    pm.create("real", value=0.0) for _ in range(config.n_types)
+        ] # no update in elec PE though (no contrib since poisson equation used directly (?))
+
+
+        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field, Vbar_elec]
+
 
     if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
 
@@ -372,6 +380,7 @@ def update_field_force_q(
             elec_field[_d].readout(positions, layout=layout_q)
         )
 
+    #print("PE F max", np.max(elec_forces))
     #print("elec_field PE", elec_field[2][0,0,0])
 
 def update_field_force_energy_q(
