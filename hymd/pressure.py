@@ -51,8 +51,7 @@ def comp_pressure(
 
     V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
 
-    V_bar += Vbar_elec # now with electrostatics
-
+    V_bar = [sum(n) for n in zip(V_bar,Vbar_elec)]
 
     p1 = [
         1/V
