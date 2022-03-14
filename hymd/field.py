@@ -786,7 +786,7 @@ def compute_field_and_kinetic_energy(
     layouts,
     comm=MPI.COMM_WORLD,
 ):
-    """Compute the particle-field and kintic energy contributions
+    """Compute the particle-field and kinetic energy contributions
 
     Calculates the kinetic energy through
 
@@ -863,11 +863,12 @@ def compute_field_energy_q_GPE(
     """
 
     V = np.prod(config.box_size)
+    n_mesh__cells = np.prod(np.full(3, config.mesh_size))
+    volume_per_cell = V / n_mesh__cells
+    # ^ due to integration on local cell before allreduce
 
     eps_0 = 1.0/(config.coulomb_constant*4*np.pi)
-
-    #field_q_energy = (0.5 * eps_0) * V * comm.allreduce(np.sum(phi_eps_fourier*elec_field_contrib_fourier))
-    field_q_energy = (0.5 * eps_0) * V * comm.allreduce(np.sum(phi_eps*dot_elec))
+    field_q_energy = volume_per_cell * (0.5 * eps_0) * comm.allreduce(np.sum(phi_eps*dot_elec))
 
     return field_q_energy
 
@@ -1014,19 +1015,8 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     eps0_inv = config.coulomb_constant*4*np.pi
 
     for t_ in range(config.n_types):
-        Vbar_elec[t_] = config_charges[t_] * elec_potential \
-                                - (0.5 / eps0_inv) * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
-
-    #print(np.shape(Vbar_elec))
-    ## suggestion 2:
-    #print(config.charges)
-    ##    if t_ in types:
-    #  V_bar[t_] = config_charges[t_] * elec_potential \
-    #                        - 0.5 * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
-    #        V_bar[t_] = charges[types == t_][0] * elec_potential \
-    #                        - 0.5 * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib
-    #    else:
-    #        Vbar_elec[t_] = 0.0*elec_field_contrib ## <--- However, safe wrt communication? doesnt seem so
+        Vbar_elec[t_] = (config_charges[t_] * elec_potential \
+                                - (0.5 / eps0_inv) * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib)
 
     #Obtain Vext,k
     for t_ in range(config.n_types):
@@ -1041,8 +1031,17 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
                 return  - 1j * k[_d] * x        ## derivative
             Vbar_elec_fourier[t_].apply(force_transfer_function, out = force_mesh_elec_fourier[t_][_d])
             force_mesh_elec_fourier[t_][_d].c2r(out = force_mesh_elec[t_][_d])
-            elec_forces[types == t_, _d] = force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
+            elec_forces[types == t_, _d] = volume_per_cell*force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
 
+    #print("max F", np.max(elec_forces))
+    #in pressure dppc system, max forces  14 (w/o) ---> 2.0 (w/volume_per_cell)
+    # will have a lot to say wrt accumulation of momentum in finer grids/sharp varying dielectric.
+    # Note: electrostatics will be weaker
+
+    """
+    in hamiltonian formalism multiply with
+    volume_per_cell
+    """
     # PS: Can do this in update field (negative gradient) and compute field force (read out)?
 
 
