@@ -1003,7 +1003,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
         def field_transfer_function(k,x, d =_d):
             return  -1j*k[_d]*x         ## negative sign relation here due to E = - nabla psi relation
 
-        phi_q_effective_fourier.apply(gradient_transfer_function, out = phi_eta_fourier[_d])
+        phi_q_effective_fourier.apply(field_transfer_function, out = phi_eta_fourier[_d])
         phi_eta_fourier[_d].c2r(out=elec_field[_d])
     ## ^-------- Method: Obtaining the electric field from electrostatic potential
     ## Assuming the electric field is conserved.
@@ -1045,7 +1045,9 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     #print("max F", np.max(elec_forces))
     #in pressure dppc system, max forces  14 (w/o) ---> 2.0 (w/volume_per_cell)
     # in lipid A pressure, goes from 7.78 to  0.061326362 <- seems a bit small ...
-    # PE F max is 9. something for lipid A system w pressure
+    # PE F max is 9. something for lipid A system w pressure, dielectric constant 80. For variable dielectric w
+    # all dielectric values set to 80, GPE F max is 5.73. This is the effect of
+    # filtering, since electric field is the same (check.)
     # will have a lot to say wrt accumulation of momentum in finer grids/sharp varying dielectric.
     # Note: electrostatics will be weaker
 
