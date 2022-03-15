@@ -82,15 +82,15 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         phi_q_fourier = pm.create("complex", value=0.0)
         elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
 
-        phi_q_eps = pm.create("real", value = 0.0) ## real contrib of non-polarization part of GPE
-        phi_q_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi q eps
-        phi_q_effective_fourier = pm.create("complex", value = 0.0) ## fourier of non-polarization part of GPE
+        #phi_q_eps = pm.create("real", value = 0.0) ## real contrib of non-polarization part of GPE
+        #phi_q_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi q eps
+        #phi_q_effective_fourier = pm.create("complex", value = 0.0) ## fourier of non-polarization part of GPE
         phi_eps = pm.create("real", value = 0.0) ## real contrib of the epsilon dielectric painted to grid
         phi_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi eps
         phi_eta = [pm.create("real", value = 0.0)for _ in range(_SPACE_DIM)] ## real contrib of factor in polarization charge density
         phi_eta_fourier = [pm.create("complex", value = 0.0)for _ in range(_SPACE_DIM)] ## fourier of factor in polarization charge density
         phi_pol = pm.create("real", value = 0.0) ## real contrib of the polarization charge
-        phi_pol_fourier = [pm.create("complex", value = 0.0) for _ in range(_SPACE_DIM)] # complex contrib of the polarization charge
+        #phi_pol_fourier = [pm.create("complex", value = 0.0) for _ in range(_SPACE_DIM)] # complex contrib of the polarization charge
         phi_pol_prev = pm.create("real", value = 0.0)
         elec_dot = pm.create("real", value = 0.0)
         elec_potential = pm.create("real", value = 0.0)
@@ -125,8 +125,8 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         #        ]
 
         list_coulomb = [phi_q, phi_q_fourier, elec_field,
-                phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
-                phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier,
+                phi_eps, phi_eps_fourier,
+                phi_eta, phi_eta_fourier, phi_pol,
                 phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
                 ]
 
@@ -897,9 +897,8 @@ def compute_field_energy_q_GPE(
     return field_q_energy
 
 def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q,
-    phi_q_fourier,phi_eps, phi_eps_fourier,phi_q_eps, phi_q_eps_fourier,
-    phi_q_effective_fourier,phi_eta, phi_eta_fourier, phi_pol_prev,
-    phi_pol, phi_pol_fourier, elec_field,elec_forces, elec_field_contrib, elec_potential,
+    phi_q_fourier,phi_eps, phi_eps_fourier,phi_eta, phi_eta_fourier, phi_pol_prev,
+    phi_pol, elec_field,elec_forces, elec_field_contrib, elec_potential,
     Vbar_elec, #Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
     hamiltonian,layout_q, layouts,pm,positions,config,comm = MPI.COMM_WORLD,
 ):
@@ -949,9 +948,9 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     #phi_q_eps = (phi_q/phi_eps)
     np.divide(phi_q,phi_eps,
     where = np.abs(phi_eps > 1e-6),
-    out = phi_q_eps)
+    out = phi_q)
 
-    phi_q_eps.r2c(out = phi_q_eps_fourier)
+    #phi_q.r2c(out = phi_q_fourier)
     ##^ Get effective charge densities
 
     _SPACE_DIM = 3
@@ -981,10 +980,10 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     conv_criteria = config.conv_crit # conv. criteria (default 1e-6)
     w = config.pol_mixing # polarization mixing param (default 0.6)
     while (i < max_iter and delta > conv_criteria):
-        (phi_q_eps + phi_pol_prev).r2c(out=phi_q_effective_fourier)
+        (phi_q + phi_pol_prev).r2c(out=phi_q_fourier)
         for _d in np.arange(_SPACE_DIM):
-            phi_q_effective_fourier.apply(iterate_apply_k_vec,out = phi_pol_fourier[_d])
-            phi_pol_fourier[_d].c2r(out = elec_field[_d])
+            phi_q_fourier.apply(iterate_apply_k_vec,out = phi_eta_fourier[_d])
+            phi_eta_fourier[_d].c2r(out = elec_field[_d])
 
         phi_pol = -(phi_eta[0]*elec_field[0] + \
                      phi_eta[1]*elec_field[1] +  phi_eta[2]*elec_field[2]);
@@ -1005,9 +1004,9 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     ## > Electrostatic potential
     eps0_inv = config.coulomb_constant*4*np.pi
     ## ^ the 1/(4pi eps0)*4*pi = 1/eps0
-    ((eps0_inv)*(phi_q_eps + phi_pol)).r2c(out = phi_q_effective_fourier)
-    phi_q_effective_fourier.apply(k_norm_divide, out = phi_q_effective_fourier)
-    phi_q_effective_fourier.c2r(out = elec_potential)
+    ((eps0_inv)*(phi_q + phi_pol)).r2c(out = phi_q_fourier)
+    phi_q_fourier.apply(k_norm_divide, out = phi_q_fourier)
+    phi_q_fourier.c2r(out = elec_potential)
     ### ^ electrostatic potential for the GPE
 
     ## elec p to txt
@@ -1018,7 +1017,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
         def field_transfer_function(k,x, d =_d):
             return  -1j*k[_d]*x         ## negative sign relation here due to E = - nabla psi relation
 
-        phi_q_effective_fourier.apply(field_transfer_function, out = phi_eta_fourier[_d])
+        phi_q_fourier.apply(field_transfer_function, out = phi_eta_fourier[_d])
         phi_eta_fourier[_d].c2r(out=elec_field[_d])
     ## ^-------- Method: Obtaining the electric field from electrostatic potential
     ## Assuming the electric field is conserved.

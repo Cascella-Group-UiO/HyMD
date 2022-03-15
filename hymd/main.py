@@ -202,10 +202,10 @@ def main():
         [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
         Vbar_elec
                 ] = coulomb_list
-    elif len(coulomb_list)==17:
+    elif len(coulomb_list)==13:
         [phi_q, phi_q_fourier, elec_field,
-                phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
-                phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier,
+                phi_eps, phi_eps_fourier,
+                phi_eta, phi_eta_fourier, phi_pol,
                 phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
                 ] = coulomb_list
 
@@ -320,9 +320,9 @@ def main():
         if config.coulombtype == 'PIC_Spectral_GPE': #dielectric_flag
             Vbar_elec, phi_eps, elec_dot = update_field_force_q_GPE(
                 conv_fun, phi, types, charges, config_charges,
-                phi_q, phi_q_fourier, phi_eps, phi_eps_fourier, phi_q_eps,
-                phi_q_eps_fourier, phi_q_effective_fourier, phi_eta,
-                phi_eta_fourier, phi_pol_prev, phi_pol, phi_pol_fourier,
+                phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
+                phi_eta,
+                phi_eta_fourier, phi_pol_prev, phi_pol,
                 elec_field, elec_forces, elec_field_contrib, elec_potential,
                 Vbar_elec, #Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                 hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
@@ -758,10 +758,10 @@ def main():
                 [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
                 Vbar_elec
                         ] = coulomb_list
-            elif len(coulomb_list) == 17:
+            elif len(coulomb_list) == 13:
                 [phi_q, phi_q_fourier, elec_field,
-                        phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
-                        phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier,
+                        phi_eps, phi_eps_fourier,
+                        phi_eta, phi_eta_fourier, phi_pol,
                         phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
                         ] = coulomb_list
 
@@ -790,9 +790,9 @@ def main():
                     #print("update elec forces  w rank", comm.Get_rank())
                     Vbar_elec, phi_eps, elec_dot = update_field_force_q_GPE(
                         conv_fun, phi, types, charges, config_charges,
-                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier, phi_q_eps,
-                        phi_q_eps_fourier, phi_q_effective_fourier, phi_eta,
-                        phi_eta_fourier, phi_pol_prev, phi_pol, phi_pol_fourier,
+                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
+                        phi_eta,
+                        phi_eta_fourier, phi_pol_prev, phi_pol,
                         elec_field, elec_forces, elec_field_contrib, elec_potential,
                         Vbar_elec, # Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                         hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
@@ -1155,9 +1155,9 @@ def main():
                 if config.coulombtype == "PIC_Spectral_GPE":
                     Vbar_elec, phi_eps, elec_dot = update_field_force_q_GPE(
                         conv_fun, phi, types, charges, config_charges,
-                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier, phi_q_eps,
-                        phi_q_eps_fourier, phi_q_effective_fourier, phi_eta,
-                        phi_eta_fourier, phi_pol_prev, phi_pol, phi_pol_fourier,
+                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
+                        phi_eta,
+                        phi_eta_fourier, phi_pol_prev, phi_pol,
                         elec_field, elec_forces, elec_field_contrib, elec_potential,
                         Vbar_elec, #Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                         hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
