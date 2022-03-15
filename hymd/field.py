@@ -100,27 +100,34 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
                     pm.create("real", value=0.0) for _ in range(config.n_types)
         ]
 
-        Vbar_elec_fourier = [
-            pm.create("complex", value=0.0) for _ in range(config.n_types)
-        ]
+        #Vbar_elec_fourier = [
+        #    pm.create("complex", value=0.0) for _ in range(config.n_types)
+        #]
 
-        force_mesh_elec = [
-                    [pm.create("real", value=0.0) for d in range(3)
-                    ] for _ in range(config.n_types)
-        ]
+        #force_mesh_elec = [
+        #            [pm.create("real", value=0.0) for d in range(3)
+        #            ] for _ in range(config.n_types)
+        #]
 
-        force_mesh_elec_fourier = [
-                    [pm.create("complex", value=0.0) for d in range(3)
-                    ] for _ in range(config.n_types)
-        ]
+        #force_mesh_elec_fourier = [
+        #            [pm.create("complex", value=0.0) for d in range(3)
+        #            ] for _ in range(config.n_types)
+        #]
 
         ## Polarization force contribution
         elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
+
+        #list_coulomb = [phi_q, phi_q_fourier, elec_field,
+        #        phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
+        #        phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier,
+        #        phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
+        #        force_mesh_elec, force_mesh_elec_fourier
+        #        ]
+
         list_coulomb = [phi_q, phi_q_fourier, elec_field,
                 phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier,
-                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
-                force_mesh_elec, force_mesh_elec_fourier
+                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
                 ]
 
     field_list = [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
@@ -606,6 +613,7 @@ def update_field(
     v_ext_fourier,
     phi_lap_filtered,
     v_ext1,
+    v_ext_elec,
     m,
     compute_potential=False,
 ):
@@ -750,10 +758,17 @@ def update_field(
         hamiltonian.v_ext1(phi_lap_filtered, v_ext1)
 
     for t in range(config.n_types):
-        if config.squaregradient:
-            v = hamiltonian.v_ext[t](phi) + v_ext1[t]
+        if  config.squaregradient:
+            if config.coulombtype == 'PIC_Spectral_GPE':
+                v = hamiltonian.v_ext[t](phi) + v_ext1[t] + v_ext_elec[t]
+            else:
+                v = hamiltonian.v_ext[t](phi) + v_ext1[t]
         else:
-            v = hamiltonian.v_ext[t](phi)
+            if config.coulombtype == 'PIC_Spectral_GPE':
+                v = hamiltonian.v_ext[t](phi) + v_ext_elec[t]
+
+            else:
+                v = hamiltonian.v_ext[t](phi)
 
         v.r2c(out=v_ext_fourier[0])
         v_ext_fourier[0].apply(hamiltonian.H, out=Ellipsis)
@@ -885,7 +900,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     phi_q_fourier,phi_eps, phi_eps_fourier,phi_q_eps, phi_q_eps_fourier,
     phi_q_effective_fourier,phi_eta, phi_eta_fourier, phi_pol_prev,
     phi_pol, phi_pol_fourier, elec_field,elec_forces, elec_field_contrib, elec_potential,
-    Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
+    Vbar_elec, #Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
     hamiltonian,layout_q, layouts,pm,positions,config,comm = MPI.COMM_WORLD,
 ):
     """
@@ -1028,19 +1043,20 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
                                 - (0.5 / eps0_inv) * (config.dielectric_type[t_] - phi_eps) * elec_field_contrib)
 
     #Obtain Vext,k
-    for t_ in range(config.n_types):
-        Vbar_elec[t_].r2c(out = Vbar_elec_fourier[t_])
-        Vbar_elec_fourier[t_].apply(hamiltonian.H, out = Vbar_elec_fourier[t_])
+    #for t_ in range(config.n_types):
+    #    Vbar_elec[t_].r2c(out = Vbar_elec_fourier[t_])
+    #    Vbar_elec_fourier[t_].apply(hamiltonian.H, out = Vbar_elec_fourier[t_])
+    #
 
     # force terms
     # gradient F = - grad Vext
-    for t_ in range(config.n_types):
-        for _d in np.arange(_SPACE_DIM):
-            def force_transfer_function(k,x, d =_d):
-                return  - 1j * k[_d] * x        ## derivative
-            Vbar_elec_fourier[t_].apply(force_transfer_function, out = force_mesh_elec_fourier[t_][_d])
-            force_mesh_elec_fourier[t_][_d].c2r(out = force_mesh_elec[t_][_d])
-            elec_forces[types == t_, _d] = force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
+    #for t_ in range(config.n_types):
+    #    for _d in np.arange(_SPACE_DIM):
+    #        def force_transfer_function(k,x, d =_d):
+    #            return  - 1j * k[_d] * x        ## derivative
+    #        Vbar_elec_fourier[t_].apply(force_transfer_function, out = force_mesh_elec_fourier[t_][_d])
+    #        force_mesh_elec_fourier[t_][_d].c2r(out = force_mesh_elec[t_][_d])
+    #        elec_forces[types == t_, _d] = force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
 
     #print("max F", np.max(elec_forces))
     #in pressure dppc system, max forces  14 (w/o) ---> 2.0 (w/volume_per_cell)

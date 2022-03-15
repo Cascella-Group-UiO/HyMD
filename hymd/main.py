@@ -202,12 +202,11 @@ def main():
         [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
         Vbar_elec
                 ] = coulomb_list
-    elif len(coulomb_list)==20:
+    elif len(coulomb_list)==17:
         [phi_q, phi_q_fourier, elec_field,
                 phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier,
-                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
-                force_mesh_elec, force_mesh_elec_fourier
+                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
                 ] = coulomb_list
 
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
@@ -288,6 +287,7 @@ def main():
             v_ext_fourier,
             phi_lap_filtered,
             v_ext1,
+            Vbar_elec,
             config.m,
             compute_potential=True,
         ) ## Old input: phi, layouts, force_on_grid, hamiltonian, pm, positions, types,   ##config, v_ext, phi_fourier, v_ext_fourier, compute_potential=True,
@@ -324,7 +324,7 @@ def main():
                 phi_q_eps_fourier, phi_q_effective_fourier, phi_eta,
                 phi_eta_fourier, phi_pol_prev, phi_pol, phi_pol_fourier,
                 elec_field, elec_forces, elec_field_contrib, elec_potential,
-                Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
+                Vbar_elec, #Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                 hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
                 )
 
@@ -638,8 +638,8 @@ def main():
             config.respa_inner * config.time_step,
         )
 
-        if charges_flag and (config.coulombtype == "PIC_Spectral" \
-                    or config.coulombtype == "PIC_Spectral_GPE"):
+        if charges_flag and (config.coulombtype == "PIC_Spectral"):# \
+                    #or config.coulombtype == "PIC_Spectral_GPE"):
             #print("here integrate vel 2")
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass,
@@ -758,12 +758,11 @@ def main():
                 [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
                 Vbar_elec
                         ] = coulomb_list
-            elif len(coulomb_list) == 20:
+            elif len(coulomb_list) == 17:
                 [phi_q, phi_q_fourier, elec_field,
                         phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
                         phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier,
-                        phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
-                        force_mesh_elec, force_mesh_elec_fourier
+                        phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
                         ] = coulomb_list
 
         # Update slow forces
@@ -776,7 +775,7 @@ def main():
                 phi,phi_gradient, phi_laplacian, phi_transfer,phi_grad_lap_fourier, phi_grad_lap, layouts,
                 force_on_grid, hamiltonian, pm, positions, types,
                 config, v_ext, phi_fourier, phi_lap_filtered_fourier, v_ext_fourier, phi_lap_filtered,
-                v_ext1, config.m,
+                v_ext1, Vbar_elec, config.m,
             )
             compute_field_force(
                 layouts, positions, force_on_grid, field_forces, types,
@@ -795,7 +794,7 @@ def main():
                         phi_q_eps_fourier, phi_q_effective_fourier, phi_eta,
                         phi_eta_fourier, phi_pol_prev, phi_pol, phi_pol_fourier,
                         elec_field, elec_forces, elec_field_contrib, elec_potential,
-                        Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
+                        Vbar_elec, # Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                         hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
                         )
 
@@ -869,7 +868,7 @@ def main():
             config.respa_inner * config.time_step,
         )
 
-        if charges_flag and (config.coulombtype == "PIC_Spectral" or config.coulombtype == "PIC_Spectral_GPE"):
+        if charges_flag and (config.coulombtype == "PIC_Spectral"):# or config.coulombtype == "PIC_Spectral_GPE"):
             #print("here integrate velocities")
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass,
@@ -1022,6 +1021,7 @@ def main():
                         v_ext_fourier,
                         phi_lap_filtered,
                         v_ext1,
+                        Vbar_elec,
                         config.m,
                         compute_potential=True,
                     )
@@ -1133,6 +1133,7 @@ def main():
                 v_ext_fourier,
                 phi_lap_filtered,
                 v_ext1,
+                Vbar_elec,
                 config.m,
                 compute_potential=True,
             )
@@ -1158,7 +1159,7 @@ def main():
                         phi_q_eps_fourier, phi_q_effective_fourier, phi_eta,
                         phi_eta_fourier, phi_pol_prev, phi_pol, phi_pol_fourier,
                         elec_field, elec_forces, elec_field_contrib, elec_potential,
-                        Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
+                        Vbar_elec, #Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                         hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
                     )
 
