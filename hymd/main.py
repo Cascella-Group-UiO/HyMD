@@ -193,16 +193,20 @@ def main():
             raise NotImplementedError(err_str)
 
     pm_stuff  = initialize_pm(pmesh, config, comm)
-    (pm, field_list, coulomb_list) = pm_stuff
+    (pm, field_list, coulomb_list, elec_list_common) = pm_stuff
     [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
             phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
             phi_grad_lap_fourier, phi_grad_lap, v_ext1
             ] = field_list
-    if len(coulomb_list)==6:
+
+    if len(elec_list_common) == 3:
+        [phi_q, phi_q_fourier, elec_field] = elec_list_common
+
+    if len(coulomb_list) == 6:
         [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
         Vbar_elec
                 ] = coulomb_list
-    elif len(coulomb_list)==13:
+    elif len(coulomb_list) == 13:
         [phi_q, phi_q_fourier, elec_field,
                 phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol,
@@ -749,11 +753,15 @@ def main():
                      step,
                      comm=comm
                 )
-            (pm, field_list, coulomb_list) = pm_stuff
+            (pm, field_list, coulomb_list, elec_list_common) = pm_stuff
             [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
                     phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
                     phi_grad_lap_fourier, phi_grad_lap, v_ext1
                     ] = field_list
+
+            if len(elec_list_common) == 3:
+                [phi_q, phi_q_fourier, elec_field] = elec_list_common
+
             if len(coulomb_list) == 6:
                 [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
                 Vbar_elec

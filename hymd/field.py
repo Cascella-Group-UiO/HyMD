@@ -51,15 +51,32 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
 
     # Initialize charge density fields
     list_coulomb = []
+    list_elec_common = []
     _SPACE_DIM = 3
-    if config.coulombtype == "PIC_Spectral": # charges_flag and
-        phi_q = pm.create("real", value=0.0)
-        phi_q_fourier = pm.create("complex", value=0.0)
-        elec_field_fourier = [
-            pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
-        ]  # for force calculation
+
+
+    if (config.coulombtype == 'PIC_Spectral_GPE' \
+            or config.coulombtype == "PIC_Spectral"):
+
+        phi_q = pm.create(
+            "real", value=0.0
+            )
+
+        phi_q_fourier = pm.create(
+            "complex", value=0.0
+            )
+
         elec_field = [
             pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
+            ] #for force calculation
+
+        list_elec_common = [phi_q, phi_q_fourier, elec_field]
+
+    if config.coulombtype == "PIC_Spectral":
+
+        elec_field_fourier = [
+            pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
+
         ]  # for force calculation
         elec_energy_field = pm.create(
             "complex", value=0.0
@@ -76,24 +93,23 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
 
     if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
 
-        #samiran to lasse: can we write this block of creations just once
-        #if config.coulombtype: create these
-        phi_q = pm.create("real", value=0.0)
-        phi_q_fourier = pm.create("complex", value=0.0)
-        elec_field = [pm.create("real", value=0.0) for _ in range(_SPACE_DIM)] #for force calculation
-
-        #phi_q_eps = pm.create("real", value = 0.0) ## real contrib of non-polarization part of GPE
-        #phi_q_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi q eps
-        #phi_q_effective_fourier = pm.create("complex", value = 0.0) ## fourier of non-polarization part of GPE
         phi_eps = pm.create("real", value = 0.0) ## real contrib of the epsilon dielectric painted to grid
+
         phi_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi eps
+
         phi_eta = [pm.create("real", value = 0.0)for _ in range(_SPACE_DIM)] ## real contrib of factor in polarization charge density
+
         phi_eta_fourier = [pm.create("complex", value = 0.0)for _ in range(_SPACE_DIM)] ## fourier of factor in polarization charge density
+
         phi_pol = pm.create("real", value = 0.0) ## real contrib of the polarization charge
-        #phi_pol_fourier = [pm.create("complex", value = 0.0) for _ in range(_SPACE_DIM)] # complex contrib of the polarization charge
+
         phi_pol_prev = pm.create("real", value = 0.0)
+
         elec_dot = pm.create("real", value = 0.0)
+
         elec_potential = pm.create("real", value = 0.0)
+
+        elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
 
         # External potential and force meshes
         Vbar_elec = [
@@ -114,8 +130,6 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         #            ] for _ in range(config.n_types)
         #]
 
-        ## Polarization force contribution
-        elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
 
         #list_coulomb = [phi_q, phi_q_fourier, elec_field,
         #        phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
@@ -134,7 +148,8 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
             phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
             phi_grad_lap_fourier, phi_grad_lap, v_ext1
             ]
-    return (pm, field_list, list_coulomb)
+
+    return (pm, field_list, list_coulomb,list_elec_common)
 
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     """Interpolate particle-field forces from the grid onto particle positions
