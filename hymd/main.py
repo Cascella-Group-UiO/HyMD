@@ -207,8 +207,8 @@ def main():
         Vbar_elec
                 ] = coulomb_list
 
-    elif len(coulomb_list)==16:
-        [phi_q, phi_q_fourier, elec_field,
+    elif len(coulomb_list)==13:
+            [
                 phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol,
                 phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
@@ -770,8 +770,8 @@ def main():
                 Vbar_elec
                         ] = coulomb_list
 
-            elif len(coulomb_list) == 16:
-                [phi_q, phi_q_fourier, elec_field,
+            elif len(coulomb_list) == 13:
+                [
                         phi_eps, phi_eps_fourier,
                         phi_eta, phi_eta_fourier, phi_pol,
                         phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
