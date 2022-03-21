@@ -732,20 +732,17 @@ def dipole_forces_redistribution(
     for i, j, k, l, fd, matrix, dih_type, is_last in zip(
         a, b, c, d, f_dipoles, trans_matrices, type_array, last_bb
     ):
-        if dih_type == 1:
-            tot_force = fd[0] + fd[1]
-            f_on_bead[i] += matrix[0] @ tot_force  # Atom A
-            f_on_bead[j] += matrix[1] @ tot_force + 0.5 * tot_force  # Atom B
-            f_on_bead[k] += matrix[2] @ tot_force + 0.5 * tot_force  # Atom C
+        if dih_type ==1:
+            sum_force = fd[0] + fd[1]
+            diff_force = fd[0] - fd[1]
+            f_on_bead[i] += matrix[0] @ diff_force  # Atom A
+            f_on_bead[j] += matrix[1] @ diff_force + 0.5 * sum_force  # Atom B
+            f_on_bead[k] += matrix[2] @ diff_force + 0.5 * sum_force  # Atom C
 
             if is_last == 1:
-                tot_force = fd[2] + fd[3]
-
-                # Atom B
-                f_on_bead[j] += matrix[3] @ tot_force
-
-                # Atom C
-                f_on_bead[k] += matrix[4] @ tot_force + 0.5 * tot_force
-
-                # Atom D
-                f_on_bead[l] += matrix[5] @ tot_force + 0.5 * tot_force
+                sum_force = fd[2] + fd[3]
+                diff_force = fd[2] - fd[3]
+                f_on_bead[j] += matrix[3] @ diff_force
+                f_on_bead[k] += matrix[4] @ diff_force + 0.5 * sum_force
+                f_on_bead[l] += matrix[5] @ diff_force + 0.5 * sum_force
+        if dih_type == 1:
