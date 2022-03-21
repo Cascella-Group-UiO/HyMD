@@ -745,4 +745,3 @@ def dipole_forces_redistribution(
                 f_on_bead[j] += matrix[3] @ diff_force
                 f_on_bead[k] += matrix[4] @ diff_force + 0.5 * sum_force
                 f_on_bead[l] += matrix[5] @ diff_force + 0.5 * sum_force
-        if dih_type == 1:
