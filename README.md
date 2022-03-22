@@ -23,21 +23,23 @@ python3 -m hymd [CONFIGURATION_FILE] [TOPOLOGY_FILE] (--OPTIONAL_ARGS)
 A [Google Colaboratory](https://colab.research.google.com/) jupyter notebook is setup [here](https://colab.research.google.com/drive/1jfzRaXjL3q53J4U8OrCgADepmf_HuCOh?usp=sharing) with a working HyMD fully installed and executable in the browser.
 
 ## Installation
+
+#### Non-Python dependencies
+HyMD installation **requires** a working MPI compiler. It is highly recommended to have *MPI-enabled* HDF5 and [h5py](https://docs.h5py.org/en/stable/mpi.html) for running parallel simulations with HyMD. Install both on Ubuntu with
+```bash
+sudo apt-get update -y
+sudo apt-get install -y pkg-config libhdf5-mpi-dev libopenmpi-dev
+python3 -m pip uninstall h5py  # Remove any serial h5py installation present
+CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
+```
+
+#### Python dependencies
 Install HyMD with `pip` by
 ```bash
 python3 -m pip install --upgrade numpy mpi4py cython
 python3 -m pip install hymd
 ```
-See [HyMD docs](https://cascella-group-uio.github.io/HyMD/index.html) for more information.
-
-#### Install dependencies
-HyMD installation **requires** a working MPI compiler. It is highly recommended to have *MPI-enabled* HDF5 and [h5py](https://docs.h5py.org/en/stable/mpi.html) for running parallel simulations with HyMD. Install both on Ubuntu with
-```bash
-sudo apt-get update -y
-sudo apt-get install -y pkg-config libhdf5-mpi-dev
-python3 -m pip uninstall h5py  # Remove any serial h5py installation present
-CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
-```
+See [HyMD docs](https://cascella-group-uio.github.io/HyMD/doc_pages/installation.html) for more information, including install steps for macOS and non-Debian linux distributions.
 
 #### Run in docker
 Alternatively, an up-to-date docker image is available from [docker hub](https://hub.docker.com/repository/docker/mortele/hymd)
@@ -59,6 +61,7 @@ Clone the repository and run tests with [pytest](https://docs.pytest.org/en/late
 ```bash
 git clone https://github.com/Cascella-Group-UiO/HyMD.git hymd
 cd hymd
+python3 -m pip install pytest pytest-mpi
 pytest
 ```
 Running MPI enabled pytest tests is simplified with a convenient script
