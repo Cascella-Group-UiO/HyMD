@@ -2,41 +2,156 @@
 
 Installation
 ############
+
+Dependencies
+============
+
+.. note::
+    HyMD requires Python ≥3.6. Python version 3.9 is most likely fine
+    to use, but HyMD is only regularly tested with Python3.8 at the moment.
+
+.. warning::
+    MPI-enabled h5py may fail to build under Python3.10. In this case, a
+    fall-back to Python3.9 or lower may be necessary.
+
+
+**Installing non-Python dependencies** may be done by
+
+.. tabs::
+
+   .. group-tab:: Ubuntu (apt)
+
+       .. code-block:: bash
+
+           sudo apt-get update -y
+           sudo apt-get install -y python3 python3-pip  # Install python3 and pip
+           sudo apt-get install -y libopenmpi-dev       # Install MPI development headers
+           sudo apt-get install -y libhdf5-openmpi-dev  # Install MPI-enabled HDF5
+           sudo apt-get install -y pkg-config           # Install pkg-config, required for h5py install
+           sudo apt-get install -y curl wget
+
+   .. group-tab:: Fedora (dnf)
+
+       .. code-block:: bash
+
+           sudo dnf update -y
+           sudo dnf install -y python3.9 python3-devel  # Install python3 and pip
+           sudo dnf install -y openmpi-devel            # Install MPI development headers
+           sudo dnf install -y hdf5-openmpi-devel       # Install MPI-enabled HDF5
+           sudo dnf install -y curl wget
+
+
+      The automatic download and building of PFFT has some issues, so we
+      manually build FFTW and PFFT before calling :code:`pip3 install pfft-python`.
+
+      .. code-block:: bash
+
+           sudo dnf install -y git
+           sudo dnf install -y libtool
+           sudo dnf install -y fftw-openmpi-devel fftw-openmpi-libs
+           export PATH=$PATH:/usr/lib64/openmpi/bin/                 # Ensure MPICC is in path
+           git clone https://github.com/mpip/pfft.git
+           cd pfft/
+           ./bootstrap.sh
+           ./configure
+           make
+           make install
+
+
+   .. group-tab:: Mac OSX (brew)
+
+       .. code-block:: bash
+
+           brew update
+           brew install python      # Install python3 and pip
+           brew install open-mpi    # Install MPI development headers
+           brew install hdf5-mpi    # Install MPI-enabled HDF5
+           brew install pkg-config  # Install pkg-config, required for h5py install
+           brew install curl wget
+
+**Installing Python dependencies** may be done by
+
+.. tabs::
+
+   .. group-tab:: Ubuntu (apt)
+
+       .. code-block:: bash
+
+           python3 -m pip install --upgrade pip
+           CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
+           python3 -m pip install mpi4py numpy cython
+
+
+   .. group-tab:: Fedora (dnf)
+
+       .. code-block:: bash
+
+          python3.9 -m ensurepip --upgrade
+          PATH=$PATH:/usr/lib64/openmpi/bin/:/usr/lib64/openmpi/lib/
+          python3.9 -m pip install mpi4py numpy cython
+          export HDF5_DIR="/usr/lib64/openmpi/"
+          CC="mpicc" HDF5_MPI="ON" python3.9 -m pip install --no-binary=h5py h5py
+
+   .. group-tab:: Mac OSX (brew)
+
+       Find the location of the installed :code:`hdf5-mpi` package by
+
+       .. code-block:: bash
+
+           find /usr -iname "*hdf5.h"
+
+       or
+
+       .. code-block:: bash
+
+           brew info hdf5-mpi
+
+      and extract the path, which will look like for example
+      :code:`/usr/local/Cellar/hdf5-mpi/1.13.0/`. Export it as :code:`HDF5_DIR`
+
+       .. code-block:: bash
+
+           python3 -m ensurepip --upgrade
+           export HDF5_DIR="/usr/local/Cellar/hdf5-mpi/1.13.0/"
+           CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
+           python3 -m pip install mpi4py numpy cython
+
+
+.. warning::
+
+    If MPI-enabled HDF5 and :code:`h5py` can not be installed, limited support
+    for serial HDF5 is available. Note that having MPI-enabled file IO is
+    **highly recommended**, and simulation performance under serial HDF5 will
+    potentially be very low.
+
+    Example dependency install on Ubuntu (apt) using serial HDF5:
+
+    .. code-block:: bash
+
+        sudo apt-get update -y
+        sudo apt-get install -y python3 python3-pip  # Install python3 and pip
+        sudo apt-get install -y libopenmpi-dev       # Install MPI development headers
+        sudo apt-get install -y libhdf5-serial-dev   # Install serial HDF5
+        sudo apt-get install -y curl wget
+
+        python3 -m pip install h5py mpi4py numpy cython
+
+    Running parallel simulations without a
+    MPI-enabled HDF5 library available necessitates the use of the
+    :code:`--disable-mpio` argument to HyMD, see :ref:`commandline-label`. Note that
+    due to the way HyMD is built, a working MPI compiler is required even if all
+    intended simulations are serial.
+
+
+Installing HyMD
+===============
 HyMD may be installed using :code:`pip` by
 
 .. code-block:: bash
 
-   python3 -m pip install --upgrade pip
-   python3 -m pip install --upgrade numpy mpi4py cython
    python3 -m pip install hymd
 
 
-Dependencies
-============
-HyMD **requires** a working MPI compiler and HDF5. On an Ubuntu system, this
-may be installed via
-
-.. code-block:: bash
-
-   sudo apt-get update -y
-   sudo apt-get install -y libhdf5-openmpi-dev python3-mpi4py
-   CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-cache-dir --no-binary=h5py h5py
-
-It is **highly recommended** to have MPI-enabled HDF5 and h5py. A
-non-MPI-enabled h5py may be installed by simply
-
-.. code-block:: bash
-
-   sudo apt-get update -y
-   sudo apt-get install libhdf5-serial-dev
-   python3 -m pip --upgrade install h5py
-
-A non-MPI-enabled HDF5 library with corresponding :code:`h5py` will work
-(mostly), but is inconvenient and slow. Running parallel simulations without a
-MPI-enabled HDF5 library available necessitates the use of the
-:code:`--disable-mpio` argument to HyMD, see :ref:`commandline-label`. Note that
-due to the way HyMD is built, a working MPI compiler is required even if all
-intended simulations are serial.
 
 Install in docker
 =================
