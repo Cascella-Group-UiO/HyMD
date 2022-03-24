@@ -9,13 +9,14 @@ necessary steps.
 1. Getting started  
 Fork the repository from [here](https://github.com/Cascella-Group-UiO/hymd).
 Clone the fork on your local machine and install the dependencies following the
-instructions given in the [documentation](https://cascella-group-uio.github.io/HyMD/doc_pages/installation.html#dependencies).   
+instructions given in the [documentation](https://cascella-group-uio.github.io/HyMD/doc_pages/installation.html#dependencies).
 
-Finally install the package in development mode using
-```bash
-cd HyMD_fork
-pip install -e .
-```
+  Finally install the package in development mode using
+    ```bash
+    cd HyMD_fork
+    pip install -e .
+    ```
+
 
 2. Contribute  
 Write your code, test it (we welcome setting up tests with [pytest](https://docs.pytest.org/en/7.0.x/)) and follow the instructions
@@ -27,9 +28,9 @@ the `force_kernel` extension in `setup.py` so they can be compiled with
 We also require both a single and double precision version of the routines.
 
 To import them inside Python you simply call
-```python3
-from force_kernel import <routine_name>
-```
+    ```python3
+    from force_kernel import <routine_name>
+    ```
 
 3. Open a pull request (PR)  
 When you feel ready you can open a PR to merge your contributions in the main HyMD branch. 
