@@ -34,7 +34,7 @@ Write your code, test it (we welcome setting up tests with [pytest](https://docs
 
 3. Open a pull request (PR)  
 When you feel ready you can open a PR to merge your contributions in the main HyMD branch. 
-Add a simple title and give a short description of the PR, explaining what problem is trying to solve or what feature is being implemented.
+Add a simple title and give a short description of the PR, explaining what problem you are trying to solve or what feature is being implemented.
 Once the PR is submitted we will review it and provide feedback.  
 
 ## Code style
