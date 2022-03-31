@@ -178,11 +178,9 @@ def semiisotropic(
             log_alpha = log_alpha + noise_term
             alpha = np.exp(log_alpha / 1.0)  # not 100% sure about this factor 2, have to check it out <<< TODO
 
-            L0 = alpha * config.box_size[0]
-            L1 = alpha * config.box_size[1]
+            L2 = alpha * config.box_size[2]
 
-            config.box_size[0] = L0
-            config.box_size[1] = L1
+            config.box_size[2] = L2
 
             for i in range(len(positions)):
                 positions[i][2] = alpha * positions[i][2]
