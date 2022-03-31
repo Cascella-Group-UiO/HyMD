@@ -22,7 +22,7 @@ from .thermostat import (csvr_thermostat, cancel_com_momentum,
 from .force import dipole_forces_redistribution, prepare_bonds
 from .integrator import integrate_velocity, integrate_position
 from .pressure import comp_pressure
-from .barostat_bussy import isotropic, semiisotropic
+from .barostat_bussi import isotropic, semiisotropic
 
 
 def main():
