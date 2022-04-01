@@ -721,12 +721,8 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
 def dipole_forces_redistribution(
     f_on_bead, f_dipoles, trans_matrices, a, b, c, d, type_array, last_bb
 ):
-    """Redistribute electrostatic forces calculated from ghost dipole point
-    charges to the backcone atoms of the protein.
-
-    .. deprecated:: 1.0.0
-        :code:`dipole_forces_redistribution` was replaced by compiled Fortran
-        code prior to 1.0.0 release.
+    """Redistribute electrostatic forces calculated from topologically 
+    reconstructed ghost dipole point charges to the backcone atoms of the protein.
     """
     f_on_bead.fill(0.0)
     for i, j, k, l, fd, matrix, dih_type, is_last in zip(
