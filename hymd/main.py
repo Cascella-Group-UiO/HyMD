@@ -20,6 +20,16 @@ from .thermostat import (csvr_thermostat, cancel_com_momentum,
 from .force import dipole_forces_redistribution, prepare_bonds
 from .integrator import integrate_velocity, integrate_position
 
+# these look valuable to learn about MPI + PLUMED
+# https://groups.google.com/g/plumed-users/c/YTFZj3r1DHQ/m/HfRb9eeaCQAJ
+# https://github.com/lammps/lammps/blob/develop/src/PLUMED/fix_plumed.cpp
+# https://groups.google.com/g/plumed-users/c/SVOgwT41e_M/m/MK6TJVNTi3MJ # indices
+# https://github.com/openmm/openmm-plumed/issues/22 # rRESPA
+
+# these look valuable to learn about PLUMED in python
+# http://openpathsampling.org/latest/_modules/openpathsampling/collectivevariables/plumed_wrapper.html
+# https://github.com/plumed/plumed2/tree/master/python/test
+# https://github.com/lab-cosmo/i-pi-dev_archive/blob/master/ipi/engine/forcefields.py
 
 def main():
     """Main simulation driver
@@ -58,6 +68,9 @@ def main():
         from .force import (
             compute_dihedral_forces__fortran as compute_dihedral_forces
         )
+
+    if args.plumed:
+        import plumed
 
     driver = "mpio" if not args.disable_mpio else None
     _kwargs = {"driver": driver, "comm": comm} if not args.disable_mpio else {}
@@ -132,6 +145,7 @@ def main():
     dihedral_energy = 0.0
     kinetic_energy = 0.0
     field_q_energy = 0.0
+    plumed_energy = 0.0
 
     # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
     # ragged nested sequences until it is fixed in pmesh
@@ -438,6 +452,33 @@ def main():
             comm=comm,
         )
 
+    # configure PLUMED
+    if args.plumed:
+        # if args.double_precision:
+        #     plumed_obj = plumed.Plumed(8)
+        # else:
+        #     plumed_obj = plumed.Plumed(4)
+
+        plumed_obj = plumed.Plumed()
+
+        plumed_version = np.zeros(1, dtype=np.intc)
+        plumed_obj.cmd("getApiVersion", plumed_version)
+        assert plumed_version[0] > 3, "HyMD requires a PLUMED API > 3"
+
+        plumed_obj.cmd("setMDEngine", "HyMD")
+
+        plumed_obj.cmd("setMPIComm", comm)
+        plumed_obj.cmd("setPlumedDat", args.plumed)
+        plumed_obj.cmd("setLogFile", args.plumed_outfile)
+        plumed_obj.cmd("setTimestep", config.time_step)
+
+        plumed_obj.cmd("setNatoms", config.n_particles)
+        plumed_obj.cmd("setKbT", 
+            config.gas_constant * config.target_temperature
+        )
+        plumed_obj.cmd("setNoVirial")
+        plumed_obj.cmd("init")
+
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -488,6 +529,41 @@ def main():
             velocities, field_forces / config.mass,
             config.respa_inner * config.time_step,
         )
+        if args.plumed:
+            plumed_forces = np.zeros_like(positions)
+            if not charges_flag:
+                charges = np.zeros_like(indices, dtype=np.double)
+            bias = np.zeros(1, float)
+            masses = np.full_like(indices, config.mass, dtype=np.double)
+            box = np.diag(config.box_size)
+
+            plumed_obj.cmd("setAtomsNlocal", indices.shape[0]);
+            plumed_obj.cmd("setAtomsGatindex", indices);
+            plumed_obj.cmd("setStep", step*config.respa_inner)
+            plumed_obj.cmd("setForces", plumed_forces)
+            # no need to worry about Fortran order because PLUMED wrapper ravel
+            plumed_obj.cmd("setPositions", positions)
+            plumed_obj.cmd("setCharges", charges)
+            plumed_obj.cmd("setMasses", masses)
+            plumed_obj.cmd("setBox", box)
+
+            plumed_obj.cmd("prepareCalc")
+            plumed_needs_energy = np.zeros(1, dtype=np.intc)
+            plumed_obj.cmd("isEnergyNeeded", plumed_needs_energy)
+            if plumed_needs_energy[0] != 0:
+                poteng = (field_energy + bond_energy + angle_energy
+                         + dihedral_energy + field_q_energy) / size
+                plumed_obj.cmd("setEnergy", poteng)
+            plumed_obj.cmd("performCalcNoUpdate")
+            # plumed_obj.cmd("update")
+
+            # plumed_obj.cmd("getBias", bias)
+            # print("bias from PLUMED: {}".format(bias[0]))
+
+            velocities = integrate_velocity(
+                velocities, plumed_forces / config.mass,
+                config.respa_inner * config.time_step,
+            )
         if charges_flag and config.coulombtype == "PIC_Spectral":
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass,
@@ -600,7 +676,41 @@ def main():
             velocities, field_forces / config.mass,
             config.respa_inner * config.time_step,
         )
+        if args.plumed:
+            plumed_forces = np.zeros_like(positions)
+            if not charges_flag:
+                charges = np.zeros_like(indices, dtype=np.double)
+            bias = np.zeros(1, float)
+            masses = np.full_like(indices, config.mass, dtype=np.double)
+            box = np.diag(config.box_size)
 
+            plumed_obj.cmd("setAtomsNlocal", indices.shape[0]);
+            plumed_obj.cmd("setAtomsGatindex", indices);
+            plumed_obj.cmd("setStep", step*config.respa_inner)
+            plumed_obj.cmd("setForces", plumed_forces)
+            # no need to worry about Fortran order because PLUMED wrapper ravel
+            plumed_obj.cmd("setPositions", positions)
+            plumed_obj.cmd("setCharges", charges)
+            plumed_obj.cmd("setMasses", masses)
+            plumed_obj.cmd("setBox", box)
+
+            plumed_obj.cmd("prepareCalc")
+            plumed_needs_energy = np.zeros(1, dtype=np.intc)
+            plumed_obj.cmd("isEnergyNeeded", plumed_needs_energy)
+            if plumed_needs_energy[0] != 0:
+                poteng = (field_energy + bond_energy + angle_energy
+                         + dihedral_energy + field_q_energy) / size
+                plumed_obj.cmd("setEnergy", poteng)
+            plumed_obj.cmd("performCalcNoUpdate")
+            plumed_obj.cmd("update")
+
+            # plumed_obj.cmd("getBias", bias)
+            # print("bias from PLUMED: {}".format(bias[0]))
+
+            velocities = integrate_velocity(
+                velocities, plumed_forces / config.mass,
+                config.respa_inner * config.time_step,
+            )
         if charges_flag and config.coulombtype == "PIC_Spectral":
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass,

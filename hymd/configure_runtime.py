@@ -95,10 +95,25 @@ def configure_runtime(comm):
         help="Redirect event logging to specified file",
     )
     ap.add_argument(
+        "--plumed", type=extant_file,
+        help="PLUMED input file",
+    )
+    ap.add_argument(
+        "--plumed-outfile", default="plumed.out",
+        help="PLUMED input file",
+    )
+    ap.add_argument(
         "config", help="Config .py or .toml input configuration script"
     )
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args()
+
+    # check for plumed optional dependency if needed
+    if args.plumed:
+        try:
+            import plumed
+        except ImportError:
+            raise ImportError("Cannot import plumed module")
 
     if comm.rank == 0:
         os.makedirs(args.destdir, exist_ok=True)
@@ -157,3 +172,15 @@ def configure_runtime(comm):
             f"\n\ntoml parse traceback:" + repr(ve)
         )
     return args, config
+
+
+def extant_file(x):
+    """
+    'Type' for argparse - checks that file exists but does not open.
+    From https://stackoverflow.com/a/11541495
+    """
+    if not os.path.exists(x):
+        # Argparse uses the ArgumentTypeError to give a rejection message like:
+        # error: argument input: x does not exist
+        raise argparse.ArgumentTypeError("{0} does not exist".format(x))
+    return x
