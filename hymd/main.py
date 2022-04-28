@@ -145,7 +145,7 @@ def main():
     dihedral_energy = 0.0
     kinetic_energy = 0.0
     field_q_energy = 0.0
-    plumed_energy = 0.0
+    plumed_bias = 0.0
 
     # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
     # ragged nested sequences until it is fixed in pmesh
@@ -284,6 +284,31 @@ def main():
             config, phi_q_fourier, elec_energy_field, field_q_energy,
             comm=comm,
         )
+
+    # configure PLUMED
+    if args.plumed:
+        plumed_obj = plumed.Plumed()
+
+        plumed_version = np.zeros(1, dtype=np.intc)
+        plumed_obj.cmd("getApiVersion", plumed_version)
+        assert plumed_version[0] > 3, "HyMD requires a PLUMED API > 3"
+
+        plumed_obj.cmd("setMDEngine", "HyMD")
+
+        plumed_obj.cmd("setMPIComm", comm)
+        plumed_obj.cmd("setPlumedDat", args.plumed)
+        plumed_obj.cmd("setLogFile", args.plumed_outfile)
+        plumed_obj.cmd("setTimestep", config.respa_inner * config.time_step)
+
+        plumed_obj.cmd("setNatoms", config.n_particles)
+        plumed_obj.cmd("setKbT", 
+            config.gas_constant * config.target_temperature
+        )
+        # plumed_obj.cmd("setNoVirial")
+        plumed_obj.cmd("init")
+
+        # set PLUMED initial forces
+        plumed_forces = np.zeros_like(positions)
 
     if molecules_flag:
         if not (args.disable_bonds
@@ -452,28 +477,6 @@ def main():
             comm=comm,
         )
 
-    # configure PLUMED
-    if args.plumed:
-        plumed_obj = plumed.Plumed()
-
-        plumed_version = np.zeros(1, dtype=np.intc)
-        plumed_obj.cmd("getApiVersion", plumed_version)
-        assert plumed_version[0] > 3, "HyMD requires a PLUMED API > 3"
-
-        plumed_obj.cmd("setMDEngine", "HyMD")
-
-        plumed_obj.cmd("setMPIComm", comm)
-        plumed_obj.cmd("setPlumedDat", args.plumed)
-        plumed_obj.cmd("setLogFile", args.plumed_outfile)
-        plumed_obj.cmd("setTimestep", config.respa_inner * config.time_step)
-
-        plumed_obj.cmd("setNatoms", config.n_particles)
-        plumed_obj.cmd("setKbT", 
-            config.gas_constant * config.target_temperature
-        )
-        plumed_obj.cmd("setNoVirial")
-        plumed_obj.cmd("init")
-
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -524,41 +527,12 @@ def main():
             velocities, field_forces / config.mass,
             config.respa_inner * config.time_step,
         )
-        # if args.plumed:
-        #     plumed_forces = np.zeros_like(positions)
-        #     if not charges_flag:
-        #         charges = np.zeros_like(indices, dtype=np.double)
-        #     bias = np.zeros(1, float)
-        #     masses = np.full_like(indices, config.mass, dtype=np.double)
-        #     box = np.diag(config.box_size)
 
-        #     plumed_obj.cmd("setAtomsNlocal", indices.shape[0]);
-        #     plumed_obj.cmd("setAtomsGatindex", indices);
-        #     plumed_obj.cmd("setStep", step*config.respa_inner)
-        #     plumed_obj.cmd("setForces", plumed_forces)
-        #     # no need to worry about Fortran order because PLUMED wrapper ravel
-        #     plumed_obj.cmd("setPositions", positions)
-        #     plumed_obj.cmd("setCharges", charges)
-        #     plumed_obj.cmd("setMasses", masses)
-        #     plumed_obj.cmd("setBox", box)
-
-        #     plumed_obj.cmd("prepareCalc")
-        #     plumed_needs_energy = np.zeros(1, dtype=np.intc)
-        #     plumed_obj.cmd("isEnergyNeeded", plumed_needs_energy)
-        #     if plumed_needs_energy[0] != 0:
-        #         poteng = (field_energy + bond_energy + angle_energy
-        #                  + dihedral_energy + field_q_energy) / size
-        #         plumed_obj.cmd("setEnergy", poteng)
-        #     plumed_obj.cmd("performCalcNoUpdate")
-        #     # plumed_obj.cmd("update")
-
-        #     # plumed_obj.cmd("getBias", bias)
-        #     # print("bias from PLUMED: {}".format(bias[0]))
-
-        #     velocities = integrate_velocity(
-        #         velocities, plumed_forces / config.mass,
-        #         config.respa_inner * config.time_step,
-        #     )
+        if args.plumed:
+            velocities = integrate_velocity(
+                velocities, plumed_forces / config.mass,
+                config.respa_inner * config.time_step,
+            )
         if charges_flag and config.coulombtype == "PIC_Spectral":
             velocities = integrate_velocity(
                 velocities, elec_forces / config.mass,
@@ -616,6 +590,16 @@ def main():
                 config.time_step,
             )
 
+        # Only compute and keep the molecular bond energy from the last rRESPA
+        # inner step
+        if molecules_flag:
+            if not args.disable_bonds:
+                bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
+            if not args.disable_angle_bonds:
+                angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+            if not args.disable_dihedrals:
+                dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
+
         # Update slow forces
         if not args.disable_field:
             layouts = [
@@ -666,18 +650,16 @@ def main():
                     bonds_4_type, bonds_4_last,
                 )
 
-        # Second rRESPA velocity step
-        velocities = integrate_velocity(
-            velocities, field_forces / config.mass,
-            config.respa_inner * config.time_step,
-        )
         if args.plumed:
             plumed_forces = np.zeros_like(positions)
             if not charges_flag:
                 charges = np.zeros_like(indices, dtype=np.double)
             bias = np.zeros(1, float)
+            plumed_virial = np.zeros((3,3), dtype=np.double)
             masses = np.full_like(indices, config.mass, dtype=np.double)
             box = np.diag(config.box_size)
+            poteng = (field_energy + bond_energy + angle_energy
+                     + dihedral_energy + field_q_energy) / size
 
             plumed_obj.cmd("setAtomsNlocal", indices.shape[0]);
             plumed_obj.cmd("setAtomsGatindex", indices);
@@ -689,19 +671,23 @@ def main():
             plumed_obj.cmd("setMasses", masses)
             plumed_obj.cmd("setBox", box)
 
+            # plumed_obj.cmd("calc")
             plumed_obj.cmd("prepareCalc")
-            plumed_needs_energy = np.zeros(1, dtype=np.intc)
-            plumed_obj.cmd("isEnergyNeeded", plumed_needs_energy)
-            if plumed_needs_energy[0] != 0:
-                poteng = (field_energy + bond_energy + angle_energy
-                         + dihedral_energy + field_q_energy) / size
-                plumed_obj.cmd("setEnergy", poteng)
-            plumed_obj.cmd("performCalcNoUpdate")
-            plumed_obj.cmd("update")
+            plumed_obj.cmd("setVirial", plumed_virial)
+            plumed_obj.cmd("setEnergy", poteng)
+            plumed_obj.cmd("performCalc")
 
-            # plumed_obj.cmd("getBias", bias)
-            # print("bias from PLUMED: {}".format(bias[0]))
+            plumed_obj.cmd("getBias", bias)
+            plumed_bias = bias[0]
+            # print("bias from PLUMED: {}".format(plumed_bias))
+            print("nonzero forces: {}".format(np.count_nonzero(plumed_forces)))
+        # Second rRESPA velocity step
+        velocities = integrate_velocity(
+            velocities, field_forces / config.mass,
+            config.respa_inner * config.time_step,
+        )
 
+        if args.plumed:
             velocities = integrate_velocity(
                 velocities, plumed_forces / config.mass,
                 config.respa_inner * config.time_step,
@@ -716,16 +702,6 @@ def main():
                 velocities, reconstructed_forces / config.mass,
                 config.respa_inner * config.time_step,
             )
-
-        # Only compute and keep the molecular bond energy from the last rRESPA
-        # inner step
-        if molecules_flag:
-            if not args.disable_bonds:
-                bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
-            if not args.disable_angle_bonds:
-                angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-            if not args.disable_dihedrals:
-                dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
         if step != 0 and config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
