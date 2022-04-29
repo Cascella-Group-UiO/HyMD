@@ -124,6 +124,7 @@ def main():
     reconstructed_forces = np.zeros_like(positions)
     field_forces = np.zeros_like(positions)
     elec_forces = np.zeros_like(positions)
+    plumed_forces = np.zeros_like(positions)
 
     positions = np.mod(positions, config.box_size[None, :])
 
@@ -237,6 +238,10 @@ def main():
     if molecules_flag:
         args_recv.append("bonds")
         args_recv.append("molecules")
+    if args.plumed:
+        args_in.append(plumed_forces)
+        args_recv.append("plumed_forces")
+
 
     _str_receive_dd = ",".join(args_recv)
     _cmd_receive_dd = f"({_str_receive_dd}) = dd"
@@ -306,9 +311,6 @@ def main():
         )
         # plumed_obj.cmd("setNoVirial")
         plumed_obj.cmd("init")
-
-        # set PLUMED initial forces
-        plumed_forces = np.zeros_like(positions)
 
     if molecules_flag:
         if not (args.disable_bonds
@@ -651,7 +653,10 @@ def main():
                 )
 
         if args.plumed:
-            plumed_forces = np.zeros_like(positions)
+            plumed_forces = (bond_forces + angle_forces + dihedral_forces
+                            + field_forces + elec_forces
+                            + reconstructed_forces)
+            plumed_forces = plumed_forces.astype(np.double)
             if not charges_flag:
                 charges = np.zeros_like(indices, dtype=np.double)
             bias = np.zeros(1, float)
@@ -679,8 +684,13 @@ def main():
 
             plumed_obj.cmd("getBias", bias)
             plumed_bias = bias[0]
-            # print("bias from PLUMED: {}".format(plumed_bias))
-            print("nonzero forces: {}".format(np.count_nonzero(plumed_forces)))
+
+            # remove other forces so I have the bias forces only
+            plumed_forces = (plumed_forces - (bond_forces 
+                            + angle_forces + dihedral_forces
+                            + field_forces + elec_forces
+                            + reconstructed_forces))
+       
         # Second rRESPA velocity step
         velocities = integrate_velocity(
             velocities, field_forces / config.mass,
