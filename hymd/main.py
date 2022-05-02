@@ -191,7 +191,8 @@ def main():
             "complex", value=0.0
         )
 
-    args_in = [
+    if config.domain_decomposition:
+        (positions,
         velocities,
         indices,
         bond_forces,
@@ -201,34 +202,7 @@ def main():
         field_forces,
         names,
         types,
-    ]
-    args_recv = [
-        "positions",
-        "velocities",
-        "indices",
-        "bond_forces",
-        "angle_forces",
-        "dihedral_forces",
-        "reconstructed_forces",
-        "field_forces",
-        "names",
-        "types",
-    ]
-
-    if charges_flag:
-        args_in.append(charges)
-        args_in.append(elec_forces)
-        args_recv.append("charges")
-        args_recv.append("elec_forces")
-    if molecules_flag:
-        args_recv.append("bonds")
-        args_recv.append("molecules")
-
-    _str_receive_dd = ",".join(args_recv)
-    _cmd_receive_dd = f"({_str_receive_dd}) = dd"
-
-    if config.domain_decomposition:
-        dd = domain_decomposition(
+        *optional) = domain_decomposition(
             positions,
             pm,
             *tuple(args_in),
@@ -238,7 +212,12 @@ def main():
             comm=comm,
         )
 
-        exec(_cmd_receive_dd)
+        if charges_flag:
+            charges = optional.pop(0)
+            elec_forces = optional.pop(0)
+        if molecules_flag:
+            bonds = optional.pop(0)
+            molecules = optional.pop(0)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]  # noqa: E501
@@ -629,23 +608,32 @@ def main():
                 angle_forces = np.ascontiguousarray(angle_forces)
                 dihedral_forces = np.ascontiguousarray(dihedral_forces)
 
-                args_in = [
-                    velocities, indices, bond_forces, angle_forces,
-                    dihedral_forces, reconstructed_forces, field_forces, names,
-                    types,
-                ]
-
-                if charges_flag:
-                    args_in.append(charges)
-                    args_in.append(elec_forces)
-
-                dd = domain_decomposition(  # noqa: F841
-                    positions, pm, *tuple(args_in),
+                (positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                dihedral_forces,
+                reconstructed_forces,
+                field_forces,
+                names,
+                types,
+                *optional) = domain_decomposition(
+                    positions,
+                    pm,
+                    *tuple(args_in),
                     molecules=molecules if molecules_flag else None,
                     bonds=bonds if molecules_flag else None,
-                    verbose=args.verbose, comm=comm,
+                    verbose=args.verbose,
+                    comm=comm,
                 )
-                exec(_cmd_receive_dd)
+
+                if charges_flag:
+                    charges = optional.pop(0)
+                    elec_forces = optional.pop(0)
+                if molecules_flag:
+                    bonds = optional.pop(0)
+                    molecules = optional.pop(0)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
