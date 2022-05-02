@@ -191,6 +191,22 @@ def main():
             "complex", value=0.0
         )
 
+    args_in = [
+        velocities,
+        indices,
+        bond_forces,
+        angle_forces,
+        dihedral_forces,
+        reconstructed_forces,
+        field_forces,
+        names,
+        types,
+    ]
+
+    if charges_flag:
+        args_in.append(charges)
+        args_in.append(elec_forces)
+
     if config.domain_decomposition:
         (positions,
         velocities,
