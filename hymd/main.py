@@ -251,6 +251,8 @@ def main():
         if molecules_flag:
             bonds = optional.pop(0)
             molecules = optional.pop(0)
+        if args.plumed:
+            plumed_forces = optional.pop(0)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]  # noqa: E501
@@ -736,6 +738,8 @@ def main():
                 if molecules_flag:
                     bonds = optional.pop(0)
                     molecules = optional.pop(0)
+                if args.plumed:
+                    plumed_forces = optional.pop(0)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
