@@ -309,7 +309,7 @@ def main():
         plumed_obj.cmd("setKbT", 
             config.gas_constant * config.target_temperature
         )
-        # plumed_obj.cmd("setNoVirial")
+        plumed_obj.cmd("setNoVirial")
         plumed_obj.cmd("init")
 
     if molecules_flag:
@@ -653,14 +653,14 @@ def main():
                 )
 
         if args.plumed:
-            plumed_forces = (bond_forces + angle_forces + dihedral_forces
+            current_forces = (bond_forces + angle_forces + dihedral_forces
                             + field_forces + elec_forces
                             + reconstructed_forces)
-            plumed_forces = plumed_forces.astype(np.double)
+            plumed_forces = current_forces.astype(np.double)
             if not charges_flag:
                 charges = np.zeros_like(indices, dtype=np.double)
             bias = np.zeros(1, float)
-            plumed_virial = np.zeros((3,3), dtype=np.double)
+            # plumed_virial = np.zeros((3,3), dtype=np.double)
             masses = np.full_like(indices, config.mass, dtype=np.double)
             box = np.diag(config.box_size)
             poteng = (field_energy + bond_energy + angle_energy
@@ -678,7 +678,7 @@ def main():
 
             # plumed_obj.cmd("calc")
             plumed_obj.cmd("prepareCalc")
-            plumed_obj.cmd("setVirial", plumed_virial)
+            # plumed_obj.cmd("setVirial", plumed_virial)
             plumed_obj.cmd("setEnergy", poteng)
             plumed_obj.cmd("performCalc")
 
@@ -686,11 +686,8 @@ def main():
             plumed_bias = bias[0]
 
             # remove other forces so I have the bias forces only
-            plumed_forces = (plumed_forces - (bond_forces 
-                            + angle_forces + dihedral_forces
-                            + field_forces + elec_forces
-                            + reconstructed_forces))
-       
+            plumed_forces -= current_forces
+
         # Second rRESPA velocity step
         velocities = integrate_velocity(
             velocities, field_forces / config.mass,
