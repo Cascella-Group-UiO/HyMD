@@ -19,6 +19,7 @@ from .thermostat import (csvr_thermostat, cancel_com_momentum,
                          generate_initial_velocities)
 from .force import dipole_forces_redistribution, prepare_bonds
 from .integrator import integrate_velocity, integrate_position
+from .plumed import PlumedBias
 
 # these look valuable to learn about MPI + PLUMED
 # https://groups.google.com/g/plumed-users/c/YTFZj3r1DHQ/m/HfRb9eeaCQAJ
@@ -30,6 +31,10 @@ from .integrator import integrate_velocity, integrate_position
 # http://openpathsampling.org/latest/_modules/openpathsampling/collectivevariables/plumed_wrapper.html
 # https://github.com/plumed/plumed2/tree/master/python/test
 # https://github.com/lab-cosmo/i-pi-dev_archive/blob/master/ipi/engine/forcefields.py
+
+# about energy as CV
+# https://github.com/plumed/plumed2/pull/486 # if energy is needed, scales forces
+
 
 def main():
     """Main simulation driver
@@ -68,9 +73,6 @@ def main():
         from .force import (
             compute_dihedral_forces__fortran as compute_dihedral_forces
         )
-
-    if args.plumed:
-        import plumed
 
     driver = "mpio" if not args.disable_mpio else None
     _kwargs = {"driver": driver, "comm": comm} if not args.disable_mpio else {}
@@ -285,28 +287,6 @@ def main():
             comm=comm,
         )
 
-    # configure PLUMED
-    if args.plumed:
-        plumed_obj = plumed.Plumed()
-
-        plumed_version = np.zeros(1, dtype=np.intc)
-        plumed_obj.cmd("getApiVersion", plumed_version)
-        assert plumed_version[0] > 3, "HyMD requires a PLUMED API > 3"
-
-        plumed_obj.cmd("setMDEngine", "HyMD")
-
-        plumed_obj.cmd("setMPIComm", comm)
-        plumed_obj.cmd("setPlumedDat", args.plumed)
-        plumed_obj.cmd("setLogFile", args.plumed_outfile)
-        plumed_obj.cmd("setTimestep", config.respa_inner * config.time_step)
-
-        plumed_obj.cmd("setNatoms", config.n_particles)
-        plumed_obj.cmd("setKbT", 
-            config.gas_constant * config.target_temperature
-        )
-        plumed_obj.cmd("setNoVirial")
-        plumed_obj.cmd("init")
-
     if molecules_flag:
         if not (args.disable_bonds
                 and args.disable_angle_bonds
@@ -474,6 +454,39 @@ def main():
             comm=comm,
         )
 
+    # initialize PLUMED and get initial forces and bias
+    if args.plumed:
+        plumed = PlumedBias(
+            config, 
+            args.plumed, 
+            args.plumed_outfile, 
+            comm
+        )
+
+        current_forces = (bond_forces + angle_forces + dihedral_forces
+                        + field_forces + elec_forces
+                        + reconstructed_forces)
+
+        # pass info and check if PLUMED also needs the energy
+        needs_energy = plumed.prepare(
+            0,
+            current_forces,
+            positions,
+            indices,
+            config,
+            (
+                np.zeros_like(indices, dtype=np.double) 
+                if not charges_flag else charges
+            )
+        )
+
+        # PLUMED likes the energy per rank
+        poteng = (field_energy + bond_energy + angle_energy
+                 + dihedral_energy + field_q_energy) / size
+
+        # get the forces and bias from PLUMED
+        plumed_forces, plumed_bias = plumed.calc(current_forces, poteng)
+
     if rank == 0:
         loop_start_time = datetime.datetime.now()
         last_step_time = datetime.datetime.now()
@@ -524,7 +537,6 @@ def main():
             velocities, field_forces / config.mass,
             config.respa_inner * config.time_step,
         )
-
         if args.plumed:
             velocities = integrate_velocity(
                 velocities, plumed_forces / config.mass,
@@ -651,37 +663,46 @@ def main():
             current_forces = (bond_forces + angle_forces + dihedral_forces
                             + field_forces + elec_forces
                             + reconstructed_forces)
-            plumed_forces = current_forces.astype(np.double)
-            if not charges_flag:
-                charges = np.zeros_like(indices, dtype=np.double)
-            bias = np.zeros(1, float)
-            # plumed_virial = np.zeros((3,3), dtype=np.double)
-            masses = np.full_like(indices, config.mass, dtype=np.double)
-            box = np.diag(config.box_size)
-            poteng = (field_energy + bond_energy + angle_energy
-                     + dihedral_energy + field_q_energy) / size
 
-            plumed_obj.cmd("setAtomsNlocal", indices.shape[0]);
-            plumed_obj.cmd("setAtomsGatindex", indices);
-            plumed_obj.cmd("setStep", step)
-            plumed_obj.cmd("setForces", plumed_forces)
-            # no need to worry about Fortran order because PLUMED wrapper ravel
-            plumed_obj.cmd("setPositions", positions)
-            plumed_obj.cmd("setCharges", charges)
-            plumed_obj.cmd("setMasses", masses)
-            plumed_obj.cmd("setBox", box)
+            # pass info and check if PLUMED also needs the energy
+            needs_energy = plumed.prepare(
+                step+1,
+                current_forces,
+                positions,
+                indices,
+                config,
+                (
+                    np.zeros_like(indices, dtype=np.double) 
+                    if not charges_flag else charges
+                )
+            )
 
-            # plumed_obj.cmd("calc")
-            plumed_obj.cmd("prepareCalc")
-            # plumed_obj.cmd("setVirial", plumed_virial)
-            plumed_obj.cmd("setEnergy", poteng)
-            plumed_obj.cmd("performCalc")
+            if needs_energy:
+                if not args.disable_field:
+                    (
+                        field_energy, kinetic_energy,
+                    ) = compute_field_and_kinetic_energy(
+                        phi, velocities, hamiltonian, positions, types, v_ext,
+                        config, layouts, comm=comm,
+                    )
 
-            plumed_obj.cmd("getBias", bias)
-            plumed_bias = bias[0]
+                    if charges_flag and config.coulombtype == "PIC_Spectral":
+                        field_q_energy = compute_field_energy_q(
+                            config, phi_q_fourier, elec_energy_field,
+                            field_q_energy, comm=comm,
+                        )
+                else:
+                    field_energy = 0.0
+                    field_q_energy = 0.0
 
-            # remove other forces so I have the bias forces only
-            plumed_forces -= current_forces
+                # PLUMED likes the energy per rank
+                poteng = (field_energy + bond_energy + angle_energy
+                         + dihedral_energy + field_q_energy) / size
+            else:
+                poteng = 0.0
+
+            # get the forces and bias from PLUMED
+            plumed_forces, plumed_bias = plumed.calc(current_forces, poteng)
 
         # Second rRESPA velocity step
         velocities = integrate_velocity(
@@ -848,7 +869,7 @@ def main():
 
                 forces_out = (
                     field_forces + bond_forces + angle_forces
-                    + dihedral_forces + reconstructed_forces
+                    + dihedral_forces + reconstructed_forces + plumed_forces
                 )
                 store_data(
                     out_dataset, step, frame, indices, positions, velocities,
