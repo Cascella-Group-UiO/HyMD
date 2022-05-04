@@ -21,20 +21,6 @@ from .force import dipole_forces_redistribution, prepare_bonds
 from .integrator import integrate_velocity, integrate_position
 from .plumed import PlumedBias
 
-# these look valuable to learn about MPI + PLUMED
-# https://groups.google.com/g/plumed-users/c/YTFZj3r1DHQ/m/HfRb9eeaCQAJ
-# https://github.com/lammps/lammps/blob/develop/src/PLUMED/fix_plumed.cpp
-# https://groups.google.com/g/plumed-users/c/SVOgwT41e_M/m/MK6TJVNTi3MJ # indices
-# https://github.com/openmm/openmm-plumed/issues/22 # rRESPA
-
-# these look valuable to learn about PLUMED in python
-# http://openpathsampling.org/latest/_modules/openpathsampling/collectivevariables/plumed_wrapper.html
-# https://github.com/plumed/plumed2/tree/master/python/test
-# https://github.com/lab-cosmo/i-pi-dev_archive/blob/master/ipi/engine/forcefields.py
-
-# about energy as CV
-# https://github.com/plumed/plumed2/pull/486 # if energy is needed, scales forces
-
 
 def main():
     """Main simulation driver
