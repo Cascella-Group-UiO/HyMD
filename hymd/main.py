@@ -482,7 +482,7 @@ def main():
     for step in range(1, config.n_steps + 1):
         current_step_time = datetime.datetime.now()
 
-        if step == 0 and args.verbose > 1:
+        if step == 1 and args.verbose > 1:
             Logger.rank0.log(logging.INFO, f"MD step = {step:10d}")
         else:
             log_step = False
@@ -857,7 +857,7 @@ def main():
 
                 forces_out = (
                     field_forces + bond_forces + angle_forces
-                    + dihedral_forces + reconstructed_forces + plumed_forces
+                    + dihedral_forces + reconstructed_forces
                 )
                 store_data(
                     out_dataset, step, frame, indices, positions, velocities,
