@@ -438,10 +438,10 @@ def main():
         last_step_time = datetime.datetime.now()
 
     # MD loop
-    for step in range(config.n_steps):
+    for step in range(1, config.n_steps + 1):
         current_step_time = datetime.datetime.now()
 
-        if step == 0 and args.verbose > 1:
+        if step == 1 and args.verbose > 1:
             Logger.rank0.log(logging.INFO, f"MD step = {step:10d}")
         else:
             log_step = False
@@ -617,7 +617,7 @@ def main():
             if not args.disable_dihedrals:
                 dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
-        if step != 0 and config.domain_decomposition:
+        if config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
@@ -730,7 +730,7 @@ def main():
 
         # Print trajectory
         if config.n_print > 0:
-            if np.mod(step, config.n_print) == 0 and step != 0:
+            if np.mod(step, config.n_print) == 0:
                 frame = step // config.n_print
                 if not args.disable_field:
                     (
@@ -788,7 +788,7 @@ def main():
             ),
         )
 
-    if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
+    if config.n_print > 0 and np.mod(config.n_steps, config.n_print) != 0:
         if not args.disable_field:
             update_field(
                 phi, layouts, force_on_grid, hamiltonian, pm, positions, types,
