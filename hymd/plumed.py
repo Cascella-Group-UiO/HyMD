@@ -105,7 +105,8 @@ class PlumedBias:
 
 
     def calc(self, forces, poteng):
-        """
+        """After setting up with prepare, set the potential energy
+        and runs performCalc to get the bias energy and forces.
         """
         if not self.ready:
             err_str = (

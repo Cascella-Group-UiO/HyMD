@@ -250,11 +250,11 @@ def main():
         if charges_flag:
             charges = optional.pop(0)
             elec_forces = optional.pop(0)
+        if args.plumed:
+            plumed_forces = optional.pop(0)
         if molecules_flag:
             bonds = optional.pop(0)
             molecules = optional.pop(0)
-        if args.plumed:
-            plumed_forces = optional.pop(0)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]  # noqa: E501
@@ -464,8 +464,9 @@ def main():
         )
 
         current_forces = (bond_forces + angle_forces + dihedral_forces
-                        + field_forces + elec_forces
-                        + reconstructed_forces)
+                        + field_forces + reconstructed_forces)
+        if charges_flag:
+            current_forces += elec_forces
 
         # pass info and check if PLUMED also needs the energy
         needs_energy = plumed.prepare(
@@ -661,8 +662,9 @@ def main():
 
         if args.plumed:
             current_forces = (bond_forces + angle_forces + dihedral_forces
-                            + field_forces + elec_forces
-                            + reconstructed_forces)
+                            + field_forces + reconstructed_forces)
+            if charges_flag:
+                current_forces += elec_forces
 
             # pass info and check if PLUMED also needs the energy
             needs_energy = plumed.prepare(
@@ -726,7 +728,7 @@ def main():
                 config.respa_inner * config.time_step,
             )
 
-        if step != 0 and config.domain_decomposition:
+        if config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
@@ -756,11 +758,11 @@ def main():
                 if charges_flag:
                     charges = optional.pop(0)
                     elec_forces = optional.pop(0)
+                if args.plumed:
+                    plumed_forces = optional.pop(0)
                 if molecules_flag:
                     bonds = optional.pop(0)
                     molecules = optional.pop(0)
-                if args.plumed:
-                    plumed_forces = optional.pop(0)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
