@@ -39,7 +39,7 @@ class PlumedBias:
             )
             Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
-                raise ImportError(err_str)      
+                raise ImportError(err_str)
 
         self.plumed_obj = plumed.Plumed()
         self.plumed_version = np.zeros(1, dtype=np.intc)
@@ -49,7 +49,14 @@ class PlumedBias:
         self.ready = False
 
         self.plumed_obj.cmd("getApiVersion", self.plumed_version)
-        assert self.plumed_version[0] > 3, "HyMD requires a PLUMED API > 3"
+        if self.plumed_version[0] <= 3:
+            err_str = (
+                "HyMD requires a PLUMED API > 3. "
+                "Use a newer PLUMED kernel."
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise AssertionError(err_str)
 
         self.plumed_obj.cmd("setMDEngine", "HyMD")
 

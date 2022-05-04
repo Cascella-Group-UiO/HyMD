@@ -492,7 +492,7 @@ def main():
         last_step_time = datetime.datetime.now()
 
     # MD loop
-    for step in range(config.n_steps):
+    for step in range(1, config.n_steps + 1):
         current_step_time = datetime.datetime.now()
 
         if step == 0 and args.verbose > 1:
@@ -666,7 +666,7 @@ def main():
 
             # pass info and check if PLUMED also needs the energy
             needs_energy = plumed.prepare(
-                step+1,
+                step,
                 current_forces,
                 positions,
                 indices,
@@ -841,7 +841,7 @@ def main():
 
         # Print trajectory
         if config.n_print > 0:
-            if np.mod(step, config.n_print) == 0 and step != 0:
+            if np.mod(step, config.n_print) == 0:
                 frame = step // config.n_print
                 if not args.disable_field:
                     (
@@ -899,7 +899,7 @@ def main():
             ),
         )
 
-    if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
+    if config.n_print > 0 and np.mod(config.n_steps, config.n_print) != 0:
         if not args.disable_field:
             update_field(
                 phi, layouts, force_on_grid, hamiltonian, pm, positions, types,
