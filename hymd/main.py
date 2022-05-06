@@ -202,33 +202,23 @@ def main():
         names,
         types,
     ]
-    args_recv = [
-        "positions",
-        "velocities",
-        "indices",
-        "bond_forces",
-        "angle_forces",
-        "dihedral_forces",
-        "reconstructed_forces",
-        "field_forces",
-        "names",
-        "types",
-    ]
 
     if charges_flag:
         args_in.append(charges)
         args_in.append(elec_forces)
-        args_recv.append("charges")
-        args_recv.append("elec_forces")
-    if molecules_flag:
-        args_recv.append("bonds")
-        args_recv.append("molecules")
-
-    _str_receive_dd = ",".join(args_recv)
-    _cmd_receive_dd = f"({_str_receive_dd}) = dd"
 
     if config.domain_decomposition:
-        dd = domain_decomposition(
+        (positions,
+        velocities,
+        indices,
+        bond_forces,
+        angle_forces,
+        dihedral_forces,
+        reconstructed_forces,
+        field_forces,
+        names,
+        types,
+        *optional) = domain_decomposition(
             positions,
             pm,
             *tuple(args_in),
@@ -238,7 +228,12 @@ def main():
             comm=comm,
         )
 
-        exec(_cmd_receive_dd)
+        if charges_flag:
+            charges = optional.pop(0)
+            elec_forces = optional.pop(0)
+        if molecules_flag:
+            bonds = optional.pop(0)
+            molecules = optional.pop(0)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]  # noqa: E501
@@ -443,10 +438,10 @@ def main():
         last_step_time = datetime.datetime.now()
 
     # MD loop
-    for step in range(config.n_steps):
+    for step in range(1, config.n_steps + 1):
         current_step_time = datetime.datetime.now()
 
-        if step == 0 and args.verbose > 1:
+        if step == 1 and args.verbose > 1:
             Logger.rank0.log(logging.INFO, f"MD step = {step:10d}")
         else:
             log_step = False
@@ -622,30 +617,39 @@ def main():
             if not args.disable_dihedrals:
                 dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
 
-        if step != 0 and config.domain_decomposition:
+        if config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
                 dihedral_forces = np.ascontiguousarray(dihedral_forces)
 
-                args_in = [
-                    velocities, indices, bond_forces, angle_forces,
-                    dihedral_forces, reconstructed_forces, field_forces, names,
-                    types,
-                ]
-
-                if charges_flag:
-                    args_in.append(charges)
-                    args_in.append(elec_forces)
-
-                dd = domain_decomposition(  # noqa: F841
-                    positions, pm, *tuple(args_in),
+                (positions,
+                velocities,
+                indices,
+                bond_forces,
+                angle_forces,
+                dihedral_forces,
+                reconstructed_forces,
+                field_forces,
+                names,
+                types,
+                *optional) = domain_decomposition(
+                    positions,
+                    pm,
+                    *tuple(args_in),
                     molecules=molecules if molecules_flag else None,
                     bonds=bonds if molecules_flag else None,
-                    verbose=args.verbose, comm=comm,
+                    verbose=args.verbose,
+                    comm=comm,
                 )
-                exec(_cmd_receive_dd)
+
+                if charges_flag:
+                    charges = optional.pop(0)
+                    elec_forces = optional.pop(0)
+                if molecules_flag:
+                    bonds = optional.pop(0)
+                    molecules = optional.pop(0)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
@@ -726,7 +730,7 @@ def main():
 
         # Print trajectory
         if config.n_print > 0:
-            if np.mod(step, config.n_print) == 0 and step != 0:
+            if np.mod(step, config.n_print) == 0:
                 frame = step // config.n_print
                 if not args.disable_field:
                     (
@@ -784,7 +788,7 @@ def main():
             ),
         )
 
-    if config.n_print > 0 and np.mod(config.n_steps - 1, config.n_print) != 0:
+    if config.n_print > 0 and np.mod(config.n_steps, config.n_print) != 0:
         if not args.disable_field:
             update_field(
                 phi, layouts, force_on_grid, hamiltonian, pm, positions, types,
