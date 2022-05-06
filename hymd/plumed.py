@@ -2,6 +2,7 @@
 """
 
 import numpy as np
+import logging
 from mpi4py import MPI
 from .logger import Logger
 
@@ -12,8 +13,41 @@ except ImportError:
     has_plumed = False
 
 class PlumedBias:
-    """Deals with PLUMED interface
+    """PLUMED handler class
+
+    Notes
+    -----
+    This wraps the :code:`Plumed()` class, see
+    `https://github.com/plumed/plumed2/tree/master/python`.
+
+    The :code:`PlumedBias()` object is created with the arguments from 
+    :code:`__init__` and at everystep the methods :code:`prepare()` and
+    :code:`calc()` should be called.
+
+    Attributes
+    ----------
+    plumed_obj : plumed.Plumed
+        Plumed object used to pass and request information from PLUMED.
+    plumed_forces : (N, D) numpy.ndarray
+        Array of forces of :code:`N` particles in :code:`D` dimensions.
+        After :code:`calc()`, this array contains only the forces due
+        to the PLUMED bias.
+    plumed_bias : (1,) numpy.ndarray
+        Used as a pointer to an :code:`int` to store PLUMED API version.
+    plumed_version : (1,) numpy.ndarray
+        Used as a pointer to an :code:`int` to store PLUMED API version.
+    comm : mpi4py.Comm
+        MPI communicator to use for rank communication.
+    ready : bool
+        Stores wether the :code:`calc()` method can be called or not.
     """
+    plumed_obj = None
+    plumed_forces = None
+    plumed_bias = np.zeros(1, np.double)
+    plumed_version = np.zeros(1, dtype=np.intc)
+    comm = None
+    ready = False
+
     def __init__(self, config, plumeddat, logfile, comm=MPI.COMM_WORLD):
         """Constructor
 
@@ -41,12 +75,13 @@ class PlumedBias:
             if comm.Get_rank() == 0:
                 raise ImportError(err_str)
 
+        Logger.rank0.log(
+            logging.INFO, 
+            f"Attempting to read PLUMED input from {plumeddat}"
+        )
+
         self.plumed_obj = plumed.Plumed()
-        self.plumed_version = np.zeros(1, dtype=np.intc)
-        self.plumed_forces = np.zeros((0,3), dtype=np.double)
-        self.plumed_bias = np.zeros(1, np.double)
         self.comm = comm
-        self.ready = False
 
         self.plumed_obj.cmd("getApiVersion", self.plumed_version)
         if self.plumed_version[0] <= 3:
@@ -73,10 +108,22 @@ class PlumedBias:
         self.plumed_obj.cmd("setNoVirial")
         self.plumed_obj.cmd("init")
 
+        Logger.rank0.log(
+            logging.INFO, 
+            f"Successfully read PLUMED input. PLUMED output file is {logfile}"
+        )
+
+
+    @property
+    def api_version(self):
+        """Returns the API version got from the PLUMED kernel.
+        """
+        return self.plumed_version[0]
+
 
     def prepare(self, step, forces, positions, indices, config, charges):
-        """Setup all the PLUMED pointers and returns if PLUMED will use
-        the potential energy as well.
+        """Set the pointers to positions and forces, and returns
+        wether the potential energy is being requested by PLUMED or not.
         """
         self.plumed_forces = forces.astype(np.double)
 
@@ -105,8 +152,9 @@ class PlumedBias:
 
 
     def calc(self, forces, poteng):
-        """After setting up with prepare, set the potential energy
-        and runs performCalc to get the bias energy and forces.
+        """Passes the energy (which can be set to any value in case 
+        :code:`prepare()` returns PLUMED doesn't need it) to get 
+        the forces and energy from the bias.
         """
         if not self.ready:
             err_str = (
