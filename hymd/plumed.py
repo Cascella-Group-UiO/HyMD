@@ -33,7 +33,7 @@ class PlumedBias:
         After :code:`calc()`, this array contains only the forces due
         to the PLUMED bias.
     plumed_bias : (1,) numpy.ndarray
-        Used as a pointer to an :code:`int` to store PLUMED API version.
+        Used as a pointer to an :code:`double` to store the bias energy.
     plumed_version : (1,) numpy.ndarray
         Used as a pointer to an :code:`int` to store PLUMED API version.
     comm : mpi4py.Comm
