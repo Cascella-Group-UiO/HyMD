@@ -430,6 +430,8 @@ def main():
             field_forces + bond_forces + angle_forces + dihedral_forces
             + reconstructed_forces
         )
+        if charges_flag:
+            forces_out += elec_forces
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
             forces_out, config.box_size, temperature, kinetic_energy,
@@ -859,6 +861,8 @@ def main():
                     field_forces + bond_forces + angle_forces
                     + dihedral_forces + reconstructed_forces
                 )
+                if charges_flag:
+                    forces_out += elec_forces
                 store_data(
                     out_dataset, step, frame, indices, positions, velocities,
                     forces_out, config.box_size, temperature, kinetic_energy,
@@ -926,6 +930,8 @@ def main():
             field_forces + bond_forces + angle_forces + dihedral_forces
             + reconstructed_forces
         )
+        if charges_flag:
+            forces_out += elec_forces
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
             forces_out, config.box_size, temperature, kinetic_energy,
