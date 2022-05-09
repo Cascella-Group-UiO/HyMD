@@ -407,7 +407,9 @@ def main():
         out_dataset, rank_range, names, types, indices, config, bonds_2_atom1,
         bonds_2_atom2, molecules=molecules if molecules_flag else None,
         velocity_out=args.velocity_output, force_out=args.force_output,
-        charges=charges if charges_flag else False, comm=comm,
+        charges=charges if charges_flag else False, 
+        plumed_out=True if args.plumed else False,
+        comm=comm,
     )
 
     if config.n_print > 0:
@@ -432,14 +434,16 @@ def main():
         )
         if charges_flag:
             forces_out += elec_forces
+        if args.plumed:
+            forces_out += plumed_forces
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
             forces_out, config.box_size, temperature, kinetic_energy,
             bond_energy, angle_energy, dihedral_energy, field_energy,
-            field_q_energy, config.time_step, config,
+            field_q_energy, plumed_bias, config.time_step, config,
             velocity_out=args.velocity_output, force_out=args.force_output,
-            charge_out=charges_flag, dump_per_particle=args.dump_per_particle,
-            comm=comm,
+            charge_out=charges_flag, plumed_out=True if args.plumed else False,
+            dump_per_particle=args.dump_per_particle, comm=comm,
         )
 
     # initialize PLUMED and get initial forces and bias
@@ -863,13 +867,17 @@ def main():
                 )
                 if charges_flag:
                     forces_out += elec_forces
+                if args.plumed:
+                    forces_out += plumed_forces
                 store_data(
                     out_dataset, step, frame, indices, positions, velocities,
                     forces_out, config.box_size, temperature, kinetic_energy,
                     bond_energy, angle_energy, dihedral_energy, field_energy,
-                    field_q_energy, config.respa_inner * config.time_step,
-                    config, velocity_out=args.velocity_output,
+                    field_q_energy, plumed_bias, 
+                    config.respa_inner * config.time_step, config,
+                    velocity_out=args.velocity_output,
                     force_out=args.force_output, charge_out=charges_flag,
+                    plumed_out=True if args.plumed else False,
                     dump_per_particle=args.dump_per_particle, comm=comm,
                 )
                 if np.mod(step, config.n_print * config.n_flush) == 0:
@@ -932,14 +940,17 @@ def main():
         )
         if charges_flag:
             forces_out += elec_forces
+        if args.plumed:
+            forces_out += plumed_forces
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
             forces_out, config.box_size, temperature, kinetic_energy,
             bond_energy, angle_energy, dihedral_energy, field_energy,
-            field_q_energy, config.respa_inner * config.time_step, config,
+            field_q_energy, plumed_bias, 
+            config.respa_inner * config.time_step, config,
             velocity_out=args.velocity_output, force_out=args.force_output,
-            charge_out=charges_flag, dump_per_particle=args.dump_per_particle,
-            comm=comm,
+            charge_out=charges_flag, plumed_out=True if args.plumed else False,
+            dump_per_particle=args.dump_per_particle, comm=comm,
         )
 
     out_dataset.close_file()
