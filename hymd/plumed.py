@@ -32,6 +32,10 @@ class PlumedBias:
         Array of forces of :code:`N` particles in :code:`D` dimensions.
         After :code:`calc()`, this array contains only the forces due
         to the PLUMED bias.
+    positions : (N, D) numpy.ndarray
+        Array of positions for :code:`N` particles in :code:`D` dimensions.
+        Local for each MPI rank.
+        Needed because we need C-contiguous array for passing to PLUMED.       
     plumed_bias : (1,) numpy.ndarray
         Used as a pointer to an :code:`double` to store the bias energy.
     plumed_version : (1,) numpy.ndarray
@@ -43,6 +47,7 @@ class PlumedBias:
     """
     plumed_obj = None
     plumed_forces = None
+    positions = None
     plumed_bias = np.zeros(1, np.double)
     plumed_version = np.zeros(1, dtype=np.intc)
     comm = None
@@ -126,6 +131,7 @@ class PlumedBias:
         wether the potential energy is being requested by PLUMED or not.
         """
         self.plumed_forces = forces.astype(np.double)
+        self.positions = positions.ravel() # get C-contiguous array
 
         needs_energy = np.zeros(1, np.intc)
         # plumed_virial = np.zeros((3,3), dtype=np.double)
@@ -136,12 +142,11 @@ class PlumedBias:
         self.plumed_obj.cmd("setAtomsGatindex", indices);
         self.plumed_obj.cmd("setStep", step)
         self.plumed_obj.cmd("setForces", self.plumed_forces)
-        # no need to worry about Fortran order because PLUMED wrapper ravels
-        self.plumed_obj.cmd("setPositions", positions)
+        self.plumed_obj.cmd("setPositions", self.positions)
         self.plumed_obj.cmd("setCharges", charges)
         self.plumed_obj.cmd("setMasses", masses)
         self.plumed_obj.cmd("setBox", box)
-        # plumed_obj.cmd("setVirial", plumed_virial)
+        # self.plumed_obj.cmd("setVirial", plumed_virial)
 
         # check if PLUMED needs energy and returns
         self.plumed_obj.cmd("prepareCalc")
