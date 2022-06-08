@@ -8,15 +8,20 @@ set -e
 set -x
 
 version=""
+program_path=""
 program_name=plumed
 
 for opt
 do
 case "$opt" in
   (version=*) version="${opt#version=}" ;;
+  (program_path=*) program_path="${opt#program_path=}" ;;
   (*) echo "unknown option $opt" ; exit 1 ;;
 esac
 done
+
+current_path=$PWD
+cd $program_path
 
 if [ -n "$version" ] ; then
   echo "installing plumed $version"
@@ -46,3 +51,5 @@ make install
 touch $HOME/opt/lib/$program_name/$hash
 
 fi
+
+cd $current_path

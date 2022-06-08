@@ -44,12 +44,10 @@ jobs:
         sudo apt-get install -y ccache
         sudo ln -s ccache /usr/local/bin/mpic++
         export PATH=/usr/lib/ccache:${PATH}
-        git clone https://github.com/plumed/plumed2.git
-        cd plumed2
+        git clone https://github.com/plumed/plumed2.git $HOME/plumed2
         ccache -s
-        CXX="mpic++" .ci/install.plumed version=master
+        CXX="mpic++" .ci/install.plumed version=master program_path=$HOME/plumed2
         ccache -s
-        cd ../
     - name: Install python dependencies
       run: |
         python3 -m pip install --upgrade pip
@@ -57,10 +55,11 @@ jobs:
         python3 -m pip install -r requirements.txt
     - name: Install PLUMED python wrapper
       run: |
-        cd plumed2/python
+        current_path=$PWD
+        cd $HOME/plumed2/python
         make pip
         python3 -m pip install .
-        cd ../../
+        cd $current_path
         PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
     - name: Install package
       run: |
