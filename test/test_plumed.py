@@ -9,7 +9,7 @@ from hymd.file_io import distribute_input
 from hymd.plumed import PlumedBias
 
 @pytest.mark.mpi()
-def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, caplog):
+def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, tmp_path, caplog):
     caplog.set_level(logging.INFO)
     indices, positions, molecules, velocities, bonds, names, types = molecules_with_solvent
     box_size = np.array([10, 10, 10], dtype=np.float64)
@@ -19,7 +19,17 @@ def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, caplog):
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
-   
+
+    # create PLUMED input with the correct tmp_path
+    plumed_str = """d14: DISTANCE ATOMS=1,4
+
+RESTRAINT ARG=d14 KAPPA=200.0 AT=2.0
+
+DUMPATOMS ATOMS=1-45 FILE={}
+PRINT ARG=d14 FILE={}""".format(tmp_path/"testdump.xyz", tmp_path/"DIST")
+    with open(tmp_path/"plumed.dat","w") as f:
+        f.write(plumed_str)
+
     # Test stub acting like a hdf5 file for distribute_input
     in_file = {'molecules': molecules, 'indices': indices}
     rank_range, molecules_flag = distribute_input(
@@ -35,8 +45,8 @@ def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, caplog):
 
     plumed = PlumedBias(
       config, 
-      "plumed.dat", 
-      "plumed.out",
+      str(tmp_path/"plumed.dat"), 
+      str(tmp_path/"plumed.out"),
       comm
     )
 
@@ -60,8 +70,8 @@ def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, caplog):
 
     if rank == 0:
         ref_forces = np.loadtxt("refforces.txt")
-        assert np.allclose(plumed_forces, ref_forces, atol=1e-13)    
-        assert filecmp.cmp("DIST", "refDIST") == True
-        assert filecmp.cmp("testdump.xyz", "reftestdump.xyz") == True
+        assert plumed_forces == pytest.approx(ref_forces, abs=1e-13)
+        assert filecmp.cmp(tmp_path/"DIST", "refDIST") == True
+        assert filecmp.cmp(tmp_path/"testdump.xyz", "reftestdump.xyz") == True
 
-    assert plumed_bias != 0.0
+    assert plumed_bias == pytest.approx(635.5621691482, abs=1e-10)
