@@ -70,8 +70,8 @@ PRINT ARG=d14 FILE={}""".format(tmp_path/"testdump.xyz", tmp_path/"DIST")
 
     if rank == 0:
         ref_forces = np.loadtxt("refforces.txt")
-        assert plumed_forces == pytest.approx(ref_forces, abs=1e-13)
+        assert plumed_forces == pytest.approx(ref_forces, abs=1e-8)
         assert filecmp.cmp(tmp_path/"DIST", "refDIST") == True
         assert filecmp.cmp(tmp_path/"testdump.xyz", "reftestdump.xyz") == True
 
-    assert plumed_bias == pytest.approx(635.5621691482, abs=1e-10)
+    assert plumed_bias == pytest.approx(635.5621691482, abs=1e-8)
