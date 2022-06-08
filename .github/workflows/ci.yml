@@ -67,9 +67,9 @@ jobs:
     - name: Test with pytest
       run: |
         python3 -m pip install pytest pytest-cov pytest-mpi coverage
-        pytest --cov=hymd --ignore=plumed2
+        pytest --cov=hymd
         chmod +x pytest-mpi
-        ./pytest-mpi -c -ca -n 2 -ns -oo
+        ./pytest-mpi -c -ca -n 2 -ns -oo -s
     - name: Coverage report and upload
       run: |
         coverage report
