@@ -28,7 +28,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y python3-mpi4py python3-numpy
         sudo apt-get install -y libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
-    - name: Install PLUMED and PLUMED python wrapper
+    - name: Install PLUMED
       run: |
         mkdir -p $HOME/opt/
         sudo apt-get install -y build-essential
@@ -40,23 +40,26 @@ jobs:
         ./configure --prefix=$HOME/opt
         make -j 4
         make install
-        make pip
-        cd python
-        python3 -m pip install .
-        cd ../../
-        PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
+        cd ../
     - name: Install python dependencies
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel numpy mpi4py cython
         python3 -m pip install -r requirements.txt
+    - name: Install PLUMED python wrapper
+      run: |
+        cd plumed2/python
+        make pip
+        python3 -m pip install .
+        cd ../../
+        PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
     - name: Install package
       run: |
         python3 -m pip install .
     - name: Test with pytest
       run: |
         python3 -m pip install pytest pytest-cov pytest-mpi coverage
-        pytest --cov=./
+        pytest --cov=hymd --ignore=plumed2
         chmod +x pytest-mpi
         ./pytest-mpi -c -ca -n 2 -ns -oo
     - name: Coverage report and upload
