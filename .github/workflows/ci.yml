@@ -60,6 +60,7 @@ jobs:
         make pip
         python3 -m pip install .
         cd $current_path
+        ls -R $HOME/opt/
         PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
     - name: Install package
       run: |
@@ -67,7 +68,7 @@ jobs:
     - name: Test with pytest
       run: |
         python3 -m pip install pytest pytest-cov pytest-mpi coverage
-        pytest --cov=hymd
+        pytest --cov=./
         chmod +x pytest-mpi
         ./pytest-mpi -c -ca -n 2 -ns -oo -s
     - name: Coverage report and upload
