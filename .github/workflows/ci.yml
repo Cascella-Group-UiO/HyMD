@@ -38,14 +38,14 @@ jobs:
       run: |
         mkdir -p $HOME/opt/
         sudo apt-get install -y build-essential
-        sudo apt-get install -y ccache
         sudo apt-get install -y openmpi-bin libopenmpi-dev git
+        sudo apt-get install -y ccache
         git clone https://github.com/plumed/plumed2.git
         cd plumed2
         echo "CC=mpicc" >> $GITHUB_ENV
         echo "CXX=mpic++" >> $GITHUB_ENV
         ccache -s -M 100M
-        ./configure CXX="ccache $CXX" --prefix=$HOME/opt
+        ./configure CXX="ccache $CXX" --disable-dependency-tracking --prefix=$HOME/opt
         make -j 4
         make install
         ccache -s -M 100M
