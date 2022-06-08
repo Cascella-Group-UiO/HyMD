@@ -1,4 +1,5 @@
 import pytest
+import warnings
 import re
 import io
 import logging
@@ -46,24 +47,32 @@ def test_input_parser_file_check_n_particles(config_toml, caplog):
     indices_take = indices_slices[MPI.COMM_WORLD.Get_rank()]
 
     if MPI.COMM_WORLD.Get_rank() == 0:
-        warning = Warning
+        with pytest.warns(Warning) as recorded_warning:
+            config_ = check_n_particles(config, indices_take)
+            assert config_.n_particles == 10001
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                assert all([(s in message) for s in ("10000", "not", "10001")])
+                assert all([(s in log) for s in ("10000", "not", "10001")])
     else:
-        warning = None
-    with pytest.warns(warning) as recorded_warning:
-        config_ = check_n_particles(config, indices_take)
-        assert config_.n_particles == 10001
-        if MPI.COMM_WORLD.Get_rank() == 0:
-            message = recorded_warning[0].message.args[0]
-            log = caplog.text
-            assert all([(s in message) for s in ("10000", "not", "10001")])
-            assert all([(s in log) for s in ("10000", "not", "10001")])
+        with warnings.catch_warnings() as recorded_warning:
+            warnings.simplefilter("error")
+            config_ = check_n_particles(config, indices_take)
+            assert config_.n_particles == 10001
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                assert all([(s in message) for s in ("10000", "not", "10001")])
+                assert all([(s in log) for s in ("10000", "not", "10001")])
 
     caplog.clear()
     indices = np.empty((n_particles_config,))
     indices_slices = np.array_split(indices, MPI.COMM_WORLD.Get_size())
     indices_take = indices_slices[MPI.COMM_WORLD.Get_rank()]
 
-    with pytest.warns(None) as recorded_warning:
+    with warnings.catch_warnings() as recorded_warning:
+        warnings.simplefilter("error")
         check_n_particles(config, indices_take)
         assert not recorded_warning
         assert not caplog.text
@@ -105,18 +114,27 @@ def test_input_parser_check_optionals(config_toml, caplog):
     )
 
     if MPI.COMM_WORLD.Get_rank() == 0:
-        warning = Warning
+        with pytest.warns(Warning) as recorded_warning:
+            config = parse_config_toml(config_toml_wrong_max_molecule_size)
+            config = check_max_molecule_size(config)
+            assert config.max_molecule_size == 201
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                assert all([(s in message) for s in ("must be", "integer", "201")])
+                assert all([(s in log) for s in ("must be", "integer", "201")])
     else:
-        warning = None
-    with pytest.warns(warning) as recorded_warning:
-        config = parse_config_toml(config_toml_wrong_max_molecule_size)
-        config = check_max_molecule_size(config)
-        assert config.max_molecule_size == 201
-        if MPI.COMM_WORLD.Get_rank() == 0:
-            message = recorded_warning[0].message.args[0]
-            log = caplog.text
-            assert all([(s in message) for s in ("must be", "integer", "201")])
-            assert all([(s in log) for s in ("must be", "integer", "201")])
+        with warnings.catch_warnings() as recorded_warning:
+            warnings.simplefilter("error")
+            config = parse_config_toml(config_toml_wrong_max_molecule_size)
+            config = check_max_molecule_size(config)
+            assert config.max_molecule_size == 201
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                message = recorded_warning[0].message.args[0]
+                log = caplog.text
+                assert all([(s in message) for s in ("must be", "integer", "201")])
+                assert all([(s in log) for s in ("must be", "integer", "201")])
+
     MPI.COMM_WORLD.Barrier()
 
 
@@ -186,16 +204,23 @@ def test_input_parser_check_bonds(config_toml, dppc_single, caplog):
         config = parse_config_toml(added_bonds_toml_str)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
-            warning = Warning
+            with pytest.warns(Warning) as recorded_warning:
+                config = check_bonds(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
         else:
-            warning = None
-        with pytest.warns(warning) as recorded_warning:
-            config = check_bonds(config, names_take)
-            if MPI.COMM_WORLD.Get_rank() == 0:
-                message = recorded_warning[0].message.args[0]
-                log = caplog.text
-                assert all([(s in message) for s in w])
-                assert all([(s in log) for s in w])
+            with warnings.catch_warnings() as recorded_warning:
+                warnings.simplefilter("error")
+                config = check_bonds(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
+
         caplog.clear()
     MPI.COMM_WORLD.Barrier()
 
@@ -234,16 +259,23 @@ def test_input_parser_check_angles(config_toml, dppc_single, caplog):
         config = parse_config_toml(added_angles_toml_str)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
-            warning = Warning
+            with pytest.warns(Warning) as recorded_warning:
+                config = check_angles(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
         else:
-            warning = None
-        with pytest.warns(warning) as recorded_warning:
-            config = check_angles(config, names_take)
-            if MPI.COMM_WORLD.Get_rank() == 0:
-                message = recorded_warning[0].message.args[0]
-                log = caplog.text
-                assert all([(s in message) for s in w])
-                assert all([(s in log) for s in w])
+            with warnings.catch_warnings() as recorded_warning:
+                warnings.simplefilter("error")
+                config = check_angles(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
+
         caplog.clear()
     MPI.COMM_WORLD.Barrier()
 
@@ -287,16 +319,23 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
         config = parse_config_toml(added_chi_toml_str)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
-            warning = Warning
+            with pytest.warns(Warning) as recorded_warning:
+                config = check_chi(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
         else:
-            warning = None
-        with pytest.warns(warning) as recorded_warning:
-            config = check_chi(config, names_take)
-            if MPI.COMM_WORLD.Get_rank() == 0:
-                message = recorded_warning[0].message.args[0]
-                log = caplog.text
-                assert all([(s in message) for s in w])
-                assert all([(s in log) for s in w])
+            with warnings.catch_warnings() as recorded_warning:
+                warnings.simplefilter("error")
+                config = check_chi(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
+
         caplog.clear()
 
     remove_chi = [
@@ -317,16 +356,23 @@ def test_input_parser_check_chi(config_toml, dppc_single, caplog):
         config = parse_config_toml(removed_chi_toml_str)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
-            warning = Warning
+            with pytest.warns(Warning) as recorded_warning:
+                config = check_chi(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
         else:
-            warning = None
-        with pytest.warns(warning) as recorded_warning:
-            config = check_chi(config, names_take)
-            if MPI.COMM_WORLD.Get_rank() == 0:
-                message = recorded_warning[0].message.args[0]
-                log = caplog.text
-                assert all([(s in message) for s in w])
-                assert all([(s in log) for s in w])
+            with warnings.catch_warnings() as recorded_warning:
+                warnings.simplefilter("error")
+                config = check_chi(config, names_take)
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    message = recorded_warning[0].message.args[0]
+                    log = caplog.text
+                    assert all([(s in message) for s in w])
+                    assert all([(s in log) for s in w])
+
         caplog.clear()
     MPI.COMM_WORLD.Barrier()
 
