@@ -28,6 +28,23 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y python3-mpi4py python3-numpy
         sudo apt-get install -y libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
+    - name: Install PLUMED and PLUMED python wrapper
+      run: |
+        mkdir -p $HOME/opt/
+        sudo apt-get install -y build-essential
+        sudo apt-get install -y openmpi-bin libopenmpi-dev git
+        git clone https://github.com/plumed/plumed2.git
+        cd plumed2
+        echo "CC=mpicc" >> $GITHUB_ENV
+        echo "CXX=mpic++" >> $GITHUB_ENV
+        ./configure --prefix=$HOME/opt
+        make -j 4
+        make install
+        make pip
+        cd python
+        python3 -m pip install .
+        cd ../../
+        PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
     - name: Install python dependencies
       run: |
         python3 -m pip install --upgrade pip
