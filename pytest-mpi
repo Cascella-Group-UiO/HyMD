@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# set -e # if a test fails, then the ci will know
-
 NPROCS=5
 VERBOSE=0
 CAPTURE=0

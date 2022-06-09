@@ -67,10 +67,10 @@ jobs:
     - name: Test with pytest
       run: |
         python3 -m pip install pytest pytest-cov pytest-mpi coverage
-        PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
+        export PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
         pytest --cov=./
         chmod +x pytest-mpi
-        ./pytest-mpi -c -ca -n 2 -ns -oo -lc
+        ./pytest-mpi -c -ca -n 2 -ns -oo -s -lc -v
     - name: Coverage report and upload
       run: |
         coverage report
