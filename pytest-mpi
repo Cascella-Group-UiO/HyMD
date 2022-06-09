@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # set -e # if a test fails, then the ci will know
-set -x
 
 NPROCS=5
 VERBOSE=0

@@ -3,6 +3,7 @@
 
 import numpy as np
 import logging
+import os
 from mpi4py import MPI
 from .logger import Logger
 
@@ -93,8 +94,12 @@ class PlumedBias:
                 "Maybe it is a problem with your PLUMED_KERNEL?"
             )
             Logger.rank0.log(logging.ERROR, err_str)
+            err_str = (
+                "PLUMED_KERNEL path: {}".format(os.environ["PLUMED_KERNEL"])
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
-                raise ImportError(err_str)
+                raise RuntimeError(err_str)
 
         self.comm = comm
 

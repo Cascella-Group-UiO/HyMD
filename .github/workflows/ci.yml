@@ -70,7 +70,7 @@ jobs:
         PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
         pytest --cov=./
         chmod +x pytest-mpi
-        ./pytest-mpi -c -ca -n 2 -ns -oo -s -lc
+        ./pytest-mpi -c -ca -n 2 -ns -oo -lc
     - name: Coverage report and upload
       run: |
         coverage report
