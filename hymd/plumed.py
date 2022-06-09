@@ -85,7 +85,17 @@ class PlumedBias:
             f"Attempting to read PLUMED input from {plumeddat}"
         )
 
-        self.plumed_obj = plumed.Plumed()
+        try:
+            self.plumed_obj = plumed.Plumed()
+        except:
+            err_str = (
+                "HyMD was not able to create a PLUMED object. "
+                "Maybe it is a problem with your PLUMED_KERNEL?"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            if comm.Get_rank() == 0:
+                raise ImportError(err_str)
+
         self.comm = comm
 
         self.plumed_obj.cmd("getApiVersion", self.plumed_version)
