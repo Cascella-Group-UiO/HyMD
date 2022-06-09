@@ -44,7 +44,7 @@ rm -fr $HOME/opt/bin/$program_name
 rm -fr $HOME/opt/include/$program_name
 rm -fr $HOME/opt/lib/lib$program_name.so*
 
-./configure --prefix=$HOME/opt --disable-dependency-tracking
+./configure --prefix=$HOME/opt --disable-libsearch --disable-static-patch --disable-static-archive --enable-asmjit
 make -j 4
 make install
 

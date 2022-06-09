@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -x
+
 NPROCS=5
 VERBOSE=0
 CAPTURE=0
