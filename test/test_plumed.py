@@ -10,7 +10,7 @@ from hymd.plumed import PlumedBias
 
 @pytest.mark.mpi()
 def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, tmp_path, caplog):
-    caplog.set_level(logging.ERROR)
+    caplog.set_level(logging.INFO)
     indices, positions, molecules, velocities, bonds, names, types = molecules_with_solvent
     box_size = np.array([10, 10, 10], dtype=np.float64)
     config = Config(n_steps=1, time_step=0.03, box_size=box_size,

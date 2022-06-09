@@ -75,7 +75,7 @@ else
   fi
 
   if [ "${ORDEROUTPUT}" -eq 1 ]; then
-    mpirun -n ${NPROCS} --output-filename outtest pytest ${PYTEST_ARGS} --only-mpi -vvv -ra -l --full-trace >/dev/null
+    mpirun -n ${NPROCS} --output-filename outtest pytest -o log_cli=true ${PYTEST_ARGS} --only-mpi -vv >/dev/null
     for ((RANK=0; RANK<${NPROCS}; RANK++)); do
       RANKFILE="outtest/1/rank.${RANK}/stdout"
       echo ""
@@ -86,8 +86,8 @@ else
     done
     rm -r outtest
   elif [ "${UNMUTE}" -eq -1 ]; then
-    mpirun -n ${NPROCS} pytest ${PYTEST_ARGS} --only-mpi -vvv -ra -l --full-trace
+    mpirun -n ${NPROCS} pytest -o log_cli=true ${PYTEST_ARGS} --only-mpi -vv
   else
-    mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh ${UNMUTE} pytest ${PYTEST_ARGS} --only-mpi -vvv -ra -l --full-trace
+    mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh ${UNMUTE} pytest -o log_cli=true ${PYTEST_ARGS} --only-mpi -vv
   fi
 fi
