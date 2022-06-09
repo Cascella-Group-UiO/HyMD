@@ -13,6 +13,7 @@ ORDEROUTPUT=0
 COVERAGE=0
 COVERAGE_APPEND=0
 HELP=0
+LOGCLI=0
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
@@ -25,6 +26,7 @@ while [[ "$#" -gt 0 ]]; do
     -c|--coverage) COVERAGE=1 ;;
     -ca|--cov-append) COVERAGE_APPEND=1 ;;
     -oo|--order-output) ORDEROUTPUT=1 ;;
+    -lc|--log-cli) LOGCLI=1 ;;
     -h|--help) HELP=1 ;;
     *) echo "Unknown parameter passed: $1"; exit 1 ;;
   esac
@@ -48,6 +50,7 @@ then
   echo "    -c  --coverage                  Pass --cov=./ to pytest."
   echo "    -ca  --cov-append               Pass --cov-append to pytest."
   echo "    -oo --order-output              Dump output from ranks in order."
+  echo "    -lc --log-cli                   Pass --log-cli=true to pytest."
   echo "    -u --unmute                     Unmute (show output from) only a specfic MPI rank."
 else
   # Note: fails if (for some reason) `utils/mute_all_ranks_except.sh` is not
@@ -70,15 +73,20 @@ else
   fi
 
   if [ "${COVERAGE}" -eq 1 ]; then
-    PYTEST_ARGS="${PYTEST_ARGS} --cov=hymd"
+    PYTEST_ARGS="${PYTEST_ARGS} --cov=./"
   fi
 
   if [ "${COVERAGE_APPEND}" -eq 1 ]; then
     PYTEST_ARGS="${PYTEST_ARGS} --cov-append"
   fi
 
+  if [ "${LOGCLI}" -eq 1 ]; then
+    PYTEST_ARGS="-o log_cli=true ${PYTEST_ARGS}"
+  fi
+
   if [ "${ORDEROUTPUT}" -eq 1 ]; then
-    mpirun -n ${NPROCS} --output-filename outtest pytest -o log_cli=true ${PYTEST_ARGS} --only-mpi -vv >/dev/null
+    mpirun -n ${NPROCS} --output-filename outtest pytest ${PYTEST_ARGS} --only-mpi >/dev/null
+    exit_code=$?
     for ((RANK=0; RANK<${NPROCS}; RANK++)); do
       RANKFILE="outtest/1/rank.${RANK}/stdout"
       echo ""
@@ -89,8 +97,12 @@ else
     done
     rm -r outtest
   elif [ "${UNMUTE}" -eq -1 ]; then
-    mpirun -n ${NPROCS} pytest -o log_cli=true ${PYTEST_ARGS} --only-mpi -vv
+    mpirun -n ${NPROCS} pytest ${PYTEST_ARGS} --only-mpi
+    exit_code=$?
   else
-    mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh ${UNMUTE} pytest -o log_cli=true ${PYTEST_ARGS} --only-mpi -vv
+    mpirun -n ${NPROCS} utils/mute_all_ranks_except.sh ${UNMUTE} pytest ${PYTEST_ARGS} --only-mpi
+    exit_code=$?
   fi
 fi
+
+exit "$exit_code"
