@@ -85,6 +85,10 @@ class PlumedBias:
             logging.INFO, 
             f"Attempting to read PLUMED input from {plumeddat}"
         )
+        Logger.rank0.log(
+            logging.INFO, 
+            "Using PLUMED_KERNEL={}".format(os.environ["PLUMED_KERNEL"])
+        )
 
         try:
             self.plumed_obj = plumed.Plumed()
@@ -92,10 +96,6 @@ class PlumedBias:
             err_str = (
                 "HyMD was not able to create a PLUMED object. "
                 "Maybe it is a problem with your PLUMED_KERNEL?"
-            )
-            Logger.rank0.log(logging.ERROR, err_str)
-            err_str = (
-                "PLUMED_KERNEL path: {}".format(os.environ["PLUMED_KERNEL"])
             )
             Logger.rank0.log(logging.ERROR, err_str)
             if comm.Get_rank() == 0:
