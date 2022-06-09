@@ -85,9 +85,16 @@ class PlumedBias:
             logging.INFO, 
             f"Attempting to read PLUMED input from {plumeddat}"
         )
+        try:
+            kernel_str = (
+                "Using PLUMED_KERNEL={}".format(os.environ["PLUMED_KERNEL"])
+            )
+        except:
+            kernel_str = "The PLUMED_KERNEL environment variable is not set."
+
         Logger.rank0.log(
             logging.INFO, 
-            "Using PLUMED_KERNEL={}".format(os.environ["PLUMED_KERNEL"])
+            kernel_str
         )
 
         try:
