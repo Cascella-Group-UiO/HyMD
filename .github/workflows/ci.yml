@@ -29,8 +29,8 @@ jobs:
         path: |
           ~/opt
           ~/.ccache
-        key: ccache-${{ runner.os }}-${{ github.sha }}
-        restore-keys: ccache-${{ runner.os }}-
+        key: ccache-v2-${{ runner.os }}-${{ github.sha }}
+        restore-keys: ccache-v2-${{ runner.os }}-
     - name: Install dependencies
       run: |
         sudo apt-get update
