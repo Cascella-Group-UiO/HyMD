@@ -1,0 +1,55 @@
+#! /bin/bash
+
+# this file was modified from the one available
+# in the plumed-nest repository:
+# https://github.com/plumed-nest/plumed-nest/
+
+set -e
+set -x
+
+version=""
+program_path=""
+program_name=plumed
+
+for opt
+do
+case "$opt" in
+  (version=*) version="${opt#version=}" ;;
+  (program_path=*) program_path="${opt#program_path=}" ;;
+  (*) echo "unknown option $opt" ; exit 1 ;;
+esac
+done
+
+current_path=$PWD
+cd $program_path
+
+if [ -n "$version" ] ; then
+  echo "installing plumed $version"
+else
+  version=$(git tag --sort=-creatordate | grep '^v2\.[0-9][0-9]*\.[0-9][0-9]*' | head -n 1 )
+  echo "installing latest stable plumed $version"
+fi
+
+git checkout $version
+
+hash=$(git rev-parse HEAD)
+
+if test -f $HOME/opt/lib/$program_name/$hash
+then
+  echo "ALREADY AVAILABLE, NO NEED TO REINSTALL"
+else
+
+rm -fr $HOME/opt/lib/$program_name
+rm -fr $HOME/opt/bin/$program_name
+rm -fr $HOME/opt/include/$program_name
+rm -fr $HOME/opt/lib/lib$program_name.so*
+
+./configure --prefix=$HOME/opt --disable-libsearch --disable-static-patch --disable-static-archive --enable-asmjit
+make -j 4
+make install
+
+touch $HOME/opt/lib/$program_name/$hash
+
+fi
+
+cd $current_path

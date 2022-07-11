@@ -24,7 +24,7 @@ def parse_args():
         help="Properties to plot",
         choices=["E", "PE", "KE", "BE", "FE", "AE", "P", "all"],
     )  # noqa: E501
-    parser.add_argument("--file", type=str, default="sim.h5", help="H5MD file")
+    parser.add_argument("--file", type=str, default="sim.H5", help="H5MD file")
     parser.add_argument(
         "--per-particle",
         default=False,
