@@ -49,6 +49,7 @@ class PlumedBias:
     plumed_obj = None
     plumed_forces = None
     positions = None
+    charges = None
     plumed_bias = np.zeros(1, np.double)
     plumed_version = np.zeros(1, dtype=np.intc)
     comm = None
@@ -153,6 +154,7 @@ class PlumedBias:
         wether the potential energy is being requested by PLUMED or not.
         """
         self.plumed_forces = forces.astype(np.double)
+        self.charges = charges.astype(np.double)
         self.positions = positions.ravel() # get C-contiguous array
 
         needs_energy = np.zeros(1, np.intc)
@@ -165,7 +167,7 @@ class PlumedBias:
         self.plumed_obj.cmd("setStep", step)
         self.plumed_obj.cmd("setForces", self.plumed_forces)
         self.plumed_obj.cmd("setPositions", self.positions)
-        self.plumed_obj.cmd("setCharges", charges)
+        self.plumed_obj.cmd("setCharges", self.charges)
         self.plumed_obj.cmd("setMasses", masses)
         self.plumed_obj.cmd("setBox", box)
         # self.plumed_obj.cmd("setVirial", plumed_virial)
