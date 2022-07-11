@@ -242,6 +242,23 @@ def main():
             bonds = optional.pop(0)
             molecules = optional.pop(0)
 
+        # rebuild args_in to point to correct arrays
+        args_in = [
+            velocities,
+            indices,
+            bond_forces,
+            angle_forces,
+            dihedral_forces,
+            reconstructed_forces,
+            field_forces,
+            names,
+            types,
+        ]
+
+        if charges_flag:
+            args_in.append(charges)
+            args_in.append(elec_forces)
+
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]  # noqa: E501
         update_field(
@@ -757,6 +774,23 @@ def main():
                 if molecules_flag:
                     bonds = optional.pop(0)
                     molecules = optional.pop(0)
+
+                # rebuild args_in to point to correct arrays
+                args_in = [
+                    velocities,
+                    indices,
+                    bond_forces,
+                    angle_forces,
+                    dihedral_forces,
+                    reconstructed_forces,
+                    field_forces,
+                    names,
+                    types,
+                ]
+
+                if charges_flag:
+                    args_in.append(charges)
+                    args_in.append(elec_forces)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
