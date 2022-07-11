@@ -726,6 +726,8 @@ def main():
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
                 dihedral_forces = np.ascontiguousarray(dihedral_forces)
+                if args.plumed:
+                    plumed_forces = np.ascontiguousarray(plumed_forces)
 
                 (positions,
                 velocities,
