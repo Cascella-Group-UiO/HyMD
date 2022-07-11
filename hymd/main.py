@@ -258,6 +258,8 @@ def main():
         if charges_flag:
             args_in.append(charges)
             args_in.append(elec_forces)
+        if args.plumed:
+            args_in.append(plumed_forces)
 
     if not args.disable_field:
         layouts = [pm.decompose(positions[types == t]) for t in range(config.n_types)]  # noqa: E501
@@ -791,6 +793,8 @@ def main():
                 if charges_flag:
                     args_in.append(charges)
                     args_in.append(elec_forces)
+                if args.plumed:
+                    args_in.append(plumed_forces)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
