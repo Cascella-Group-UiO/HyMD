@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hymd.thermostat &mdash; hymd 1.0.6-post1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html">
+            <img src="../../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.6-post1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#hamiltonian">4.3. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.force">4.4. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#logger">4.5. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.input_parser">4.6. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.field">4.7. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.file_io">4.8. File input/output</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>hymd.thermostat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hymd.thermostat</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Scales or otherwise modifies the particle velocities during simulation to</span>
+<span class="sd">simulate coupling to an external heat bath with temperature T₀.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">.logger</span> <span class="kn">import</span> <span class="n">Logger</span>
+<span class="kn">from</span> <span class="nn">.input_parser</span> <span class="kn">import</span> <span class="n">Config</span>
+
+
+<span class="k">def</span> <span class="nf">cancel_com_momentum</span><span class="p">(</span><span class="n">velocities</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">):</span>
+    <span class="n">com_velocity</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+    <span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">-</span> <span class="n">com_velocity</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">n_particles</span>
+    <span class="k">return</span> <span class="n">velocities</span>
+
+
+<span class="k">def</span> <span class="nf">generate_initial_velocities</span><span class="p">(</span><span class="n">velocities</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">):</span>
+    <span class="n">kT_start</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">start_temperature</span>
+    <span class="n">n_particles_</span> <span class="o">=</span> <span class="n">velocities</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
+        <span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">kT_start</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_particles_</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">com_velocity</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+    <span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">-</span> <span class="n">com_velocity</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">n_particles</span>
+    <span class="n">kinetic_energy</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span>
+        <span class="mf">0.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocities</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span>
+    <span class="p">)</span>
+    <span class="n">start_kinetic_energy_target</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mf">1.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">n_particles</span>
+        <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">start_temperature</span>
+    <span class="p">)</span>
+    <span class="n">factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">n_particles</span> <span class="o">*</span> <span class="n">kT_start</span> <span class="o">/</span> <span class="n">kinetic_energy</span><span class="p">)</span>
+    <span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">velocities</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span>
+    <span class="n">kinetic_energy</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span>
+        <span class="mf">0.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocities</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span>
+    <span class="p">)</span>
+    <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Initialized </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="si">}</span><span class="s2"> velocities, target kinetic &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;energy: </span><span class="si">{</span><span class="n">start_kinetic_energy_target</span><span class="si">}</span><span class="s2">, actual kinetic energy &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;generated: </span><span class="si">{</span><span class="n">kinetic_energy</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">velocities</span>
+
+
+<div class="viewcode-block" id="_random_gaussian"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.thermostat._random_gaussian">[docs]</a><span class="k">def</span> <span class="nf">_random_gaussian</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Draw a single random number from the standard normal distribution</span>
+<span class="sd">    Generate a number from the Gaussian distribution centered at zero with unit</span>
+<span class="sd">    standard deviation, :math:`N(0, 1)`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        A random number drawn from :math:`N(0, 1)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="_random_chi_squared"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.thermostat._random_chi_squared">[docs]</a><span class="k">def</span> <span class="nf">_random_chi_squared</span><span class="p">(</span><span class="n">M</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Draw the sum of :code:`M` squared normally distributed values</span>
+
+<span class="sd">    The value is generated by the Gamma distribution, in lieu of generating</span>
+<span class="sd">    :code:`M` Gaussian distributed numbers and summing their squares.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    M : int</span>
+<span class="sd">        Number of standard normally distributed numbers in the sum.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        The sum of :code:`M` squared normally distributed values centered at</span>
+<span class="sd">        zero with unit standard deviation.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The sum of the squares of k independent standard normal random variables is</span>
+<span class="sd">    distributed according to a :math:`\\chi^2` distribution.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\chi^2_1 + \\chi_2^2 + \\chi_3^2 + \\dots + \\chi_M^2</span>
+<span class="sd">        \\sim</span>
+<span class="sd">        \\sigma^2\\chi^2(k)</span>
+
+<span class="sd">    This is a special case of the :math:`\\Gamma` distribution,</span>
+<span class="sd">    :math:`\\Gamma(k/2, 2)`, and may be generated by</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\chi^2(k) \\sim 2 \\Gamma(k/2, 2)</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Knuth, D.E. 1981, Seminumerical Algorithms, 2nd ed., vol. 2 of The Art of</span>
+<span class="sd">    Computer Programming (Reading, MA: Addison-Wesley), pp. 120ff.</span>
+<span class="sd">    J. H. Ahrens and U. Dieter, Computing 12 (1974), 223-246.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">chisquare</span><span class="p">(</span><span class="n">M</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="csvr_thermostat"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.thermostat.csvr_thermostat">[docs]</a><span class="k">def</span> <span class="nf">csvr_thermostat</span><span class="p">(</span>
+    <span class="n">velocity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">,</span>
+    <span class="n">comm</span><span class="p">:</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Intracomm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+    <span class="n">random_gaussian</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">_random_gaussian</span><span class="p">,</span>
+    <span class="n">random_chi_squared</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">_random_chi_squared</span><span class="p">,</span>
+    <span class="n">remove_center_of_mass_momentum</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Canonical sampling through velocity rescaling thermostat</span>
+
+<span class="sd">    Implements the CSVR thermostat. Rescales the system kinetic energy by a</span>
+<span class="sd">    stochastically chosen factor to keep the temperature constant. Requires</span>
+<span class="sd">    communcation of the kinetic energies calculated locally for each MPI rank.</span>
+<span class="sd">    The random numbers sampled through :code:`random_gaussian` and</span>
+<span class="sd">    :code:`random_chi_squared` are broadcast from the root rank to the other</span>
+<span class="sd">    ranks to ensure the scaling is performed with the same stochasticity for</span>
+<span class="sd">    all particles in the full system.</span>
+
+<span class="sd">    The velocities are cleaned of center of mass momentum before the thermostat</span>
+<span class="sd">    is applied, and the center of mass momentum is subsequently reapplied. This</span>
+<span class="sd">    is performed for each thermostat coupling group, i.e. the center of mass</span>
+<span class="sd">    momenta of each *group* is separately removed and reapplied after</span>
+<span class="sd">    thermostatting.</span>
+
+<span class="sd">    The implementation here is based on the derivation presented in the 2008</span>
+<span class="sd">    Comput. Phys. Commun paper, not in the original 2007 J. Chem. Phys. paper.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    velocity : (N, D) numpy.ndarray</span>
+<span class="sd">        Array of velocities of N particles in D dimensions.</span>
+<span class="sd">    names : (N,) numpy.ndarray</span>
+<span class="sd">        Array of particle names.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration dataclass containing simulation metadata and parameters.</span>
+<span class="sd">    comm : MPI.Intracomm, optional</span>
+<span class="sd">        MPI communicator to use for rank commuication. Defaults to</span>
+<span class="sd">        MPI.COMM_WORLD.</span>
+<span class="sd">    random_gaussian : callable, optional</span>
+<span class="sd">        Function for generating standard normally distributed numbers.</span>
+<span class="sd">    random_chi_squared : callable, optional</span>
+<span class="sd">        Function for generating :math:`\\chi^2`-distributed numbers</span>
+<span class="sd">    remove_center_of_mass_momentum : bool, optional</span>
+<span class="sd">        If True, the center of mass of each coupling group is removed before</span>
+<span class="sd">        the thermostat is applied. The center of mass momenta are added back</span>
+<span class="sd">        after the kinetic energy rescaling is complete.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    _random_gaussian :</span>
+<span class="sd">        Used to sample Gaussian-distributed numbers.</span>
+<span class="sd">    _random_chi_squared :</span>
+<span class="sd">        Used to sample :math:`\\chi^2`-distributed numbers.</span>
+<span class="sd">    hymd.input_parser.Config :</span>
+<span class="sd">        Configuration dataclass handler.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    G. Bussi, D. Donadio, and M. Parrinello, J. Chem. Phys. 126, 014101 (2007).</span>
+<span class="sd">    G. Bussi and M. Parrinello, Comput. Phys. Commun. 179, 26-29, (2008).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">thermostat_coupling_groups</span><span class="p">):</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">thermostat_coupling_groups</span> <span class="o">=</span> <span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">unique_names</span><span class="o">.</span><span class="n">copy</span><span class="p">()]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">thermostat_coupling_groups</span><span class="p">):</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">names</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">group</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">group_n_particles</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+
+        <span class="c1"># Clean velocities of center of mass momentum</span>
+        <span class="k">if</span> <span class="n">remove_center_of_mass_momentum</span> <span class="ow">and</span> <span class="n">group_n_particles</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">com_velocity</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocity</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">velocity_clean</span> <span class="o">=</span> <span class="n">velocity</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">com_velocity</span> <span class="o">/</span> <span class="n">group_n_particles</span>
+            <span class="n">K</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span>
+                               <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocity_clean</span><span class="p">[</span><span class="o">...</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">K</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocity</span><span class="p">[</span><span class="o">...</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">K_target</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">1.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">group_n_particles</span>
+            <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">target_temperature</span>
+        <span class="p">)</span>
+        <span class="n">N_f</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">group_n_particles</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">time_step</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">respa_inner</span><span class="p">)</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
+
+        <span class="c1"># Draw random numbers and broadcast them so they are identical across</span>
+        <span class="c1"># MPI ranks</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">SNf</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="n">random_gaussian</span><span class="p">()</span>
+            <span class="n">SNf</span> <span class="o">=</span> <span class="n">random_chi_squared</span><span class="p">(</span><span class="n">N_f</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">SNf</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">SNf</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">alpha2</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">c</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">SNf</span> <span class="o">+</span> <span class="n">R</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">K_target</span> <span class="o">/</span> <span class="p">(</span><span class="n">N_f</span> <span class="o">*</span> <span class="n">K</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">R</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">*</span> <span class="n">K_target</span> <span class="o">/</span> <span class="p">(</span><span class="n">N_f</span> <span class="o">*</span> <span class="n">K</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">dK</span> <span class="o">=</span> <span class="n">K</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">alpha2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">remove_center_of_mass_momentum</span> <span class="ow">and</span> <span class="n">group_n_particles</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Assign velocities and reapply the previously removed center</span>
+            <span class="c1"># of mass momentum removed</span>
+            <span class="n">velocity_clean</span> <span class="o">*=</span> <span class="n">alpha</span>
+            <span class="n">velocity</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">velocity_clean</span> <span class="o">+</span> <span class="n">com_velocity</span> <span class="o">/</span> <span class="n">group_n_particles</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">velocity</span> <span class="o">*=</span> <span class="n">alpha</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">thermostat_work</span> <span class="o">+=</span> <span class="n">dK</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2. Usage overview for HylleraasMD &mdash; hymd 1.0.6-post1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3. Configuration file" href="config_file.html" />
+    <link rel="prev" title="1. Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html">
+            <img src="../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.6-post1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#hamiltonian">4.3. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.force">4.4. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#logger">4.5. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.input_parser">4.6. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.field">4.7. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.file_io">4.8. File input/output</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><span class="section-number">2. </span>Usage overview for HylleraasMD</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/doc_pages/overview.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage-overview-for-hylleraasmd">
+<span id="overview-label"></span><h1><span class="section-number">2. </span>Usage overview for HylleraasMD<a class="headerlink" href="#usage-overview-for-hylleraasmd" title="Permalink to this headline"></a></h1>
+<p>HyMD is a Python package that allows large scale parallel hybrid particle-field
+molecular dynamics (hPF-MD) simulations. The main simulation driver takes as
+input a <a class="reference external" href="https://github.com/toml-lang/toml">toml</a> format configuration file, along with a topology and structure
+file specifying the input system in HDF5 format.</p>
+<p><strong>Configuration file</strong></p>
+<p>The configuration file specifies the type and length of simulation to run. A
+simple example of a configuration file which performs a short simulation of a
+system contained in a <code class="code docutils literal notranslate"><span class="pre">[5,</span> <span class="pre">5,</span> <span class="pre">5]</span></code> nm simulation box at 300 K may look like
+the following:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text"><strong>config_simple_1.toml</strong></span><a class="headerlink" href="#id1" title="Permalink to this code"></a></div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[simulation]</span><span class="w"></span>
+<span class="n">integrator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;velocity-verlet&quot;</span><span class="w"></span>
+<span class="n">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">100</span><span class="w">                      </span><span class="c1"># total simulation steps</span><span class="w"></span>
+<span class="n">n_print</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w">                       </span><span class="c1"># output trajectory data every n_print steps</span><span class="w"></span>
+<span class="n">time_step</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01</span><span class="w">                   </span><span class="c1"># time step in ps</span><span class="w"></span>
+<span class="n">box_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mf">5.0</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">]</span><span class="w">         </span><span class="c1"># simulation box size in nm</span><span class="w"></span>
+<span class="n">target_temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">300</span><span class="w">           </span><span class="c1"># thermostat temperature in Kelvin</span><span class="w"></span>
+<span class="n">tau</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.1</span><span class="w">                          </span><span class="c1"># thermostat coupling strength in ps</span><span class="w"></span>
+<span class="n">hamiltonian</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;SquaredPhi&quot;</span><span class="w">         </span><span class="c1"># interaction energy functional</span><span class="w"></span>
+<span class="n">kappa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.05</span><span class="w">                       </span><span class="c1"># compressibility in mol/kJ</span><span class="w"></span>
+
+<span class="k">[field]</span><span class="w"></span>
+<span class="n">mesh_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">]</span><span class="w">           </span><span class="c1"># FFT grid size</span><span class="w"></span>
+<span class="n">sigma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="w">                        </span><span class="c1"># filtering length scale in nm</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<p>Note that for the version 1.0 release of HyMD, the <code class="code docutils literal notranslate"><span class="pre">[particles]</span></code>,
+<code class="code docutils literal notranslate"><span class="pre">[simulation]</span></code>, and <code class="code docutils literal notranslate"><span class="pre">[field]</span></code> groups are optional specifiers for
+structuring the configuration file.</p>
+<p>For a full specification of every recognised configuration keyword in HyMD,
+please refer to <a class="reference internal" href="config_file.html#config-label"><span class="std std-ref">Configuration file</span></a>.</p>
+<p><strong>Topology and structure file</strong></p>
+<p>The topology and structure file specifies the positions, momenta, types, and
+molecular structure of the particles in the system. In order to allow highly
+parallel file read during program initialisation, the structure file format is a
+simple flat HDF5 structure. An example structure file for a system containing
+<code class="code docutils literal notranslate"><span class="pre">N</span></code> particles may look like the following:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text"><strong>example_structure.HDF5</strong></span><a class="headerlink" href="#id2" title="Permalink to this code"></a></div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>group   /
+   <span class="c1"># root group</span>
+
+dataset /coordinates
+   <span class="c1"># float32, shape (T, N, D,)</span>
+   <span class="c1"># Time steps of N rows of D dimensional coordinate data</span>
+   <span class="c1"># The last frame is used by default if multiple time steps are provided</span>
+   <span class="c1"># T is the number of time steps, D is the spatial dimension</span>
+
+dataset /velocities
+   <span class="c1"># float32, shape (T, N, D,) OPTIONAL</span>
+   <span class="c1"># Time steps of N rows of D dimensional velocity data</span>
+   <span class="c1"># The last frame is used by default if multiple time steps are provided</span>
+   <span class="c1"># T is the number of time steps, D is the spatial dimension</span>
+
+dataset /bonds
+   <span class="c1"># int32,   shape (N, B,)    OPTIONAL</span>
+   <span class="c1"># Each row i contains indices of the particles bonds from/to i</span>
+   <span class="c1"># B denotes the maximum bonds per particle</span>
+
+dataset /indices
+   <span class="c1"># int32,   shape (N,)</span>
+   <span class="c1"># Index of each particle, 0--(N-1)</span>
+
+dataset /molecules
+   <span class="c1"># int32,   shape (N,)</span>
+   <span class="c1"># Index of molecule each particle belongs to</span>
+   <span class="c1"># Used to construct bond network locally on MPI ranks</span>
+
+dataset /names
+   <span class="c1"># str10,   shape (N,)</span>
+   <span class="c1"># Fixed size string array containing particle type names</span>
+
+dataset /types
+   <span class="c1"># int32,   shape (N,)       OPTIONAL</span>
+   <span class="c1"># Mapping of particle names to type indices</span>
+</pre></div>
+</div>
+</div>
+<p>For a full specification of the topology and structure input file, see
+<a class="reference internal" href="topology_input.html#topology-label"><span class="std std-ref">Topology and structure file</span></a>.</p>
+<p><strong>Command line arguments</strong></p>
+<p>A select few settings for HyMD are specified on the command line, most notably
+output files, output directories, output specifications, and random seeds. In
+addition, the configuration and structure files are provided as the first and
+second required positional arguments. An example for running the simulation
+specified by the <code class="code docutils literal notranslate"><span class="pre">config_simple_1.toml</span></code> and <code class="code docutils literal notranslate"><span class="pre">example_structure.HDF5</span></code>
+files may look like the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="si">${</span><span class="nv">MPI_NUM_RANKS</span><span class="si">}</span> python3 -m hymd         <span class="se">\ </span> <span class="c1"># HyMD executable</span>
+                           config_simple_1.toml    <span class="se">\ </span> <span class="c1"># configuration file</span>
+                           example_structure.HDF5  <span class="se">\ </span> <span class="c1"># structure file</span>
+                           --logfile<span class="o">=</span>log_out.txt   <span class="se">\ </span> <span class="c1"># set logfile path</span>
+                           --seed <span class="m">123456</span>           <span class="se">\ </span> <span class="c1"># set random seed</span>
+                           --verbose <span class="m">2</span>             <span class="se">\ </span> <span class="c1"># set logging verbosity</span>
+                           --velocity-output          <span class="c1"># enable velocity in trajectory output</span>
+</pre></div>
+</div>
+<p>For a full specification of all command line arguments, see
+<a class="reference internal" href="command_line.html#commandline-label"><span class="std std-ref">Command line arguments</span></a>.</p>
+<p><strong>More examples</strong></p>
+<p>For more thorough rundown and concrete usage examples, see
+<a class="reference internal" href="examples.html#examples-label"><span class="std std-ref">Examples</span></a>.</p>
+<section id="running-parallel-simulations">
+<h2><span class="section-number">2.1. </span>Running parallel simulations<a class="headerlink" href="#running-parallel-simulations" title="Permalink to this headline"></a></h2>
+<p>Executing the HyMD code in parallel is fundamentally no different from running
+it in serial, with the <strong>only</strong> difference being how the python3 interpreter is
+invoked. Prepending <code class="code docutils literal notranslate"><span class="pre">mpirun</span> <span class="pre">-n</span> <span class="pre">${NPROCS}</span></code> to the usual
+<code class="code docutils literal notranslate"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">hymd</span></code> runs the simulation with <code class="code docutils literal notranslate"><span class="pre">${NPROCS}</span></code> MPI ranks.</p>
+<p>Inputting</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun -n <span class="m">6</span> python3 -m ideal_gas.toml ideal_gas.HDF5 --disable-field
+</pre></div>
+</div>
+<p>sets up an example simulation of the <a class="reference external" href="https://github.com/Cascella-Group-UiO/HyMD-tutorial/tree/main/ideal_gas">HyMD-tutorial/ideal_gas</a> system. For
+more details about this system in particular, or other example simulations, see
+the <a class="reference external" href="https://github.com/Cascella-Group-UiO/HyMD-tutorial">HyMD-tutorial</a> repository.</p>
+</section>
+<section id="running-tests">
+<h2><span class="section-number">2.2. </span>Running tests<a class="headerlink" href="#running-tests" title="Permalink to this headline"></a></h2>
+<p>Run serial code tests by</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/Cascella-Group-UiO/HyMD.git hymd
+<span class="nb">cd</span> hymd/
+python3 -m pip install pytest pytest-mpi
+python3 -m pytest
+</pre></div>
+</div>
+<p>There is a small convenience script in <code class="code docutils literal notranslate"><span class="pre">hymd/</span></code> for running the MPI-enabled
+tests,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>chmod +x pytest-mpi
+./pytest-mpi --nprocs <span class="m">5</span> --order-output --no-summary --capture<span class="o">=</span>no
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="1. Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="config_file.html" class="btn btn-neutral float-right" title="3. Configuration file" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

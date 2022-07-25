@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hymd.force &mdash; hymd 1.0.6-post1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html">
+            <img src="../../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.6-post1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#hamiltonian">4.3. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.force">4.4. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#logger">4.5. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.input_parser">4.6. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.field">4.7. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.file_io">4.8. File input/output</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>hymd.force</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hymd.force</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Calculates intramolecular forces between bonded particles in molecules</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="c1"># Imported here so we can call from force import compute_bond_forces__fortran</span>
+<span class="kn">from</span> <span class="nn">force_kernels</span> <span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">cbf</span> <span class="k">as</span> <span class="n">compute_bond_forces__fortran</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">force_kernels</span> <span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">caf</span> <span class="k">as</span> <span class="n">compute_angle_forces__fortran</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">force_kernels</span> <span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">cdf</span> <span class="k">as</span> <span class="n">compute_dihedral_forces__fortran</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">force_kernels</span> <span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">cbf_d</span> <span class="k">as</span> <span class="n">compute_bond_forces__fortran__double</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">force_kernels</span> <span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">caf_d</span> <span class="k">as</span> <span class="n">compute_angle_forces__fortran__double</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">force_kernels</span> <span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">cdf_d</span> <span class="k">as</span> <span class="n">compute_dihedral_forces__fortran__double</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="Bond"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.Bond">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Bond</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Dataclass representing a single two-particle bond type</span>
+
+<span class="sd">    A `bond type` is a bond strength and equilibrium distance associated with</span>
+<span class="sd">    any bond between particles of specific types :code:`A` and :code:`B`</span>
+<span class="sd">    (where :code:`A` and :code:`B` may be the same or different). Harmonic</span>
+<span class="sd">    two-particle bonds in HyMD take the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        V_2(\\mathbf{r}_1, \\mathbf{r}_2) =</span>
+<span class="sd">            \\frac{1}{2}k</span>
+<span class="sd">            \\left(</span>
+<span class="sd">                \\vert \\mathbf{r}_1 - \\mathbf{r}_2 \\vert - r_0</span>
+<span class="sd">            \\right)^2,</span>
+
+<span class="sd">    where :math:`k` is the bond strength (spring constant) and :math:`r_0` is</span>
+<span class="sd">    the equilibrium bond length (at which the energy is zero).</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    atom_1 : str</span>
+<span class="sd">        Type name of particle 1.</span>
+<span class="sd">    atom_2 : str</span>
+<span class="sd">        Type name of particle 2.</span>
+<span class="sd">    equilibrium : float</span>
+<span class="sd">        Equilibrium distance at which the energy associated with the bond</span>
+<span class="sd">        vanishes and the resulting force is zero.</span>
+<span class="sd">    strength : float</span>
+<span class="sd">        Harmonic bond strength coefficient (spring constant).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">atom_1</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">atom_2</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">equilibrium</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">strength</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+<div class="viewcode-block" id="Angle"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.Angle">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Angle</span><span class="p">(</span><span class="n">Bond</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dataclass representing a single three-particle bond type</span>
+
+<span class="sd">    A `bond type` is a bond strength and equilibrium angle associated with</span>
+<span class="sd">    any three-particle bond between particles of specific types :code:`A`,</span>
+<span class="sd">    :code:`B`, and :code:`C` (where :code:`A`, :code:`B`, and :code:`C` may be</span>
+<span class="sd">    different or the same). Harmonic angular three-particle bonds in HyMD take</span>
+<span class="sd">    the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        V_3(\\mathbf{r}_1, \\mathbf{r}_2, \\mathbf{r}_3) =</span>
+<span class="sd">            \\frac{1}{2}k</span>
+<span class="sd">            \\left(</span>
+<span class="sd">                \\cos^{-1}</span>
+<span class="sd">                \\left[</span>
+<span class="sd">                    \\frac{</span>
+<span class="sd">                        (\\mathbf{r}_1-\\mathbf{r}_2)</span>
+<span class="sd">                        \\cdot</span>
+<span class="sd">                        (\\mathbf{r}_3-\\mathbf{r}_2)</span>
+<span class="sd">                    }</span>
+<span class="sd">                    {</span>
+<span class="sd">                        \\vert\\mathbf{r}_1-\\mathbf{r}_2\\vert</span>
+<span class="sd">                        \\vert\\mathbf{r}_3-\\mathbf{r}_2\\vert</span>
+<span class="sd">                    }</span>
+<span class="sd">                \\right] - \\theta_0</span>
+<span class="sd">            \\right)^2</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    atom_1 : str</span>
+<span class="sd">        Type name of particle 1.</span>
+<span class="sd">    atom_2 : str</span>
+<span class="sd">        Type name of particle 2.</span>
+<span class="sd">    atom_3 : str</span>
+<span class="sd">        Type name of particle 3.</span>
+<span class="sd">    equilibrium : float</span>
+<span class="sd">        Equilibrium angle at which the energy associated with the</span>
+<span class="sd">        three-particle angular bond vanishes and the resulting force is zero.</span>
+<span class="sd">    strength : float</span>
+<span class="sd">        Harmonic bond strength coefficient.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    Bond :</span>
+<span class="sd">        Two-particle bond type dataclass</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">atom_3</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+<div class="viewcode-block" id="Dihedral"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.Dihedral">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Dihedral</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Dataclass representing a single four-particle bond type</span>
+
+<span class="sd">    A `bond type` is a bond strength and equilibrium angle associated with</span>
+<span class="sd">    any four-particle torsional bond between particles of specific types</span>
+<span class="sd">    :code:`A`, :code:`B`, :code:`C`, and :code:`D` (where :code:`A`, :code:`B`,</span>
+<span class="sd">    :code:`C`, and :code:`D` may be different or the same). Dihedral</span>
+<span class="sd">    four-particle bonds in HyMD take different forms depending on the</span>
+<span class="sd">    :code:`dih_type` parameter.</span>
+
+<span class="sd">    In the following, let :math:`\\phi` denote the angle between the planes</span>
+<span class="sd">    spanned by the relative positions of atoms :code:`A`-:code:`B`-:code:`C`</span>
+<span class="sd">    and :code:`B`-:code:`C`-:code:`D`. If :code:`dih_type = 0`, then</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        V_4(\\phi) = \\sum_n c_n</span>
+<span class="sd">            \\left(</span>
+<span class="sd">                1 + \\cos\\left[</span>
+<span class="sd">                    n\\phi - d_n</span>
+<span class="sd">                \\right]</span>
+<span class="sd">            \\right),</span>
+
+<span class="sd">    where :math:`c_n` are energy coefficients and :math:`d_n` are propensity</span>
+<span class="sd">    phases. By default, the cosine sum is truncated at five terms. If</span>
+<span class="sd">    :code:`coeffs` provides only a single float, this is used as the coiling</span>
+<span class="sd">    propensity parameter :math:`\\lambda`. In this case, :math:`c_n` and</span>
+<span class="sd">    :math:`d_n` are automatically set to values which promote alpha helical</span>
+<span class="sd">    (:math:`\\lambda=-1`), beta sheet (:math:`\\lambda=1`), or a mixed</span>
+<span class="sd">    (:math:`1&gt;\\lambda&gt;-1`) structure (using values provided by Bore et al.</span>
+<span class="sd">    (2018)). In this case, the full potential takes the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        V_4(\\phi;\\lambda) =</span>
+<span class="sd">            \\frac{1}{2}(1-\\lambda) V_{\\text{prop},\\alpha}(\\phi)</span>
+<span class="sd">            +</span>
+<span class="sd">            \\frac{1}{2}(1+\\lambda) V_{\\text{prop},\\beta}(\\phi)</span>
+<span class="sd">            +</span>
+<span class="sd">            (1-\\vert\\lambda\\vert) V_{\\text{prop}, \\text{coil}}(\\phi),</span>
+
+<span class="sd">    with each of the :math:`V_{\\mathrm{prop}, X}` being fixed cosine series</span>
+<span class="sd">    potentials with pre-set :math:`c_n` -s and :math:`d_n` -s.</span>
+
+<span class="sd">    If :code:`dih_type = 1`, then a combined bending torsional (CBT) potential</span>
+<span class="sd">    is employed,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        V_4(\\phi,\\gamma;\\lambda) =</span>
+<span class="sd">            V_4(\\phi;\\lambda)</span>
+<span class="sd">            +</span>
+<span class="sd">            \\frac{1}{2}K(\\phi)(\\gamma - \\gamma_0)^2,</span>
+
+<span class="sd">    where :math:`V_4(\\phi;\\lambda)` specifies the potential as given by the</span>
+<span class="sd">    coiling propensity parameter above, :math:`K(\\phi)` is a separate cosine</span>
+<span class="sd">    series potential acting as the angular three-particle bond strength, and</span>
+<span class="sd">    :math:`\\gamma_0` is the three-particle bond equilibrium angle. In this</span>
+<span class="sd">    case, the :code:`coeffs` parameter must specify *both* a :math:`\\lambda`</span>
+<span class="sd">    value, in additon to the energy and phases dictating the :math:`K(\\phi)`</span>
+<span class="sd">    potential.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    atom_1 : str</span>
+<span class="sd">        Type name of particle 1.</span>
+<span class="sd">    atom_2 : str</span>
+<span class="sd">        Type name of particle 2.</span>
+<span class="sd">    atom_3 : str</span>
+<span class="sd">        Type name of particle 3.</span>
+<span class="sd">    atom_4 : str</span>
+<span class="sd">        Type name of particle 4.</span>
+<span class="sd">    coeffs : list[list[float]] or list[float] or numpy.ndarray</span>
+<span class="sd">        Dihedral coefficients defining the series expansion of the dihedral</span>
+<span class="sd">        energy.</span>
+<span class="sd">    dih_type : int</span>
+<span class="sd">        Specifies the type of dihedral used; If :code:`0`, then :code:`coeffs`</span>
+<span class="sd">        must contain **either** two lists of five energy coefficients</span>
+<span class="sd">        :math:`c_n` and five propensity phases :math:`d_n` **or** a single</span>
+<span class="sd">        floating point number defining the :math:`\\lambda` coiling propensity</span>
+<span class="sd">        parameter. If :code:`1`, the combined bending-torsional potential is</span>
+<span class="sd">        used, and :code:`coeffs` must specify :math:`\\lambda` *and* two lists</span>
+<span class="sd">        containing energy coefficients and propensity phases for the</span>
+<span class="sd">        :math:`V_\\text{prop}` propensity potential, defined in terms of cosine</span>
+<span class="sd">        series.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Bore et al. J. Chem. Theory Comput., 14(2): 1120–1130, 2018.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">atom_1</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">atom_2</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">atom_3</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">atom_4</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">dih_type</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+<div class="viewcode-block" id="Chi"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.Chi">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Chi</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Dataclass representing a single :math:`\\chi` mixing interaction type</span>
+
+<span class="sd">    An `interaction mixing energy type` is a mixing energy associated with</span>
+<span class="sd">    density overlap between species of types :code:`A` and :code:`B`</span>
+<span class="sd">    (specified as inputs :code:`atom_1` and :code:`atom_2`). A positive mixing</span>
+<span class="sd">    energy promotes phase separation, a negative mixing energy promotes mixing.</span>
+<span class="sd">    The interaction energy density (provided the :code:`DefaultWithChi`</span>
+<span class="sd">    Hamiltonian is used) takes the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        w[\\tilde\\phi] = \\frac{1}{2\\kappa}</span>
+<span class="sd">            \\sum_{k,l}\\chi_{k,l} \\tilde\\phi_k\\tilde\\phi_l,</span>
+
+<span class="sd">    where :math:`\\chi_{k,l}` denotes the mixing energy between species</span>
+<span class="sd">    :math:`k` and :math:`l`, with :math:`\\kappa` being the incompressibility.</span>
+<span class="sd">    The value of the interaction mixing energy parameter may be extracted from</span>
+<span class="sd">    `Flory-Huggins theory`_.</span>
+
+<span class="sd">    .. _`Flory-Huggins theory`:</span>
+<span class="sd">        https://en.wikipedia.org/wiki/Flory%E2%80%93Huggins_solution_theory</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    atom_1 : str</span>
+<span class="sd">        Type name of particle 1.</span>
+<span class="sd">    atom_2 : str</span>
+<span class="sd">        Type name of particle 2.</span>
+<span class="sd">    interaction_energy : float</span>
+<span class="sd">        Interaction mixing energy.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    hymd.hamiltonian.DefaultWithChi :</span>
+<span class="sd">        Interaction energy functional using :math:`\\chi`-interactions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">atom_1</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">atom_2</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">interaction_energy</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+<div class="viewcode-block" id="find_all_paths"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.find_all_paths">[docs]</a><span class="k">def</span> <span class="nf">find_all_paths</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper function that recursively finds all paths of given lenght &#39;n + 1&#39; inside a network &#39;G&#39;.</span>
+<span class="sd">    Adapted from https://stackoverflow.com/a/28103735.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[[</span><span class="n">u</span><span class="p">]]</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">G</span><span class="o">.</span><span class="n">neighbors</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">find_all_paths</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">neighbor</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">u</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">u</span><span class="p">]</span> <span class="o">+</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">paths</span></div>
+
+
+<div class="viewcode-block" id="prepare_bonds_old"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.prepare_bonds_old">[docs]</a><span class="k">def</span> <span class="nf">prepare_bonds_old</span><span class="p">(</span><span class="n">molecules</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">bonds</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find bonded interactions from connectivity and bond types information</span>
+
+<span class="sd">    .. deprecated:: 1.0.0</span>
+<span class="sd">        :code:`prepare_bonds_old` was replaced by :code:`prepare_bonds` for</span>
+<span class="sd">        use with compiled Fortran kernels prior to 1.0.0 release.</span>
+
+<span class="sd">    Prepares the necessary equilibrium and bond strength information needed by</span>
+<span class="sd">    the intramolecular interaction functions. This is performed locally on each</span>
+<span class="sd">    MPI rank, as the domain decomposition ensures that for all molecules *all*</span>
+<span class="sd">    consituent particles are always contained on *the same* MPI rankself.</span>
+
+<span class="sd">    This function traverses the bond connectivity information provided in the</span>
+<span class="sd">    structure/topology input file and indentifies any two-, three-, or</span>
+<span class="sd">    four-particle potential bonds. For each connected chain of two, three, or</span>
+<span class="sd">    four particles, a matching to bond types is attempted. If the corresponding</span>
+<span class="sd">    names match, a bond object is initialized.</span>
+
+<span class="sd">    In order to investigate the connectivity, a graph is created using</span>
+<span class="sd">    networkx functionality.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    molecules : (N,) numpy.ndarray</span>
+<span class="sd">        Array of integer molecule affiliation for each of :code:`N` particles.</span>
+<span class="sd">        Global (across all MPI ranks) or local (local indices on this MPI rank</span>
+<span class="sd">        only) may be used, both, without affecting the result.</span>
+<span class="sd">    names : (N,) numpy.ndarray</span>
+<span class="sd">        Array of type names for each of :code:`N` particles.</span>
+<span class="sd">    bonds : (N,M) numpy.ndarray</span>
+<span class="sd">        Array of :code:`M` bonds originating from each of :code:`N` particles.</span>
+<span class="sd">    indices : (N,) numpy.ndarray</span>
+<span class="sd">        Array of integer indices for each of :code:`N` particles. Global</span>
+<span class="sd">        (across all MPI ranks) or local (local indices on this MPI rank only)</span>
+<span class="sd">        may be used, both, without affecting the result.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bonds_2 : list</span>
+<span class="sd">        List of lists containing *local* particle indices, equilibrium</span>
+<span class="sd">        distance, and bond strength coefficient for each reconstructed</span>
+<span class="sd">        two-particle bond.</span>
+<span class="sd">    bonds_3 :</span>
+<span class="sd">        List of lists containing *local* particle indices, equilibrium angle,</span>
+<span class="sd">        and bond strength coefficient for each reconstructed three-particle</span>
+<span class="sd">        bond.</span>
+<span class="sd">    bonds_4 :</span>
+<span class="sd">        List of lists containing *local* particle indices, dihedral type index,</span>
+<span class="sd">        and dihedral coefficients for each reconstructed four-particle</span>
+<span class="sd">        torsional bond.</span>
+<span class="sd">    bb_index : list</span>
+<span class="sd">        List indicating the dihedral type of each four-particle bond in</span>
+<span class="sd">        :code:`bonds_4`.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    Bond :</span>
+<span class="sd">        Two-particle bond type dataclass.</span>
+<span class="sd">    Angle :</span>
+<span class="sd">        Three-particle angular bond type dataclass.</span>
+<span class="sd">    Dihedral :</span>
+<span class="sd">        Four-particle torsional bond type dataclass.</span>
+<span class="sd">    hymd.input_parser.Config</span>
+<span class="sd">        Configuration dataclass handler.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bonds_2</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">bonds_3</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">bonds_4</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">bb_index</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">different_molecules</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">molecules</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">different_molecules</span><span class="p">:</span>
+        <span class="n">bb_dihedral</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">bond_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">local_index</span><span class="p">,</span> <span class="n">global_index</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">indices</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">molecules</span><span class="p">[</span><span class="n">local_index</span><span class="p">]</span> <span class="o">!=</span> <span class="n">mol</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">bond_graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span>
+                <span class="n">global_index</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">names</span><span class="p">[</span><span class="n">local_index</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;UTF-8&quot;</span><span class="p">),</span>
+                <span class="n">local_index</span><span class="o">=</span><span class="n">local_index</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">bond</span> <span class="ow">in</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bonds</span><span class="p">[</span><span class="n">local_index</span><span class="p">]</span> <span class="k">if</span> <span class="n">b</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">bond_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">global_index</span><span class="p">,</span> <span class="n">bond</span><span class="p">)</span>
+
+        <span class="n">connectivity</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">all_pairs_shortest_path</span><span class="p">(</span><span class="n">bond_graph</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">connectivity</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">connected</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">connected</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="n">name_i</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                    <span class="n">name_j</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+
+                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">bonds</span><span class="p">:</span>
+                        <span class="n">match_forward</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">name_i</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">atom_1</span> <span class="ow">and</span> <span class="n">name_j</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">atom_2</span>
+                        <span class="p">)</span>
+                        <span class="n">match_backward</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">name_i</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">atom_2</span> <span class="ow">and</span> <span class="n">name_j</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">atom_1</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">match_forward</span> <span class="ow">or</span> <span class="n">match_backward</span><span class="p">:</span>
+                            <span class="n">bonds_2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="p">[</span>
+                                    <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                    <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                    <span class="n">b</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">,</span>
+                                    <span class="n">b</span><span class="o">.</span><span class="n">strength</span><span class="p">,</span>
+                                <span class="p">]</span>
+                            <span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="n">name_i</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                    <span class="n">name_mid</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                    <span class="n">name_j</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+
+                    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">angle_bonds</span><span class="p">:</span>
+                        <span class="n">match_forward</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">name_i</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_1</span>
+                            <span class="ow">and</span> <span class="n">name_mid</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_2</span>
+                            <span class="ow">and</span> <span class="n">name_j</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_3</span>
+                        <span class="p">)</span>
+                        <span class="n">match_backward</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">name_i</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_3</span>
+                            <span class="ow">and</span> <span class="n">name_mid</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_2</span>
+                            <span class="ow">and</span> <span class="n">name_j</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_1</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">match_forward</span> <span class="ow">or</span> <span class="n">match_backward</span><span class="p">:</span>
+                            <span class="n">bonds_3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="p">[</span>
+                                    <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                    <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                    <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">j</span><span class="p">][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                    <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">),</span>
+                                    <span class="n">a</span><span class="o">.</span><span class="n">strength</span><span class="p">,</span>
+                                <span class="p">]</span>
+                            <span class="p">)</span>
+
+            <span class="n">all_paths_len_four</span> <span class="o">=</span> <span class="n">find_all_paths</span><span class="p">(</span><span class="n">bond_graph</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">all_paths_len_four</span><span class="p">:</span>
+                <span class="n">name_i</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                <span class="n">name_mid_1</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                <span class="n">name_mid_2</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+                <span class="n">name_j</span> <span class="o">=</span> <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">dihedrals</span><span class="p">:</span>
+                    <span class="n">match_forward</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">name_i</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_1</span>
+                        <span class="ow">and</span> <span class="n">name_mid_1</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_2</span>
+                        <span class="ow">and</span> <span class="n">name_mid_2</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_3</span>
+                        <span class="ow">and</span> <span class="n">name_j</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">atom_4</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">match_forward</span>
+                        <span class="ow">and</span> <span class="p">[</span>
+                            <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                            <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                            <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                            <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                            <span class="n">a</span><span class="o">.</span><span class="n">coeffs</span><span class="p">,</span>
+                            <span class="n">a</span><span class="o">.</span><span class="n">dih_type</span><span class="p">,</span>
+                        <span class="p">]</span>
+                        <span class="ow">not</span> <span class="ow">in</span> <span class="n">bonds_4</span>
+                    <span class="p">):</span>
+                        <span class="n">bonds_4</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">[</span>
+                                <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                <span class="n">bond_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">()[</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]][</span><span class="s2">&quot;local_index&quot;</span><span class="p">],</span>
+                                <span class="n">a</span><span class="o">.</span><span class="n">coeffs</span><span class="p">,</span>
+                                <span class="n">a</span><span class="o">.</span><span class="n">dih_type</span><span class="p">,</span>
+                            <span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">dih_type</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">bb_dihedral</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">bb_dihedral</span><span class="p">:</span>
+            <span class="n">bb_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bb_dihedral</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">bonds_2</span><span class="p">,</span> <span class="n">bonds_3</span><span class="p">,</span> <span class="n">bonds_4</span><span class="p">,</span> <span class="n">bb_index</span></div>
+
+
+<div class="viewcode-block" id="prepare_bonds"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.prepare_bonds">[docs]</a><span class="k">def</span> <span class="nf">prepare_bonds</span><span class="p">(</span><span class="n">molecules</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">bonds</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Rearrange the bond information for usage in compiled Fortran kernels</span>
+
+<span class="sd">    Restructures the lists resulting from the execution of</span>
+<span class="sd">    :code:`prepare_bonds_old` into numpy arrays suitable for calls to optimized</span>
+<span class="sd">    Fortran code calculating bonded forces and energiesself.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    molecules : (N,) numpy.ndarray</span>
+<span class="sd">        Array of integer molecule affiliation for each of :code:`N` particles.</span>
+<span class="sd">        Global (across all MPI ranks) or local (local indices on this MPI rank</span>
+<span class="sd">        only) may be used, both, without affecting the result.</span>
+<span class="sd">    names : (N,) numpy.ndarray</span>
+<span class="sd">        Array of type names for each of :code:`N` particles.</span>
+<span class="sd">    bonds : (N,M) numpy.ndarray</span>
+<span class="sd">        Array of :code:`M` bonds originating from each of :code:`N` particles.</span>
+<span class="sd">    indices : (N,) numpy.ndarray</span>
+<span class="sd">        Array of integer indices for each of :code:`N` particles. Global</span>
+<span class="sd">        (across all MPI ranks) or local (local indices on this MPI rank only)</span>
+<span class="sd">        may be used, both, without affecting the result.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bonds_2_atom_1 : (B,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 1 for each of :code:`B` constructed</span>
+<span class="sd">        two-particle bonds.</span>
+<span class="sd">    bonds_2_atom_2 : (B,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 2 for each of :code:`B` constructed</span>
+<span class="sd">        two-particle bonds.</span>
+<span class="sd">    bonds_2_equilibrium : (B,) numpy.ndarray</span>
+<span class="sd">        Equilibrium distance for each of :code:`B` constructed two-particle</span>
+<span class="sd">        bonds.</span>
+<span class="sd">    bonds_2_strength : (B,) numpy.ndarray</span>
+<span class="sd">        Bond strength for each of :code:`B` constructed two-particle</span>
+<span class="sd">        bonds.</span>
+<span class="sd">    bonds_3_atom_1 : (A,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 1 for each of :code:`A` constructed</span>
+<span class="sd">        three-particle bonds.</span>
+<span class="sd">    bonds_3_atom_2 : (A,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 2 for each of :code:`A` constructed</span>
+<span class="sd">        three-particle bonds.</span>
+<span class="sd">    bonds_3_atom_3 : (A,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 3 for each of :code:`A` constructed</span>
+<span class="sd">        three-particle bonds.</span>
+<span class="sd">    bonds_3_equilibrium : (A,) numpy.ndarray</span>
+<span class="sd">        Equilibrium angle for each of :code:`A` constructed three-particle</span>
+<span class="sd">        bonds.</span>
+<span class="sd">    bonds_3_strength : (A,) numpy.ndarray</span>
+<span class="sd">        Bond strength for each of :code:`A` constructed three-particle</span>
+<span class="sd">        bonds.</span>
+<span class="sd">    bonds_4_atom_1 : (D,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 1 for each of :code:`D` constructed</span>
+<span class="sd">        four-particle bonds.</span>
+<span class="sd">    bonds_4_atom_2 : (D,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 2 for each of :code:`D` constructed</span>
+<span class="sd">        four-particle bonds.</span>
+<span class="sd">    bonds_4_atom_3 : (D,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 3 for each of :code:`D` constructed</span>
+<span class="sd">        four-particle bonds.</span>
+<span class="sd">    bonds_4_atom_4 : (D,) numpy.ndarray</span>
+<span class="sd">        Local index of particle 4 for each of :code:`D` constructed</span>
+<span class="sd">        four-particle bonds.</span>
+<span class="sd">    bonds_4_coeff : (D,) numpy.ndarray</span>
+<span class="sd">        Cosine series coefficients for each of :code:`D` constructed</span>
+<span class="sd">        four-particle bonds.</span>
+<span class="sd">    bonds_4_type : (D,) numpy.ndarray</span>
+<span class="sd">        Dihedral type for each of :code:`D` constructed four-particle</span>
+<span class="sd">        bonds.</span>
+<span class="sd">    bonds_4_last : (D,) numpy.ndarray</span>
+<span class="sd">        Flags indicating if :code:`dih_type` is :code:`1` for each of :code:`D`</span>
+<span class="sd">        constructed four-particle bonds.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    prepare_bonds_old :</span>
+<span class="sd">        Used internally to reconstruct the bonded interactions types from the</span>
+<span class="sd">        connectivity information in the structure/topology input file and the</span>
+<span class="sd">        bonded types specified in the configuration file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bonds_2</span><span class="p">,</span> <span class="n">bonds_3</span><span class="p">,</span> <span class="n">bonds_4</span><span class="p">,</span> <span class="n">bb_index</span> <span class="o">=</span> <span class="n">prepare_bonds_old</span><span class="p">(</span>
+        <span class="n">molecules</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">bonds</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">config</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Bonds</span>
+    <span class="n">bonds_2_atom1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_2_atom2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_2_equilibrium</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">bonds_2_strength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bonds_2</span><span class="p">):</span>
+        <span class="n">bonds_2_atom1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">bonds_2_atom2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">bonds_2_equilibrium</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">bonds_2_strength</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+    <span class="c1"># Angles</span>
+    <span class="n">bonds_3_atom1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_3_atom2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_3_atom3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_3_equilibrium</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">bonds_3_strength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bonds_3</span><span class="p">):</span>
+        <span class="n">bonds_3_atom1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">bonds_3_atom2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">bonds_3_atom3</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">bonds_3_equilibrium</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">bonds_3_strength</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="c1"># Dihedrals</span>
+    <span class="n">bonds_4_atom1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_4_atom2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_4_atom3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_4_atom4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">number_of_coeff</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">len_of_coeff</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">bonds_4_coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">),</span> <span class="n">number_of_coeff</span><span class="p">,</span> <span class="n">len_of_coeff</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="p">)</span>
+    <span class="n">bonds_4_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">bonds_4_last</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bonds_4</span><span class="p">):</span>
+        <span class="n">bonds_4_atom1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">bonds_4_atom2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">bonds_4_atom3</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">bonds_4_atom4</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">bonds_4_coeff</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="p">(</span><span class="n">number_of_coeff</span><span class="p">,</span> <span class="n">len_of_coeff</span><span class="p">))</span>
+        <span class="n">bonds_4_type</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">bonds_4_last</span><span class="p">[</span><span class="n">bb_index</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">bonds_2_atom1</span><span class="p">,</span> <span class="n">bonds_2_atom2</span><span class="p">,</span> <span class="n">bonds_2_equilibrium</span><span class="p">,</span> <span class="n">bonds_2_strength</span><span class="p">,</span>
+        <span class="n">bonds_3_atom1</span><span class="p">,</span> <span class="n">bonds_3_atom2</span><span class="p">,</span> <span class="n">bonds_3_atom3</span><span class="p">,</span> <span class="n">bonds_3_equilibrium</span><span class="p">,</span> <span class="n">bonds_3_strength</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+        <span class="n">bonds_4_atom1</span><span class="p">,</span> <span class="n">bonds_4_atom2</span><span class="p">,</span> <span class="n">bonds_4_atom3</span><span class="p">,</span> <span class="n">bonds_4_atom4</span><span class="p">,</span> <span class="n">bonds_4_coeff</span><span class="p">,</span> <span class="n">bonds_4_type</span><span class="p">,</span> <span class="n">bonds_4_last</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compute_bond_forces__plain"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.compute_bond_forces__plain">[docs]</a><span class="k">def</span> <span class="nf">compute_bond_forces__plain</span><span class="p">(</span><span class="n">f_bonds</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">bonds_2</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes forces resulting from bonded interactions</span>
+
+<span class="sd">    .. deprecated:: 1.0.0</span>
+<span class="sd">        :code:`compute_bond_forces__plain` was replaced by compiled Fortran</span>
+<span class="sd">        code prior to 1.0.0 release.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f_bonds</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">energy</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">bonds_2</span><span class="p">:</span>
+        <span class="n">ri</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">rj</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">rij</span> <span class="o">=</span> <span class="n">rj</span> <span class="o">-</span> <span class="n">ri</span>
+
+        <span class="c1"># Apply periodic boundary conditions to the distance rij</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rij</span><span class="p">)):</span>
+            <span class="n">rij</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">-=</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">rij</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">/</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+        <span class="n">dr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">rij</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="o">-</span><span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">dr</span> <span class="o">-</span> <span class="n">r0</span><span class="p">)</span>
+        <span class="n">f_bond_vector</span> <span class="o">=</span> <span class="n">df</span> <span class="o">*</span> <span class="n">rij</span> <span class="o">/</span> <span class="n">dr</span>
+        <span class="n">f_bonds</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-=</span> <span class="n">f_bond_vector</span>
+        <span class="n">f_bonds</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">f_bond_vector</span>
+
+        <span class="n">energy</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">dr</span> <span class="o">-</span> <span class="n">r0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">energy</span></div>
+
+
+<div class="viewcode-block" id="compute_angle_forces__plain"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.compute_angle_forces__plain">[docs]</a><span class="k">def</span> <span class="nf">compute_angle_forces__plain</span><span class="p">(</span><span class="n">f_angles</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">bonds_3</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes forces resulting from angular interactions</span>
+
+<span class="sd">    .. deprecated:: 1.0.0</span>
+<span class="sd">        :code:`compute_angle_forces__plain` was replaced by compiled Fortran</span>
+<span class="sd">        code prior to 1.0.0 release.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f_angles</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">energy</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">bonds_3</span><span class="p">:</span>
+        <span class="n">ra</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">r</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">r</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ra</span><span class="p">)):</span>
+            <span class="n">ra</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">-=</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">ra</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">/</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+            <span class="n">rc</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">-=</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">rc</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">/</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+
+        <span class="n">xra</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ra</span><span class="p">,</span> <span class="n">ra</span><span class="p">))</span>
+        <span class="n">xrc</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">rc</span><span class="p">))</span>
+        <span class="n">ea</span> <span class="o">=</span> <span class="n">ra</span> <span class="o">*</span> <span class="n">xra</span>
+        <span class="n">ec</span> <span class="o">=</span> <span class="n">rc</span> <span class="o">*</span> <span class="n">xrc</span>
+
+        <span class="n">cosphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ea</span><span class="p">,</span> <span class="n">ec</span><span class="p">)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span><span class="n">cosphi</span><span class="p">)</span>
+        <span class="n">xsinph</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">cosphi</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">theta</span> <span class="o">-</span> <span class="n">theta0</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="o">-</span><span class="n">k</span> <span class="o">*</span> <span class="n">d</span>
+
+        <span class="n">xrasin</span> <span class="o">=</span> <span class="n">xra</span> <span class="o">*</span> <span class="n">xsinph</span> <span class="o">*</span> <span class="n">f</span>
+        <span class="n">xrcsin</span> <span class="o">=</span> <span class="n">xrc</span> <span class="o">*</span> <span class="n">xsinph</span> <span class="o">*</span> <span class="n">f</span>
+
+        <span class="n">fa</span> <span class="o">=</span> <span class="p">(</span><span class="n">ea</span> <span class="o">*</span> <span class="n">cosphi</span> <span class="o">-</span> <span class="n">ec</span><span class="p">)</span> <span class="o">*</span> <span class="n">xrasin</span>
+        <span class="n">fc</span> <span class="o">=</span> <span class="p">(</span><span class="n">ec</span> <span class="o">*</span> <span class="n">cosphi</span> <span class="o">-</span> <span class="n">ea</span><span class="p">)</span> <span class="o">*</span> <span class="n">xrcsin</span>
+
+        <span class="n">f_angles</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">fa</span>
+        <span class="n">f_angles</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">fc</span>
+        <span class="n">f_angles</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-=</span> <span class="n">fa</span> <span class="o">+</span> <span class="n">fc</span>
+        <span class="c1"># f_angles[b, :] += -(fa + fc)</span>
+
+        <span class="n">energy</span> <span class="o">-=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="n">d</span>
+
+    <span class="k">return</span> <span class="n">energy</span></div>
+
+
+<div class="viewcode-block" id="compute_dihedral_forces__plain"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.compute_dihedral_forces__plain">[docs]</a><span class="k">def</span> <span class="nf">compute_dihedral_forces__plain</span><span class="p">(</span><span class="n">f_dihedrals</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">bonds_4</span><span class="p">,</span> <span class="n">box_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes forces resulting from dihedral interactions</span>
+
+<span class="sd">    .. deprecated:: 1.0.0</span>
+<span class="sd">        :code:`compute_dihedral_forces__plain` was replaced by compiled Fortran</span>
+<span class="sd">        code prior to 1.0.0 release.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f_dihedrals</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">energy</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">phase</span> <span class="ow">in</span> <span class="n">bonds_4</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">r</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="n">d</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">r</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">-=</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">/</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+            <span class="n">g</span> <span class="o">-=</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">/</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+            <span class="n">h</span> <span class="o">-=</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">/</span> <span class="n">box_size</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+        <span class="n">vv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="n">ww</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">gn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+
+        <span class="n">cosphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">sinphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">),</span> <span class="n">g</span><span class="p">)</span> <span class="o">/</span> <span class="n">gn</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">sinphi</span><span class="p">,</span> <span class="n">cosphi</span><span class="p">)</span>
+
+        <span class="n">fg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+        <span class="n">hg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+        <span class="n">sc</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">fg</span> <span class="o">/</span> <span class="p">(</span><span class="n">vv</span> <span class="o">*</span> <span class="n">gn</span><span class="p">)</span> <span class="o">-</span> <span class="n">w</span> <span class="o">*</span> <span class="n">hg</span> <span class="o">/</span> <span class="p">(</span><span class="n">ww</span> <span class="o">*</span> <span class="n">gn</span><span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+            <span class="n">energy</span> <span class="o">+=</span> <span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">m</span> <span class="o">*</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">m</span><span class="p">]))</span>
+            <span class="n">df</span> <span class="o">+=</span> <span class="n">m</span> <span class="o">*</span> <span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">m</span> <span class="o">*</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">coeffs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">m</span><span class="p">])</span>
+
+        <span class="n">force_on_a</span> <span class="o">=</span> <span class="n">df</span> <span class="o">*</span> <span class="n">gn</span> <span class="o">*</span> <span class="n">v</span> <span class="o">/</span> <span class="n">vv</span>
+        <span class="n">force_on_d</span> <span class="o">=</span> <span class="n">df</span> <span class="o">*</span> <span class="n">gn</span> <span class="o">*</span> <span class="n">w</span> <span class="o">/</span> <span class="n">ww</span>
+
+        <span class="n">f_dihedrals</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-=</span> <span class="n">force_on_a</span>
+        <span class="n">f_dihedrals</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">df</span> <span class="o">*</span> <span class="n">sc</span> <span class="o">+</span> <span class="n">force_on_a</span>
+        <span class="n">f_dihedrals</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-=</span> <span class="n">df</span> <span class="o">*</span> <span class="n">sc</span> <span class="o">+</span> <span class="n">force_on_d</span>
+        <span class="n">f_dihedrals</span><span class="p">[</span><span class="n">d</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">force_on_d</span>
+    <span class="k">return</span> <span class="n">energy</span></div>
+
+
+<div class="viewcode-block" id="dipole_forces_redistribution"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.force.dipole_forces_redistribution">[docs]</a><span class="k">def</span> <span class="nf">dipole_forces_redistribution</span><span class="p">(</span>
+    <span class="n">f_on_bead</span><span class="p">,</span> <span class="n">f_dipoles</span><span class="p">,</span> <span class="n">trans_matrices</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">type_array</span><span class="p">,</span> <span class="n">last_bb</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Redistribute electrostatic forces calculated from ghost dipole point</span>
+<span class="sd">    charges to the backcone atoms of the protein.</span>
+
+<span class="sd">    .. deprecated:: 1.0.0</span>
+<span class="sd">        :code:`dipole_forces_redistribution` was replaced by compiled Fortran</span>
+<span class="sd">        code prior to 1.0.0 release.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f_on_bead</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">dih_type</span><span class="p">,</span> <span class="n">is_last</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">f_dipoles</span><span class="p">,</span> <span class="n">trans_matrices</span><span class="p">,</span> <span class="n">type_array</span><span class="p">,</span> <span class="n">last_bb</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">dih_type</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">tot_force</span> <span class="o">=</span> <span class="n">fd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">fd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">f_on_bead</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">@</span> <span class="n">tot_force</span>  <span class="c1"># Atom A</span>
+            <span class="n">f_on_bead</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">@</span> <span class="n">tot_force</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">tot_force</span>  <span class="c1"># Atom B</span>
+            <span class="n">f_on_bead</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">matrix</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">@</span> <span class="n">tot_force</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">tot_force</span>  <span class="c1"># Atom C</span>
+
+            <span class="k">if</span> <span class="n">is_last</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">tot_force</span> <span class="o">=</span> <span class="n">fd</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">fd</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+                <span class="c1"># Atom B</span>
+                <span class="n">f_on_bead</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">matrix</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">@</span> <span class="n">tot_force</span>
+
+                <span class="c1"># Atom C</span>
+                <span class="n">f_on_bead</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">matrix</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">@</span> <span class="n">tot_force</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">tot_force</span>
+
+                <span class="c1"># Atom D</span>
+                <span class="n">f_on_bead</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">+=</span> <span class="n">matrix</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">@</span> <span class="n">tot_force</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">tot_force</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

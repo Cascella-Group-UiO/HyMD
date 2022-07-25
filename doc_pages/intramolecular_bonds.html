@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2. Intramolecular bonds &mdash; hymd 1.0.6-post1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3. Electrostatic interactions" href="electrostatics.html" />
+    <link rel="prev" title="1. Theory" href="theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html">
+            <img src="../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.6-post1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#hamiltonian">4.3. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.force">4.4. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#logger">4.5. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.input_parser">4.6. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.field">4.7. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.file_io">4.8. File input/output</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><span class="section-number">2. </span>Intramolecular bonds</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/doc_pages/intramolecular_bonds.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intramolecular-bonds">
+<span id="bonds-label"></span><h1><span class="section-number">2. </span>Intramolecular bonds<a class="headerlink" href="#intramolecular-bonds" title="Permalink to this headline"></a></h1>
+<p>Intramolecular bonds types in HyMD are specified in the configuration file.
+Once a simulation starts, the specific indices of bonded particles are inferred
+from the type information in the configuration file, see <a class="reference internal" href="config_file.html#config-label"><span class="std std-ref">Configuration file</span></a>.
+The construction of the bonds internally happens locally on each MPI rank after
+every explicit domain decomposition transfer, which is the only time during
+simulation when particles are permanently re-assigned to new CPUs. Ideally, you
+should be running HyMD with relatively few particles per MPI rank (see
+<a class="reference internal" href="benchmarks.html#benchmarks-label"><span class="std std-ref">Benchmarks</span></a>), around 200 being the optimal value for maximum
+efficiency. In this case, the computational cost involved in reconstructing the
+bond network subsequent to every domain decomposition swap is minuscule and not
+measurable.</p>
+<p>All intramolecular potentials are computed in highly optimised Fortran kernels,
+and require no MPI communication (except for explicit domain decomposition
+swaps which are performed very rarely in practice [e.g. every hundreds of
+thousands time steps]).</p>
+<section id="two-particle-bonds">
+<h2><span class="section-number">2.1. </span>Two-particle bonds<a class="headerlink" href="#two-particle-bonds" title="Permalink to this headline"></a></h2>
+<p>Stretching bonds in HyMD are implemented as harmonic spring potentials,</p>
+<div class="math notranslate nohighlight">
+\[V_2(r) = \frac{k}{2}(r-r_0)^2,\]</div>
+<p>where <span class="math notranslate nohighlight">\(r=|\mathbf{r}|\)</span> is the inter-particle distance, <span class="math notranslate nohighlight">\(k\)</span> is a
+constant of dimension energy (units <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span>), and
+<span class="math notranslate nohighlight">\(r_0\)</span> is the equilibrum length of the bond (units: <span class="math notranslate nohighlight">\(\text{nm}\)</span>). The
+force is calculated as</p>
+<div class="math notranslate nohighlight">
+\[F_{i\rightarrow j}(\mathbf{r}) = k(r-r_0)\frac{\mathbf{r}}{r},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{r}\)</span> is the vector pointing <em>from</em> <span class="math notranslate nohighlight">\(i\)</span> <em>to</em> <span class="math notranslate nohighlight">\(j\)</span>.</p>
+<p>In the configuration file, two-particle bonds are specified per particle type:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">configuration_two_particle_example.toml</span><a class="headerlink" href="#id1" title="Permalink to this code"></a></div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[bonds]</span><span class="w"></span>
+<span class="n">bonds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.47</span><span class="p">,</span><span class="w"> </span><span class="mf">1250.0</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.37</span><span class="p">,</span><span class="w">  </span><span class="mf">940.0</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.50</span><span class="p">,</span><span class="w"> </span><span class="mf">1010.0</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.42</span><span class="p">,</span><span class="w">  </span><span class="mf">550.0</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">...</span><span class="w"></span>
+<span class="p">]</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<p>The order of the specified names does not matter, but the order of the length
+and energy scales do.</p>
+</section>
+<section id="three-particle-bonds">
+<h2><span class="section-number">2.2. </span>Three-particle bonds<a class="headerlink" href="#three-particle-bonds" title="Permalink to this headline"></a></h2>
+<p>Bending bonds in HyMD are implemented as harmonic angular bonds, depending on
+the particle–particle–particle angle <span class="math notranslate nohighlight">\(\theta\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[V_3(\theta) = \frac{k}{2}(\theta-\theta_0)^2,\]</div>
+<p>where <span class="math notranslate nohighlight">\(k\)</span> is a constant of dimension energy (units
+<span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span>), and <span class="math notranslate nohighlight">\(\theta_0\)</span> is the equilibrum
+angle of the bond (units: <span class="math notranslate nohighlight">\({}^\circ\)</span>). Defining the particles with labels
+<span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span>, and <span class="math notranslate nohighlight">\(c\)</span>, let <span class="math notranslate nohighlight">\(\mathbf{r}_a\)</span> denote the vector
+pointing from <span class="math notranslate nohighlight">\(b\)</span> to <span class="math notranslate nohighlight">\(a\)</span>, and correspondingly let
+<span class="math notranslate nohighlight">\(\mathbf{r}_c\)</span> point from <span class="math notranslate nohighlight">\(b\)</span> to <span class="math notranslate nohighlight">\(c\)</span>. The
+<span class="math notranslate nohighlight">\(a\)</span>–<span class="math notranslate nohighlight">\(b\)</span>–<span class="math notranslate nohighlight">\(c\)</span> may be computed through the law of Cosines,</p>
+<div class="math notranslate nohighlight">
+\[\theta = \cos^{-1}\left[\frac{\mathbf{r}_a\cdot \mathbf{r}_c}{r_a r_c}\right]\]</div>
+<p>Then the force acting on <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(c\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\mathbf{F}_a = -\frac{\mathrm{d}V_3(\theta)}{\mathrm{d}r_a}\frac{\mathrm{d}r_a}{\mathrm{d}\mathbf{r}_a},\\\mathbf{F}_c = -\frac{\mathrm{d}V_3(\theta)}{\mathrm{d}r_c}\frac{\mathrm{d}r_c}{\mathrm{d}\mathbf{r}_c},\end{aligned}\end{align} \]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{F}_b = - \mathbf{F}_a - \mathbf{F}_c\]</div>
+<p>In the configuration file, three-particle bonds are specified per particle type:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">configuration_three_particle_example.toml</span><a class="headerlink" href="#id2" title="Permalink to this code"></a></div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[bonds]</span><span class="w"></span>
+<span class="n">angle_bonds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">180.0</span><span class="p">,</span><span class="w"> </span><span class="mf">90.0</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">120.0</span><span class="p">,</span><span class="w"> </span><span class="mf">55.0</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w">  </span><span class="mf">30.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">110.0</span><span class="p">,</span><span class="w"> </span><span class="mf">25.5</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">...</span><span class="w"></span>
+<span class="p">]</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<p>The order of the specified names does not matter, but the order of the length
+and energy scales do.</p>
+</section>
+<section id="four-particle-bonds">
+<h2><span class="section-number">2.3. </span>Four-particle bonds<a class="headerlink" href="#four-particle-bonds" title="Permalink to this headline"></a></h2>
+<p>Torsional dihedral potentials in HyMD are implemented as Cosine series
+potentials, depending on the angle <span class="math notranslate nohighlight">\(\phi\)</span> between the
+<span class="math notranslate nohighlight">\(a\)</span>–<span class="math notranslate nohighlight">\(b\)</span>–<span class="math notranslate nohighlight">\(c\)</span> and <span class="math notranslate nohighlight">\(b\)</span>–<span class="math notranslate nohighlight">\(c\)</span>–<span class="math notranslate nohighlight">\(d\)</span> planes, for
+a dihedral bond quartet <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span>, <span class="math notranslate nohighlight">\(c\)</span>, and <span class="math notranslate nohighlight">\(d\)</span>. The
+potential takes the form</p>
+<div class="math notranslate nohighlight">
+\[V_4(\phi) = \frac{1}{2}\sum_n^M c_n\cos(n\phi+\phi_n),\]</div>
+<p>where <span class="math notranslate nohighlight">\(c_n\)</span> is a constant of dimension energy (units
+<span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\text{rad}^{-2}\)</span>), and <span class="math notranslate nohighlight">\(\phi_n\)</span> are
+specified phase angles in the cosine series.</p>
+<p>In the configuration file, four-particle bonds are specified per particle type:</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">configuration_four_particle_example.toml</span><a class="headerlink" href="#id3" title="Permalink to this code"></a></div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[bonds]</span><span class="w"></span>
+<span class="n">dihedrals</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;D&quot;</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="w"></span>
+<span class="w">     </span><span class="p">[</span><span class="mi">-1</span><span class="p">],</span><span class="w"></span>
+<span class="w">     </span><span class="p">[</span><span class="mf">449.08790868</span><span class="p">,</span><span class="w"> </span><span class="mf">610.2408724</span><span class="p">,</span><span class="w"> </span><span class="mi">-544</span><span class="mf">.48626121</span><span class="p">,</span><span class="w"> </span><span class="mf">251.59427866</span><span class="p">,</span><span class="w"> </span><span class="mi">-84</span><span class="mf">.9918564</span><span class="p">],</span><span class="w"></span>
+<span class="w">     </span><span class="p">[</span><span class="mf">0.08</span><span class="p">,</span><span class="w"> </span><span class="mf">0.46</span><span class="p">,</span><span class="w"> </span><span class="mf">1.65</span><span class="p">,</span><span class="w"> </span><span class="mi">-0</span><span class="mf">.96</span><span class="p">,</span><span class="w"> </span><span class="mf">0.38</span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">],</span><span class="w"></span>
+<span class="w">   </span><span class="p">[</span><span class="mf">1.0</span><span class="p">],</span><span class="w"></span>
+<span class="p">]</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory.html" class="btn btn-neutral float-left" title="1. Theory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="electrostatics.html" class="btn btn-neutral float-right" title="3. Electrostatic interactions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

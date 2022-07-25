@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Index &mdash; hymd 1.0.6-post1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/tabs.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html">
+            <img src="_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.6-post1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="doc_pages/config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc_pages/api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#hamiltonian">4.3. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#module-hymd.force">4.4. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#logger">4.5. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#module-hymd.input_parser">4.6. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#module-hymd.field">4.7. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc_pages/api.html#module-hymd.file_io">4.8. File input/output</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Index</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ 
+</div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.hamiltonian.DefaultNoChi.__init__">__init__() (hymd.hamiltonian.DefaultNoChi method)</a>
+
+      <ul>
+        <li><a href="doc_pages/api.html#hymd.hamiltonian.DefaultWithChi.__init__">(hymd.hamiltonian.DefaultWithChi method)</a>
+</li>
+        <li><a href="doc_pages/api.html#hymd.hamiltonian.Hamiltonian.__init__">(hymd.hamiltonian.Hamiltonian method)</a>
+</li>
+        <li><a href="doc_pages/api.html#hymd.hamiltonian.SquaredPhi.__init__">(hymd.hamiltonian.SquaredPhi method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.thermostat._random_chi_squared">_random_chi_squared() (in module hymd.thermostat)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.thermostat._random_gaussian">_random_gaussian() (in module hymd.thermostat)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.hamiltonian.Hamiltonian._setup">_setup() (hymd.hamiltonian.Hamiltonian method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.force.Angle">Angle (class in hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.angle_bonds">angle_bonds (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.Bond.atom_1">atom_1 (hymd.force.Bond attribute)</a>
+
+      <ul>
+        <li><a href="doc_pages/api.html#hymd.force.Chi.atom_1">(hymd.force.Chi attribute)</a>
+</li>
+        <li><a href="doc_pages/api.html#hymd.force.Dihedral.atom_1">(hymd.force.Dihedral attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.force.Bond.atom_2">atom_2 (hymd.force.Bond attribute)</a>
+
+      <ul>
+        <li><a href="doc_pages/api.html#hymd.force.Chi.atom_2">(hymd.force.Chi attribute)</a>
+</li>
+        <li><a href="doc_pages/api.html#hymd.force.Dihedral.atom_2">(hymd.force.Dihedral attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="doc_pages/api.html#hymd.force.Angle.atom_3">atom_3 (hymd.force.Angle attribute)</a>
+
+      <ul>
+        <li><a href="doc_pages/api.html#hymd.force.Dihedral.atom_3">(hymd.force.Dihedral attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="doc_pages/api.html#hymd.force.Dihedral.atom_4">atom_4 (hymd.force.Dihedral attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.force.Bond">Bond (class in hymd.force)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.bonds">bonds (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.box_size">box_size (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.cancel_com_momentum">cancel_com_momentum (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_angles">check_angles() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_bonds">check_bonds() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_box_size">check_box_size() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_cancel_com_momentum">check_cancel_com_momentum() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_chi">check_chi() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_config">check_config() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_dihedrals">check_dihedrals() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_domain_decomposition">check_domain_decomposition() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_hamiltonian">check_hamiltonian() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_integrator">check_integrator() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_mass">check_mass() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_max_molecule_size">check_max_molecule_size() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_n_particles">check_n_particles() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_n_print">check_n_print() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_name">check_name() (in module hymd.input_parser)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_start_and_target_temperature">check_start_and_target_temperature() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_tau">check_tau() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.check_thermostat_coupling_groups">check_thermostat_coupling_groups() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.Chi">Chi (class in hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.chi">chi (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.file_io.OutDataset.close_file">close_file() (hymd.file_io.OutDataset method)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.Dihedral.coeffs">coeffs (hymd.force.Dihedral attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.compute_angle_forces__plain">compute_angle_forces__plain() (in module hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.compute_bond_forces__plain">compute_bond_forces__plain() (in module hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.compute_dihedral_forces__plain">compute_dihedral_forces__plain() (in module hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.field.compute_field_and_kinetic_energy">compute_field_and_kinetic_energy() (in module hymd.field)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.field.compute_field_energy_q">compute_field_energy_q() (in module hymd.field)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.field.compute_field_force">compute_field_force() (in module hymd.field)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config">Config (class in hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.coulomb_constant">coulomb_constant (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.coulombtype">coulombtype (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.thermostat.csvr_thermostat">csvr_thermostat() (in module hymd.thermostat)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.hamiltonian.DefaultNoChi">DefaultNoChi (class in hymd.hamiltonian)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.hamiltonian.DefaultWithChi">DefaultWithChi (class in hymd.hamiltonian)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.dielectric_const">dielectric_const (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.Dihedral.dih_type">dih_type (hymd.force.Dihedral attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.Dihedral">Dihedral (class in hymd.force)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.dihedrals">dihedrals (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.dipole_forces_redistribution">dipole_forces_redistribution() (in module hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.file_io.distribute_input">distribute_input() (in module hymd.file_io)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.domain_decomposition">domain_decomposition (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.field.domain_decomposition">domain_decomposition() (in module hymd.field)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.force.Bond.equilibrium">equilibrium (hymd.force.Bond attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.file_name">file_name (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.logger.MPIFilterAll.filter">filter() (hymd.logger.MPIFilterAll method)</a>
+
+      <ul>
+        <li><a href="doc_pages/api.html#hymd.logger.MPIFilterRoot.filter">(hymd.logger.MPIFilterRoot method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.force.find_all_paths">find_all_paths() (in module hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.file_io.OutDataset.flush">flush() (hymd.file_io.OutDataset method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.gas_constant">gas_constant (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.hamiltonian.Hamiltonian">Hamiltonian (class in hymd.hamiltonian)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.hamiltonian">hamiltonian (hymd.input_parser.Config attribute)</a>
+</li>
+      <li>
+    hymd.field
+
+      <ul>
+        <li><a href="doc_pages/api.html#module-hymd.field">module</a>
+</li>
+      </ul></li>
+      <li>
+    hymd.file_io
+
+      <ul>
+        <li><a href="doc_pages/api.html#module-hymd.file_io">module</a>
+</li>
+      </ul></li>
+      <li>
+    hymd.force
+
+      <ul>
+        <li><a href="doc_pages/api.html#module-hymd.force">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    hymd.input_parser
+
+      <ul>
+        <li><a href="doc_pages/api.html#module-hymd.input_parser">module</a>
+</li>
+      </ul></li>
+      <li>
+    hymd.integrator
+
+      <ul>
+        <li><a href="doc_pages/api.html#module-hymd.integrator">module</a>
+</li>
+      </ul></li>
+      <li>
+    hymd.thermostat
+
+      <ul>
+        <li><a href="doc_pages/api.html#module-hymd.thermostat">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.initial_energy">initial_energy (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.integrator.integrate_position">integrate_position() (in module hymd.integrator)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.integrator.integrate_velocity">integrate_velocity() (in module hymd.integrator)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.integrator">integrator (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.Chi.interaction_energy">interaction_energy (hymd.force.Chi attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.kappa">kappa (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.logger.Logger">Logger (class in hymd.logger)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.mass">mass (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.max_molecule_size">max_molecule_size (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.mesh_size">mesh_size (hymd.input_parser.Config attribute)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="doc_pages/api.html#module-hymd.field">hymd.field</a>
+</li>
+        <li><a href="doc_pages/api.html#module-hymd.file_io">hymd.file_io</a>
+</li>
+        <li><a href="doc_pages/api.html#module-hymd.force">hymd.force</a>
+</li>
+        <li><a href="doc_pages/api.html#module-hymd.input_parser">hymd.input_parser</a>
+</li>
+        <li><a href="doc_pages/api.html#module-hymd.integrator">hymd.integrator</a>
+</li>
+        <li><a href="doc_pages/api.html#module-hymd.thermostat">hymd.thermostat</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.logger.MPIFilterAll">MPIFilterAll (class in hymd.logger)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.logger.MPIFilterRoot">MPIFilterRoot (class in hymd.logger)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.n_flush">n_flush (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.n_particles">n_particles (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.n_print">n_print (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.n_steps">n_steps (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.name">name (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.file_io.OutDataset">OutDataset (class in hymd.file_io)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.parse_config_toml">parse_config_toml() (in module hymd.input_parser)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.prepare_bonds">prepare_bonds() (in module hymd.force)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.force.prepare_bonds_old">prepare_bonds_old() (in module hymd.force)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.propensity_potential_coeffs">propensity_potential_coeffs() (in module hymd.input_parser)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.read_config_toml">read_config_toml() (in module hymd.input_parser)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.respa_inner">respa_inner (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.hamiltonian.DefaultNoChi.setup">setup() (hymd.hamiltonian.DefaultNoChi method)</a>
+
+      <ul>
+        <li><a href="doc_pages/api.html#hymd.hamiltonian.DefaultWithChi.setup">(hymd.hamiltonian.DefaultWithChi method)</a>
+</li>
+        <li><a href="doc_pages/api.html#hymd.hamiltonian.SquaredPhi.setup">(hymd.hamiltonian.SquaredPhi method)</a>
+</li>
+        <li><a href="doc_pages/api.html#hymd.logger.Logger.setup">(hymd.logger.Logger class method)</a>
+</li>
+      </ul></li>
+      <li><a href="doc_pages/api.html#hymd.file_io.setup_time_dependent_element">setup_time_dependent_element() (in module hymd.file_io)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.sigma">sigma (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.hamiltonian.SquaredPhi">SquaredPhi (class in hymd.hamiltonian)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.start_temperature">start_temperature (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.file_io.store_data">store_data() (in module hymd.file_io)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.file_io.store_static">store_static() (in module hymd.file_io)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.force.Bond.strength">strength (hymd.force.Bond attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.tags">tags (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.target_temperature">target_temperature (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.tau">tau (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.thermostat_coupling_groups">thermostat_coupling_groups (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.thermostat_work">thermostat_work (hymd.input_parser.Config attribute)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.input_parser.Config.time_step">time_step (hymd.input_parser.Config attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.field.update_field">update_field() (in module hymd.field)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="doc_pages/api.html#hymd.field.update_field_force_energy_q">update_field_force_energy_q() (in module hymd.field)</a>
+</li>
+      <li><a href="doc_pages/api.html#hymd.field.update_field_force_q">update_field_force_q() (in module hymd.field)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hymd.field &mdash; hymd 1.0.6-post1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html">
+            <img src="../../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.6-post1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#hamiltonian">4.3. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.force">4.4. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#logger">4.5. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.input_parser">4.6. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.field">4.7. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.file_io">4.8. File input/output</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>hymd.field</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hymd.field</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Forces and energies from the discretized particle-field grid interactions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">.logger</span> <span class="kn">import</span> <span class="n">Logger</span>
+
+
+<div class="viewcode-block" id="compute_field_force"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.field.compute_field_force">[docs]</a><span class="k">def</span> <span class="nf">compute_field_force</span><span class="p">(</span><span class="n">layouts</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">force_mesh</span><span class="p">,</span> <span class="n">force</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">n_types</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Interpolate particle-field forces from the grid onto particle positions</span>
+
+<span class="sd">    Backmaps the forces calculated on the grid to particle positions using the</span>
+<span class="sd">    window function :math:`P` (by default cloud-in-cell [CIC]). In the</span>
+<span class="sd">    following, let :math:`\\mathbf{F}_j` denote the force acting on the</span>
+<span class="sd">    particle with index :math:`j` and position :math:`\\mathbf{r}_j`. The</span>
+<span class="sd">    interpolated force is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathbf{F}_j = -\\sum_k\\nabla V_{j_k}</span>
+<span class="sd">            P(\\mathbf{r}_{j_k}-\\mathbf{r}_j)h^3,</span>
+
+<span class="sd">    where :math:`V_{j_k}` is the discretized external potential at grid vertex</span>
+<span class="sd">    :math:`j_k`, :math:`\\mathbf{r}_{j_k}` is the position of the grid vertex</span>
+<span class="sd">    with index :math:`j_k`, and :math:`h^3` is the volume of each grid voxel.</span>
+<span class="sd">    The sum is taken over all closest neighbour vertices, :math:`j_k`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    layouts : list[pmesh.domain.Layout]</span>
+<span class="sd">        Pmesh communication layout objects for domain decompositions of each</span>
+<span class="sd">        particle type. Used as blueprint by :code:`pmesh.pm.readout` for</span>
+<span class="sd">        exchange of particle information across MPI ranks as necessary.</span>
+<span class="sd">    r : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">    force_mesh : list[pmesh.pm.RealField]</span>
+<span class="sd">        Pmesh :code:`RealField` objects containing discretized particle-field</span>
+<span class="sd">        force density values on the computational grid; :code:`D` fields in D</span>
+<span class="sd">        dimensions for each particle type. Local for each MPI rank--the full</span>
+<span class="sd">        computaional grid is represented by the collective fields of all MPI</span>
+<span class="sd">        ranks.</span>
+<span class="sd">    force : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of forces for :code:`N` particles in :code:`D` dimensions. Local</span>
+<span class="sd">        for each MPI rank.</span>
+<span class="sd">    types : (N,) numpy.ndarray</span>
+<span class="sd">        Array of type indices for each of :code:`N` particles. Local for each</span>
+<span class="sd">        MPI rank.</span>
+<span class="sd">    n_types : int</span>
+<span class="sd">        Number of different unique types present in the simulation system.</span>
+<span class="sd">        :code:`n_types` is global, i.e. the same for all MPI ranks even if some</span>
+<span class="sd">        ranks contain zero particles of certain types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_types</span><span class="p">):</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">types</span> <span class="o">==</span> <span class="n">t</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">force</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">force_mesh</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">readout</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="n">t</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="compute_field_energy_q"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.field.compute_field_energy_q">[docs]</a><span class="k">def</span> <span class="nf">compute_field_energy_q</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span> <span class="n">phi_q_fourier</span><span class="p">,</span> <span class="n">elec_energy_field</span><span class="p">,</span> <span class="n">field_q_energy</span><span class="p">,</span>
+    <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the electrostatic energy from a field configuration</span>
+
+<span class="sd">    From the definition of the elecrostatic potential :math:`\\Psi`, the energy</span>
+<span class="sd">    is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E = \\frac{1}{2}\\int\\mathrm{d}\\mathbf{r}\\,</span>
+<span class="sd">            \\rho(\\mathbf{r}) \\Psi(\\mathbf{r}),</span>
+
+<span class="sd">    where :math:`\\rho(\\mathbf{r})` denotes the charge density at position</span>
+<span class="sd">    :math:`\\mathbf{r}`. Through application of Gauss&#39; law and writing</span>
+<span class="sd">    :math:`\\Psi` in terms of the electric field :math:`\\mathbf{E}`, this</span>
+<span class="sd">    becomes</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E = \\frac{\\varepsilon}{2}\\int\\mathrm{d}\\mathbf{r}\\,</span>
+<span class="sd">            \\mathbf{E}\\cdot \\mathbf{E},</span>
+
+<span class="sd">    where :math:`\\varepsilon` is the relative dielectric of the simulation</span>
+<span class="sd">    medium.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+<span class="sd">    phi_q_fourier : pmesh.pm.ComplexField</span>
+<span class="sd">        Pmesh :code:`ComplexField` object containing the discretized</span>
+<span class="sd">        electrostatic potential values in reciprocal space on the</span>
+<span class="sd">        computational grid. Local for each MPI rank--the full computaional grid</span>
+<span class="sd">        is represented by the collective fields of all MPI ranks.</span>
+<span class="sd">    elec_energy_field : pmesh.pm.ComplexField</span>
+<span class="sd">        Pmesh :code:`ComplexField` object for storing calculated discretized</span>
+<span class="sd">        electrostatic energy density values in reciprocal space on the</span>
+<span class="sd">        computational grid. Pre-allocated, but empty; any values in this field</span>
+<span class="sd">        are discarded. Changed in-place. Local for each MPI rank--the full</span>
+<span class="sd">        computaional grid is represented by the collective fields of all MPI</span>
+<span class="sd">        ranks.</span>
+<span class="sd">    field_q_energy : float</span>
+<span class="sd">        Total elecrostatic energy.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    elec_field_energy : float</span>
+<span class="sd">        Total electrostatic energy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">elec_conversion_factor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">coulomb_constant</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">dielectric_const</span>
+
+    <span class="k">def</span> <span class="nf">transfer_energy</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">elec_conversion_factor</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+            <span class="o">/</span> <span class="n">k</span><span class="o">.</span><span class="n">normp</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">zeromode</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="n">transfer_energy</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;wavenumber&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">elec_energy_field</span>
+    <span class="p">)</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="p">)</span>
+    <span class="n">field_q_energy</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">V</span> <span class="o">*</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">elec_energy_field</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">field_q_energy</span><span class="o">.</span><span class="n">real</span></div>
+
+
+<div class="viewcode-block" id="update_field_force_q"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.field.update_field_force_q">[docs]</a><span class="k">def</span> <span class="nf">update_field_force_q</span><span class="p">(</span>
+    <span class="n">charges</span><span class="p">,</span> <span class="n">phi_q</span><span class="p">,</span> <span class="n">phi_q_fourier</span><span class="p">,</span> <span class="n">elec_field_fourier</span><span class="p">,</span> <span class="n">elec_field</span><span class="p">,</span>
+    <span class="n">elec_forces</span><span class="p">,</span> <span class="n">layout_q</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the electrostatic particle-field forces on the grid</span>
+
+<span class="sd">    Computes the electrostatic potential :math:`\\Psi` from particle charges</span>
+<span class="sd">    through the smoothed charge density :math:`\\tilde\\rho`. With :math:`P`</span>
+<span class="sd">    being the cloud-in-cell (CIC) window function, the charge density and</span>
+<span class="sd">    filtered charge densities are computed as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\rho(\\mathbf{r}) = \\sum_i q_i P(\\mathbf{r}-\\mathbf{r}_i),</span>
+
+<span class="sd">    and</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\tilde\\rho(\\mathbf{r}) = \\int\\mathrm{x}\\mathbf{r}\\,</span>
+<span class="sd">            \\rho(\\mathbf{x})H(\\mathbf{r}-\\mathbf{x}),</span>
+
+<span class="sd">    where :math:`H` is the grid-independent filtering function. The</span>
+<span class="sd">    electrostatic potential is computed in reciprocal space as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\Phi = \\mathrm{FFT}^{-1}\\left[</span>
+<span class="sd">            \\frac{4\\pi k_e}{\\varepsilon \\vert\\mathbf{k}\\vert^2}</span>
+<span class="sd">            \\mathrm{FFT}(\\rho)\\mathrm{FFT}(H)</span>
+<span class="sd">        \\right],</span>
+
+<span class="sd">    with the electric field</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathbf{E} = \\mathrm{FFT}^{-1}\\left[</span>
+<span class="sd">            -i\\mathbf{k}\\,\\mathrm{FFT}(\\Psi)</span>
+<span class="sd">        \\right].</span>
+
+<span class="sd">    In the following, let :math:`\\mathbf{F}_j` denote the electrostatic force</span>
+<span class="sd">    acting on the particle with index :math:`j` and position</span>
+<span class="sd">    :math:`\\mathbf{r}_j`. The interpolated electrostatic force is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathbf{F}_j = \\sum_k q_j\\mathbf{E}_{j_k}</span>
+<span class="sd">            P(\\mathbf{r}_{j_k}-\\mathbf{r}_j)h^3,</span>
+
+<span class="sd">    where :math:`\\mathbf{E}_{j_k}` is the discretized electric field at grid</span>
+<span class="sd">    vertex :math:`j_k`, :math:`\\mathbf{r}_{j_k}` is the position of the grid</span>
+<span class="sd">    vertex with index :math:`j_k`, and :math:`h^3` is the volume of each grid</span>
+<span class="sd">    voxel. The sum is taken over all closest neighbour vertices, :math:`j_k`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    charges : (N,) numpy.ndarray</span>
+<span class="sd">        Array of particle charge values for :code:`N` particles. Local for each</span>
+<span class="sd">        MPI rank.</span>
+<span class="sd">    phi_q : pmesh.pm.RealField</span>
+<span class="sd">        Pmesh :code:`RealField` object for storing calculated discretized</span>
+<span class="sd">        charge density density values on the computational grid. Pre-allocated,</span>
+<span class="sd">        but empty; any values in this field are discarded. Changed in-place.</span>
+<span class="sd">        Local for each MPI rank--the full computaional grid is represented by</span>
+<span class="sd">        the collective fields of all MPI ranks.</span>
+<span class="sd">    phi_q_fourier : pmesh.pm.ComplexField</span>
+<span class="sd">        Pmesh :code:`ComplexField` object for storing calculated discretized</span>
+<span class="sd">        Fourier transformed charge density values in reciprocal space on the</span>
+<span class="sd">        computational grid. Pre-allocated, but empty; any values in this field</span>
+<span class="sd">        are discarded. Changed in-place. Local for each MPI rank--the full</span>
+<span class="sd">        computaional grid is represented by the collective fields of all MPI</span>
+<span class="sd">        ranks.</span>
+<span class="sd">    elec_field_fourier : pmesh.pm.ComplexField</span>
+<span class="sd">        Pmesh :code:`ComplexField` object for storing calculated discretized</span>
+<span class="sd">        electric field values in reciprocal space on the computational grid.</span>
+<span class="sd">        Pre-allocated, but empty; any values in this field are discarded.</span>
+<span class="sd">        Changed in-place. Local for each MPI rank--the full computaional grid</span>
+<span class="sd">        is represented by the collective fields of all MPI ranks.</span>
+<span class="sd">    elec_field : pmesh.pm.RealField</span>
+<span class="sd">        Pmesh :code:`RealField` object for storing calculated discretized</span>
+<span class="sd">        electric field values on the computational grid. Pre-allocated,</span>
+<span class="sd">        but empty; any values in this field are discarded. Changed in-place.</span>
+<span class="sd">        Local for each MPI rank--the full computaional grid is represented by</span>
+<span class="sd">        the collective fields of all MPI ranks.</span>
+<span class="sd">    elec_forces : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of electrostatic forces on :code:`N` particles in :code:`D`</span>
+<span class="sd">        dimensions.</span>
+<span class="sd">    layout_q : pmesh.domain.Layout</span>
+<span class="sd">        Pmesh communication layout object for domain decomposition of the full</span>
+<span class="sd">        system. Used as blueprint by :code:`pmesh.pm.paint` and</span>
+<span class="sd">        :code:`pmesh.pm.readout` for exchange of particle information across</span>
+<span class="sd">        MPI ranks as necessary.</span>
+<span class="sd">    pm : pmesh.pm.ParticleMesh</span>
+<span class="sd">        Pmesh :code:`ParticleMesh` object interfacing to the CIC window</span>
+<span class="sd">        function and the PFFT discrete Fourier transform library.</span>
+<span class="sd">    positions : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">    config : hymd.input_parser.Config</span>
+<span class="sd">        Configuration object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="p">)</span>
+    <span class="n">n_mesh_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mesh_size</span><span class="p">))</span>
+    <span class="n">volume_per_cell</span> <span class="o">=</span> <span class="n">V</span> <span class="o">/</span> <span class="n">n_mesh_cells</span>
+    <span class="n">pm</span><span class="o">.</span><span class="n">paint</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="n">layout_q</span><span class="p">,</span> <span class="n">mass</span><span class="o">=</span><span class="n">charges</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">phi_q</span><span class="p">)</span>
+    <span class="n">phi_q</span> <span class="o">/=</span> <span class="n">volume_per_cell</span>
+    <span class="n">phi_q</span><span class="o">.</span><span class="n">r2c</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">phi_q_fourier</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">phi_transfer_function</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="o">.</span><span class="n">normp</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">zeromode</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">phi_transfer_function</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">phi_q_fourier</span><span class="p">)</span>
+    <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">c2r</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">phi_q</span><span class="p">)</span>
+    <span class="n">n_dimensions</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">elec_conversion_factor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">coulomb_constant</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">dielectric_const</span>
+
+    <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_dimensions</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">poisson_transfer_function</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">_d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">k</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">*</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">elec_conversion_factor</span> <span class="o">*</span> <span class="n">v</span>
+                <span class="o">/</span> <span class="n">k</span><span class="o">.</span><span class="n">normp</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">zeromode</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">poisson_transfer_function</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">elec_field_fourier</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">elec_field_fourier</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">c2r</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">elec_field</span><span class="p">[</span><span class="n">_d</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_dimensions</span><span class="p">):</span>
+        <span class="n">elec_forces</span><span class="p">[:,</span> <span class="n">_d</span><span class="p">]</span> <span class="o">=</span> <span class="n">charges</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">elec_field</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">readout</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="n">layout_q</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="update_field_force_energy_q"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.field.update_field_force_energy_q">[docs]</a><span class="k">def</span> <span class="nf">update_field_force_energy_q</span><span class="p">(</span>
+    <span class="n">charges</span><span class="p">,</span> <span class="n">phi_q</span><span class="p">,</span> <span class="n">phi_q_fourier</span><span class="p">,</span> <span class="n">elec_field_fourier</span><span class="p">,</span> <span class="n">elec_field</span><span class="p">,</span> <span class="n">elec_forces</span><span class="p">,</span>
+    <span class="n">elec_energy_field</span><span class="p">,</span> <span class="n">field_q_energy</span><span class="p">,</span> <span class="n">layout_q</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span>
+    <span class="n">compute_energy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the electrostatic particle-field energy and forces on the grid</span>
+
+<span class="sd">    .. deprecated:: 1.0.0</span>
+<span class="sd">        :code:`update_field_force_energy_q` was deprecated in favour of</span>
+<span class="sd">        :code:`update_field_force_q` and independent calls to</span>
+<span class="sd">        :code:`compute_field_energy_q` prior to 1.0.0 release.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    charges : (N,) numpy.ndarray</span>
+<span class="sd">        Array of particle charge values for :code:`N` particles. Local for each</span>
+<span class="sd">        MPI rank.</span>
+<span class="sd">    phi_q : pmesh.pm.RealField</span>
+<span class="sd">        Pmesh :code:`RealField` object for storing calculated discretized</span>
+<span class="sd">        charge density density values on the computational grid. Pre-allocated,</span>
+<span class="sd">        but empty; any values in this field are discarded. Changed in-place.</span>
+<span class="sd">        Local for each MPI rank--the full computaional grid is represented by</span>
+<span class="sd">        the collective fields of all MPI ranks.</span>
+<span class="sd">    phi_q_fourier : pmesh.pm.ComplexField</span>
+<span class="sd">        Pmesh :code:`ComplexField` object for storing calculated discretized</span>
+<span class="sd">        Fourier transformed charge density values in reciprocal space on the</span>
+<span class="sd">        computational grid. Pre-allocated, but empty; any values in this field</span>
+<span class="sd">        are discarded. Changed in-place. Local for each MPI rank--the full</span>
+<span class="sd">        computaional grid is represented by the collective fields of all MPI</span>
+<span class="sd">        ranks.</span>
+<span class="sd">    elec_field_fourier : pmesh.pm.ComplexField</span>
+<span class="sd">        Pmesh :code:`ComplexField` object for storing calculated discretized</span>
+<span class="sd">        electric field values in reciprocal space on the computational grid.</span>
+<span class="sd">        Pre-allocated, but empty; any values in this field are discarded.</span>
+<span class="sd">        Changed in-place. Local for each MPI rank--the full computaional grid</span>
+<span class="sd">        is represented by the collective fields of all MPI ranks.</span>
+<span class="sd">    elec_field : pmesh.pm.RealField</span>
+<span class="sd">        Pmesh :code:`RealField` object for storing calculated discretized</span>
+<span class="sd">        electric field values on the computational grid. Pre-allocated,</span>
+<span class="sd">        but empty; any values in this field are discarded. Changed in-place.</span>
+<span class="sd">        Local for each MPI rank--the full computaional grid is represented by</span>
+<span class="sd">        the collective fields of all MPI ranks.</span>
+<span class="sd">    elec_forces : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of electrostatic forces on :code:`N` particles in :code:`D`</span>
+<span class="sd">        dimensions.</span>
+<span class="sd">    elec_energy_field : pmesh.pm.ComplexField</span>
+<span class="sd">        Pmesh :code:`ComplexField` object for storing calculated discretized</span>
+<span class="sd">        electrostatic energy density values in reciprocal space on the</span>
+<span class="sd">        computational grid. Pre-allocated, but empty; any values in this field</span>
+<span class="sd">        are discarded. Changed in-place. Local for each MPI rank--the full</span>
+<span class="sd">        computaional grid is represented by the collective fields of all MPI</span>
+<span class="sd">        ranks.</span>
+<span class="sd">    field_q_energy : float</span>
+<span class="sd">        Total elecrostatic energy.</span>
+<span class="sd">    layout_q : pmesh.domain.Layout</span>
+<span class="sd">        Pmesh communication layout object for domain decomposition of the full</span>
+<span class="sd">        system. Used as blueprint by :code:`pmesh.pm.paint` and</span>
+<span class="sd">        :code:`pmesh.pm.readout` for exchange of particle information across</span>
+<span class="sd">        MPI ranks as necessary.</span>
+<span class="sd">    pm : pmesh.pm.ParticleMesh</span>
+<span class="sd">        Pmesh :code:`ParticleMesh` object interfacing to the CIC window</span>
+<span class="sd">        function and the PFFT discrete Fourier transform library.</span>
+<span class="sd">    positions : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+<span class="sd">    compute_energy : bool, optional</span>
+<span class="sd">        Computes the electrostatic energy if :code:`True`, otherwise only</span>
+<span class="sd">        computes the electrostatic forces.</span>
+<span class="sd">    comm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank commuication.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    elec_field_energy : float</span>
+<span class="sd">        Total electrostatic energy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="p">)</span>
+    <span class="n">n_mesh_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mesh_size</span><span class="p">))</span>
+    <span class="n">volume_per_cell</span> <span class="o">=</span> <span class="n">V</span> <span class="o">/</span> <span class="n">n_mesh_cells</span>
+    <span class="n">pm</span><span class="o">.</span><span class="n">paint</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="n">layout_q</span><span class="p">,</span> <span class="n">mass</span><span class="o">=</span><span class="n">charges</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">phi_q</span><span class="p">)</span>
+    <span class="n">phi_q</span> <span class="o">/=</span> <span class="n">volume_per_cell</span>
+    <span class="n">phi_q</span><span class="o">.</span><span class="n">r2c</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">phi_q_fourier</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">phi_transfer_function</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="o">.</span><span class="n">normp</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">zeromode</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">phi_transfer_function</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">phi_q_fourier</span><span class="p">)</span>
+    <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">c2r</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">phi_q</span><span class="p">)</span>
+    <span class="n">n_dimensions</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">elec_conversion_factor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">coulomb_constant</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">dielectric_const</span>
+
+    <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_dimensions</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">poisson_transfer_function</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">_d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">k</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">*</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">elec_conversion_factor</span> <span class="o">*</span> <span class="n">v</span>
+                <span class="o">/</span> <span class="n">k</span><span class="o">.</span><span class="n">normp</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">zeromode</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">poisson_transfer_function</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">elec_field_fourier</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">elec_field_fourier</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">c2r</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">elec_field</span><span class="p">[</span><span class="n">_d</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">_d</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_dimensions</span><span class="p">):</span>
+        <span class="n">elec_forces</span><span class="p">[:,</span> <span class="n">_d</span><span class="p">]</span> <span class="o">=</span> <span class="n">charges</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">elec_field</span><span class="p">[</span><span class="n">_d</span><span class="p">]</span><span class="o">.</span><span class="n">readout</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="n">layout_q</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">compute_energy</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">transfer_energy</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">elec_conversion_factor</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+                <span class="o">/</span> <span class="n">k</span><span class="o">.</span><span class="n">normp</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">zeromode</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">phi_q_fourier</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">transfer_energy</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;wavenumber&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">elec_energy_field</span>
+        <span class="p">)</span>
+        <span class="n">field_q_energy</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">elec_energy_field</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">field_q_energy</span><span class="o">.</span><span class="n">real</span></div>
+
+
+<div class="viewcode-block" id="update_field"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.field.update_field">[docs]</a><span class="k">def</span> <span class="nf">update_field</span><span class="p">(</span>
+    <span class="n">phi</span><span class="p">,</span> <span class="n">layouts</span><span class="p">,</span> <span class="n">force_mesh</span><span class="p">,</span> <span class="n">hamiltonian</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">v_ext</span><span class="p">,</span>
+    <span class="n">phi_fourier</span><span class="p">,</span> <span class="n">v_ext_fourier</span><span class="p">,</span> <span class="n">compute_potential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the particle-field potential and force density</span>
+
+<span class="sd">    If :code:`compute_potential` is :code:`True`, the energy may subsequently</span>
+<span class="sd">    be computed by calling :code:`compute_field_and_kinetic_energy`.</span>
+
+<span class="sd">    Computes the particle-field external potential :math:`V_\\text{ext}` from</span>
+<span class="sd">    particle number densities through the smoothed density field,</span>
+<span class="sd">    :math:`\\phi(\\mathbf{r})`. With :math:`P` being the cloud-in-cell (CIC)</span>
+<span class="sd">    window function, the density and filtered densities are computed as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\phi(\\mathbf{r}) = \\sum_i P(\\mathbf{r}-\\mathbf{r}_i),</span>
+
+<span class="sd">    and</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\tilde\\phi(\\mathbf{r}) = \\int\\mathrm{x}\\mathbf{r}\\,</span>
+<span class="sd">            \\phi(\\mathbf{x})H(\\mathbf{r}-\\mathbf{x}),</span>
+
+<span class="sd">    where :math:`H` is the grid-independent filtering function. The</span>
+<span class="sd">    external potential is computed in reciprocal space as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        V_\\text{ext} = \\mathrm{FFT}^{-1}\\left[</span>
+<span class="sd">            \\mathrm{FFT}</span>
+<span class="sd">                \\left(</span>
+<span class="sd">                    \\frac{\\partial w}{\\partial \\tilde\\phi}</span>
+<span class="sd">                \\right)</span>
+<span class="sd">            \\mathrm{FFT}(H)</span>
+<span class="sd">        \\right],</span>
+
+<span class="sd">    where :math:`w` is the interaction energy functional. Differentiating</span>
+<span class="sd">    :math:`V_\\text{ext}` is done by simply applying :math:`i\\mathbf{k}` in</span>
+<span class="sd">    Fourier space, and the resulting forces are back-transformed to direct</span>
+<span class="sd">    space and interpolated to particle positions by</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathbf{F}_j = -\\sum_{j_k} \\nabla V_{j_k}</span>
+<span class="sd">            P(\\mathbf{r}_{j_k} - \\mathbf{r}_j)h^3,</span>
+
+<span class="sd">    where :math:`j_k` are the neighbouring vertices of particle :math:`j` at</span>
+<span class="sd">    position :math:`\\mathbf{r}_j`, and :math:`h^3` is the volume of each grid</span>
+<span class="sd">    voxel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    phi : list[pmesh.pm.RealField]</span>
+<span class="sd">        Pmesh :code:`RealField` objects containing discretized particle number</span>
+<span class="sd">        density values on the computational grid; one for each particle type.</span>
+<span class="sd">        Pre-allocated, but empty; any values in this field are discarded.</span>
+<span class="sd">        Changed in-place. Local for each MPI rank--the full computaional grid</span>
+<span class="sd">        is represented by the collective fields of all MPI ranks.</span>
+<span class="sd">    layouts : list[pmesh.domain.Layout]</span>
+<span class="sd">        Pmesh communication layout objects for domain decompositions of each</span>
+<span class="sd">        particle type. Used as blueprint by :code:`pmesh.pm.readout` for</span>
+<span class="sd">        exchange of particle information across MPI ranks as necessary.</span>
+<span class="sd">    force_mesh : list[pmesh.pm.RealField]</span>
+<span class="sd">        Pmesh :code:`RealField` objects containing discretized particle-field</span>
+<span class="sd">        force density values on the computational grid; :code:`D` fields in D</span>
+<span class="sd">        dimensions for each particle type. Pre-allocated, but empty; any values</span>
+<span class="sd">        in this field are discarded. Changed in-place. Local for each MPI</span>
+<span class="sd">        rank--the full computaional grid is represented by the collective</span>
+<span class="sd">        fields of all MPI ranks.</span>
+<span class="sd">    hamiltonian : Hamiltonian</span>
+<span class="sd">        Particle-field interaction energy handler object. Defines the</span>
+<span class="sd">        grid-independent filtering function, :math:`H`.</span>
+<span class="sd">    pm : pmesh.pm.ParticleMesh</span>
+<span class="sd">        Pmesh :code:`ParticleMesh` object interfacing to the CIC window</span>
+<span class="sd">        function and the PFFT discrete Fourier transform library.</span>
+<span class="sd">    positions : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">    types : (N,) numpy.ndarray</span>
+<span class="sd">        Array of type indices for each of :code:`N` particles. Local for each</span>
+<span class="sd">        MPI rank.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+<span class="sd">    v_ext : list[pmesh.pm.RealField]</span>
+<span class="sd">        Pmesh :code:`RealField` objects containing discretized particle-field</span>
+<span class="sd">        external potential values on the computational grid; one for each</span>
+<span class="sd">        particle type. Pre-allocated, but empty; any values in this field are</span>
+<span class="sd">        discarded Changed in-place. Local for each MPI rank--the full</span>
+<span class="sd">        computaional grid is represented by the collective fields of all MPI</span>
+<span class="sd">        ranks.</span>
+<span class="sd">    phi_fourier : list[pmesh.pm.ComplexField]</span>
+<span class="sd">        Pmesh :code:`ComplexField` objects containing discretized particle</span>
+<span class="sd">        number density values in reciprocal space on the computational grid;</span>
+<span class="sd">        one for each particle type. Pre-allocated, but empty; any values in</span>
+<span class="sd">        this field are discarded Changed in-place. Local for each MPI rank--the</span>
+<span class="sd">        full computaional grid is represented by the collective fields of all</span>
+<span class="sd">        MPI ranks.</span>
+<span class="sd">    v_ext_fourier : list[pmesh.pm.ComplexField]</span>
+<span class="sd">        Pmesh :code:`ComplesField` objects containing discretized</span>
+<span class="sd">        particle-field external potential values in reciprocal space on the</span>
+<span class="sd">        computational grid; :code:`D+1` fields in D dimensions for each</span>
+<span class="sd">        particle type. :code:`D` copies are made after calculation for later</span>
+<span class="sd">        use in force calculation, because the `force transfer function`</span>
+<span class="sd">        application differentiates the field in-place, ruining the contents</span>
+<span class="sd">        for differentiation in the remaining :code:`D-1` spatial directions.</span>
+<span class="sd">        Pre-allocated, but empty; any values in this field are discarded.</span>
+<span class="sd">        Changed in-place. Local for each MPI rank--the full computaional grid</span>
+<span class="sd">        is represented by the collective fields of all MPI ranks.</span>
+<span class="sd">    compute_potential : bool, optional</span>
+<span class="sd">        If :code:`True`, a :code:`D+1`-th copy of the Fourier transformed</span>
+<span class="sd">        external potential field is made to be used later in particle-field</span>
+<span class="sd">        energy calculation. If :code:`False`, only :code:`D` copies are made.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    compute_field_and_kinetic_energy :</span>
+<span class="sd">        Compute the particle-field energy after the external potential is</span>
+<span class="sd">        calculated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="p">)</span>
+    <span class="n">n_mesh_cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mesh_size</span><span class="p">))</span>
+    <span class="n">volume_per_cell</span> <span class="o">=</span> <span class="n">V</span> <span class="o">/</span> <span class="n">n_mesh_cells</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">):</span>
+        <span class="n">pm</span><span class="o">.</span><span class="n">paint</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="n">types</span> <span class="o">==</span> <span class="n">t</span><span class="p">],</span> <span class="n">layout</span><span class="o">=</span><span class="n">layouts</span><span class="p">[</span><span class="n">t</span><span class="p">],</span> <span class="n">out</span><span class="o">=</span><span class="n">phi</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+        <span class="n">phi</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">/=</span> <span class="n">volume_per_cell</span>
+        <span class="n">phi</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">r2c</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">phi_fourier</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+        <span class="n">phi_fourier</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">hamiltonian</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="bp">Ellipsis</span><span class="p">)</span>
+        <span class="n">phi_fourier</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">c2r</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">phi</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+    <span class="c1"># External potential</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">):</span>
+        <span class="n">hamiltonian</span><span class="o">.</span><span class="n">v_ext</span><span class="p">[</span><span class="n">t</span><span class="p">](</span><span class="n">phi</span><span class="p">)</span><span class="o">.</span><span class="n">r2c</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">hamiltonian</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="bp">Ellipsis</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span>
+            <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">casting</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">,</span>
+            <span class="n">where</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span>
+            <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">casting</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">,</span>
+            <span class="n">where</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">compute_potential</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span>
+                <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">casting</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">,</span>
+                <span class="n">where</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Differentiate the external potential in fourier space</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">force_transfer_function</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">):</span>
+                <span class="k">return</span> <span class="o">-</span><span class="n">k</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">v</span>
+
+            <span class="n">v_ext_fourier</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">force_transfer_function</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="bp">Ellipsis</span><span class="p">)</span>
+            <span class="n">v_ext_fourier</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">c2r</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">force_mesh</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="n">d</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">compute_potential</span><span class="p">:</span>
+            <span class="n">v_ext_fourier</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">c2r</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">v_ext</span><span class="p">[</span><span class="n">t</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="compute_field_and_kinetic_energy"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.field.compute_field_and_kinetic_energy">[docs]</a><span class="k">def</span> <span class="nf">compute_field_and_kinetic_energy</span><span class="p">(</span>
+    <span class="n">phi</span><span class="p">,</span> <span class="n">velocity</span><span class="p">,</span> <span class="n">hamiltonian</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">v_ext</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">layouts</span><span class="p">,</span>
+    <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute the particle-field and kintic energy contributions</span>
+
+<span class="sd">    Calculates the kinetic energy through</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E_k = \\sum_j \\frac{1}{2}m_j\\mathbf{v}_j\\cdot\\mathbf{v}_j,</span>
+
+<span class="sd">    and the particle-field energy by</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        E_\\text{field} = \\int\\mathrm{d}\\mathbf{r}\\,</span>
+<span class="sd">            w[\\tilde\\phi],</span>
+
+<span class="sd">    where :math:`w` is the interaction energy functional `density`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    phi : list[pmesh.pm.RealField]</span>
+<span class="sd">        Pmesh :code:`RealField` objects containing discretized particle number</span>
+<span class="sd">        density values on the computational grid; one for each particle type.</span>
+<span class="sd">        Local for each MPI rank--the full computaional grid is represented by</span>
+<span class="sd">        the collective fields of all MPI ranks.</span>
+<span class="sd">    velocity : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of velocities for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">    hamiltonian : Hamiltonian</span>
+<span class="sd">        Particle-field interaction energy handler object. Defines the</span>
+<span class="sd">        grid-independent filtering function, :math:`H`.</span>
+<span class="sd">    positions : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">    types : (N,) numpy.ndarray</span>
+<span class="sd">        Array of type indices for each of :code:`N` particles. Local for each</span>
+<span class="sd">        MPI rank.</span>
+<span class="sd">    v_ext : list[pmesh.pm.RealField]</span>
+<span class="sd">        Pmesh :code:`RealField` objects containing discretized particle-field</span>
+<span class="sd">        external potential values on the computational grid; one for each</span>
+<span class="sd">        particle type. Local for each MPI rank--the full computaional grid is</span>
+<span class="sd">        represented by the collective fields of all MPI ranks.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+<span class="sd">    layouts : list[pmesh.domain.Layout]</span>
+<span class="sd">        Pmesh communication layout objects for domain decompositions of each</span>
+<span class="sd">        particle type. Used as blueprint by :code:`pmesh.pm.readout` for</span>
+<span class="sd">        exchange of particle information across MPI ranks as necessary.</span>
+<span class="sd">    comm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank commuication.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    update_field :</span>
+<span class="sd">        Computes the up-to-date external potential for use in calculating the</span>
+<span class="sd">        particle-field energy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="p">)</span>
+    <span class="n">n_mesh__cells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mesh_size</span><span class="p">))</span>
+    <span class="n">volume_per_cell</span> <span class="o">=</span> <span class="n">V</span> <span class="o">/</span> <span class="n">n_mesh__cells</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="n">hamiltonian</span><span class="o">.</span><span class="n">w</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">volume_per_cell</span>
+    <span class="n">field_energy</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">csum</span><span class="p">()</span>
+    <span class="n">kinetic_energy</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocity</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">field_energy</span><span class="p">,</span> <span class="n">kinetic_energy</span></div>
+
+
+<div class="viewcode-block" id="domain_decomposition"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.field.domain_decomposition">[docs]</a><span class="k">def</span> <span class="nf">domain_decomposition</span><span class="p">(</span>
+    <span class="n">positions</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">molecules</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bonds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Performs domain decomposition</span>
+
+<span class="sd">    Rearranges the MPI rank memory layout into one that better mimics the PFFT</span>
+<span class="sd">    pencil grid 2D decomposition. As molecules are always required to be fully</span>
+<span class="sd">    contained on a single MPI rank, a perfect decomposition is not always</span>
+<span class="sd">    possible. The best decomposition which leaves the center of mass of all</span>
+<span class="sd">    molecules in their respective correct domains is used, with possible</span>
+<span class="sd">    overlap into neighbouring domains if the spatial extent of any molecule</span>
+<span class="sd">    crosses domain boundaries.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    positions : (N,D) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">    pm : pmesh.pm.ParticleMesh</span>
+<span class="sd">        Pmesh :code:`ParticleMesh` object interfacing to the CIC window</span>
+<span class="sd">        function and the PFFT discrete Fourier transform library.</span>
+<span class="sd">    *args</span>
+<span class="sd">        Variable length argument list containing arrays to include in the</span>
+<span class="sd">        domain decomposition.</span>
+<span class="sd">    molecules : (N,) numpy.ndarray, optional</span>
+<span class="sd">        Array of integer molecule affiliation for each of :code:`N` particles.</span>
+<span class="sd">        Global (across all MPI ranks) or local (local indices on this MPI rank</span>
+<span class="sd">        only) may be used, both, without affecting the result.</span>
+<span class="sd">    bonds : (N,M) numpy.ndarray, optional</span>
+<span class="sd">        Array of :code:`M` bonds originating from each of :code:`N` particles.</span>
+<span class="sd">    verbose : int, optional</span>
+<span class="sd">        Specify the logging event verbosity of this function.</span>
+<span class="sd">    comm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank commuication.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Domain decomposed :code:`positions` and any array specified in</span>
+<span class="sd">    :code:`*args`, in addition to :code:`bonds` and :code:`molecules` if these</span>
+<span class="sd">    arrays were provided as input.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">molecules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">bonds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;bonds must be provided with molecules&quot;</span>
+        <span class="n">unique_molecules</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">molecules</span><span class="p">))</span>
+        <span class="n">molecules_com</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">unique_molecules</span><span class="p">:</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">molecules</span> <span class="o">==</span> <span class="n">m</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:][</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">molecules_com</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">r</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="n">molecules_com</span><span class="p">,</span> <span class="n">smoothing</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">bonds</span><span class="p">,</span> <span class="n">molecules</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">smoothing</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+            <span class="s2">&quot;DOMAIN_DECOMP: Total number of particles to be exchanged = </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">get_exchange_cost</span><span class="p">()),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">layout</span><span class="o">.</span><span class="n">exchange</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

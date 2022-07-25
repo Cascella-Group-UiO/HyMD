@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hymd.hamiltonian &mdash; hymd 1.0.6-post1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html">
+            <img src="../../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.6-post1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#hamiltonian">4.3. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.force">4.4. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#logger">4.5. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.input_parser">4.6. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.field">4.7. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.file_io">4.8. File input/output</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>hymd.hamiltonian</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hymd.hamiltonian</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Interaction energy functionals.</span>
+
+<span class="sd">Implements field--particle interaction energy functionals depending on the</span>
+<span class="sd">field configuration. Extending HyMD with a new Hamiltonian is done by</span>
+<span class="sd">subclassing the :code:`Hamiltonian` superclass with logic intialized in the</span>
+<span class="sd">constructor.</span>
+
+<span class="sd">The grid-independent filtering function is defined in the :code:`Hamiltonian`</span>
+<span class="sd">superclass constructor. Hijack :code:`self.H` in a subclass to change the</span>
+<span class="sd">filter.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sympy</span>
+
+
+<div class="viewcode-block" id="Hamiltonian"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.Hamiltonian">[docs]</a><span class="k">class</span> <span class="nc">Hamiltonian</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Interaction energy functional superclass</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Hamiltonian.__init__"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.Hamiltonian.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : Config</span>
+<span class="sd">            Configuration object.</span>
+
+<span class="sd">        See also</span>
+<span class="sd">        --------</span>
+<span class="sd">        hymd.input_parser.Config : Configuration dataclass handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Hamiltonian._setup"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.Hamiltonian._setup">[docs]</a>    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Superclass setup</span>
+
+<span class="sd">        Sets up the grid-independent filtering function :code:`H`, and the</span>
+<span class="sd">        SymPy logic for symbolically differentiating interaction energy</span>
+<span class="sd">        functionals in Hamiltonian subclasses.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;simulation_volume&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">simulation_volume</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rho0</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">simulation_volume</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="s2">&quot;phi:</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">unique_names</span><span class="p">)))</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="s2">&quot;k:</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">fourier_space_window_function</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">sympy</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">elementary</span><span class="o">.</span><span class="n">exponential</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+                <span class="o">-</span><span class="mf">0.5</span>
+                <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="o">*</span> <span class="p">(</span><span class="n">k0</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">k1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">k2</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># noqa: F821, E501</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">window_function_lambda</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">lambdify</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">fourier_space_window_function</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">H</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">v</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_function_lambda</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">H</span></div></div>
+
+
+<div class="viewcode-block" id="SquaredPhi"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.SquaredPhi">[docs]</a><span class="k">class</span> <span class="nc">SquaredPhi</span><span class="p">(</span><span class="n">Hamiltonian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple squared density interaction energy functional</span>
+
+<span class="sd">    The interaction energy density takes the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        w[\\tilde\\phi] = \\frac{1}{2\\kappa\\rho_0}</span>
+<span class="sd">            \\left(</span>
+<span class="sd">                \\sum_k \\tilde\\phi_k</span>
+<span class="sd">            \\right)^2,</span>
+
+<span class="sd">    where :math:`\\kappa` is the compressibility and :math:`rho_0` is the</span>
+<span class="sd">    average density of the fully homogenous system. Expressing the species</span>
+<span class="sd">    densities in terms of fluctuations from the average,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathrm{d}\\tilde\\phi_k = \\rho_0 - \\tilde\\phi_k,</span>
+
+<span class="sd">    it is evident that this interaction energy functional is a slight change of</span>
+<span class="sd">    the :code:`DefaultNoChi` Hamiltonian, as the expanded interaction energy</span>
+<span class="sd">    density becomes</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        w[\\tilde\\phi] = \\frac{1}{2\\kappa\\rho_0}</span>
+<span class="sd">            \\left(</span>
+<span class="sd">                6\\rho_0\\left[</span>
+<span class="sd">                    \\sum_k \\mathrm{d}\\tilde\\phi_k</span>
+<span class="sd">                \\right]</span>
+<span class="sd">                +</span>
+<span class="sd">                9\\rho_0^2</span>
+<span class="sd">                +</span>
+<span class="sd">                \\sum_k \\mathrm{d}\\tilde\\phi_k^2</span>
+<span class="sd">                +</span>
+<span class="sd">                \\prod_{k\\not=l}</span>
+<span class="sd">                    \\mathrm{d}\\tilde\\phi_k \\mathrm{d}\\tilde\\phi_l</span>
+<span class="sd">            \\right),</span>
+
+<span class="sd">    identical to :code:`DefaultNoChi` apart from a constant energy shift</span>
+<span class="sd">    :math:`9\\rho_0^2`(which does not impact dynamics) and the</span>
+<span class="sd">    :math:`\\rho_0`--:math:`\\mathrm{d}\\tilde\\phi_k` cross-terms. These</span>
+<span class="sd">    cross-terms constitute contributions to the energy linear in</span>
+<span class="sd">    :math:`\\mathrm{d}\\tilde\\phi_k` absent in :code:`DefaultNoChi`, which has</span>
+<span class="sd">    only quadratic terms present.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    hymd.hamiltonian.DefaultNoChi</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SquaredPhi.__init__"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.SquaredPhi.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : Config</span>
+<span class="sd">            Configuration object.</span>
+
+<span class="sd">        See also</span>
+<span class="sd">        --------</span>
+<span class="sd">        hymd.input_parser.Config : Configuration dataclass handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SquaredPhi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SquaredPhi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SquaredPhi.setup"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.SquaredPhi.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup the interaction energy potential and the external potential</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">w</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">kappa</span><span class="p">,</span> <span class="n">rho0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rho0</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="n">kappa</span> <span class="o">*</span> <span class="n">rho0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_ext</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">sympy</span><span class="o">.</span><span class="n">lambdify</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">],</span> <span class="n">sympy</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">unique_names</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">lambdify</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">],</span> <span class="n">w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="DefaultNoChi"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultNoChi">[docs]</a><span class="k">class</span> <span class="nc">DefaultNoChi</span><span class="p">(</span><span class="n">Hamiltonian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Incompressibility-only interaction energy functional</span>
+
+<span class="sd">    The interaction energy density takes the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        w[\\tilde\\phi] = \\frac{1}{2\\kappa} \\left(</span>
+<span class="sd">            \\sum_k \\tilde\\phi_k - \\rho_0</span>
+<span class="sd">        \\right)^2,</span>
+
+<span class="sd">    where :math:`\\kappa` is the compressibility and :math:`\\rho_0` is the</span>
+<span class="sd">    average density of the fully homogenous system. The :code:`SquaredPhi`</span>
+<span class="sd">    Hamiltonian implements a similar functional with an additional linear term</span>
+<span class="sd">    component depending on</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathmr{d}\\tilde\\phi_k = \\tilde\\phi_k - \\rho_0</span>
+
+<span class="sd">    and not :math:`\\mathrm{d}\\tilde\\phi_k^2`. No explicit inter-species</span>
+<span class="sd">    interaction is present apart from the indirect interaction through the</span>
+<span class="sd">    incompressibility.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    hymd.hamiltonian.DefaultNoChi</span>
+<span class="sd">    hymd.input_parser.Config :</span>
+<span class="sd">        Configuration dataclass handler.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="DefaultNoChi.__init__"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultNoChi.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : Config</span>
+<span class="sd">            Configuration object.</span>
+
+<span class="sd">        See also</span>
+<span class="sd">        --------</span>
+<span class="sd">        hymd.input_parser.Config : Configuration dataclass handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DefaultNoChi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DefaultNoChi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="DefaultNoChi.setup"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultNoChi.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup the interaction energy potential and the external potential</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">w</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">kappa</span><span class="p">,</span> <span class="n">rho0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rho0</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="n">kappa</span> <span class="o">*</span> <span class="n">rho0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">-</span> <span class="n">rho0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_ext</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">sympy</span><span class="o">.</span><span class="n">lambdify</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">],</span> <span class="n">sympy</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">unique_names</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">lambdify</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">],</span> <span class="n">w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="DefaultWithChi"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultWithChi">[docs]</a><span class="k">class</span> <span class="nc">DefaultWithChi</span><span class="p">(</span><span class="n">Hamiltonian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Incompressibility and :math:`\\chi`-interactions energy functional</span>
+
+<span class="sd">    The interaction energy density takes the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        w[\\tilde\\phi] =</span>
+<span class="sd">            \\frac{1}{2\\rho_0}</span>
+<span class="sd">                \\sum_{k,l}\\chi_{kl} \\tilde\\phi_k \\tilde\\phi_l</span>
+<span class="sd">            +</span>
+<span class="sd">            \\frac{1}{2\\kappa} \\left(</span>
+<span class="sd">                \\sum_k \\tilde\\phi_k - \\rho_0</span>
+<span class="sd">            \\right)^2,</span>
+
+<span class="sd">    where :math:`\\kappa` is the incompressibility, :math:`\\rho_0` is the</span>
+<span class="sd">    average density of the fully homogenous system and :math:`\\chi_{ij}` is</span>
+<span class="sd">    the Flory-Huggins-like inter-species mixing energy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="DefaultWithChi.__init__"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultWithChi.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">unique_names</span><span class="p">,</span> <span class="n">type_to_name_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : Config</span>
+<span class="sd">            Configuration object.</span>
+<span class="sd">        unique_names : numpy.ndarray</span>
+<span class="sd">            Sorted array of all distinct names of different species present in</span>
+<span class="sd">            the simulation. Result of :code:`numpy.unique(all_names)`, where</span>
+<span class="sd">            :code:`all_names` is the gathered union of all individual MPI</span>
+<span class="sd">            ranks&#39; :code:`names` arrays.</span>
+<span class="sd">        type_to_name_map : dict[int, str]</span>
+<span class="sd">            Dictionary of the mapping from type indices (integers) to type</span>
+<span class="sd">            names.</span>
+
+<span class="sd">        See also</span>
+<span class="sd">        --------</span>
+<span class="sd">        hymd.input_parser.Config : Configuration dataclass handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DefaultWithChi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DefaultWithChi</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">unique_names</span><span class="p">,</span> <span class="n">type_to_name_map</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DefaultWithChi.setup"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultWithChi.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_names</span><span class="p">,</span> <span class="n">type_to_name_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Setup the interaction energy potential and the external potential</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        unique_names : numpy.ndarray</span>
+<span class="sd">            Sorted array of all distinct names of different species present in</span>
+<span class="sd">            the simulation. Result of :code:`numpy.unique(all_names)`, where</span>
+<span class="sd">            :code:`all_names` is the gathered union of all individual MPI</span>
+<span class="sd">            ranks&#39; :code:`names` arrays.</span>
+<span class="sd">        type_to_name_map : dict[int, str]</span>
+<span class="sd">            Dictionary of the mapping from type indices (integers) to type</span>
+<span class="sd">            names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_to_name_map</span> <span class="o">=</span> <span class="n">type_to_name_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chi_type_dictionary</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">atom_1</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">atom_2</span><span class="p">])):</span> <span class="n">c</span><span class="o">.</span><span class="n">interaction_energy</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">chi</span>
+        <span class="p">}</span>
+
+        <span class="k">def</span> <span class="nf">w</span><span class="p">(</span>
+            <span class="n">phi</span><span class="p">,</span>
+            <span class="n">kappa</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">kappa</span><span class="p">,</span>
+            <span class="n">rho0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rho0</span><span class="p">,</span>
+            <span class="n">chi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">chi</span><span class="p">,</span>
+            <span class="n">type_to_name_map</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type_to_name_map</span><span class="p">,</span>
+            <span class="n">chi_type_dictionary</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">chi_type_dictionary</span><span class="p">,</span>
+        <span class="p">):</span>
+
+            <span class="n">interaction</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">):</span>
+                    <span class="n">ni</span> <span class="o">=</span> <span class="n">type_to_name_map</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">nj</span> <span class="o">=</span> <span class="n">type_to_name_map</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">])</span>
+                    <span class="n">c</span> <span class="o">=</span> <span class="n">chi_type_dictionary</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">names</span><span class="p">)]</span>
+
+                    <span class="n">interaction</span> <span class="o">+=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">phi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">phi</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="n">rho0</span>
+            <span class="n">incompressibility</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="n">kappa</span> <span class="o">*</span> <span class="n">rho0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">-</span> <span class="n">rho0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="k">return</span> <span class="n">incompressibility</span> <span class="o">+</span> <span class="n">interaction</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_ext</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">sympy</span><span class="o">.</span><span class="n">lambdify</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">],</span> <span class="n">sympy</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">unique_names</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">sympy</span><span class="o">.</span><span class="n">lambdify</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">],</span> <span class="n">w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">))</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
