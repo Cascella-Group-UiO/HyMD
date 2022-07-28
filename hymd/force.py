@@ -749,3 +749,34 @@ def dipole_forces_redistribution(
 
                 # Atom D
                 f_on_bead[l] += matrix[5] @ tot_force + 0.5 * tot_force
+
+def wrapped_C_bonded_functions(dtype):
+    import ctypes
+    from numpy.ctypeslib import ndpointer
+    from sysconfig import get_config_var
+
+    ext_suffix = get_config_var("EXT_SUFFIX")
+    if dtype == np.float64:
+        filename = f"./force_kernels__double{ext_suffix}"
+        c_type = ctypes.c_double
+    else:
+        filename = f"./force_kernels{ext_suffix}"
+        c_type = ctypes.c_float
+    library = ctypes.cdll.LoadLibrary(filename)
+    cbf = library.cbf
+    cbf.restype = ctypes.c_double
+    cbf.argtypes = [
+        ndpointer(c_type, flags="C_CONTIGUOUS"), # forces
+        ndpointer(c_type, flags="C_CONTIGUOUS"), # positions
+        ndpointer(c_type, flags="C_CONTIGUOUS"), # box
+        ctypes.c_size_t, # number of bonds, len(bonds_2_atom1)
+        ndpointer(ctypes.c_int, flags="C_CONTIGUOUS"), # bonds_2_atom1
+        ndpointer(ctypes.c_int, flags="C_CONTIGUOUS"), # bonds_2_atom2
+        ndpointer(c_type, flags="C_CONTIGUOUS"), # bonds_2_equilibrium
+        ndpointer(c_type, flags="C_CONTIGUOUS"), # bonds_2_strength
+    ]
+    # Do the same for caf and cdf
+    # Then in main.py
+    # compute_bond_forces, compute_angle_forces, compute_dihedral_forces = wrapped_C_bonded_functions(dtype)
+    return cbf #,caf, cdf
+

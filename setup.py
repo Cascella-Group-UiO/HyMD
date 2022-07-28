@@ -1,5 +1,4 @@
-import setuptools  # noqa: F401, https://stackoverflow.com/a/55358607/4179419
-from numpy.distutils.core import setup, Extension
+from setuptools import setup, Extension # Don't need to use numpy for compiling C code, I think
 
 
 def find_version(path):
@@ -18,7 +17,7 @@ with open('README.md', 'r') as in_file:
 force_kernels = Extension(
     name="force_kernels",
     sources=[
-        "hymd/compute_bond_forces.f90",
+        "hymd/compute_bond_forces.c",
         "hymd/compute_bond_forces__double.f90",
         "hymd/compute_angle_forces.f90",
         "hymd/compute_angle_forces__double.f90",
@@ -26,6 +25,15 @@ force_kernels = Extension(
         "hymd/compute_dihedral_forces__double.f90",
         "hymd/dipole_reconstruction.f90",
         "hymd/dipole_reconstruction__double.f90",
+    ]
+)
+force_kernels__double = Extension(
+    name="force_kernels__double",
+    sources=[
+        "hymd/compute_bond_forces__double.c",
+        "hymd/compute_angle_forces__double.c",
+        "hymd/compute_dihedral_forces__double.c",
+        "hymd/dipole_reconstruction__double.c",
     ]
 )
 
@@ -40,7 +48,7 @@ setup(
     license="LGPLv3",
     packages=["hymd"],
     version=find_version("hymd/version.py"),
-    ext_modules=[force_kernels],
+    ext_modules=[force_kernels, force_kernels__double],
     setup_requires=[
         "cython",
         "numpy",

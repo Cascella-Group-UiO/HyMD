@@ -17,7 +17,7 @@ from .field import (compute_field_force, update_field,
                     update_field_force_q, compute_field_energy_q,)
 from .thermostat import (csvr_thermostat, cancel_com_momentum,
                          generate_initial_velocities)
-from .force import dipole_forces_redistribution, prepare_bonds
+from .force import dipole_forces_redistribution, prepare_bonds, wrapped_C_bonded_functions
 from .integrator import integrate_velocity, integrate_position
 
 
@@ -58,6 +58,7 @@ def main():
         from .force import (
             compute_dihedral_forces__fortran as compute_dihedral_forces
         )
+    # compute_bond_forces, compute_angle_forces, compute_dihedral_forces = wrapped_C_bonded_functions(dtype)
 
     driver = "mpio" if not args.disable_mpio else None
     _kwargs = {"driver": driver, "comm": comm} if not args.disable_mpio else {}
