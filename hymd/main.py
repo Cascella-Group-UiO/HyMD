@@ -453,8 +453,6 @@ def main():
         )
         if charges_flag:
             forces_out += elec_forces
-        if args.plumed:
-            forces_out += plumed_forces
 
     # initialize PLUMED and get initial forces and bias
     if args.plumed:
@@ -492,6 +490,9 @@ def main():
 
     # log after PLUMED forces and bias have been calculated
     if config.n_print > 0:
+        if args.plumed:
+            forces_out += plumed_forces
+
         store_data(
             out_dataset, step, frame, indices, positions, velocities,
             forces_out, config.box_size, temperature, kinetic_energy,
