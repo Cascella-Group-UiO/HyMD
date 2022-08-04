@@ -455,15 +455,6 @@ def main():
             forces_out += elec_forces
         if args.plumed:
             forces_out += plumed_forces
-        store_data(
-            out_dataset, step, frame, indices, positions, velocities,
-            forces_out, config.box_size, temperature, kinetic_energy,
-            bond_energy, angle_energy, dihedral_energy, field_energy,
-            field_q_energy, plumed_bias, config.time_step, config,
-            velocity_out=args.velocity_output, force_out=args.force_output,
-            charge_out=charges_flag, plumed_out=True if args.plumed else False,
-            dump_per_particle=args.dump_per_particle, comm=comm,
-        )
 
     # initialize PLUMED and get initial forces and bias
     if args.plumed:
@@ -498,6 +489,18 @@ def main():
 
         # get the forces and bias from PLUMED
         plumed_forces, plumed_bias = plumed.calc(current_forces, poteng)
+
+    # log after PLUMED forces and bias have been calculated
+    if config.n_print > 0:
+        store_data(
+            out_dataset, step, frame, indices, positions, velocities,
+            forces_out, config.box_size, temperature, kinetic_energy,
+            bond_energy, angle_energy, dihedral_energy, field_energy,
+            field_q_energy, plumed_bias, config.time_step, config,
+            velocity_out=args.velocity_output, force_out=args.force_output,
+            charge_out=charges_flag, plumed_out=True if args.plumed else False,
+            dump_per_particle=args.dump_per_particle, comm=comm,
+        )
 
     if rank == 0:
         loop_start_time = datetime.datetime.now()
