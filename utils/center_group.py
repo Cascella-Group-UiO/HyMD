@@ -68,7 +68,7 @@ if __name__ == '__main__':
     description = 'Center geometric center of beads in the box for each frame in a .H5 trajectory'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('h5md_file', type=str, help='input .H5MD file name')
-    parser.add_argument('--beads', type=parse_bead_list, nargs='+', required=True,
+    parser.add_argument('-b', '--beads', type=parse_bead_list, nargs='+', required=True,
                         help='bead list to center (e.g.: 1-100 102-150)')
     parser.add_argument('--out', type=str, default=None, dest='out_path',
                         metavar='file name', help='output hymd HDF5 file name')
