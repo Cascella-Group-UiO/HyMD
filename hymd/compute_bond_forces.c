@@ -13,9 +13,9 @@ float cbf(float* f, float* r, float* box, size_t n_bonds, int* a, int* b, float*
         rab[1] = r[bb + 1] - r[aa + 1];
         rab[2] = r[bb + 2] - r[aa + 2];
 
-        rab[0] -= box[0] * nearbyint(rab[0]/box[0]);
-        rab[1] -= box[1] * nearbyint(rab[1]/box[1]);
-        rab[2] -= box[2] * nearbyint(rab[2]/box[2]);
+        rab[0] -= box[0] * round(rab[0]/box[0]);
+        rab[1] -= box[1] * round(rab[1]/box[1]);
+        rab[2] -= box[2] * round(rab[2]/box[2]);
 
         rab_norm = sqrt(rab[0] * rab[0] + rab[1] * rab[1] + rab[2] * rab[2]);
 
