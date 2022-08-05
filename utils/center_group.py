@@ -70,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('h5md_file', type=str, help='input .H5MD file name')
     parser.add_argument('-b', '--beads', type=parse_bead_list, nargs='+', required=True,
                         help='bead list to center (e.g.: 1-100 102-150)')
-    parser.add_argument('--out', type=str, default=None, dest='out_path',
+    parser.add_argument('-o', '--out', type=str, default=None, dest='out_path',
                         metavar='file name', help='output hymd HDF5 file name')
     parser.add_argument('-f', action='store_true', default=False, dest='force',
                         help='overwrite existing output file')
