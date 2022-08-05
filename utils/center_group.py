@@ -9,11 +9,11 @@ def parse_bead_list(string):
     m = re.match(r'(\d+)(?:-(\d+))?$', string)
     if not m:
         raise argparse.ArgumentTypeError("'" + string + "' is not a range of number. Expected forms like '0-5' or '2'.")
-    start = m.group(1)
-    end = m.group(2) or start
-    if int(end) < int(start):
+    start = int(m.group(1), base=10)
+    end = int(m.group(2), base=10) or start
+    if end < start:
         raise argparse.ArgumentTypeError(f"Start value ({start}) should be larger than final value ({end})")
-    return list(range(int(start,10), int(end,10)+1))
+    return list(range(start, end + 1))
 
 def get_centers(positions, box):
     centers = np.empty((0,positions.shape[2]))
