@@ -6,7 +6,7 @@ import os
 import logging
 import getpass
 from mpi4py import MPI
-from .logger import Logger
+from .logger import Logger, get_version
 
 
 class OutDataset:
@@ -168,31 +168,20 @@ def store_static(
     creator_group = h5md_group.create_group("creator")
     creator_group.attrs["name"] = np.string_("Hylleraas MD")
 
-    # Check if we are in a git repo and grab the commit hash and the branch if
-    # we are, append it to the version number in the output specification. Also
-    # grab the user email from git config if we can find it.
+    # Get HyMD version. Also grab the user email from git config if we
+    # can find it.
+    creator_group.attrs["version"] = np.string_(get_version())
     try:
         import git
 
         try:
-            repo_dir = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), os.pardir)
-            )
-            repo = git.Repo(repo_dir)
-            commit = repo.head.commit
-            branch = repo.active_branch
-            version_add = f"[{branch}-branch commit {commit}]"
-            try:
-                reader = repo.config_reader()
-                user_email = reader.get_value("user", "email")
-                author_group.attrs["email"] = np.string_(user_email)
-            except KeyError:
-                ...
-        except git.exc.InvalidGitRepositoryError:
-            version_add = ""
-    except ModuleNotFoundError:
-        version_add = ""
-    creator_group.attrs["version"] = np.string_("0.0 " + version_add)
+            reader = repo.config_reader()
+            user_email = reader.get_value("user", "email")
+            author_group.attrs["email"] = np.string_(user_email)
+        except:
+            pass
+    except:
+        pass
 
     h5md.particles_group = h5md.file.create_group("/particles")
     h5md.all_particles = h5md.particles_group.create_group("all")

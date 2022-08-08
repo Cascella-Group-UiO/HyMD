@@ -8,7 +8,7 @@ import atexit
 import cProfile
 import logging
 import pstats
-from .logger import Logger
+from .logger import Logger, print_header
 from .input_parser import read_config_toml, parse_config_toml
 
 
@@ -115,6 +115,9 @@ def configure_runtime(comm):
         log_file=f"{args.destdir}/{args.logfile}",
         verbose=args.verbose,
     )
+
+    # print header info
+    Logger.rank0.log(logging.INFO, print_header())
 
     if args.profile:
         prof_file_name = "cpu.txt-%05d-of-%05d" % (comm.rank, comm.size)
