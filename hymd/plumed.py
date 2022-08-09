@@ -54,8 +54,10 @@ class PlumedBias:
     plumed_version = np.zeros(1, dtype=np.intc)
     comm = None
     ready = False
+    verbose = None
 
-    def __init__(self, config, plumeddat, logfile, comm=MPI.COMM_WORLD):
+    def __init__(self, config, plumeddat, logfile, comm=MPI.COMM_WORLD,
+                 verbose=1):
         """Constructor
 
         Parameters
@@ -66,8 +68,10 @@ class PlumedBias:
             Path file containing PLUMED input.
         logfile : str
             Path to PLUMED's output file
-        comm : mpi4py.Comm
+        comm : mpi4py.Comm, optional
             MPI communicator to use for rank communication.
+        verbose : int, optional
+            Specify the logging event verbosity of this object.
 
         See also
         --------
@@ -79,8 +83,10 @@ class PlumedBias:
                 "but HyMD could not import py-plumed."
             )
             Logger.rank0.log(logging.ERROR, err_str)
-            if comm.Get_rank() == 0:
-                raise ImportError(err_str)
+            raise ImportError(err_str)
+
+        self.comm = comm
+        self.verbose = verbose
 
         Logger.rank0.log(
             logging.INFO, 
@@ -103,13 +109,10 @@ class PlumedBias:
         except:
             err_str = (
                 "HyMD was not able to create a PLUMED object. "
-                "Maybe it is a problem with your PLUMED_KERNEL?"
+                "Maybe there is a problem with your PLUMED_KERNEL?"
             )
             Logger.rank0.log(logging.ERROR, err_str)
-            if comm.Get_rank() == 0:
-                raise RuntimeError(err_str)
-
-        self.comm = comm
+            raise RuntimeError(err_str)
 
         self.plumed_obj.cmd("getApiVersion", self.plumed_version)
         if self.plumed_version[0] <= 3:
@@ -118,8 +121,7 @@ class PlumedBias:
                 "Use a newer PLUMED kernel."
             )
             Logger.rank0.log(logging.ERROR, err_str)
-            if comm.Get_rank() == 0:
-                raise AssertionError(err_str)
+            raise AssertionError(err_str)
 
         self.plumed_obj.cmd("setMDEngine", "HyMD")
 
@@ -153,6 +155,11 @@ class PlumedBias:
         """Set the pointers to positions and forces, and returns
         wether the potential energy is being requested by PLUMED or not.
         """
+        if self.verbose > 1:
+            Logger.rank0.log(
+                logging.INFO, 
+                f"Setting PLUMED pointers for step {step}"
+            )
         self.plumed_forces = forces.astype(np.double)
         self.charges = charges.astype(np.double)
         self.positions = positions.ravel() # get C-contiguous array
@@ -191,16 +198,38 @@ class PlumedBias:
                 "without first calling prepare method."
             )
             Logger.rank0.log(logging.ERROR, err_str)
-            if self.comm.Get_rank() == 0:
-                raise RuntimeError(err_str)      
+            raise RuntimeError(err_str)      
+
+        if self.verbose > 1:
+            Logger.rank0.log(
+                logging.INFO, 
+                "Calculating PLUMED forces"
+            )
 
         # set the energy and calc
         self.plumed_obj.cmd("setEnergy", poteng)
         self.plumed_obj.cmd("performCalc")
         self.plumed_obj.cmd("getBias", self.plumed_bias)
 
+        # check if the returned forces are valid
+        if (np.isnan(self.plumed_forces).any() or 
+            np.isinf(self.plumed_forces).any()):
+            err_str = (
+                "Forces returned by PLUMED are not valid. "
+                "It means there's a NaN or infinite force in "
+                "the computed forces, and your input should be checked."
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            raise RuntimeError(err_str)                  
+
         # subtract forces to get only the bias' extra force
         self.plumed_forces -= forces
+
+        if self.verbose > 1:
+            Logger.rank0.log(
+                logging.INFO, 
+                "Done calculating PLUMED forces"
+            )
 
         self.ready = False
         return self.plumed_forces, self.plumed_bias[0]

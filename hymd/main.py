@@ -460,7 +460,8 @@ def main():
             config, 
             args.plumed, 
             args.plumed_outfile, 
-            comm
+            comm=comm,
+            verbose=args.verbose
         )
 
         current_forces = (bond_forces + angle_forces + dihedral_forces
