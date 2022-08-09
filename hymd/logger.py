@@ -213,9 +213,6 @@ def print_header():
  elastic network with a coarse-grained molecular force field: structure, 
  dynamics, and intermolecular recognition. J. Chem. Theory Comput. 2009, 
  5.9, 2531-2543.
- 
- [6] Pippig, M. PFFT: An extension of FFTW to massively parallel architectures.
- SIAM J. Sci. Comput. 2013, 35, C213–C236.
 """
 
     version = f"Version {get_version()}"
