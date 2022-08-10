@@ -26,7 +26,6 @@ hamiltonian = 'DefaultWithChi'
 pressure = true
 barostat = 'semiisotropic'
 
-
 [field]
 mesh_size = [50, 50, 50]
 kappa = 0.05
