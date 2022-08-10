@@ -1,7 +1,7 @@
 import pytest
 from mpi4py import MPI
-from .logger import Logger, get_version, print_header
-from .version import __version__
+from hymd.logger import get_version, print_header
+from hymd.version import __version__
 
 def test_version():
     try:
