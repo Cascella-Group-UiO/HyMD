@@ -174,13 +174,15 @@ class DefaultNoChi(Hamiltonian):
     .. math::
 
         w[\\tilde\\phi] = \\frac{1}{2\\kappa} \\left(
-            \\sum_k \\tilde\\phi_k - \\rho_0
+            \\sum_k \\tilde\\phi_k - a
         \\right)^2,
 
-    where :math:`\\kappa` is the compressibility and :math:`\\rho_0` is the
-    average density of the fully homogenous system. The :code:`SquaredPhi`
-    Hamiltonian implements a similar functional with an additional linear term
-    component depending on
+    where :math:`\\kappa` is the compressibility and :math:`a=\\rho_0` for
+    NVT runs where :math:`\\rho_0` is the average density of the fully
+    homogenous system. In case of NPT runs, :math:`a` is a calibrated
+    parameter to obtain the correct average density at the target temperature
+    and pressure. The :code:`SquaredPhi` Hamiltonian implements a similar
+    functional with an additional linear term component depending on
 
     .. math::
 
@@ -260,12 +262,15 @@ class DefaultWithChi(Hamiltonian):
                 \\sum_{k,l}\\chi_{kl} \\tilde\\phi_k \\tilde\\phi_l
             +
             \\frac{1}{2\\kappa} \\left(
-                \\sum_k \\tilde\\phi_k - \\rho_0
+                \\sum_k \\tilde\\phi_k - a
             \\right)^2,
 
-    where :math:`\\kappa` is the incompressibility, :math:`\\rho_0` is the
-    average density of the fully homogenous system and :math:`\\chi_{ij}` is
-    the Flory-Huggins-like inter-species mixing energy.
+    where :math:`\\kappa` is the compressibility and :math:`a=\\rho_0` for
+    NVT runs where :math:`\\rho_0` is the average density of the fully
+    homogenous system. In case of NPT runs, :math:`a` is a calibrated
+    parameter to obtain the correct average density at the target temperature
+    and pressure. :math:`\\chi_{ij}` is the Flory-Huggins-like
+    inter-species mixing energy.
     """
     def __init__(self, config, unique_names, type_to_name_map):
         """Constructor

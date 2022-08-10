@@ -22,6 +22,8 @@ subroutine cbf(f, r, box, i, j, r0, k, energy, bond_pr)
     ! -------
     ! energy : float
     !     Total energy of all two-particle bonds.
+    ! bond_pr : (3,) numpy.ndarray
+    !     Total bond pressure due all two-particle bonds.
     !
     implicit none
 
