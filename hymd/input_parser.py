@@ -183,7 +183,6 @@ class Config:
     thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: Union[int, bool] = False
-    ## samirans version cancel_com_momentum: bool = False
     coulombtype: str = None
     convergence_type: str = None
     pol_mixing: float = None
@@ -198,9 +197,9 @@ class Config:
     a: float = None
     pressure: bool = False
     barostat: str = None
+    barostat_type: str = None
     tau_p: float = None
     target_pressure : List[Target_pressure] = field(default_factory=list)
-    alpha_0: float = None
     n_b: int = None
     m: List[float] = field(default_factory=list)
 
@@ -384,12 +383,8 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "pol_mixing",
         "conv_crit",
         "dielectric_type",
-        "alpha_0",
         "n_b",
         "box_size",
-        "alpha_0",
-        "n_b",
-        "box_size"
     ):
         config_dict[n] = None
 
@@ -793,31 +788,6 @@ def check_K_coupl(config, names, comm=MPI.COMM_WORLD):
     #add warnings and error remarks here
     return config
 
-"""
-def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
-    if config.box_size is not None:
-        config.box_size = np.array(config.box_size, dtype=np.float32)
-        if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
-            err_str = (
-                f"Box size specified in {config.file_name}: "
-                f"{config.box_size} does not match input box:"
-                f"{input_box}"
-            )
-            Logger.rank0.log(logging.ERROR, err_str)
-            if comm.Get_rank() == 0:
-                raise ValueError(err_str)
-    else:
-        if input_box.all():
-            config.box_size = input_box
-        else:
-            err_str = (
-                f"No box information found"
-            )
-            Logger.rank0.log(logging.ERROR, err_str)
-            if comm.Get_rank() == 0:
-                raise ValueError(err_str)
-"""
-
 def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
     if config.box_size is not None:
         config.box_size = np.array(config.box_size, dtype=np.float32)
@@ -1086,8 +1056,15 @@ def check_name(config, comm=MPI.COMM_WORLD):
 
 def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
     """
-    Check validity of barostat, a, rho0, target_pressure, tau_p
+    Check validity of barostat_type, barostat,
+    a, rho0, target_pressure, tau_p
     """
+    if not config.barostat_type:
+        config.barostat_type = 'berendsen'
+        warn_str = "barostat_type not specified,"\
+                "setting to berendsen"
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0: warnings.warn(warn_str)
     if config.barostat is None:
         if(config.tau_p is not None 
                 or (config.target_pressure.P_L and config.target_pressure.P_N) is not None):
@@ -1179,11 +1156,6 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                         "were found in the system"
                     )
                     raise ValueError(err_str)
-    return config
-
-def check_alpha_0(config, comm = MPI.COMM_WORLD):
-    if config.alpha_0 is None:
-        config.alpha_0 = 0.9999999
     return config
 
 def check_m(config, comm = MPI.COMM_WORLD):
@@ -1289,7 +1261,6 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = check_dihedrals(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
     config = check_NPT_conditions(config, comm=comm)
-    config = check_alpha_0(config, comm=comm)
     config = check_n_b(config, comm=comm)
     config = check_m(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
