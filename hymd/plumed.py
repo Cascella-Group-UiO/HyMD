@@ -212,12 +212,11 @@ class PlumedBias:
         self.plumed_obj.cmd("getBias", self.plumed_bias)
 
         # check if the returned forces are valid
-        if (np.isnan(self.plumed_forces).any() or 
-            np.isinf(self.plumed_forces).any()):
+        if np.isnan(self.plumed_forces).any():
             err_str = (
                 "Forces returned by PLUMED are not valid. "
-                "It means there's a NaN or infinite force in "
-                "the computed forces, and your input should be checked."
+                "It means there's a NaN in the computed forces, "
+                "and your input should be checked. "
             )
             Logger.rank0.log(logging.ERROR, err_str)
             raise RuntimeError(err_str)                  
