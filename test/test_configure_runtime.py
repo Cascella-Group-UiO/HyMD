@@ -18,7 +18,7 @@ def test_configure_runtime(h5py_molecules_file, config_toml,
     assert parsed.destdir == "."
     assert parsed.logfile == "sim.log"
 
-    parsed, _ = configure_runtime(["-v 2"]+basearg, comm)
+    parsed, _ = configure_runtime(["-v", "2"]+basearg, comm)
     assert parsed.verbose == 2
 
     parsed, _ = configure_runtime(["--disable-field"]+basearg, comm)
