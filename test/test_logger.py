@@ -34,13 +34,11 @@ def test_logger(tmp_path):
         assert "rank 0" in logcontent[-1]
         assert "TEST INF RANK0"in logcontent[-1]
 
-
     Logger.all_ranks.log(logging.INFO, "TEST INF ALL_RANKS")
     MPI.COMM_WORLD.Barrier()
     with open(logname, 'r') as f:
         logcontent = f.readlines()
         assert "TEST INF ALL_RANKS" in logcontent[-1]
-
 
     Logger.rank0.log(logging.WARNING, "TEST WARN RANK0")
     MPI.COMM_WORLD.Barrier()
@@ -48,7 +46,6 @@ def test_logger(tmp_path):
         logcontent = f.readlines()
         assert " WARNING " in logcontent[-1]
         assert "TEST WARN RANK0" in logcontent[-1]
-
 
     Logger.rank0.log(logging.ERROR, "TEST ERR RANK0")
     MPI.COMM_WORLD.Barrier()
