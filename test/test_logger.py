@@ -24,7 +24,7 @@ def test_logger(tmp_path):
     assert Logger.log_file == logname
 
     # test
-    Logger.rank0.log(logging.INFO, "TEST INFO RANK0")
+    Logger.rank0.log(logging.INFO, "TEST INF RANK0")
     MPI.COMM_WORLD.Barrier()
     with open(logname, 'r') as f:
         logcontent = f.readlines()
@@ -32,30 +32,30 @@ def test_logger(tmp_path):
         assert "test_logger.py" in logcontent[-1]
         assert "<test_logger>" in logcontent[-1]
         assert "rank 0" in logcontent[-1]
-        assert "TEST INFO RANK0"in logcontent[-1]
+        assert "TEST INF RANK0"in logcontent[-1]
 
 
-    Logger.all_ranks.log(logging.INFO, "TEST INFO ALL_RANKS")
+    Logger.all_ranks.log(logging.INFO, "TEST INF ALL_RANKS")
     MPI.COMM_WORLD.Barrier()
     with open(logname, 'r') as f:
         logcontent = f.readlines()
-        assert "TEST INFO ALL_RANKS" in logcontent[-1]
+        assert "TEST INF ALL_RANKS" in logcontent[-1]
 
 
-    Logger.rank0.log(logging.WARNING, "TEST WARNING RANK0")
+    Logger.rank0.log(logging.WARNING, "TEST WARN RANK0")
     MPI.COMM_WORLD.Barrier()
     with open(logname, 'r') as f:
         logcontent = f.readlines()
         assert " WARNING " in logcontent[-1]
-        assert "TEST WARNING RANK0" in logcontent[-1]
+        assert "TEST WARN RANK0" in logcontent[-1]
 
 
-    Logger.rank0.log(logging.ERROR, "TEST ERROR RANK0")
+    Logger.rank0.log(logging.ERROR, "TEST ERR RANK0")
     MPI.COMM_WORLD.Barrier()
     with open(logname, 'r') as f:
         logcontent = f.readlines()
         assert " ERROR " in logcontent[-1]
-        assert "TEST ERROR RANK0" in logcontent[-1]
+        assert "TEST ERR RANK0" in logcontent[-1]
 
 
 def test_version():
