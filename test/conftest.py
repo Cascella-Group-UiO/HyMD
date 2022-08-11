@@ -606,3 +606,8 @@ def v_ext(types, kappa, rho0, sigma):
     def H(k, v):
         return v * H1(k)
     """
+
+
+@pytest.fixture
+def change_tmp_dir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
