@@ -807,13 +807,19 @@ def check_hamiltonian(config, comm=MPI.COMM_WORLD):
 
 
 def check_n_print(config, comm=MPI.COMM_WORLD):
+    if (not isinstance(config.n_print, int) and
+        not isinstance(config.n_print, float)):
+        err_str = (
+            f"invalid value for n_print ({config.n_print})"
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+        raise RuntimeError(err_str)        
+    
     if config.n_print is None or config.n_print < 0:
         config.n_print = False
         return config
     elif not isinstance(config.n_print, int):
-        if isinstance(config.n_print, float) and config.n_print.is_int():
-            config.n_print = int(config.n_print)
-        elif isinstance(config.n_print, float):
+        if isinstance(config.n_print, float):
             warn_str = (
                 f"n_print is a float ({config.n_print}), not int, using "
                 f"{int(round(config.n_print))}"
@@ -822,11 +828,13 @@ def check_n_print(config, comm=MPI.COMM_WORLD):
             if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
 
-            n_print = int(round(config.n_print))
-            if n_print > 0:
-                config.n_print = n_print
-            else:
-                config.n_print = False
+            config.n_print = int(round(config.n_print))
+        else:
+            err_str = (
+                f"invalid value for n_print ({config.n_print})"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            raise RuntimeError(err_str)
     return config
 
 

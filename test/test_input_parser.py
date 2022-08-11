@@ -20,6 +20,7 @@ from hymd.input_parser import (
     check_thermostat_coupling_groups,
     check_cancel_com_momentum,
     check_start_and_target_temperature,
+    check_n_print
 )
 
 
@@ -548,3 +549,40 @@ def test_input_parser_check_start_and_target_temperature(config_toml, caplog):
         assert all([(s in message) for s in ("to negative", "defaulting to")])
         assert all([(s in log) for s in ("to negative", "defaulting to")])
     caplog.clear()
+
+
+def test_input_parser_check_n_print(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.n_print = 1.0
+        config = check_n_print(config)
+        assert config.n_print == 1
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        assert "n_print is a float" in message
+        assert "n_print is a float" in log
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.n_print = 1.27
+        config = check_n_print(config)
+        assert config.n_print == 1
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        assert "n_print is a float" in message
+        assert "n_print is a float" in log
+
+    with pytest.raises(RuntimeError) as recorded_error:
+        config.n_print = "test"
+        _ = check_n_print(config)        
+        log = caplog.text
+        assert "invalid value for n_print" in log
+    message = str(recorded_error.value)
+    assert "invalid value for n_print" in message
+
+    caplog.clear()
+
+def test_input_parser_check_tau():
+    pass
