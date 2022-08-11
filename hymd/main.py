@@ -3,6 +3,7 @@
 import datetime
 import h5py
 import logging
+import sys
 from mpi4py import MPI
 import numpy as np
 import pmesh.pm as pmesh
@@ -34,7 +35,7 @@ def main():
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config = configure_runtime(comm)
+    args, config = configure_runtime(sys.argv[1:], comm)
 
     if args.double_precision:
         dtype = np.float64
