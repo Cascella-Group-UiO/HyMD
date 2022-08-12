@@ -72,7 +72,7 @@ Dependencies
 .. warning::
     There might be memory leaks when using HyMD with OpenMPI 4.1.1.
     Therefore, using a newer version of OpenMPI is recommended.
-    See `Issue #186 <https://github.com/Cascella-Group-UiO/HyMD/issues/186>` for more details.
+    See `Issue #186 <https://github.com/Cascella-Group-UiO/HyMD/issues/186>`_ for more details.
 
 
 **Installing Python dependencies** may be done by
