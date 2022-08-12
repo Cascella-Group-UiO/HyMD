@@ -293,3 +293,29 @@ class DefaultWithChi(Hamiltonian):
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
+
+
+def get_hamiltonian(config):
+    """Return appropriate Hamiltonian object based on the 
+    config.hamiltonian string.
+
+    Parameters
+    ----------
+    config : Config
+        Configuration object.
+
+    Returns
+    ----------
+    hamiltonian : Hamiltonian
+        Hamiltonian object.
+    """
+    if config.hamiltonian.lower() == "defaultnochi":
+        hamiltonian = DefaultNoChi(config)
+    elif config.hamiltonian.lower() == "defaultwithchi":
+        hamiltonian = DefaultWithChi(
+            config, config.unique_names, config.type_to_name_map
+        )
+    elif config.hamiltonian.lower() == "squaredphi":
+        hamiltonian = SquaredPhi(config)
+
+    return hamiltonian

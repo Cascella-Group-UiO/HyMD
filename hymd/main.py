@@ -9,7 +9,7 @@ import numpy as np
 import pmesh.pm as pmesh
 import warnings
 from .configure_runtime import configure_runtime
-from .hamiltonian import DefaultNoChi, DefaultWithChi, SquaredPhi
+from .hamiltonian import get_hamiltonian
 from .input_parser import check_config
 from .logger import Logger, format_timedelta
 from .file_io import distribute_input, OutDataset, store_static, store_data
@@ -147,22 +147,7 @@ def main():
             dtype="f4" if dtype == np.float32 else np.float64, comm=comm
         )
 
-    if config.hamiltonian.lower() == "defaultnochi":
-        hamiltonian = DefaultNoChi(config)
-    elif config.hamiltonian.lower() == "defaultwithchi":
-        hamiltonian = DefaultWithChi(
-            config, config.unique_names, config.type_to_name_map
-        )
-    elif config.hamiltonian.lower() == "squaredphi":
-        hamiltonian = SquaredPhi(config)
-    else:
-        err_str = (
-            f"The specified Hamiltonian {config.hamiltonian} was not "
-            f"recognized as a valid Hamiltonian."
-        )
-        Logger.rank0.log(logging.ERROR, err_str)
-        if rank == 0:
-            raise NotImplementedError(err_str)
+    hamiltonian = get_hamiltonian(config)
 
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
