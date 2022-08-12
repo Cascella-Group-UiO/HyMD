@@ -8,6 +8,8 @@ import numpy as np
 from mpi4py import MPI
 from hymd.input_parser import (
     Config,
+    _find_unique_names,
+    _setup_type_to_name_map,
     read_config_toml,
     parse_config_toml,
     check_n_particles,
@@ -374,6 +376,46 @@ def test_input_parser_check_integrator(config_toml, caplog):
     config = parse_config_toml(config_toml_str)
     assert config.integrator == "respa"
     assert config.respa_inner == 5
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.respa_inner = 1.0
+        config = check_integrator(config)
+        assert config.respa_inner == 1
+        log = caplog.text
+        message = recorded_warning[0].message.args[0]
+        cmp_strings = ("Number of inner rRESPA time steps",
+                       "specified as float")
+        assert all([(s in message) for s in cmp_strings])
+        assert all([(s in log) for s in cmp_strings])
+
+    with pytest.raises(TypeError) as recorded_error:
+        config.respa_inner = "test"
+        _ = check_integrator(config)
+    message = str(recorded_error.value)
+    cmp_strings = ("Invalid number of inner rRESPA time steps", 
+                   "Must be positive integer")
+    assert all([(s in message) for s in cmp_strings])
+
+    with pytest.raises(ValueError) as recorded_error:
+        config.respa_inner = -1
+        _ = check_integrator(config)
+    message = str(recorded_error.value)
+    cmp_strings = ("Invalid number of inner rRESPA time steps", 
+                   "Must be positive integer")
+    assert all([(s in message) for s in cmp_strings])
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.integrator = "velocity-verlet"
+        config.respa_inner = 2
+        config = check_integrator(config)
+        assert config.respa_inner == 1
+        log = caplog.text
+        message = recorded_warning[0].message.args[0]
+        cmp_strings = ("Integrator type Velocity-Verlet specified",
+                       "and inner rRESPA time steps set to",
+                       "Using respa_inner = 1")
+        assert all([(s in message) for s in cmp_strings])
+        assert all([(s in log) for s in cmp_strings])
 
     changed_integrator_toml_str = _change_in_config(
         config_toml_str, "integrator = ", 'integrator = "rsjgyu"'
@@ -758,3 +800,37 @@ def test_input_parser_check_hamiltonian(config_toml, caplog):
 
     caplog.clear()
 
+
+def test_input_parser__find_unique_names(config_toml, dppc_single):
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    _, _, names, _, _, _ = dppc_single
+
+    config = _find_unique_names(config, names)
+    assert hasattr(config, "unique_names")
+    assert isinstance(config.unique_names, list)
+    assert all([(n in config.unique_names) for n in ["N","P","G","C"]])
+    assert hasattr(config, "n_types")
+    assert config.n_types == 4
+
+
+def test_input_parser__setup_type_to_name_map(config_toml, dppc_single):
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    _, _, names, _, _, _ = dppc_single
+
+    names_to_types = {"N":0, "P": 1, "G": 2, "C": 3}
+    types = np.array([names_to_types[n.decode('UTF-8')] for n in names],
+                     dtype=int)
+
+    config = _setup_type_to_name_map(config, names, types)
+    assert hasattr(config, "name_to_type_map")
+    assert isinstance(config.name_to_type_map, dict)
+    assert all([(k in config.name_to_type_map.keys()) 
+                 for k in names_to_types.keys()])
+    assert hasattr(config, "type_to_name_map")
+    assert isinstance(config.type_to_name_map, dict)
+    assert all([(v in config.type_to_name_map.keys()) 
+                 for v in names_to_types.values()])

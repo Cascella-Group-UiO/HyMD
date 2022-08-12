@@ -734,36 +734,33 @@ def check_integrator(config, comm=MPI.COMM_WORLD):
             raise ValueError(err_str)
 
     if config.integrator.lower() == "respa":
-        if not isinstance(config.respa_inner, int):
-            if isinstance(config.respa_inner, float):
-                if config.respa_inner.is_int():
-                    warn_str = (
-                        f"Number of inner rRESPA time steps in "
-                        f"{config.file_name}: {config.respa_inner} specified "
-                        f"as float, using {int(config.respa_inner)}"
-                    )
-                    Logger.rank0.log(logging.WARNING, err_str)
-                    if comm.Get_rank() == 0:
-                        warnings.warn(warn_str)
-                    config.respa_inner = int(config.respa_inner)
-                else:
-                    err_str = (
-                        f"Invalid number of inner rRESPA time steps in "
-                        f"{config.file_name}: {config.respa_inner}. Must be "
-                        f"positive integer"
-                    )
-                    Logger.rank0.log(logging.ERROR, err_str)
-                    if comm.Get_rank() == 0:
-                        raise ValueError(err_str)
-            else:
-                err_str = (
-                    f"Invalid number of inner rRESPA time steps in "
-                    f"{config.file_name}: {config.respa_inner}. Must be "
-                    f"positive integer"
-                )
-                Logger.rank0.log(logging.ERROR, err_str)
-                if comm.Get_rank() == 0:
-                    raise TypeError(err_str)
+        if isinstance(config.respa_inner, float):
+            warn_str = (
+                f"Number of inner rRESPA time steps in "
+                f"{config.file_name}: {config.respa_inner} specified "
+                f"as float, using {int(config.respa_inner)}"
+            )
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+            config.respa_inner = int(config.respa_inner)
+        elif not isinstance(config.respa_inner, int):
+            err_str = (
+                f"Invalid number of inner rRESPA time steps in "
+                f"{config.file_name}: {config.respa_inner}. Must be "
+                f"positive integer"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            raise TypeError(err_str)
+
+        if config.respa_inner <= 0:
+            err_str = (
+                f"Invalid number of inner rRESPA time steps in "
+                f"{config.file_name}: {config.respa_inner}. Must be "
+                f"positive integer"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            raise ValueError(err_str)
 
     if (
         config.integrator.lower() == "velocity-verlet"
