@@ -20,7 +20,13 @@ from hymd.input_parser import (
     check_thermostat_coupling_groups,
     check_cancel_com_momentum,
     check_start_and_target_temperature,
-    check_n_print
+    check_n_print,
+    check_tau,
+    check_mass,
+    check_domain_decomposition,
+    check_name,
+    check_config,
+    check_hamiltonian
 )
 
 
@@ -556,14 +562,9 @@ def test_input_parser_check_n_print(config_toml, caplog):
     _, config_toml_str = config_toml
     config = parse_config_toml(config_toml_str)
 
-    with pytest.warns(Warning) as recorded_warning:
-        config.n_print = 1.0
-        config = check_n_print(config)
-        assert config.n_print == 1
-        message = recorded_warning[0].message.args[0]
-        log = caplog.text
-        assert "n_print is a float" in message
-        assert "n_print is a float" in log
+    config.n_print = None
+    config = check_n_print(config)
+    assert config.n_print == False
 
     with pytest.warns(Warning) as recorded_warning:
         config.n_print = 1.27
@@ -571,18 +572,189 @@ def test_input_parser_check_n_print(config_toml, caplog):
         assert config.n_print == 1
         message = recorded_warning[0].message.args[0]
         log = caplog.text
-        assert "n_print is a float" in message
-        assert "n_print is a float" in log
+        cmp_string = "n_print is a float"
+        assert cmp_string in message
+        assert cmp_string in log
 
     with pytest.raises(RuntimeError) as recorded_error:
         config.n_print = "test"
         _ = check_n_print(config)        
         log = caplog.text
-        assert "invalid value for n_print" in log
+        cmp_string = "invalid value for n_print"
+        assert cmp_string in log
     message = str(recorded_error.value)
-    assert "invalid value for n_print" in message
+    cmp_string = "invalid value for n_print"
+    assert cmp_string in message
 
     caplog.clear()
 
-def test_input_parser_check_tau():
-    pass
+
+def test_input_parser_check_tau(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.tau = None
+        config = check_tau(config)
+        assert config.tau == pytest.approx(0.7)
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        cmp_string = "target temp specified but no tau"
+        assert cmp_string in message
+        assert cmp_string in log
+
+    caplog.clear()
+
+   
+def test_input_parser_check_mass(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    config = check_mass(config)
+    assert config.mass == pytest.approx(72.0)
+
+    config.mass = None
+    config = check_mass(config)
+    log = caplog.text
+    assert config.mass == pytest.approx(72.0)
+    cmp_string = "no mass specified, defaulting to 72.0"
+    assert cmp_string in log
+
+    with pytest.raises(TypeError) as recorded_error:
+        config.mass = "test"
+        _ = check_mass(config)
+    message = str(recorded_error.value)
+    cmp_string = "specified mass is invalid type"
+    assert cmp_string in message
+
+    with pytest.raises(ValueError) as recorded_error:
+        config.mass = -1.0
+        _ = check_mass(config)
+    message = str(recorded_error.value)
+    cmp_string = "invalid mass specified"
+    assert cmp_string in message
+
+    caplog.clear()
+
+
+def test_input_parser_check_domain_decomposition(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    config = check_domain_decomposition(config)
+    assert config.domain_decomposition == False
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.domain_decomposition = -1
+        config = check_domain_decomposition(config)
+        assert config.domain_decomposition == False
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        cmp_string = "negative domain_decomposition specified, using False"
+        assert cmp_string in message
+        assert cmp_string in log
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.domain_decomposition = -1.1
+        config = check_domain_decomposition(config)
+        assert config.domain_decomposition == False
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        cmp_string = "negative domain_decomposition specified, using False"
+        assert cmp_string in message
+        assert cmp_string in log
+    
+    with pytest.warns(Warning) as recorded_warning:
+        config.domain_decomposition = 1.0
+        config = check_domain_decomposition(config)
+        assert config.domain_decomposition == 1
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        cmp_strings = ("domain_decomposition", "is not an integer, using")
+        assert all([(s in message) for s in cmp_strings])
+        assert all([(s in log) for s in cmp_strings])
+
+    with pytest.raises(ValueError) as recorded_error:
+        config.domain_decomposition = "test"
+        _ = check_domain_decomposition(config)
+    message = str(recorded_error.value)
+    cmp_strings = ("invalid value for domain_decomposition", 
+                   "use an integer")
+    assert all([(s in message) for s in cmp_strings])
+
+    caplog.clear()
+
+
+def test_input_parser_check_name(config_toml):
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    config = check_name(config)
+    assert "example config.toml" in config.name
+
+    config.name = None
+    config = check_name(config)
+    assert "sim" in config.name
+
+
+def test_input_parser_check_config(config_toml, dppc_single):
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    config.n_particles = 13
+
+    indices, _, names, _, _, _ = dppc_single
+
+    indices = np.append(indices, [12])
+    names = np.append(names, [b"W"])
+    names_to_types = {"N":0, "P": 1, "G": 2, "C": 3, "W": 4}
+    types = np.array([names_to_types[n.decode('UTF-8')] for n in names],
+                     dtype=int)
+
+    config = check_config(config, indices, names, types)
+    assert isinstance(config, Config)
+
+
+def test_input_parser_check_hamiltonian(config_toml, caplog):
+    caplog.set_level(logging.INFO)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    config = check_hamiltonian(config)
+    assert config.hamiltonian == "DefaultWithChi"
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.hamiltonian = None
+        config = check_hamiltonian(config)
+        assert config.hamiltonian == "DefaultWithChi"
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        cmp_strings = ("No hamiltonian form specified", 
+                       "defaulting to DefaultWithChi")
+        assert all([(s in message) for s in cmp_strings])
+        assert all([(s in log) for s in cmp_strings])
+
+    with pytest.warns(Warning) as recorded_warning:
+        config.hamiltonian = None
+        config.chi = []
+        config = check_hamiltonian(config)
+        assert config.hamiltonian == "DefaultNoChi"
+        message = recorded_warning[0].message.args[0]
+        log = caplog.text
+        cmp_strings = ("No hamiltonian form and no chi", 
+                       "defaulting to DefaultNoChi")
+        assert all([(s in message) for s in cmp_strings])
+        assert all([(s in log) for s in cmp_strings])
+
+    with pytest.raises(NotImplementedError) as recorded_error:
+        config.hamiltonian = "test"
+        _ = check_hamiltonian(config)
+    message = str(recorded_error.value)
+    cmp_strings = ("The specified Hamiltonian", 
+                   "was not recognized as a valid Hamiltonian")
+    assert all([(s in message) for s in cmp_strings])
+
+    caplog.clear()
+
