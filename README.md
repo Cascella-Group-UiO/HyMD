@@ -34,7 +34,7 @@ CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
 ```
 
 > **Note**
-> There might be memory leaks if you use OpenMPI <= 4.1.1. See #186 for more details.
+> There might be memory leaks if you use OpenMPI <= 4.1.1. See [#186](https://github.com/Cascella-Group-UiO/HyMD/issues/186) for more details.
 
 #### Python dependencies
 Install HyMD with `pip` by
