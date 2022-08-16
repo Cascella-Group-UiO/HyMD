@@ -1064,10 +1064,11 @@ def check_charges(charges, comm=MPI.COMM_WORLD):
     total_charge = comm.allreduce(np.sum(charges), MPI.SUM)
 
     if not math.isclose(total_charge, 0.):
-        err_str = (
+        warn_str = (
             f"Charges in the input file do not sum to zero. "
             f"Total charge is {total_charge}."
         )
-        Logger.rank0.log(logging.ERROR, err_str)
-        raise AssertionError(err_str)
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0:
+            warnings.warn(warn_str)
 
