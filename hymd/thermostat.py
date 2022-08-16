@@ -21,8 +21,7 @@ def generate_initial_velocities(velocities, config, prng, comm=MPI.COMM_WORLD):
     velocities[...] = prng.normal(
         loc=0, scale=kT_start / config.mass, size=(n_particles_, 3)
     )
-    com_velocity = comm.allreduce(np.sum(velocities[...], axis=0), MPI.SUM)
-    velocities[...] = velocities[...] - com_velocity / config.n_particles
+    velocities = cancel_com_momentum(velocities, config, comm=comm)
     kinetic_energy = comm.allreduce(
         0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
     )
