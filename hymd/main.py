@@ -34,7 +34,7 @@ def main():
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config = configure_runtime(comm)
+    args, config, prng = configure_runtime(comm)
 
     if args.double_precision:
         dtype = np.float64
@@ -104,7 +104,7 @@ def main():
             config.n_flush = 10000 // config.n_print
 
     if config.start_temperature:
-        velocities = generate_initial_velocities(velocities, config, comm=comm)
+        velocities = generate_initial_velocities(velocities, config, prng, comm=comm)
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
@@ -760,7 +760,7 @@ def main():
 
         # Thermostat
         if config.target_temperature:
-            csvr_thermostat(velocities, names, config, comm=comm)
+            csvr_thermostat(velocities, names, config, prng, comm=comm)
 
         # Remove total linear momentum
         if config.cancel_com_momentum:
