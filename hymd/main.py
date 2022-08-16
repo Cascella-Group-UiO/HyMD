@@ -9,7 +9,7 @@ import pmesh.pm as pmesh
 import warnings
 from .configure_runtime import configure_runtime
 from .hamiltonian import DefaultNoChi, DefaultWithChi, SquaredPhi
-from .input_parser import check_config
+from .input_parser import check_config, check_charges
 from .logger import Logger, format_timedelta
 from .file_io import distribute_input, OutDataset, store_static, store_data
 from .field import (compute_field_force, update_field,
@@ -94,6 +94,9 @@ def main():
             charges_flag = True
         else:
             charges_flag = False
+
+    if charges_flag:
+        check_charges(charges, comm=comm)
 
     config = check_config(config, indices, names, types, comm=comm)
     if config.n_print:
