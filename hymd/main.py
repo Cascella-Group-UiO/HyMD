@@ -99,9 +99,6 @@ def main():
         check_charges(charges, comm=comm)
 
     config = check_config(config, indices, names, types, comm=comm)
-    if config.n_print:
-        if config.n_flush is None:
-            config.n_flush = 10000 // config.n_print
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, prng, comm=comm)

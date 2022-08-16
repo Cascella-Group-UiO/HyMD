@@ -348,6 +348,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "max_molecule_size",
         "coulombtype",
         "dielectric_const",
+        "n_flush",
     ):
         config_dict[n] = None
 
@@ -807,6 +808,13 @@ def check_hamiltonian(config, comm=MPI.COMM_WORLD):
     return config
 
 
+def check_n_flush(config, comm=MPI.COMM_WORLD):
+    if config.n_print:
+        if config.n_flush is None:
+            config.n_flush = 10000 // config.n_print
+    return config
+
+
 def check_n_print(config, comm=MPI.COMM_WORLD):
     if config.n_print is None or config.n_print < 0:
         config.n_print = False
@@ -1048,6 +1056,7 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_hamiltonian(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     config = check_cancel_com_momentum(config, comm=comm)
+    config = check_n_flush(config, comm=comm)
     return config
 
 
