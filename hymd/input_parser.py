@@ -6,6 +6,7 @@ import datetime
 import logging
 import warnings
 import numpy as np
+import math
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
@@ -347,6 +348,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "max_molecule_size",
         "coulombtype",
         "dielectric_const",
+        "n_flush",
     ):
         config_dict[n] = None
 
@@ -813,6 +815,13 @@ def check_hamiltonian(config, comm=MPI.COMM_WORLD):
     return config
 
 
+def check_n_flush(config, comm=MPI.COMM_WORLD):
+    if config.n_print:
+        if config.n_flush is None:
+            config.n_flush = 10000 // config.n_print
+    return config
+
+
 def check_n_print(config, comm=MPI.COMM_WORLD):
     if (not isinstance(config.n_print, int) and
         not isinstance(config.n_print, float) and
@@ -1069,4 +1078,28 @@ def check_config(config, indices, names, types, comm=MPI.COMM_WORLD):
     config = check_thermostat_coupling_groups(config, comm=comm)
     config = check_cancel_com_momentum(config, comm=comm)
     config = check_n_print(config, comm=comm)
+    config = check_n_flush(config, comm=comm)
     return config
+
+
+def check_charges(charges, comm=MPI.COMM_WORLD):
+    """Check if charges across ranks sum to zero.
+
+    Parameters
+    ----------
+    charges : (N,) numpy.ndarray
+        Array of floats with charges for :code:`N` particles.
+    comm : mpi4py.Comm, optional
+        MPI communicator, defaults to :code:`mpi4py.COMM_WORLD`.
+    """  
+    total_charge = comm.allreduce(np.sum(charges), MPI.SUM)
+
+    if not math.isclose(total_charge, 0.):
+        warn_str = (
+            f"Charges in the input file do not sum to zero. "
+            f"Total charge is {total_charge}."
+        )
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0:
+            warnings.warn(warn_str)
+

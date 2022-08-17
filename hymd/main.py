@@ -10,7 +10,7 @@ import pmesh.pm as pmesh
 import warnings
 from .configure_runtime import configure_runtime
 from .hamiltonian import get_hamiltonian
-from .input_parser import check_config
+from .input_parser import check_config, check_charges
 from .logger import Logger, format_timedelta
 from .file_io import distribute_input, OutDataset, store_static, store_data
 from .field import (compute_field_force, update_field,
@@ -35,7 +35,7 @@ def main():
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config = configure_runtime(sys.argv[1:], comm)
+    args, config, prng = configure_runtime(sys.argv[1:], comm)
 
     if args.double_precision:
         dtype = np.float64
@@ -96,13 +96,13 @@ def main():
         else:
             charges_flag = False
 
+    if charges_flag:
+        check_charges(charges, comm=comm)
+
     config = check_config(config, indices, names, types, comm=comm)
-    if config.n_print:
-        if config.n_flush is None:
-            config.n_flush = 10000 // config.n_print
 
     if config.start_temperature:
-        velocities = generate_initial_velocities(velocities, config, comm=comm)
+        velocities = generate_initial_velocities(velocities, config, prng, comm=comm)
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
@@ -743,7 +743,7 @@ def main():
 
         # Thermostat
         if config.target_temperature:
-            csvr_thermostat(velocities, names, config, comm=comm)
+            csvr_thermostat(velocities, names, config, prng, comm=comm)
 
         # Remove total linear momentum
         if config.cancel_com_momentum:

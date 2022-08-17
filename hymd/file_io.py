@@ -583,7 +583,6 @@ def store_data(
     h5md.temperature[frame] = temperature
     h5md.thermostat_work[frame] = config.thermostat_work
 
-    header_ = 15 * "{:>13}"
     fmt_ = [
         "step",
         "time",
@@ -601,6 +600,20 @@ def store_data(
         "Pz",
         "ΔH" if config.target_temperature else "ΔE",
     ]
+    fmt_ = np.array(fmt_)
+    
+    # create mask to show only energies > 0
+    en_array = np.array([
+        field_energy,
+        field_q_energy,
+        bond2_energy,
+        bond3_energy,
+        bond4_energy,
+    ])
+    mask = np.full_like(fmt_, True, dtype=bool)
+    mask[range(6,11)] = en_array > 0.
+
+    header_ = fmt_[mask].shape[0] * "{:>13}"
     if config.initial_energy is None:
         fmt_[-1] = ""
 
@@ -621,9 +634,9 @@ def store_data(
     else:
         H_tilde = 0.0
 
-    header = header_.format(*fmt_)
-    data_fmt = f'{"{:13}"}{14 * "{:13.5g}" }'
-    data = data_fmt.format(
+    header = header_.format(*fmt_[mask])
+    data_fmt = f'{"{:13}"}{(fmt_[mask].shape[0]-1) * "{:13.5g}" }'
+    all_data = [
         step,
         time_step * step,
         temperature,
@@ -639,7 +652,8 @@ def store_data(
         total_momentum[1] / divide_by,
         total_momentum[2] / divide_by,
         H_tilde / divide_by,
-    )
+    ]
+    data = data_fmt.format(*[val for i,val in enumerate(all_data) if mask[i]])
     Logger.rank0.log(logging.INFO, ("\n" + header + "\n" + data))
 
 
