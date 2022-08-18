@@ -72,11 +72,13 @@ def test_setup_time_dependent_element(config_toml, tmp_path):
 
 @pytest.mark.mpi()
 def test_distribute_input():
-    indices = np.arange(0, 30)
-    molecules = np.array([
-        0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6
-    ], dtype=int)
+    # create fake indices and molecules
+    indices = np.arange(0, 10000)
+    molecules = np.zeros_like(indices)
+    molecules[400:450] = 1
+    molecules[450:] = np.arange(2, 9552)
+    assert indices.shape == molecules.shape
+
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -92,14 +94,12 @@ def test_distribute_input():
 
     in_file = {'indices': indices, 'molecules': molecules}
     rank_range, molecules_flag = distribute_input(
-        in_file, rank, size, 30, max_molecule_size=100, comm=comm
+        in_file, rank, size, indices.shape[0], max_molecule_size=1000, comm=comm
     )
     assert molecules_flag
     gather_range = comm.allgather(rank_range)
     gather_range = list(itertools.chain.from_iterable(gather_range))
     assert np.array_equal(gather_range, indices)
-    if rank == 0:
-        assert len(rank_range) == 25
 
 
 @pytest.mark.mpi()

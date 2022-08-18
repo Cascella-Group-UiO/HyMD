@@ -3,6 +3,7 @@ import warnings
 import re
 import io
 import logging
+import warnings
 from types import ModuleType
 import numpy as np
 from mpi4py import MPI
@@ -28,7 +29,9 @@ from hymd.input_parser import (
     check_domain_decomposition,
     check_name,
     check_config,
-    check_hamiltonian
+    check_hamiltonian,
+    check_charges,
+    check_n_flush,
 )
 
 
@@ -834,3 +837,65 @@ def test_input_parser__setup_type_to_name_map(config_toml, dppc_single):
     assert isinstance(config.type_to_name_map, dict)
     assert all([(v in config.type_to_name_map.keys()) 
                  for v in names_to_types.values()])
+
+
+@pytest.mark.mpi()
+def test_input_parser_check_charges(caplog):
+    caplog.set_level(logging.WARNING)
+    charges = np.array(
+        [1.0, 0.0, 0.5, 0.2, -0.3, 0.0, 0.3, 0.0, -0.5, 0.0, -0.5, 0.99, -0.2,
+        0.3, 0.5, 0.0, 0.0, -0.3, 0.0, 0.0, -0.99, -1.0],
+        dtype=float
+    )
+    # split charges across ranks
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    n_charges = charges.shape[0] // size
+    ind_rank = {}
+    for i in range(size):
+        ind_rank[i] = i * n_charges
+    ind_rank[size] = size * n_charges + np.mod(charges.shape[0], size)
+
+    rank_charges = charges[ind_rank[rank]:ind_rank[rank+1]]
+
+    check_charges(rank_charges, comm=comm) # warnings are not expected
+    assert len(caplog.text) == 0
+
+    # change charges to generate a warning
+    charges[1] = 1000.
+    rank_charges = charges[ind_rank[rank]:ind_rank[rank+1]]
+
+    with pytest.warns(Warning) as recorded_warning:
+        config = check_charges(rank_charges)
+        # only rank 0 gives the warning
+        if rank == 0:
+            message = recorded_warning[0].message.args[0]
+            log = caplog.text
+            cmp_strings = ("Charges in the input file do not sum to zero.", 
+                           "Total charge is ")
+            assert all([(s in message) for s in cmp_strings])
+            assert all([(s in log) for s in cmp_strings])
+            total_charge = float(log.split()[-1][:-1])
+            assert total_charge == pytest.approx(charges[1])
+        # but others should give a warn so pytest.warns does not fail with:
+        # Failed: DID NOT WARN. No warnings of type..
+        else:
+            warnings.warn("give a warning so other ranks do not fail")
+            assert len(recorded_warning) == 1
+
+
+def test_input_parser_check_n_flush(config_toml):
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+
+    config = check_n_flush(config)
+
+    assert config.n_flush == (10000 // config.n_print)
+
+    config.n_flush = 1234
+
+    config = check_n_flush(config)
+
+    assert config.n_flush == 1234
