@@ -101,12 +101,15 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
     config = _find_unique_names(config, names, comm=comm)
     velocities_copy = velocities.copy()
 
+    # create np.random.Generator just to pass as argument
+    prng = np.random.default_rng()
+
     # Hijack the _random_gaussian and _random_chi_squared interal functions in
     # thermostat to control the exact numbers generated for testing.
     random_chi_squared = RandomMock([125.4595634810623])
     random_gaussian = RandomMock([0.5579657512081987])
     csvr_thermostat(
-        velocities_copy, names, config, comm=comm,
+        velocities_copy, names, config, prng, comm=comm,
         random_gaussian=random_gaussian, random_chi_squared=random_chi_squared,
         remove_center_of_mass_momentum=False,
     )
@@ -127,7 +130,7 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
     random_gaussian = RandomMock([-1.752320325907187, 1.099694957420625,
                                   0.6113448515745533, -0.7183266831611322])
     csvr_thermostat(
-        velocities_copy, names, config, comm=comm,
+        velocities_copy, names, config, prng, comm=comm,
         random_gaussian=random_gaussian, random_chi_squared=random_chi_squared,
         remove_center_of_mass_momentum=False,
     )
@@ -142,7 +145,7 @@ def test_thermostat_coupling_groups(molecules_with_solvent):
     random_chi_squared = RandomMock([97.07130218590895, 33.06359496718739])
     random_gaussian = RandomMock([0.1661408606772054, -0.06216797747541603])
     csvr_thermostat(
-        velocities_copy, names, config, comm=comm,
+        velocities_copy, names, config, prng, comm=comm,
         random_gaussian=random_gaussian, random_chi_squared=random_chi_squared,
         remove_center_of_mass_momentum=False,
     )
