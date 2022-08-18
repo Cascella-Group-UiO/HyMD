@@ -6,7 +6,6 @@ import datetime
 import logging
 import warnings
 import numpy as np
-import math
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
@@ -1094,7 +1093,7 @@ def check_charges(charges, comm=MPI.COMM_WORLD):
     """  
     total_charge = comm.allreduce(np.sum(charges), MPI.SUM)
 
-    if not math.isclose(total_charge, 0.):
+    if not np.isclose(total_charge, 0.):
         warn_str = (
             f"Charges in the input file do not sum to zero. "
             f"Total charge is {total_charge}."
