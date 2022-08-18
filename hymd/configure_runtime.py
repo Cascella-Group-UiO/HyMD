@@ -115,14 +115,23 @@ def configure_runtime(comm):
         except ImportError:
             raise ImportError("Cannot import plumed module")
 
-    if comm.rank == 0:
+    if comm.Get_rank() == 0:
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-    else:
-        np.random.seed()
+    # Safely define seeds
+    seeds = None
+    if comm.Get_rank() == 0:    
+        if args.seed is not None:
+            ss = np.random.SeedSequence(args.seed)
+        else:
+            ss = np.random.SeedSequence()
+        seeds = ss.spawn(comm.Get_size())
+
+    seeds = comm.bcast(seeds, root=0)
+
+    # Setup a PRNG for each rank
+    prng = np.random.default_rng(seeds[comm.Get_rank()])
 
     # Setup logger
     Logger.setup(
@@ -171,7 +180,7 @@ def configure_runtime(comm):
             f"Unable to parse configuration file {args.config}"
             f"\n\ntoml parse traceback:" + repr(ve)
         )
-    return args, config
+    return args, config, prng
 
 
 def extant_file(x):
@@ -184,3 +193,4 @@ def extant_file(x):
         # error: argument input: x does not exist
         raise argparse.ArgumentTypeError("{0} does not exist".format(x))
     return x
+
