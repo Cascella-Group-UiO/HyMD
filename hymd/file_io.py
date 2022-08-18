@@ -630,7 +630,7 @@ def store_data(
         bond2_energy,
         bond3_energy,
         bond4_energy,
-	plumed_bias,
+        plumed_bias,
     ])
     mask = np.full_like(fmt_, True, dtype=bool)
     mask[range(6,12)] = en_array > 0.
