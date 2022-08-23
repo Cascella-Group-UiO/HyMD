@@ -1,6 +1,6 @@
 """Parses command line arguments to HyMD
 """
-from argparse import ArgumentParser
+import argparse
 import os
 import sys
 import numpy as np
@@ -29,7 +29,7 @@ def configure_runtime(args_in, comm):
     config : hymd.input_parser.Config
         Parsed configuration object.
     """
-    ap = ArgumentParser()
+    ap = argparse.ArgumentParser()
 
     ap.add_argument(
         "-v", "--verbose", default=1, type=int, nargs="?",

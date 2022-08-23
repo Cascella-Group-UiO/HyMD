@@ -2,9 +2,9 @@ import pytest
 import logging
 import numpy as np
 import os
+import argparse
 from mpi4py import MPI
-from argparse import Namespace
-from hymd.configure_runtime import configure_runtime
+from hymd.configure_runtime import configure_runtime, extant_file
 from hymd.input_parser import Config
 
 def test_configure_runtime(h5py_molecules_file, config_toml,
@@ -16,11 +16,12 @@ def test_configure_runtime(h5py_molecules_file, config_toml,
     basearg = [config_toml_file, h5py_molecules_file]
 
     parsed, config, prng = configure_runtime(basearg, comm)
-    assert isinstance(parsed, Namespace)
+    assert isinstance(parsed, argparse.Namespace)
     assert isinstance(config, Config)
     assert isinstance(prng, np.random.Generator)
     assert parsed.destdir == "."
     assert parsed.logfile == "sim.log"
+    assert parsed.plumed_outfile == "plumed.out"
 
     parsed, _, _ = configure_runtime(["-v", "2"]+basearg, comm)
     assert parsed.verbose == 2
@@ -66,3 +67,23 @@ def test_configure_runtime(h5py_molecules_file, config_toml,
 
     parsed, _, _ = configure_runtime(["--logfile", "test.log"]+basearg, comm)
     assert parsed.logfile == "test.log"
+
+    parsed, _, _ = configure_runtime(["--plumed", "test.log"]+basearg, comm)
+    assert parsed.plumed == "test.log"
+
+    parsed, _, _ = configure_runtime(
+                       ["--plumed-outfile", "test.plumed.out"]+basearg,
+                       comm
+                   )
+    assert parsed.plumed_outfile == "test.plumed.out"
+
+
+def test_extant_file(caplog):
+    caplog.set_level(logging.INFO)
+    with pytest.raises(argparse.ArgumentTypeError) as recorded_error:
+        _ = extant_file("inexistant_test_file.txt")
+        log = caplog.text
+        assert "does not exist" in log
+    message = str(recorded_error.value)
+    assert "does not exist" in message
+    caplog.clear()
