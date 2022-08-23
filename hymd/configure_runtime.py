@@ -8,15 +8,17 @@ import atexit
 import cProfile
 import logging
 import pstats
-from .logger import Logger
+from .logger import Logger, print_header
 from .input_parser import read_config_toml, parse_config_toml
 
 
-def configure_runtime(comm):
+def configure_runtime(args_in, comm):
     """Parse command line arguments and configuration file
 
     Parameters
     ----------
+    args_in : list
+        List with arguments to be processed.
     comm : mpi4py.Comm
         MPI communicator to use for rank commuication.
 
@@ -106,7 +108,7 @@ def configure_runtime(comm):
         "config", help="Config .py or .toml input configuration script"
     )
     ap.add_argument("input", help="input.hdf5")
-    args = ap.parse_args()
+    args = ap.parse_args(args_in)
 
     # check for plumed optional dependency if needed
     if args.plumed:
@@ -139,6 +141,9 @@ def configure_runtime(comm):
         log_file=f"{args.destdir}/{args.logfile}",
         verbose=args.verbose,
     )
+
+    # print header info
+    Logger.rank0.log(logging.INFO, print_header())
 
     if args.profile:
         prof_file_name = "cpu.txt-%05d-of-%05d" % (comm.rank, comm.size)

@@ -254,6 +254,7 @@ def config_toml(mpi_file_name):
     integrator = "respa"
     respa_inner = 5
     domain_decomposition = false
+    hamiltonian = "DefaultWithChi"
     start_temperature = false
     target_temperature = 323
     tau = 0.7
@@ -610,3 +611,7 @@ def v_ext(types, kappa, rho0, sigma):
 @pytest.fixture
 def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname)
+
+@pytest.fixture
+def change_tmp_dir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
