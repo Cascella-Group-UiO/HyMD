@@ -1,8 +1,10 @@
 """Handles event logging for simulation information, warnings, and errors.
 """
 import sys
+import os
 import logging
 from mpi4py import MPI
+from .version import __version__
 
 
 class MPIFilterRoot(logging.Filter):
@@ -157,3 +159,66 @@ def format_timedelta(timedelta):
         ret_str += f"{days} days "
     ret_str += f"{hours:02d}:{minutes:02d}:{seconds:02d}.{microseconds:06d}"
     return ret_str
+
+
+def get_version():
+    # Check if we are in a git repo and grab the commit hash and the branch if
+    # we are, append it to the version number in the output specification.
+    try:
+        import git
+
+        try:
+            repo_dir = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), os.pardir)
+            )
+            repo = git.Repo(repo_dir)
+            commit = str(repo.head.commit)[:7]
+            branch = repo.active_branch
+            version = f"{__version__} [{branch} branch commit {commit}]"
+        except git.exc.InvalidGitRepositoryError:
+            version = f"{__version__}"
+    except ModuleNotFoundError:
+        version = f"{__version__}"
+
+    return version
+
+
+def print_header():
+    banner = r"""
+     __  __      ____                              __  _______ 
+    / / / /_  __/ / /__  _________ _____ ______   /  |/  / __ \
+   / /_/ / / / / / / _ \/ ___/ __ `/ __ `/ ___/  / /|_/ / / / /
+  / __  / /_/ / / /  __/ /  / /_/ / /_/ (__  )  / /  / / /_/ / 
+ /_/ /_/\__, /_/_/\___/_/   \__,_/\__,_/____/  /_/  /_/_____/  
+       /____/ 
+    """
+
+    refs = """
+ [1] Milano, G.; Kawakatsu, T. Hybrid particle-field molecular dynamics 
+ simulations for dense polymer systems. J. Chem. Phys. 2009, 130, 214106.
+ 
+ [2] Bore, S. L.; Cascella, M. Hamiltonian and alias-free hybrid 
+ particle–field molecular dynamics. J. Chem. Phys. 2020, 153, 094106.
+ 
+ [3] Kolli, H. B.; De Nicola, A.; Bore, S. L.; Schäfer, K.; Diezemann, G.;
+ Gauss, J.; Kawakatsu, T.;Lu, Z.-Y.; Zhu, Y.-L.; Milano, G.; Cascella, M. 
+ Hybrid Particle-Field Molecular DynamicsSimulations of Charged Amphiphiles 
+ in an Aqueous Environment. J. Chem. Theory Comput. 2018, 14, 4928–4937.
+ 
+ [4] Bore, S. L.; Milano, G.; Cascella, M. Hybrid Particle-Field Model for
+ Conformational Dynamics of Peptide Chains. J. Chem. Theory Comput. 2018,
+ 14, 1120–1130.
+ 
+ [5] Periole, X.; Cavalli, M.; Marrink, S. J.; Ceruso, M. A. Combining an 
+ elastic network with a coarse-grained molecular force field: structure, 
+ dynamics, and intermolecular recognition. J. Chem. Theory Comput. 2009, 
+ 5.9, 2531-2543.
+"""
+
+    version = f"Version {get_version()}"
+    header = banner
+    header += version.center(56)+"\n\n"
+    header += " Please read and cite accordingly the references below:"
+    header += refs
+
+    return header
