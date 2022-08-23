@@ -26,12 +26,13 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-mpi4py python3-numpy
+        sudo apt-get install -y python3-mpi4py python3-numpy python3-distutils
         sudo apt-get install -y libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
     - name: Install python dependencies
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel numpy mpi4py cython
+        CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
         python3 -m pip install -r requirements.txt
     - name: Install package
       run: |

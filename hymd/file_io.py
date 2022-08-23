@@ -505,7 +505,7 @@ def store_data(
     for dset in (
         h5md.positions_step,
         h5md.total_energy_step,
-        h5md.potential_energy,
+        h5md.potential_energy_step,
         h5md.kinetc_energy_step,
         h5md.bond_energy_step,
         h5md.angle_energy_step,

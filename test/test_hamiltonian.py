@@ -4,7 +4,7 @@ import logging
 import pmesh
 import numpy as np
 from hymd.hamiltonian import (
-    Hamiltonian, DefaultNoChi, DefaultWithChi, SquaredPhi,
+    Hamiltonian, DefaultNoChi, DefaultWithChi, SquaredPhi, get_hamiltonian,
 )
 from hymd.input_parser import (
     _find_unique_names, Config, read_config_toml, parse_config_toml,
@@ -358,3 +358,24 @@ def test_Hamiltonian_with_chi_gaussian_core(v_ext, caplog):
     # -2.8663135769747057 --> grid 640
     # -2.866313576974921 --> grid 320
     # -2.866313576974796 --> grid 160
+
+
+def test_get_hamiltonian(config_toml):
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    config.unique_names = ["N","P","G","C","W"]
+    config.type_to_name_map = {0: 'N', 1: 'P', 2: 'G', 3: 'C', 4: 'W'}
+    config.n_types = 5
+
+    config.hamiltonian = "DefaultNoChi"
+    hamiltonian = get_hamiltonian(config)
+    assert isinstance(hamiltonian, DefaultNoChi)
+
+    config.hamiltonian = "DefaultWithChi"
+    hamiltonian = get_hamiltonian(config)
+    assert isinstance(hamiltonian, DefaultWithChi)
+
+    config.hamiltonian = "SquaredPhi"
+    hamiltonian = get_hamiltonian(config)
+    assert isinstance(hamiltonian, SquaredPhi)
+
