@@ -143,6 +143,23 @@ class PlumedBias:
             f"Successfully read PLUMED input. PLUMED output file is {logfile}"
         )
 
+    def finalize(self):
+        """Finalize object
+        """
+        self.plumed_obj.finalize()
+
+
+    def __enter__(self):
+        """Allow usage in 'with' context
+        """
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Finalize on exit of context
+        """
+        self.plumed_obj.__exit__(exc_type, exc_value, traceback)
+
 
     @property
     def api_version(self):

@@ -985,3 +985,5 @@ def main():
         )
 
     out_dataset.close_file()
+    if args.plumed:
+        plumed.finalize()

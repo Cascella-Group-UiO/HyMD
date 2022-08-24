@@ -8,8 +8,9 @@ from hymd.input_parser import Config
 from hymd.file_io import distribute_input
 from hymd.plumed import PlumedBias
 
-@pytest.mark.mpi()
-def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, tmp_path, caplog):
+@pytest.mark.mpi(min_size=2)
+def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, tmp_path, 
+                         caplog, monkeypatch):
     caplog.set_level(logging.INFO)
     indices, positions, molecules, velocities, bonds, names, types = molecules_with_solvent
     box_size = np.array([10, 10, 10], dtype=np.float64)
@@ -26,8 +27,9 @@ def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, tmp_path, capl
 RESTRAINT ARG=d14 KAPPA=200.0 AT=2.0
 
 DUMPATOMS ATOMS=1-45 FILE={}
-PRINT ARG=d14 FILE={}""".format(tmp_path/"testdump.xyz", tmp_path/"DIST")
-    with open(tmp_path/"plumed.dat","w") as f:
+PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"), 
+                                os.path.join(tmp_path,"DIST"))
+    with open(os.path.join(tmp_path,"plumed.dat"),"w") as f:
         f.write(plumed_str)
 
     # Test stub acting like a hdf5 file for distribute_input
@@ -43,13 +45,24 @@ PRINT ARG=d14 FILE={}""".format(tmp_path/"testdump.xyz", tmp_path/"DIST")
     types_ = types[rank_range]
     names_ = names[rank_range]
 
+    # test working case
     plumed = PlumedBias(
-      config, 
-      str(tmp_path/"plumed.dat"), 
-      str(tmp_path/"plumed.out"),
-      comm
+        config, 
+        os.path.join(tmp_path,"plumed.dat"),
+        os.path.join(tmp_path,"plumed.out"),
+        comm=comm,
+        verbose=2
     )
 
+    if rank == 0:
+        log = caplog.text
+        print(log)
+        cmp_strings = (
+            "Attempting to read PLUMED input from",
+            "Using PLUMED_KERNEL="
+        )
+        assert all([(s in log) for s in cmp_strings])
+        caplog.clear()
     assert plumed.api_version > 3
 
     forces_ = np.zeros_like(positions_)
@@ -65,13 +78,58 @@ PRINT ARG=d14 FILE={}""".format(tmp_path/"testdump.xyz", tmp_path/"DIST")
     )
 
     assert needs_energy == False
+    if rank == 0:
+        log = caplog.text
+        cmp_strings = (
+            "Setting PLUMED pointers for step",
+        )
+        assert all([(s in log) for s in cmp_strings])
+        caplog.clear()
 
     plumed_forces, plumed_bias = plumed.calc(forces_, 0.0)
+    if rank == 0:
+        log = caplog.text
+        cmp_strings = (
+            "Calculating PLUMED forces",
+            "Done calculating PLUMED forces"
+        )
+        assert all([(s in log) for s in cmp_strings])
+        caplog.clear()
 
     if rank == 0:
         ref_forces = np.loadtxt("refforces.txt")
         assert plumed_forces == pytest.approx(ref_forces, abs=1e-8)
-        assert filecmp.cmp(tmp_path/"DIST", "refDIST") == True
-        assert filecmp.cmp(tmp_path/"testdump.xyz", "reftestdump.xyz") == True
+        assert filecmp.cmp(os.path.join(tmp_path,"DIST"), "refDIST") == True
+        assert filecmp.cmp(os.path.join(tmp_path,"testdump.xyz"), "reftestdump.xyz") == True
 
     assert plumed_bias == pytest.approx(635.5621691482, abs=1e-8)
+
+    # test calc without prepare
+    with pytest.raises(RuntimeError) as recorded_error:
+        _, _ = plumed.calc(forces_, 0.0)
+        if rank == 0:
+            log = caplog.text
+            assert "without first calling prepare method" in log
+    message = str(recorded_error.value)
+    assert "without first calling prepare method" in message
+    caplog.clear()
+
+    # test creating object in 'with' context and 
+    # without PLUMED_KERNEL set
+    monkeypatch.delenv("PLUMED_KERNEL")
+    with PlumedBias(
+        config, 
+        os.path.join(tmp_path,"plumed.dat"), 
+        os.path.join(tmp_path,"plumed.out"),
+        comm=comm,
+        verbose=2
+    ) as _:
+        if rank == 0:
+            log = caplog.text
+            cmp_strings = (
+                "The PLUMED_KERNEL environment variable is not set",
+            )
+            assert all([(s in log) for s in cmp_strings])
+
+    caplog.clear()
+    plumed.finalize()
