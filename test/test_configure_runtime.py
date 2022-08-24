@@ -7,6 +7,26 @@ from mpi4py import MPI
 from hymd.configure_runtime import configure_runtime, extant_file
 from hymd.input_parser import Config
 
+
+def test_extant_file(tmp_path, caplog):
+    caplog.set_level(logging.INFO)
+    with pytest.raises(argparse.ArgumentTypeError) as recorded_error:
+        _ = extant_file("inexistant_test_file.txt")
+        log = caplog.text
+        assert "does not exist" in log
+    message = str(recorded_error.value)
+    assert "does not exist" in message
+    
+    file_path = os.path.join(tmp_path, "test.txt")
+    with open(file_path, 'w') as f:
+        f.write("test")
+
+    ret_path = extant_file(file_path)
+    assert ret_path == file_path
+
+    caplog.clear()
+
+
 def test_configure_runtime(h5py_molecules_file, config_toml,
                            change_tmp_dir, caplog):
     caplog.set_level(logging.ERROR)
@@ -77,13 +97,3 @@ def test_configure_runtime(h5py_molecules_file, config_toml,
                    )
     assert parsed.plumed_outfile == "test.plumed.out"
 
-
-def test_extant_file(caplog):
-    caplog.set_level(logging.INFO)
-    with pytest.raises(argparse.ArgumentTypeError) as recorded_error:
-        _ = extant_file("inexistant_test_file.txt")
-        log = caplog.text
-        assert "does not exist" in log
-    message = str(recorded_error.value)
-    assert "does not exist" in message
-    caplog.clear()
