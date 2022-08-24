@@ -117,19 +117,27 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
     # test creating object in 'with' context and 
     # without PLUMED_KERNEL set
     monkeypatch.delenv("PLUMED_KERNEL")
-    with PlumedBias(
-        config, 
-        os.path.join(tmp_path,"plumed.dat"), 
-        os.path.join(tmp_path,"plumed.out"),
-        comm=comm,
-        verbose=2
-    ) as _:
-        if rank == 0:
-            log = caplog.text
-            cmp_strings = (
-                "The PLUMED_KERNEL environment variable is not set",
-            )
-            assert all([(s in log) for s in cmp_strings])
+    with pytest.raises(RuntimeError) as recorded_error:
+        with PlumedBias(
+            config, 
+            os.path.join(tmp_path,"plumed.dat"), 
+            os.path.join(tmp_path,"plumed.out"),
+            comm=comm,
+            verbose=2
+        ) as _:
+            if rank == 0:
+                log = caplog.text
+                cmp_strings = (
+                    "The PLUMED_KERNEL environment variable is not set",
+                )
+                assert all([(s in log) for s in cmp_strings])
+
+    cmp_strings = (
+        "HyMD was not able to create a PLUMED object",
+        "Maybe there is a problem with your PLUMED_KERNEL?"
+    )
+    message = str(recorded_error.value)
+    assert all([(s in message) for s in cmp_strings])
 
     caplog.clear()
     plumed.finalize()
