@@ -135,6 +135,7 @@ def test_fail_plumed_bias_obj(monkeypatch):
 
     # try to get rid of PLUMED_KERNEL path
     monkeypatch.delenv("PLUMED_KERNEL")
+    found_plumed_in_syspath = False
     for libpath in sys.path:
         if "plumed2/" in libpath:
             found_plumed_in_syspath = True
