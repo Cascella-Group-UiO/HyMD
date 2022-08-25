@@ -7,11 +7,6 @@ import os
 from mpi4py import MPI
 from .logger import Logger
 
-try:
-    import plumed
-    has_plumed = True
-except ImportError:
-    has_plumed = False
 
 class PlumedBias:
     """PLUMED handler class
@@ -77,7 +72,9 @@ class PlumedBias:
         --------
         hymd.input_parser.Config : Configuration dataclass handler.
         """
-        if not has_plumed:
+        try:
+            import plumed
+        except ImportError:
             err_str = (
                 "You are trying to use PLUMED "
                 "but HyMD could not import py-plumed."
@@ -88,10 +85,6 @@ class PlumedBias:
         self.comm = comm
         self.verbose = verbose
 
-        Logger.rank0.log(
-            logging.INFO, 
-            f"Attempting to read PLUMED input from {plumeddat}"
-        )
         try:
             kernel_str = (
                 "Using PLUMED_KERNEL={}".format(os.environ["PLUMED_KERNEL"])
@@ -124,8 +117,13 @@ class PlumedBias:
             raise AssertionError(err_str)
 
         self.plumed_obj.cmd("setMDEngine", "HyMD")
-
         self.plumed_obj.cmd("setMPIComm", comm)
+
+        Logger.rank0.log(
+            logging.INFO, 
+            f"Attempting to read PLUMED input from {plumeddat}"
+        )
+
         self.plumed_obj.cmd("setPlumedDat", plumeddat)
         self.plumed_obj.cmd("setLogFile", logfile)
         self.plumed_obj.cmd("setTimestep", 

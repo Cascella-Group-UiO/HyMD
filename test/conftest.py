@@ -4,6 +4,7 @@ import numpy as np
 import h5py
 import pytest
 import collections
+import builtins
 
 
 @pytest.fixture
@@ -615,3 +616,15 @@ def change_test_dir(request, monkeypatch):
 @pytest.fixture
 def change_tmp_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+
+@pytest.fixture
+def hide_available_plumed(monkeypatch):
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == 'plumed':
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, '__import__', mocked_import)
+

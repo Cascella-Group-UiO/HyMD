@@ -3,14 +3,16 @@ import numpy as np
 import logging
 import filecmp
 import os
+import sys
 from mpi4py import MPI
 from hymd.input_parser import Config
 from hymd.file_io import distribute_input
-from hymd.plumed import PlumedBias
 
 @pytest.mark.mpi(min_size=2)
 def test_plumed_bias_obj(molecules_with_solvent, change_test_dir, tmp_path, 
                          caplog, monkeypatch):
+    pytest.importorskip("plumed")
+    from hymd.plumed import PlumedBias
     caplog.set_level(logging.INFO)
     indices, positions, molecules, velocities, bonds, names, types = molecules_with_solvent
     box_size = np.array([10, 10, 10], dtype=np.float64)
@@ -46,7 +48,7 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
     names_ = names[rank_range]
 
     # test working case
-    plumed = PlumedBias(
+    plumed_obj = PlumedBias(
         config, 
         os.path.join(tmp_path,"plumed.dat"),
         os.path.join(tmp_path,"plumed.out"),
@@ -63,12 +65,12 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
         )
         assert all([(s in log) for s in cmp_strings])
         caplog.clear()
-    assert plumed.api_version > 3
+    assert plumed_obj.api_version > 3
 
     forces_ = np.zeros_like(positions_)
     charges_ = np.zeros_like(indices_, dtype=np.double)
 
-    needs_energy = plumed.prepare(
+    needs_energy = plumed_obj.prepare(
         0,
         forces_,
         positions_,
@@ -86,7 +88,7 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
         assert all([(s in log) for s in cmp_strings])
         caplog.clear()
 
-    plumed_forces, plumed_bias = plumed.calc(forces_, 0.0)
+    plumed_forces, plumed_bias = plumed_obj.calc(forces_, 0.0)
     if rank == 0:
         log = caplog.text
         cmp_strings = (
@@ -106,7 +108,7 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
 
     # test calc without prepare
     with pytest.raises(RuntimeError) as recorded_error:
-        _, _ = plumed.calc(forces_, 0.0)
+        _, _ = plumed_obj.calc(forces_, 0.0)
         if rank == 0:
             log = caplog.text
             assert "without first calling prepare method" in log
@@ -114,14 +116,37 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
     assert "without first calling prepare method" in message
     caplog.clear()
 
-    # test creating object in 'with' context and 
-    # without PLUMED_KERNEL set
+    # finalize PlumedBias object
+    plumed_obj.finalize()
+
+
+@pytest.mark.mpi()
+def test_fail_plumed_bias_obj(monkeypatch):
+    pytest.importorskip("plumed")
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    # create fake config
+    box_size = np.array([10, 10, 10], dtype=np.float64)
+    config = Config(n_steps=1, time_step=0.03, box_size=box_size,
+                    mesh_size=[5, 5, 5], sigma=0.5, kappa=0.05,
+                    n_particles=1000, target_temperature=300.0)
+
+    # try to get rid of PLUMED_KERNEL path
     monkeypatch.delenv("PLUMED_KERNEL")
+    for libpath in sys.path:
+        if "plumed2/" in libpath:
+            found_plumed_in_syspath = True
+            break
+
+    import hymd.plumed
+   
     with pytest.raises(RuntimeError) as recorded_error:
-        with PlumedBias(
+        with hymd.plumed.PlumedBias(
             config, 
-            os.path.join(tmp_path,"plumed.dat"), 
-            os.path.join(tmp_path,"plumed.out"),
+            "test.in", 
+            "test.out",
             comm=comm,
             verbose=2
         ) as _:
@@ -132,12 +157,45 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
                 )
                 assert all([(s in log) for s in cmp_strings])
 
+    if not found_plumed_in_syspath:
+        cmp_strings = (
+            "HyMD was not able to create a PLUMED object",
+            "Maybe there is a problem with your PLUMED_KERNEL?"
+        )
+        message = str(recorded_error.value)
+        assert all([(s in message) for s in cmp_strings])
+
+
+def test_unavailable_plumed(hide_available_plumed):
+    import hymd.plumed
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    # create fake config
+    box_size = np.array([10, 10, 10], dtype=np.float64)
+    config = Config(n_steps=1, time_step=0.03, box_size=box_size,
+                    mesh_size=[5, 5, 5], sigma=0.5, kappa=0.05,
+                    n_particles=1000, target_temperature=300.0)
+
+    with pytest.raises(ImportError) as recorded_error:
+        with hymd.plumed.PlumedBias(
+            config, 
+            "test.in", 
+            "test.out",
+            comm=comm,
+            verbose=2
+        ) as _:
+            if rank == 0:
+                log = caplog.text
+                cmp_strings = (
+                    "You are trying to use PLUMED",
+                    "but HyMD could not import py-plumed."
+                )
+                assert all([(s in log) for s in cmp_strings])
     cmp_strings = (
-        "HyMD was not able to create a PLUMED object",
-        "Maybe there is a problem with your PLUMED_KERNEL?"
+        "You are trying to use PLUMED",
+        "but HyMD could not import py-plumed."
     )
     message = str(recorded_error.value)
     assert all([(s in message) for s in cmp_strings])
-
-    caplog.clear()
-    plumed.finalize()
