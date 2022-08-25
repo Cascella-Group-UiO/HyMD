@@ -110,13 +110,6 @@ def configure_runtime(args_in, comm):
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args(args_in)
 
-    # check for plumed optional dependency if needed
-    if args.plumed:
-        try:
-            import plumed
-        except ImportError:
-            raise ImportError("Cannot import plumed module")
-
     if comm.Get_rank() == 0:
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
