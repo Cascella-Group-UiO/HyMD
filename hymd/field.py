@@ -57,9 +57,43 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
 
 
+def compute_self_energy_q(config, charges, comm=MPI.COMM_WORLD):
+    """Compute the self energy for the interaction due to the Ewald scheme
+    used to compute the electrostatics. The energy is stored in :code:`config`.
+
+    The self interaction energy is given by:
+
+    .. math::
+
+        U_{self} = \\sqrt{\\frac{1}{2\\pi\\sigma^2}} \\sum_{i=1}^{N} q_i^2
+
+    where :math:`q_i` are the charges and :math:`\\sigma` is the half-width
+    of the Gaussian filter.
+
+    Parameters
+    ----------
+    config : Config
+        Configuration object.
+    charges : (N,) numpy.ndarray
+        Array of particle charge values for :code:`N` particles. Local for each
+        MPI rank.
+    comm : mpi4py.Comm
+        MPI communicator to use for rank communication.
+
+    Returns
+    -------
+    field_q_self_energy : float
+        Electrostatic self energy.
+    """
+    prefac = np.sqrt(1./(2.*np.pi*config.sigma*config.sigma))
+    _squared_charges = charges * charges
+    squared_charges_sum = comm.allreduce(np.sum(_squared_charges))
+    return prefac * squared_charges_sum
+
+
 def compute_field_energy_q(
     config, phi_q_fourier, elec_energy_field, field_q_energy,
-    comm=MPI.COMM_WORLD,
+    field_q_self_energy, comm=MPI.COMM_WORLD,
 ):
     """Calculate the electrostatic energy from a field configuration
 
@@ -102,6 +136,8 @@ def compute_field_energy_q(
         ranks.
     field_q_energy : float
         Total elecrostatic energy.
+    field_q_self_energy : float
+        Electrostatic self energy to be subtracted.
 
     Returns
     -------
@@ -121,6 +157,7 @@ def compute_field_energy_q(
     )
     V = np.prod(config.box_size)
     field_q_energy = 0.5 * V * comm.allreduce(np.sum(elec_energy_field.value))
+    field_q_energy -= field_q_self_energy # subtract self-energy
     return field_q_energy.real
 
 
