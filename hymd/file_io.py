@@ -59,13 +59,24 @@ class OutDataset:
                 comm=comm
             )
 
+    def is_open(self, comm=MPI.COMM_WORLD):
+        """Check if HDF5 output file is open
+
+        Parameters
+        ----------
+        comm : mpi4py.Comm
+            MPI communicator to use for rank communication.
+        """
+        comm.Barrier()
+        return self.file.__bool__()
+
     def close_file(self, comm=MPI.COMM_WORLD):
         """Closes the HDF5 output file
 
         Parameters
         ----------
         comm : mpi4py.Comm
-            MPI communicator to use for rank commuication.
+            MPI communicator to use for rank communication.
         """
         comm.Barrier()
         self.file.close()
@@ -208,6 +219,8 @@ def store_static(
     if np.mod(config.n_steps - 1, config.n_print) != 0:
         n_frames += 1
     if np.mod(config.n_steps, config.n_print) == 1:
+        n_frames += 1
+    if n_frames == config.n_steps:
         n_frames += 1
 
     species = h5md.all_particles.create_dataset(

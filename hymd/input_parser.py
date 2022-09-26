@@ -149,7 +149,7 @@ class Config:
         Four-particle bond type dataclass.
     """
     gas_constant: ClassVar[float] = 0.0083144621  # kJ mol-1 K-1
-    coulomb_constant: ClassVar[float] = 138.935458  # kJ mn mol-1 e-2
+    coulomb_constant: ClassVar[float] = 138.935458  # kJ nm mol-1 e-2
 
     n_steps: int
     time_step: float
