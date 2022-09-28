@@ -175,7 +175,10 @@ def main():
         elec_field = [
             pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
         ]  # for force calculation
-        elec_energy_field = pm.create(
+        elec_potential = pm.create(
+            "real", value=0.0
+        )
+        elec_potential_fourier = pm.create(
             "complex", value=0.0
         )
 
@@ -264,11 +267,12 @@ def main():
         layout_q = pm.decompose(positions)
         update_field_force_q(
             charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field,
-            elec_forces, layout_q, pm, positions, config,
+            elec_forces, layout_q, hamiltonian, pm, positions, config,
         )
 
         field_q_energy = compute_field_energy_q(
-            config, phi_q_fourier, elec_energy_field, field_q_energy,
+            config, phi_q, phi_q_fourier, elec_potential, 
+            elec_potential_fourier, 
             field_q_self_energy, comm=comm,
         )
 
@@ -376,7 +380,7 @@ def main():
             update_field_force_q(
                 dipole_charges, phi_dipoles, phi_dipoles_fourier,
                 dipoles_field_fourier, dipoles_field, dipole_forces,
-                layout_dipoles, pm, dipole_positions, config,
+                layout_dipoles, hamiltonian, pm, dipole_positions, config,
             )
 
             dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3))
@@ -566,10 +570,12 @@ def main():
                 layout_q = pm.decompose(positions)
                 update_field_force_q(
                     charges, phi_q, phi_q_fourier, elec_field_fourier,
-                    elec_field, elec_forces, layout_q, pm, positions, config,
+                    elec_field, elec_forces, layout_q, hamiltonian, 
+                    pm, positions, config,
                 )
                 field_q_energy = compute_field_energy_q(
-                    config, phi_q_fourier, elec_energy_field, field_q_energy,
+                    config, phi_q, phi_q_fourier, elec_potential, 
+                    elec_potential_fourier, 
                     field_q_self_energy, comm=comm,
                 )
 
@@ -585,7 +591,7 @@ def main():
                 update_field_force_q(
                     dipole_charges, phi_dipoles, phi_dipoles_fourier,
                     dipoles_field_fourier, dipoles_field, dipole_forces,
-                    layout_dipoles, pm, dipole_positions, config,
+                    layout_dipoles, hamiltonian, pm, dipole_positions, config,
                 )
 
                 dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3))
@@ -767,8 +773,9 @@ def main():
 
                     if charges_flag and config.coulombtype == "PIC_Spectral":
                         field_q_energy = compute_field_energy_q(
-                            config, phi_q_fourier, elec_energy_field,
-                            field_q_energy, field_q_self_energy, comm=comm,
+                            config, phi_q, phi_q_fourier, elec_potential, 
+                            elec_potential_fourier, 
+                            field_q_self_energy, comm=comm,
                         )
                 else:
                     kinetic_energy = comm.allreduce(
@@ -831,11 +838,13 @@ def main():
                 layout_q = pm.decompose(positions)
                 update_field_force_q(
                     charges, phi_q, phi_q_fourier, elec_field_fourier,
-                    elec_field, elec_forces, layout_q, pm, positions, config,
+                    elec_field, elec_forces, layout_q, hamiltonian, pm,
+                    positions, config,
                 )
 
                 field_q_energy = compute_field_energy_q(
-                    config, phi_q_fourier, elec_energy_field, field_q_energy,
+                    config, phi_q, phi_q_fourier, elec_potential, 
+                    elec_potential_fourier, 
                     field_q_self_energy, comm=comm,
                 )
 

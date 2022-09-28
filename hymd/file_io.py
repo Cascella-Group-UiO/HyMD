@@ -604,7 +604,7 @@ def store_data(
     ]
     fmt_ = np.array(fmt_)
     
-    # create mask to show only energies > 0
+    # create mask to show only energies != 0
     en_array = np.array([
         field_energy,
         field_q_energy,
@@ -613,7 +613,7 @@ def store_data(
         bond4_energy,
     ])
     mask = np.full_like(fmt_, True, dtype=bool)
-    mask[range(6,11)] = en_array > 0.
+    mask[range(6,11)] = en_array != 0.
 
     header_ = fmt_[mask].shape[0] * "{:>13}"
     if config.initial_energy is None:
