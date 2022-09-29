@@ -22,7 +22,6 @@ from .thermostat import (csvr_thermostat, cancel_com_momentum,
 from .force import dipole_forces_redistribution, prepare_bonds
 from .integrator import integrate_velocity, integrate_position
 from .pressure import comp_pressure
-from .barostat import isotropic, semiisotropic
 
 
 def main():
@@ -105,6 +104,14 @@ def main():
             input_box = np.array( [None, None, None] )
 
     config = check_config(config, indices, names, types, input_box, comm=comm)
+    if config.barostat_type is 'berendsen':
+        from .barostat import (
+            isotropic, semiisotropic
+        )
+    elif config.barostat_type == 'scr':
+        from .barostat_bussi import (
+            isotropic, semiisotropic
+        )
 
     ## dielectric from toml
     if config.coulombtype == 'PIC_Spectral_GPE':
@@ -563,9 +570,6 @@ def main():
                     phi_transfer,
                     phi_grad_lap_fourier,
                     phi_grad_lap,
-                    args,
-                    bond_forces,
-                    angle_forces,
                     positions,
                     bond_pr_,
                     angle_pr_,
@@ -722,9 +726,6 @@ def main():
                      phi_transfer,
                      phi_grad_lap_fourier,
                      phi_grad_lap,
-                     bond_forces,
-                     angle_forces,
-                     args,
                      bond_pr_,
                      angle_pr_,
                      Vbar_elec,
@@ -747,9 +748,6 @@ def main():
                      phi_transfer,
                      phi_grad_lap_fourier,
                      phi_grad_lap,
-                     bond_forces,
-                     angle_forces,
-                     args,
                      bond_pr_,
                      angle_pr_,
                      Vbar_elec,
@@ -1080,9 +1078,6 @@ def main():
                             phi_transfer,
                             phi_grad_lap_fourier,
                             phi_grad_lap,
-                            args,
-                            bond_forces,
-                            angle_forces,
                             positions,
                             bond_pr_,
                             angle_pr_,
@@ -1229,9 +1224,6 @@ def main():
                     phi_transfer,
                     phi_grad_lap_fourier,
                     phi_grad_lap,
-                    args,
-                    bond_forces,
-                    angle_forces,
                     positions,
                     bond_pr_,
                     angle_pr_,

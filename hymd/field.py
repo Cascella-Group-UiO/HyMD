@@ -7,6 +7,26 @@ from .logger import Logger
 import warnings
 
 def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
+    """
+    Creates the necessary pmesh objects for pfft operations.
+
+    Parameters
+    ----------
+    pmesh : module 'pmesh.pm'
+    config : Config
+        Configuration dataclass containing simulation metadata and parameters.
+    comm : MPI.Intracomm, optional
+        MPI communicator to use for rank commuication. Defaults to
+        MPI.COMM_WORLD.
+
+    Returns
+    -------
+    pm : object 'pmesh.pm.ParticleMesh'
+    field_list : list[pmesh.pm.RealField], (multiple)
+        Essential list of pmesh objects required for MD
+    list_coulomb : list[pmesh.pm.RealField], (multiple)
+        Additional list of pmesh objects required for electrostatics.
+    """
 
     # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
     # ragged nested sequences until it is fixed in pmesh
@@ -686,6 +706,21 @@ def update_field(
         Pre-allocated, but empty; any values in this field are discarded.
         Changed in-place. Local for each MPI rank--the full computaional grid
         is represented by the collective fields of all MPI ranks.
+    phi_gradient : list[pmesh.pm.RealField], (M, 3)
+        Like phi, but containing the gradient of particle number densities.
+        Needed only for vestigial squaregradient term.
+    phi_laplacian : list[pmesh.pm.RealField], (M, 3)
+        Like phi, but containing the laplacian of particle number densities.
+    phi_transfer : list[pmesh.pm.ComplexField], (3,)
+        Like phi_fourier, used as an intermediary to perform FFT operations
+        to obtain the gradient or laplacian of particle number densities.
+    phi_grad_lap_fourier : list[pmesh.pm.ComplexField], (3,)
+        Like phi_fourier, used as a second intermediary after phi_transfer
+        to perform FFT operations to obtain gradient of laplacian of particle
+        number densities. Needed only for vestigial squaregradient term.
+    phi_grad_lap : list[pmesh.pm.RealField], (M, 3, 3)
+        Like phi, to obtain the gradient of laplacian in all 3x3 directions.
+        Needed only for vestigial squaregradient term.
     layouts : list[pmesh.domain.Layout]
         Pmesh communication layout objects for domain decompositions of each
         particle type. Used as blueprint by :code:`pmesh.pm.readout` for
@@ -736,6 +771,15 @@ def update_field(
         Pre-allocated, but empty; any values in this field are discarded.
         Changed in-place. Local for each MPI rank--the full computaional grid
         is represented by the collective fields of all MPI ranks.
+    phi_lap_filtered_fourier: list[pmesh.pm.ComplexField]
+        Like phi_fourier, for the vestigial squaregradient term.
+        Defaults to None.
+    v_ext1: list[pmesh.pm.RealField], (M,)
+        Like v_ext, but for discretized particle-field external potential values
+        for the vesitigial squaregradient term. Defaults to None.
+    m: list[float], (M,)
+        pmesh.pm.ParticleMesh parameter for mass of particles in simulation unit.
+        Defaults to 1.0 for all particle types.
     compute_potential : bool, optional
         If :code:`True`, a :code:`D+1`-th copy of the Fourier transformed
         external potential field is made to be used later in particle-field
