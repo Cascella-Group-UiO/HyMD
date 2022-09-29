@@ -124,7 +124,6 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
         angle_pr(1) = angle_pr(1) + (fa_x * ra_x) + (fc_x * rc_x)
         angle_pr(2) = angle_pr(2) + (fa_y * ra_y) + (fc_y * rc_y)
         angle_pr(3) = angle_pr(3) + (fa_z * ra_z) + (fc_z * rc_z)
-        print(*,*)"Prints anything naki na?"
 
       end if
     end do
