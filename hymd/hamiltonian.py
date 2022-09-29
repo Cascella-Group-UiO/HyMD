@@ -160,7 +160,7 @@ class SquaredPhi(Hamiltonian):
         ]
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
@@ -214,11 +214,8 @@ class DefaultNoChi(Hamiltonian):
         super(DefaultNoChi, self)._setup()
         self.setup()
 
-# old vs: of setup     def w(phi, kappa=self.config.kappa, rho0=self.config.rho0):
-#        return 0.5 / (kappa * rho0) * (sum(phi) - rho0) ** 2
     def setup(self):
-        """
-        Set in comment here
+        """Setup the interaction energy potential and the external potential
         """
         def w(
                 phi,
@@ -244,7 +241,7 @@ class DefaultNoChi(Hamiltonian):
             for k in range(len(self.config.unique_names))
         ]
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
@@ -333,14 +330,11 @@ class DefaultWithChi(Hamiltonian):
             interaction = 0
             for i in range(self.config.n_types):
                 for j in range(i + 1, self.config.n_types):
-
-                # use line below instead to count diagonal chi:
-                #for j in range(i, self.config.n_types):
-
                     ni = type_to_name_map[i]
                     nj = type_to_name_map[j]
                     names = sorted([ni, nj])
                     c = chi_type_dictionary[tuple(names)]
+
                     interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
             return incompressibility + interaction
@@ -377,10 +371,11 @@ class DefaultWithChi(Hamiltonian):
         ]
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
+
 
     def w1(
         self,
@@ -420,6 +415,31 @@ class DefaultWithChi(Hamiltonian):
                     c = K_coupl_type_dictionary[tuple(names)]
                 else:
                     c = 0
-                #uncomment to include diagonal K_coupl terms:
-                #c = K_coupl_type_dictionary[tuple(names)]
+
                 v_ext1[k] += -1 * c / rho0 * phi_lap_filtered[l]
+
+
+def get_hamiltonian(config):
+    """Return appropriate Hamiltonian object based on the 
+    config.hamiltonian string.
+
+    Parameters
+    ----------
+    config : Config
+        Configuration object.
+
+    Returns
+    ----------
+    hamiltonian : Hamiltonian
+        Hamiltonian object.
+    """
+    if config.hamiltonian.lower() == "defaultnochi":
+        hamiltonian = DefaultNoChi(config)
+    elif config.hamiltonian.lower() == "defaultwithchi":
+        hamiltonian = DefaultWithChi(
+            config, config.unique_names, config.type_to_name_map
+        )
+    elif config.hamiltonian.lower() == "squaredphi":
+        hamiltonian = SquaredPhi(config)
+
+    return hamiltonian

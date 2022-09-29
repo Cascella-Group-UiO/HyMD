@@ -33,11 +33,9 @@ compute_angle_forces__single$(EXT_SUFFIX): compute_angle_forces.f90
 
 compute_angle_forces__double.f90: compute_angle_forces.f90
 	sed ${SINGLE_TO_DOUBLE} compute_angle_forces.f90 > compute_angle_forces__double.f90
-	sed ${SINGLE_TO_DOUBLE} dipole_reconstruction.f90 > dipole_reconstruction__double.f90
 
 compute_angle_forces__double$(EXT_SUFFIX): compute_angle_forces__double.f90
-	$(FC) -c compute_angle_forces__double.f90 dipole_reconstruction__double.f90 -m compute_angle_forces__double
-	$(RM) compute_angle_forces__double.f90 dipole_reconstruction__double.f90
+	$(FC) -c compute_angle_forces__double.f90 -m compute_angle_forces__double
 
 compute_dihedral_forces__single$(EXT_SUFFIX): compute_dihedral_forces.f90
 	$(FC) -c compute_dihedral_forces.f90 dipole_reconstruction.f90 -m compute_dihedral_forces

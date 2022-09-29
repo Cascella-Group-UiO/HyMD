@@ -11,8 +11,9 @@ def parse_args():
             "Extracts observables from H5MD files and plots them "
             "using matplotlib. Supported properties: Total energy "
             "(E), potential energy (PE), kinetic energy (KE), bond "
-            "energy (BE), angular bond energy (AE), and total center "
-            "of mass momentum (P). Plot all available observables by "
+            "energy (BE), angular bond energy (AE), total center "
+            "of mass momentum (P), and electrostatic energy (EE). "
+            "Plot all available observables by "
             'specifying "all".'
         )
     )
@@ -22,7 +23,7 @@ def parse_args():
         type=str,
         nargs="+",
         help="Properties to plot",
-        choices=["E", "PE", "KE", "BE", "FE", "AE", "P", "all"],
+        choices=["E", "PE", "KE", "BE", "FE", "AE", "P", "EE", "all"],
     )  # noqa: E501
     parser.add_argument("--file", type=str, default="sim.h5", help="H5MD file")
     parser.add_argument(
@@ -161,7 +162,7 @@ class Property:
 if __name__ == "__main__":
     args = parse_args()
     if "all" in args.property:
-        args.property = ["E", "PE", "KE", "BE", "FE", "AE", "DE", "P"]
+        args.property = ["E", "PE", "KE", "BE", "FE", "AE", "DE", "P", "EE"]
     file_path = os.path.abspath(args.file)
     h5md_file = open_h5md_file(file_path)
 

@@ -2,7 +2,7 @@
   <img src="https://github.com/Cascella-Group-UiO/HyMD/blob/main/docs/img/hymd_logo_text_black.png?raw=true" width="500" title="HylleraasMD">
 </a>
 
-[![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/Cascella-Group-UiO/HyMD-2021/workflows/build/badge.svg) [![docs](https://github.com/Cascella-Group-UiO/HyMD/actions/workflows/docs_pages.yml/badge.svg)](https://github.com/Cascella-Group-UiO/HyMD/actions/workflows/docs_pages.yml) [![codecov](https://codecov.io/gh/Cascella-Group-UiO/HyMD/branch/main/graph/badge.svg?token=BXZ7B9RXV9)](https://codecov.io/gh/Cascella-Group-UiO/HyMD) [![PyPI version](https://badge.fury.io/py/hymd.svg)](https://badge.fury.io/py/hymd)
+[![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/Cascella-Group-UiO/HyMD-2021/workflows/build/badge.svg) [![docs](https://github.com/Cascella-Group-UiO/HyMD/actions/workflows/docs_pages.yml/badge.svg)](https://cascella-group-uio.github.io/HyMD/) [![codecov](https://codecov.io/gh/Cascella-Group-UiO/HyMD/branch/main/graph/badge.svg?token=BXZ7B9RXV9)](https://codecov.io/gh/Cascella-Group-UiO/HyMD) [![PyPI version](https://badge.fury.io/py/hymd.svg)](https://badge.fury.io/py/hymd)
 
 ---------
 **HylleraasMD** (HyMD) is a massively parallel Python package for hybrid particle-field molecular dynamics (hPF-MD) simulations of coarse-grained bio- and soft-matter systems.
@@ -18,36 +18,31 @@ Run simulations by
 ```bash
 python3 -m hymd [CONFIGURATION_FILE] [TOPOLOGY_FILE] (--OPTIONAL_ARGS)
 ```
-A typical command would look like:
-```bash
-mpirun -n 4 python3 -m hymd config.tomli dppc.h5 --verbose --logfile log.txt
-```
 
 #### Run interactively in Google Colaboratory
 A [Google Colaboratory](https://colab.research.google.com/) jupyter notebook is setup [here](https://colab.research.google.com/drive/1jfzRaXjL3q53J4U8OrCgADepmf_HuCOh?usp=sharing) with a working HyMD fully installed and executable in the browser.
 
 ## Installation
+
+#### Non-Python dependencies
+HyMD installation **requires** a working MPI compiler. It is highly recommended to have *MPI-enabled* HDF5 and [h5py](https://docs.h5py.org/en/stable/mpi.html) for running parallel simulations with HyMD. Install both on Ubuntu with
+```bash
+sudo apt-get update -y
+sudo apt-get install -y pkg-config libhdf5-mpi-dev libopenmpi-dev
+python3 -m pip uninstall h5py  # Remove any serial h5py installation present
+CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
+```
+
+> **Note**
+> There might be memory leaks if you use OpenMPI <= 4.1.1. See [#186](https://github.com/Cascella-Group-UiO/HyMD/issues/186) for more details.
+
+#### Python dependencies
 Install HyMD with `pip` by
 ```bash
 python3 -m pip install --upgrade numpy mpi4py cython
 python3 -m pip install hymd
 ```
-To install a developer's version:
-```bash
-git clone https://github.com/Cascella-Group-UiO/HyMD.git hymd
-cd hymd
-python3 -m pip install -e . 
-```
-See [HyMD docs](https://cascella-group-uio.github.io/HyMD/index.html) for more information.
-
-#### Install dependencies
-HyMD installation **requires** a working MPI compiler. It is highly recommended to have *MPI-enabled* HDF5 and [h5py](https://docs.h5py.org/en/stable/mpi.html) for running parallel simulations with HyMD. Install both on Ubuntu with
-```bash
-sudo apt-get update -y
-sudo apt-get install -y pkg-config libhdf5-mpi-dev
-python3 -m pip uninstall h5py  # Remove any serial h5py installation present
-CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
-```
+See [HyMD docs](https://cascella-group-uio.github.io/HyMD/doc_pages/installation.html) for more information, including install steps for macOS and non-Debian linux distributions.
 
 #### Run in docker
 Alternatively, an up-to-date docker image is available from [docker hub](https://hub.docker.com/repository/docker/mortele/hymd)
@@ -69,6 +64,7 @@ Clone the repository and run tests with [pytest](https://docs.pytest.org/en/late
 ```bash
 git clone https://github.com/Cascella-Group-UiO/HyMD.git hymd
 cd hymd
+python3 -m pip install pytest pytest-mpi
 pytest
 ```
 Running MPI enabled pytest tests is simplified with a convenient script

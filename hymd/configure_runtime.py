@@ -8,15 +8,17 @@ import atexit
 import cProfile
 import logging
 import pstats
-from .logger import Logger
+from .logger import Logger, print_header
 from .input_parser import read_config_toml, parse_config_toml
 
 
-def configure_runtime(comm):
+def configure_runtime(args_in, comm):
     """Parse command line arguments and configuration file
 
     Parameters
     ----------
+    args_in : list
+        List with arguments to be processed.
     comm : mpi4py.Comm
         MPI communicator to use for rank commuication.
 
@@ -30,7 +32,7 @@ def configure_runtime(comm):
     ap = ArgumentParser()
 
     ap.add_argument(
-        "-v", "--verbose", default=0, type=int, nargs="?",
+        "-v", "--verbose", default=1, type=int, nargs="?",
         help="Increase logging verbosity",
     )
     ap.add_argument(
@@ -98,21 +100,25 @@ def configure_runtime(comm):
         "config", help="Config .py or .toml input configuration script"
     )
     ap.add_argument("input", help="input.hdf5")
-    args = ap.parse_args()
+    args = ap.parse_args(args_in)
 
-    # Given as '--verbose' or '-v' without a specific value specified,
-    # default to 1
-    if args.verbose is None:
-        args.verbose = 1
-
-    if comm.rank == 0:
+    if comm.Get_rank() == 0:
         os.makedirs(args.destdir, exist_ok=True)
     comm.barrier()
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-    else:
-        np.random.seed()
+    # Safely define seeds
+    seeds = None
+    if comm.Get_rank() == 0:    
+        if args.seed is not None:
+            ss = np.random.SeedSequence(args.seed)
+        else:
+            ss = np.random.SeedSequence()
+        seeds = ss.spawn(comm.Get_size())
+
+    seeds = comm.bcast(seeds, root=0)
+
+    # Setup a PRNG for each rank
+    prng = np.random.default_rng(seeds[comm.Get_rank()])
 
     # Setup logger
     Logger.setup(
@@ -120,6 +126,9 @@ def configure_runtime(comm):
         log_file=f"{args.destdir}/{args.logfile}",
         verbose=args.verbose,
     )
+
+    # print header info
+    Logger.rank0.log(logging.INFO, print_header())
 
     if args.profile:
         prof_file_name = "cpu.txt-%05d-of-%05d" % (comm.rank, comm.size)
@@ -161,4 +170,4 @@ def configure_runtime(comm):
             f"Unable to parse configuration file {args.config}"
             f"\n\ntoml parse traceback:" + repr(ve)
         )
-    return args, config
+    return args, config, prng

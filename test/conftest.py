@@ -230,7 +230,7 @@ def h5py_molecules_file(mpi_file_name):
             dset_indices[:] = indices[:]
             dset_molecules[:] = molecules[:]
     MPI.COMM_WORLD.Barrier()
-    print(mpi_file_name)
+    # print(mpi_file_name)
     return mpi_file_name, n_particles, indices, molecules
 
 
@@ -254,6 +254,7 @@ def config_toml(mpi_file_name):
     integrator = "respa"
     respa_inner = 5
     domain_decomposition = false
+    hamiltonian = "DefaultWithChi"
     start_temperature = false
     target_temperature = 323
     tau = 0.7
@@ -581,7 +582,7 @@ def v_ext(types, kappa, rho0, sigma):
         return 0.5 / (kappa * rho0) * (sum(phi) - rho0)**2
 
     v_external = [
-        sympy.lambdify([phi], sympy.diff(w(phi), "phi%d" % (i)))
+        sympy.lambdify([phi], sympy.diff(w(phi), phi[i]))
         for i in range(n_types)
     ]
 
@@ -606,3 +607,8 @@ def v_ext(types, kappa, rho0, sigma):
     def H(k, v):
         return v * H1(k)
     """
+
+
+@pytest.fixture
+def change_tmp_dir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)

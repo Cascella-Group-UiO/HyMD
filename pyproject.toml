@@ -1,2 +1,4 @@
 [build-system]
-requires = ["setuptools", "wheel", "numpy", "cython", "mpi4py"]
+requires = ["setuptools<60", "wheel", "numpy", "cython", "mpi4py"]
+[tool.black]
+exclude = "\\(./)"
