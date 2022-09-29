@@ -70,95 +70,80 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     ]
 
     # Initialize charge density fields
-    list_coulomb = []
-    list_elec_common = []
+    coulomb_list = []
+    elec_common_list = []
     _SPACE_DIM = 3
 
-
-    if (config.coulombtype == 'PIC_Spectral_GPE' \
-            or config.coulombtype == "PIC_Spectral"):
-
+    if (config.coulombtype == 'PIC_Spectral_GPE' 
+        or config.coulombtype == "PIC_Spectral"):
         phi_q = pm.create(
             "real", value=0.0
-            )
-
+        )
         phi_q_fourier = pm.create(
             "complex", value=0.0
-            )
-
+        )
         elec_field = [
             pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
-            ] #for force calculation
+        ] # for force calculation
 
-        list_elec_common = [phi_q, phi_q_fourier, elec_field]
+        elec_common_list = [phi_q, phi_q_fourier, elec_field]
 
     if config.coulombtype == "PIC_Spectral":
-
         elec_field_fourier = [
             pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
-
         ]  # for force calculation
-        elec_energy_field = pm.create(
+        elec_potential = pm.create(
+            "real", value=0.0
+        )
+        elec_potential_fourier = pm.create(
             "complex", value=0.0
         )
-
         # Can run elecPE with pressure by adding this
         Vbar_elec = [
-                    pm.create("real", value=0.0) for _ in range(config.n_types)
+            pm.create("real", value=0.0) for _ in range(config.n_types)
         ] # no update in elec PE though (no contrib since poisson equation used directly (?))
 
-
-        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field, Vbar_elec]
-
+        coulomb_list = [
+            elec_field_fourier, 
+            elec_potential, 
+            elec_potential_fourier, 
+            Vbar_elec
+        ]
 
     if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
-
         phi_eps = pm.create("real", value = 0.0) ## real contrib of the epsilon dielectric painted to grid
-
         phi_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi eps
-
         phi_eta = [pm.create("real", value = 0.0)for _ in range(_SPACE_DIM)] ## real contrib of factor in polarization charge density
-
         phi_eta_fourier = [pm.create("complex", value = 0.0)for _ in range(_SPACE_DIM)] ## fourier of factor in polarization charge density
-
         phi_pol = pm.create("real", value = 0.0) ## real contrib of the polarization charge
-
         phi_pol_prev = pm.create("real", value = 0.0)
-
         elec_dot = pm.create("real", value = 0.0)
-
         elec_potential = pm.create("real", value = 0.0)
-
         elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
 
         # External potential and force meshes
         Vbar_elec = [
-                    pm.create("real", value=0.0) for _ in range(config.n_types)
+            pm.create("real", value=0.0) for _ in range(config.n_types)
         ]
-
         Vbar_elec_fourier = [
             pm.create("complex", value=0.0) for _ in range(config.n_types)
         ]
-
         force_mesh_elec = [
-                    [pm.create("real", value=0.0) for d in range(3)
-                    ] for _ in range(config.n_types)
+            [pm.create("real", value=0.0) for d in range(3)]
+            for _ in range(config.n_types)
         ]
-
         force_mesh_elec_fourier = [
-                    [pm.create("complex", value=0.0) for d in range(3)
-                    ] for _ in range(config.n_types)
+            [pm.create("complex", value=0.0) for d in range(3)]
+            for _ in range(config.n_types)
         ]
 
-
-        list_coulomb = [
-                phi_eps, phi_eps_fourier,
-                phi_eta, phi_eta_fourier, phi_pol,
-                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
-                force_mesh_elec, force_mesh_elec_fourier
-                ]
-
-        #list_coulomb = [phi_q, phi_q_fourier, elec_field,
+        coulomb_list = [
+            phi_eps, phi_eps_fourier,
+            phi_eta, phi_eta_fourier, phi_pol,
+            phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
+            force_mesh_elec, force_mesh_elec_fourier
+        ]
+        #coulomb_list = [phi_q, phi_q_fourier, elec_field,
         #        phi_eps, phi_eps_fourier,
         #        phi_eta, phi_eta_fourier, phi_pol,
         #        phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
@@ -169,7 +154,9 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
             phi_grad_lap_fourier, phi_grad_lap, v_ext1
             ]
 
-    return (pm, field_list, list_coulomb,list_elec_common)
+    return (pm, field_list, elec_common_list, coulomb_list)
+
+
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     """Interpolate particle-field forces from the grid onto particle positions
 

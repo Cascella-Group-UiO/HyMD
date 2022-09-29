@@ -190,22 +190,36 @@ def main():
 
     hamiltonian = get_hamiltonian(config)
 
-    pm_stuff  = initialize_pm(pmesh, config, comm)
-    (pm, field_list, coulomb_list,elec_list_common) = pm_stuff
-    [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
-            phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
-            phi_grad_lap_fourier, phi_grad_lap, v_ext1
-            ] = field_list
+    pm_objs = initialize_pm(pmesh, config, comm)
+    (pm, field_list, elec_common_list, coulomb_list) = pm_objs
+    (
+        phi, 
+        phi_fourier, 
+        force_on_grid, 
+        v_ext_fourier, 
+        v_ext,
+        phi_transfer,
+        phi_gradient,
+        phi_laplacian,
+        phi_lap_filtered_fourier,
+        phi_lap_filtered,
+        phi_grad_lap_fourier,
+        phi_grad_lap,
+        v_ext1
+    ) = field_list
 
-    if len(elec_list_common) == 3:
-        [phi_q, phi_q_fourier, elec_field] = elec_list_common
+    if len(elec_common_list) == 3:
+        (phi_q, phi_q_fourier, elec_field) = elec_common_list
 
-    if len(coulomb_list)==6:
-        [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
-        Vbar_elec
-                ] = coulomb_list
+    if len(coulomb_list) == 4:
+        (
+            elec_field_fourier, 
+            elec_potential, 
+            elec_potential_fourier, 
+            Vbar_elec
+        ) = coulomb_list
 
-    elif len(coulomb_list)==13:
+    elif len(coulomb_list) == 13:
             [
                 phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol,
@@ -691,12 +705,13 @@ def main():
                 config.time_step,
             )
 
-        # Berendsen Barostat
+        # Barostat
         if config.barostat:
+            print("=========================TEST========================")
             if config.barostat.lower() == 'isotropic':
-                pm_stuff, change = isotropic(
+                pm_objs, change = isotropic(
                      pmesh,
-                     pm_stuff,
+                     pm_objs,
                      phi,
                      phi_gradient,
                      hamiltonian,
@@ -716,9 +731,9 @@ def main():
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
-                pm_stuff, change = semiisotropic(
+                pm_objs, change = semiisotropic(
                      pmesh,
-                     pm_stuff,
+                     pm_objs,
                      phi,
                      phi_gradient,
                      hamiltonian,
@@ -736,19 +751,33 @@ def main():
                      step,
                      comm=comm
                 )
-            (pm, field_list, coulomb_list,elec_list_common) = pm_stuff
-            [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
-                    phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
-                    phi_grad_lap_fourier, phi_grad_lap, v_ext1
-                    ] = field_list
+            (pm, field_list, elec_common_list, coulomb_list) = pm_objs
+            (
+                phi,
+                phi_fourier,
+                force_on_grid,
+                v_ext_fourier,
+                v_ext,
+                phi_transfer,
+                phi_gradient,
+                phi_laplacian,
+                phi_lap_filtered_fourier,
+                phi_lap_filtered,
+                phi_grad_lap_fourier,
+                phi_grad_lap,
+                v_ext1
+            ) = field_list
 
-            if len(elec_list_common) == 3:
-                [phi_q, phi_q_fourier, elec_field] = elec_list_common
+            if len(elec_common_list) == 3:
+                (phi_q, phi_q_fourier, elec_field) = elec_common_list
 
-            if len(coulomb_list) == 6:
-                [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
-                Vbar_elec
-                        ] = coulomb_list
+            if len(coulomb_list) == 4:
+                (
+                    elec_field_fourier, 
+                    elec_potential, 
+                    elec_potential_fourier, 
+                    Vbar_elec
+                ) = coulomb_list
 
             elif len(coulomb_list) == 13:
                 [
