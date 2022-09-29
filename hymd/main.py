@@ -9,7 +9,7 @@ import pmesh.pm as pmesh
 import warnings
 from .configure_runtime import configure_runtime
 from .hamiltonian import DefaultNoChi, DefaultWithChi, SquaredPhi
-from .input_parser import check_config, sort_dielectric_by_type_id
+from .input_parser import check_config, sort_dielectric_by_type_id, get_charges_types_list
 from .logger import Logger, format_timedelta
 from .file_io import distribute_input, OutDataset, store_static, store_data
 from .field import (compute_field_force, update_field,
@@ -115,8 +115,9 @@ def main():
 
     ## dielectric from toml
     if config.coulombtype == 'PIC_Spectral_GPE':
+        config_charges = get_charges_types_list(config, types, charges, comm = comm)
         dielectric_sorted = sort_dielectric_by_type_id(config,charges,types)
-        ###^----- only needed if dielectric given from toml.
+        ###^----- dielectric not needed in new version of force-GPE
         dielectric_flag = True
 
         if config.convergence_type is not None:
@@ -199,21 +200,27 @@ def main():
             raise NotImplementedError(err_str)
 
     pm_stuff  = initialize_pm(pmesh, config, comm)
-    (pm, field_list, coulomb_list) = pm_stuff
+    (pm, field_list, coulomb_list,elec_list_common) = pm_stuff
     [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
             phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
             phi_grad_lap_fourier, phi_grad_lap, v_ext1
             ] = field_list
-    if len(coulomb_list)==5:
-        [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field
-                ] = coulomb_list
-    elif len(coulomb_list)==18:
+
+    if len(elec_list_common) == 3:
+        [phi_q, phi_q_fourier, elec_field] = elec_list_common
+
+    if len(coulomb_list)==6:
         [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
-                phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
-                phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier, phi_pol_temp, sum_fourier,
-                phi_pol_prev, elec_dot
+        Vbar_elec
                 ] = coulomb_list
 
+    elif len(coulomb_list)==13:
+            [
+                phi_eps, phi_eps_fourier,
+                phi_eta, phi_eta_fourier, phi_pol,
+                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
+                force_mesh_elec, force_mesh_elec_fourier
+                ] = coulomb_list
 
     Logger.rank0.log(logging.INFO, f"pfft-python processor mesh: {str(pm.np)}")
 
@@ -246,9 +253,11 @@ def main():
         args_in.append(elec_forces)
         args_recv.append("charges")
         args_recv.append("elec_forces")
+
     if dielectric_flag:
         args_in.append(dielectric_sorted)
         args_recv.append('dielectric_sorted')
+
     if molecules_flag:
         args_recv.append("bonds")
         args_recv.append("molecules")
@@ -321,15 +330,17 @@ def main():
     if charges_flag:
         layout_q = pm.decompose(positions)
         if config.coulombtype == 'PIC_Spectral_GPE': #dielectric_flag
-            phi_eps, elec_dot = update_field_force_q_GPE(
-                conv_fun, phi, types, charges,dielectric_sorted,
-                phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
-                phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
-                phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
-                sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
-                elec_forces,elec_field_contrib, layout_q, layouts,
-                pm, positions,config,comm = comm,
+            Vbar_elec, phi_eps, elec_dot = update_field_force_q_GPE(
+                conv_fun, phi, types, charges, config_charges,
+                phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
+                phi_eta,
+                phi_eta_fourier, phi_pol_prev, phi_pol,
+                elec_field, elec_forces, elec_field_contrib, elec_potential,
+                Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
+                hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
                 )
+
+
 
             field_q_energy = compute_field_energy_q_GPE(
                 config, phi_eps,field_q_energy,
@@ -562,6 +573,7 @@ def main():
                     positions,
                     bond_pr_,
                     angle_pr_,
+                    Vbar_elec,
                     comm=comm
             )
 
@@ -716,6 +728,7 @@ def main():
                      phi_grad_lap,
                      bond_pr_,
                      angle_pr_,
+                     Vbar_elec,
                      step,
                      comm=comm
                 )
@@ -737,22 +750,30 @@ def main():
                      phi_grad_lap,
                      bond_pr_,
                      angle_pr_,
+                     Vbar_elec,
                      step,
                      comm=comm
                 )
-            (pm, field_list, coulomb_list) = pm_stuff
+            (pm, field_list, coulomb_list,elec_list_common) = pm_stuff
             [phi, phi_fourier, force_on_grid, v_ext_fourier, v_ext, phi_transfer,
                     phi_gradient, phi_laplacian, phi_lap_filtered_fourier, phi_lap_filtered,
                     phi_grad_lap_fourier, phi_grad_lap, v_ext1
                     ] = field_list
-            if len(coulomb_list) == 5:
-                [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field
-                        ] = coulomb_list
-            elif len(coulomb_list) == 18:
+
+            if len(elec_list_common) == 3:
+                [phi_q, phi_q_fourier, elec_field] = elec_list_common
+
+            if len(coulomb_list) == 6:
                 [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field,
-                        phi_q_eps, phi_q_eps_fourier, phi_q_effective_fourier, phi_eps, phi_eps_fourier,
-                        phi_eta, phi_eta_fourier, phi_pol, phi_pol_fourier, phi_pol_temp, sum_fourier,
-                        phi_pol_prev, elec_dot
+                Vbar_elec
+                        ] = coulomb_list
+
+            elif len(coulomb_list) == 13:
+                [
+                        phi_eps, phi_eps_fourier,
+                        phi_eta, phi_eta_fourier, phi_pol,
+                        phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
+                        force_mesh_elec, force_mesh_elec_fourier
                         ] = coulomb_list
 
         # Update slow forces
@@ -774,17 +795,20 @@ def main():
 
             if charges_flag:
                 layout_q = pm.decompose(positions)
+                #print(charges)
+                #print(config.name_to_type_map)
                 if config.coulombtype == "PIC_Spectral_GPE": # dielectric_flag and
                     #print("update elec forces  w rank", comm.Get_rank())
-                    phi_eps, elec_dot = update_field_force_q_GPE(
-                    conv_fun, phi, types, charges,dielectric_sorted,
-                    phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
-                    phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
-                    phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
-                    sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
-                    elec_forces,elec_field_contrib, layout_q, layouts,
-                    pm, positions,config,comm = comm,
-                    )
+                    Vbar_elec, phi_eps, elec_dot = update_field_force_q_GPE(
+                        conv_fun, phi, types, charges, config_charges,
+                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
+                        phi_eta,
+                        phi_eta_fourier, phi_pol_prev, phi_pol,
+                        elec_field, elec_forces, elec_field_contrib, elec_potential,
+                        Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
+                        hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
+                        )
+
 
                     field_q_energy =compute_field_energy_q_GPE(
                         config, phi_eps,
@@ -801,7 +825,7 @@ def main():
                     #print("here", sums)
 
                     #if rank == 0:
-                    #    print("here", sums)
+                    # print("here", sums)
                     #    f.write("{:.2f}, {:.2f}, {:.2f}, {:.2f} \n".format(0, sums[0], sums[1], sums[2]))
 
                 if config.coulombtype == "PIC_Spectral":
@@ -1057,6 +1081,7 @@ def main():
                             positions,
                             bond_pr_,
                             angle_pr_,
+                            Vbar_elec,
                             comm=comm
                     )
                 else:
@@ -1135,15 +1160,16 @@ def main():
             if charges_flag:
                 layout_q = pm.decompose(positions)
                 if config.coulombtype == "PIC_Spectral_GPE":
-                    phi_eps, elec_dot = update_field_force_q_GPE(
-                        conv_fun, phi, types, charges,dielectric_sorted,
-                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,phi_q_eps,
-                        phi_q_eps_fourier,phi_q_effective_fourier, phi_eta,
-                        phi_eta_fourier, phi_pol_prev,  phi_pol, phi_pol_fourier,
-                        sum_fourier,phi_pol_temp, elec_field_fourier, elec_field,
-                        elec_forces,elec_field_contrib, layout_q, layouts,
-                        pm, positions,config,comm = comm,
-                    )
+                    Vbar_elec, phi_eps, elec_dot = update_field_force_q_GPE(
+                        conv_fun, phi, types, charges, config_charges,
+                        phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
+                        phi_eta,
+                        phi_eta_fourier, phi_pol_prev, phi_pol,
+                        elec_field, elec_forces, elec_field_contrib, elec_potential,
+                        Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
+                        hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
+                        )
+
 
                     field_q_energy =compute_field_energy_q_GPE(
                         config, phi_eps,
@@ -1201,6 +1227,7 @@ def main():
                     positions,
                     bond_pr_,
                     angle_pr_,
+                    Vbar_elec,
                     comm=comm
             )
         else:

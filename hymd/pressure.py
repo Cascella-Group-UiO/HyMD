@@ -19,6 +19,7 @@ def comp_pressure(
         positions,
         bond_pr,
         angle_pr,
+        Vbar_elec,
         comm=MPI.COMM_WORLD
 ):
     """
@@ -112,7 +113,12 @@ def comp_pressure(
     V_bar_tuple = [
         hamiltonian.V_bar[k](phi) for k in range(config.n_types)
     ]
+
     V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
+    #print("shape before", np.shape(V_bar))
+
+    V_bar = [sum(n) for n in zip(V_bar,Vbar_elec)]
+    #print("shape after", np.shape(V_bar))
 
     p1 = [
         1/V
