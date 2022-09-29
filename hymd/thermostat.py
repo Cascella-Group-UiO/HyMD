@@ -193,14 +193,10 @@ def csvr_thermostat(
         N_f = 3 * group_n_particles
         c = np.exp(-(config.time_step * config.respa_inner) / config.tau)
 
-        # Draw random numbers and broadcast them so they are identical across
-        # MPI ranks
-        R = SNf = None
-        if comm.Get_rank() == 0:
-            R = random_gaussian(prng)
-            SNf = random_chi_squared(prng, N_f - 1)
-        R = comm.bcast(R, root=0)
-        SNf = comm.bcast(SNf, root=0)
+        # Random numbers are identical across ranks because all ranks have
+        # the same prng after the initialization of the velocities
+        R = random_gaussian(prng)
+        SNf = random_chi_squared(prng, N_f - 1)
 
         alpha2 = (
             c + (1 - c) * (SNf + R**2) * K_target / (N_f * K)

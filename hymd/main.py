@@ -107,6 +107,10 @@ def main():
     elif config.cancel_com_momentum:
         velocities = cancel_com_momentum(velocities, config, comm=comm)
 
+    # set all PRNG to the root's PRNG
+    # this is done to avoid communication between ranks in the thermostat
+    prng = comm.bcast(prng, root=0)
+
     bond_forces = np.zeros_like(positions)
     angle_forces = np.zeros_like(positions)
     dihedral_forces = np.zeros_like(positions)
