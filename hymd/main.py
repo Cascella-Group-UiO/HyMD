@@ -727,6 +727,7 @@ def main():
                      angle_pr_,
                      Vbar_elec,
                      step,
+                     prng,
                      comm=comm
                 )
 
@@ -749,6 +750,7 @@ def main():
                      angle_pr_,
                      Vbar_elec,
                      step,
+                     prng,
                      comm=comm
                 )
             (pm, field_list, elec_common_list, coulomb_list) = pm_objs

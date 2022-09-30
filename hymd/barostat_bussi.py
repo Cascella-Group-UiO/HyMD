@@ -46,6 +46,7 @@ def isotropic(
         bond_pr,
         angle_pr,
         step,
+        prng,
         comm=MPI.COMM_WORLD
     ):
     """
@@ -72,9 +73,7 @@ def isotropic(
 
     if(np.mod(step, config.n_b)==0):
 
-        if comm.Get_rank() == 0:
-            R = np.random.normal()
-        R = comm.bcast(R, root=0)
+        R = prng.normal()
 
         change = True
         #compute pressure
@@ -137,6 +136,7 @@ def semiisotropic(
         bond_pr,
         angle_pr,
         step,
+        prng,
         comm=MPI.COMM_WORLD
     ):
     """
@@ -168,13 +168,9 @@ def semiisotropic(
     rank = comm.Get_rank()
     beta = 7.6 * 10**(-4)  # isothermal compressibility of water
     change = False
-    Rxy = Rz = None
     if(np.mod(step, config.n_b)==0):
-        if comm.Get_rank() == 0:
-            Rxy = np.random.normal()
-            Rz = np.random.normal()
-        Rxy = comm.bcast(Rxy, root=0)
-        Rz = comm.bcast(Rz, root=0)
+        Rxy = prng.normal()
+        Rz = prng.normal()
         change = True
         #compute pressure
         pressure = comp_pressure(

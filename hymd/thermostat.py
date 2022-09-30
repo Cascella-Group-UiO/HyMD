@@ -144,6 +144,8 @@ def csvr_thermostat(
         Array of particle names.
     config : Config
         Configuration dataclass containing simulation metadata and parameters.
+    prng : np.random.Generator
+        Numpy object that provides a stream of random bits
     comm : MPI.Intracomm, optional
         MPI communicator to use for rank commuication. Defaults to
         MPI.COMM_WORLD.
