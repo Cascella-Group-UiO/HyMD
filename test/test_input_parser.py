@@ -363,13 +363,23 @@ def test_input_parser_check_box_size(config_toml, caplog):
         config_toml_str, "box_size = [", "box_size = [2.25, -3.91, 4.11]"
     )
     config = parse_config_toml(changed_box_toml_str)
+    input_box = np.array([2.25, -3.91, 4.11])
 
     with pytest.raises(ValueError) as recorded_error:
-        _ = check_box_size(config)
+        _ = check_box_size(config, input_box)
         log = caplog.text
         assert all([(s in log) for s in ("Invalid", "box")])
     message = str(recorded_error.value)
     assert all([(s in message) for s in ("Invalid", "box")])
+
+    input_box = np.ones(3)
+    with pytest.raises(ValueError) as recorded_error:
+        _ = check_box_size(config, input_box)
+        log = caplog.text
+        assert all([(s in log) for s in ("Box", "not", "match")])
+    message = str(recorded_error.value)
+    assert all([(s in message) for s in ("Box", "not", "match")])
+
     caplog.clear()
 
 
@@ -749,6 +759,9 @@ def test_input_parser_check_config(config_toml, dppc_single):
     _, config_toml_str = config_toml
     config = parse_config_toml(config_toml_str)
     config.n_particles = 13
+    input_box = np.array(config.box_size)
+    config.n_b = 1
+    config.barostat_type = "berendsen"
 
     indices, _, names, _, _, _ = dppc_single
 
@@ -758,7 +771,7 @@ def test_input_parser_check_config(config_toml, dppc_single):
     types = np.array([names_to_types[n.decode('UTF-8')] for n in names],
                      dtype=int)
 
-    config = check_config(config, indices, names, types)
+    config = check_config(config, indices, names, types, input_box)
     assert isinstance(config, Config)
 
 
