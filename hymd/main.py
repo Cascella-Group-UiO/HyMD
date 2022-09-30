@@ -674,7 +674,7 @@ def main():
             # Update fast forces
             if molecules_flag:
                 if not args.disable_bonds:
-                    bond_energy, bond_pr_ = compute_bond_forces(
+                    bond_energy_, bond_pr_ = compute_bond_forces(
                         bond_forces, positions, config.box_size, bonds_2_atom1,
                         bonds_2_atom2, bonds_2_equilibrium, bonds_2_stength,
                     )
