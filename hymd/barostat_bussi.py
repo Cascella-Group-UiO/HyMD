@@ -45,6 +45,7 @@ def isotropic(
         phi_grad_lap,
         bond_pr,
         angle_pr,
+        Vbar_elec,
         step,
         prng,
         comm=MPI.COMM_WORLD
@@ -91,6 +92,7 @@ def isotropic(
                 positions,
                 bond_pr,
                 angle_pr,
+                Vbar_elec,
                 comm=comm
         )
 
@@ -135,6 +137,7 @@ def semiisotropic(
         phi_grad_lap,
         bond_pr,
         angle_pr,
+        Vbar_elec,
         step,
         prng,
         comm=MPI.COMM_WORLD
@@ -187,6 +190,7 @@ def semiisotropic(
                 positions,
                 bond_pr,
                 angle_pr,
+                Vbar_elec,
                 comm=comm
         )
 
