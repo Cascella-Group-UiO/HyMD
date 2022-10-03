@@ -211,6 +211,7 @@ def main():
     if len(elec_common_list) == 3:
         (phi_q, phi_q_fourier, elec_field) = elec_common_list
 
+    Vbar_elec = None # needed if electrostatics is not used
     if len(coulomb_list) == 4:
         (
             elec_field_fourier, 
@@ -707,7 +708,6 @@ def main():
 
         # Barostat
         if config.barostat:
-            print("=========================TEST========================")
             if config.barostat.lower() == 'isotropic':
                 pm_objs, change = isotropic(
                      pmesh,
