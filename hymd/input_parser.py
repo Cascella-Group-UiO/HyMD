@@ -1099,12 +1099,6 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
     Check validity of barostat_type, barostat,
     a, rho0, target_pressure, tau_p
     """
-    if not config.barostat_type:
-        config.barostat_type = 'berendsen'
-        warn_str = "barostat_type not specified,"\
-                "setting to berendsen"
-        Logger.rank0.log(logging.WARNING, warn_str)
-        if comm.Get_rank() == 0: warnings.warn(warn_str)
     if config.barostat is None:
         if(config.tau_p is not None
                 or (config.target_pressure.P_L and config.target_pressure.P_N) is not None):
@@ -1125,6 +1119,13 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
             if comm.Get_rank() == 0: warnings.warn(warn_str)
 
     if config.barostat is not None:
+        if not config.barostat_type:
+            config.barostat_type = 'berendsen'
+            warn_str = "barostat_type not specified,"\
+                       "setting to berendsen"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
         if (config.barostat != 'isotropic' and config.barostat != 'semiisotropic'):
             err_str = "barostat option not recognised. Valid options: isotropic, semiisotropic"
             Logger.rank0.log(logging.ERROR, err_str)
@@ -1137,7 +1138,8 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
                 config.target_pressure.P_N = 1.0 #bar
             warn_str = "barostat specified but no target_pressure, defaulting to 1.0 bar"
             Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0: warnings.warn(warn_str)
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
         if config.tau_p is None:
             if config.tau <= 0.1:
                 config.tau_p = config.tau * 10.0
@@ -1145,7 +1147,8 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
                 config.tau_p = 1.0
             warn_str = "barostat specified but no tau_p, defaulting to "+str(config.tau_p)
             Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0: warnings.warn(warn_str)
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
         if not config.a:
             err_str = "a not specified; cannot start simulation {config.a}"
             Logger.rank0.log(logging.ERROR, err_str)
@@ -1155,10 +1158,11 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
             warn_str = "rho0 not specified;"\
                     "setting rho0 to average density"
             Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0: warnings.warn(warn_str)
-
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
 
     return config
+
 
 def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
     if any(config.thermostat_coupling_groups):
