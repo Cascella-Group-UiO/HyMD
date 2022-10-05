@@ -267,12 +267,14 @@ class K_Coupl:
     atom_2: str
     squaregradient_energy: float
 
-def findPathsNoLC(G, u, n):
+def find_all_paths(G, u, n):
+    """Helper function that recursively finds all paths of given lenght 'n + 1' inside a network 'G'.
+    Adapted from https://stackoverflow.com/a/28103735."""
     if n == 0:
         return [[u]]
     paths = []
     for neighbor in G.neighbors(u):
-        for path in findPathsNoLC(G, neighbor, n - 1):
+        for path in find_all_paths(G, neighbor, n - 1):
             if u not in path:
                 paths.append([u] + path)
     return paths
@@ -420,7 +422,7 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                                 ]
                             )
 
-            all_paths_len_four = findPathsNoLC(bond_graph, i, 3)
+            all_paths_len_four = find_all_paths(bond_graph, i, 3)
             for p in all_paths_len_four:
                 name_i = bond_graph.nodes()[i]["name"]
                 name_mid_1 = bond_graph.nodes()[p[1]]["name"]
@@ -730,31 +732,23 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
 def dipole_forces_redistribution(
     f_on_bead, f_dipoles, trans_matrices, a, b, c, d, type_array, last_bb
 ):
-    """Redistribute electrostatic forces calculated from ghost dipole point
-    charges to the backcone atoms of the protein.
-
-    .. deprecated:: 1.0.0
-        :code:`dipole_forces_redistribution` was replaced by compiled Fortran
-        code prior to 1.0.0 release.
+    """Redistribute electrostatic forces calculated from topologically 
+    reconstructed ghost dipole point charges to the backcone atoms of the protein.
     """
     f_on_bead.fill(0.0)
     for i, j, k, l, fd, matrix, dih_type, is_last in zip(
         a, b, c, d, f_dipoles, trans_matrices, type_array, last_bb
     ):
-        if dih_type == 1:
-            tot_force = fd[0] + fd[1]
-            f_on_bead[i] += matrix[0] @ tot_force  # Atom A
-            f_on_bead[j] += matrix[1] @ tot_force + 0.5 * tot_force  # Atom B
-            f_on_bead[k] += matrix[2] @ tot_force + 0.5 * tot_force  # Atom C
+        if dih_type ==1:
+            sum_force = fd[0] + fd[1]
+            diff_force = fd[0] - fd[1]
+            f_on_bead[i] += matrix[0] @ diff_force  # Atom A
+            f_on_bead[j] += matrix[1] @ diff_force + 0.5 * sum_force  # Atom B
+            f_on_bead[k] += matrix[2] @ diff_force + 0.5 * sum_force  # Atom C
 
             if is_last == 1:
-                tot_force = fd[2] + fd[3]
-
-                # Atom B
-                f_on_bead[j] += matrix[3] @ tot_force
-
-                # Atom C
-                f_on_bead[k] += matrix[4] @ tot_force + 0.5 * tot_force
-
-                # Atom D
-                f_on_bead[l] += matrix[5] @ tot_force + 0.5 * tot_force
+                sum_force = fd[2] + fd[3]
+                diff_force = fd[2] - fd[3]
+                f_on_bead[j] += matrix[3] @ diff_force
+                f_on_bead[k] += matrix[4] @ diff_force + 0.5 * sum_force
+                f_on_bead[l] += matrix[5] @ diff_force + 0.5 * sum_force

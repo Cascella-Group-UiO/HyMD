@@ -57,6 +57,7 @@ def isotropic(
         angle_pr,
         Vbar_elec,
         step,
+        prng,
         comm=MPI.COMM_WORLD
     ):
     """
@@ -113,6 +114,8 @@ def isotropic(
         Total angle pressure due all three-particle bonds.
     step : integer
         MD step number
+    prng : np.random.Generator
+        Numpy object that provides a stream of random bits
     comm : MPI.Intracomm, optional
         MPI communicator to use for rank commuication. Defaults to
         MPI.COMM_WORLD.
@@ -189,6 +192,7 @@ def semiisotropic(
         angle_pr,
         Vbar_elec,
         step,
+        prng,
         comm=MPI.COMM_WORLD
     ):
     """
@@ -245,6 +249,8 @@ def semiisotropic(
         Total angle pressure due all three-particle bonds.
     step : integer
         MD step number
+    prng : np.random.Generator
+        Numpy object that provides a stream of random bits
     comm : MPI.Intracomm, optional
         MPI communicator to use for rank commuication. Defaults to
         MPI.COMM_WORLD.

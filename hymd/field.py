@@ -70,95 +70,80 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     ]
 
     # Initialize charge density fields
-    list_coulomb = []
-    list_elec_common = []
+    coulomb_list = []
+    elec_common_list = []
     _SPACE_DIM = 3
 
-
-    if (config.coulombtype == 'PIC_Spectral_GPE' \
-            or config.coulombtype == "PIC_Spectral"):
-
+    if (config.coulombtype == 'PIC_Spectral_GPE' 
+        or config.coulombtype == "PIC_Spectral"):
         phi_q = pm.create(
             "real", value=0.0
-            )
-
+        )
         phi_q_fourier = pm.create(
             "complex", value=0.0
-            )
-
+        )
         elec_field = [
             pm.create("real", value=0.0) for _ in range(_SPACE_DIM)
-            ] #for force calculation
+        ] # for force calculation
 
-        list_elec_common = [phi_q, phi_q_fourier, elec_field]
+        elec_common_list = [phi_q, phi_q_fourier, elec_field]
 
     if config.coulombtype == "PIC_Spectral":
-
         elec_field_fourier = [
             pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
-
         ]  # for force calculation
-        elec_energy_field = pm.create(
+        elec_potential = pm.create(
+            "real", value=0.0
+        )
+        elec_potential_fourier = pm.create(
             "complex", value=0.0
         )
-
         # Can run elecPE with pressure by adding this
         Vbar_elec = [
-                    pm.create("real", value=0.0) for _ in range(config.n_types)
+            pm.create("real", value=0.0) for _ in range(config.n_types)
         ] # no update in elec PE though (no contrib since poisson equation used directly (?))
 
-
-        list_coulomb = [phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_energy_field, Vbar_elec]
-
+        coulomb_list = [
+            elec_field_fourier, 
+            elec_potential, 
+            elec_potential_fourier, 
+            Vbar_elec
+        ]
 
     if config.coulombtype == 'PIC_Spectral_GPE': ## initializing the density mesh #dielectric_flag
-
         phi_eps = pm.create("real", value = 0.0) ## real contrib of the epsilon dielectric painted to grid
-
         phi_eps_fourier = pm.create("complex", value = 0.0) # complex contrib of phi eps
-
         phi_eta = [pm.create("real", value = 0.0)for _ in range(_SPACE_DIM)] ## real contrib of factor in polarization charge density
-
         phi_eta_fourier = [pm.create("complex", value = 0.0)for _ in range(_SPACE_DIM)] ## fourier of factor in polarization charge density
-
         phi_pol = pm.create("real", value = 0.0) ## real contrib of the polarization charge
-
         phi_pol_prev = pm.create("real", value = 0.0)
-
         elec_dot = pm.create("real", value = 0.0)
-
         elec_potential = pm.create("real", value = 0.0)
-
         elec_field_contrib = pm.create("real", value = 0.0) # needed for pol energies later
 
         # External potential and force meshes
         Vbar_elec = [
-                    pm.create("real", value=0.0) for _ in range(config.n_types)
+            pm.create("real", value=0.0) for _ in range(config.n_types)
         ]
-
         Vbar_elec_fourier = [
             pm.create("complex", value=0.0) for _ in range(config.n_types)
         ]
-
         force_mesh_elec = [
-                    [pm.create("real", value=0.0) for d in range(3)
-                    ] for _ in range(config.n_types)
+            [pm.create("real", value=0.0) for d in range(3)]
+            for _ in range(config.n_types)
         ]
-
         force_mesh_elec_fourier = [
-                    [pm.create("complex", value=0.0) for d in range(3)
-                    ] for _ in range(config.n_types)
+            [pm.create("complex", value=0.0) for d in range(3)]
+            for _ in range(config.n_types)
         ]
 
-
-        list_coulomb = [
-                phi_eps, phi_eps_fourier,
-                phi_eta, phi_eta_fourier, phi_pol,
-                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
-                force_mesh_elec, force_mesh_elec_fourier
-                ]
-
-        #list_coulomb = [phi_q, phi_q_fourier, elec_field,
+        coulomb_list = [
+            phi_eps, phi_eps_fourier,
+            phi_eta, phi_eta_fourier, phi_pol,
+            phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
+            force_mesh_elec, force_mesh_elec_fourier
+        ]
+        #coulomb_list = [phi_q, phi_q_fourier, elec_field,
         #        phi_eps, phi_eps_fourier,
         #        phi_eta, phi_eta_fourier, phi_pol,
         #        phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec
@@ -169,7 +154,9 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
             phi_grad_lap_fourier, phi_grad_lap, v_ext1
             ]
 
-    return (pm, field_list, list_coulomb,list_elec_common)
+    return (pm, field_list, elec_common_list, coulomb_list)
+
+
 def compute_field_force(layouts, r, force_mesh, force, types, n_types):
     """Interpolate particle-field forces from the grid onto particle positions
 
@@ -221,9 +208,45 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
 
 
+def compute_self_energy_q(config, charges, comm=MPI.COMM_WORLD):
+    """Compute the self energy for the interaction due to the Ewald scheme
+    used to compute the electrostatics. The energy is stored in :code:`config`.
+
+    The self interaction energy is given by:
+
+    .. math::
+
+        U_{self} = \\sqrt{\\frac{1}{2\\pi\\sigma^2}} \\sum_{i=1}^{N} q_i^2
+
+    where :math:`q_i` are the charges and :math:`\\sigma` is the half-width
+    of the Gaussian filter.
+
+    Parameters
+    ----------
+    config : Config
+        Configuration object.
+    charges : (N,) numpy.ndarray
+        Array of particle charge values for :code:`N` particles. Local for each
+        MPI rank.
+    comm : mpi4py.Comm
+        MPI communicator to use for rank communication.
+
+    Returns
+    -------
+    field_q_self_energy : float
+        Electrostatic self energy.
+    """
+    elec_conversion_factor = config.coulomb_constant / config.dielectric_const
+
+    prefac = elec_conversion_factor * np.sqrt(1./(2.*np.pi*config.sigma*config.sigma))
+    _squared_charges = charges * charges
+    squared_charges_sum = comm.allreduce(np.sum(_squared_charges))
+    return prefac * squared_charges_sum
+
+
 def compute_field_energy_q(
-    config, phi_q_fourier, elec_energy_field, field_q_energy,
-    comm=MPI.COMM_WORLD,
+    config, phi_q, phi_q_fourier, elec_potential, elec_potential_fourier, 
+    field_q_self_energy, comm=MPI.COMM_WORLD,
 ):
     """Calculate the electrostatic energy from a field configuration
 
@@ -232,65 +255,76 @@ def compute_field_energy_q(
 
     .. math::
 
-        E = \\frac{1}{2}\\int\\mathrm{d}\\mathbf{r}\\,
+        E = \\frac{1}{2\\varepsilon_0 \\varepsilon_r}\\int\\mathrm{d}\\mathbf{r}\\,
             \\rho(\\mathbf{r}) \\Psi(\\mathbf{r}),
 
     where :math:`\\rho(\\mathbf{r})` denotes the charge density at position
-    :math:`\\mathbf{r}`. Through application of Gauss' law and writing
-    :math:`\\Psi` in terms of the electric field :math:`\\mathbf{E}`, this
-    becomes
-
-    .. math::
-
-        E = \\frac{\\varepsilon}{2}\\int\\mathrm{d}\\mathbf{r}\\,
-            \\mathbf{E}\\cdot \\mathbf{E},
-
-    where :math:`\\varepsilon` is the relative dielectric of the simulation
+    :math:`\\mathbf{r}`, :math:`\\varepsilon_0` is the vacuum permittivity 
+    and :math:`\\varepsilon_r` is the relative dielectric of the simulation
     medium.
 
     Parameters
     ----------
     config : Config
         Configuration object.
+    phi_q : pmesh.pm.RealField
+        Pmesh :code:`RealField` object containing the discretized
+        electrostatic potential values in real space on the
+        computational grid. Local for each MPI rank--the full computayional grid
+        is represented by the collective fields of all MPI ranks.
     phi_q_fourier : pmesh.pm.ComplexField
         Pmesh :code:`ComplexField` object containing the discretized
         electrostatic potential values in reciprocal space on the
-        computational grid. Local for each MPI rank--the full computaional grid
+        computational grid. Local for each MPI rank--the full computayional grid
         is represented by the collective fields of all MPI ranks.
-    elec_energy_field : pmesh.pm.ComplexField
-        Pmesh :code:`ComplexField` object for storing calculated discretized
-        electrostatic energy density values in reciprocal space on the
+    elec_potential : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        electrostatic potential values in real space on the
         computational grid. Pre-allocated, but empty; any values in this field
         are discarded. Changed in-place. Local for each MPI rank--the full
         computaional grid is represented by the collective fields of all MPI
         ranks.
-    field_q_energy : float
-        Total elecrostatic energy.
+    elec_potential_fourier : pmesh.pm.ComplexField
+        Pmesh :code:`ComplexField` object for storing calculated discretized
+        electrostatic potential values in reciprocal space on the
+        computational grid. Pre-allocated, but empty; any values in this field
+        are discarded. Changed in-place. Local for each MPI rank--the full
+        computaional grid is represented by the collective fields of all MPI
+        ranks.
+    field_q_self_energy : float
+        Electrostatic self energy to be subtracted.
 
     Returns
     -------
-    elec_field_energy : float
+    field_q_energy : float
         Total electrostatic energy.
     """
     elec_conversion_factor = config.coulomb_constant / config.dielectric_const
+    V = np.prod(config.box_size)
+    n_mesh_cells = np.prod(np.full(3, config.mesh_size))
+    volume_per_cell = V / n_mesh_cells
 
-    def transfer_energy(k, v):
+    # solve Poisson equation in Fourier space
+    def poisson_transfer_function(k, v):
         return (
-            4.0 * np.pi * elec_conversion_factor * np.abs(v)**2
+            4. * np.pi * elec_conversion_factor * v
             / k.normp(p=2, zeromode=1)
         )
-
     phi_q_fourier.apply(
-        transfer_energy, kind="wavenumber", out=elec_energy_field
+        poisson_transfer_function, out=elec_potential_fourier
     )
-    V = np.prod(config.box_size)
-    field_q_energy = 0.5 * V * comm.allreduce(np.sum(elec_energy_field.value))
-    return field_q_energy.real
+
+    # get electrostatic potential in real space and compute energy
+    elec_potential_fourier.c2r(out=elec_potential)
+    field_q_energy = 0.5 * volume_per_cell * comm.allreduce(np.sum(phi_q*elec_potential))
+
+    field_q_energy -= field_q_self_energy # subtract self-energy
+    return field_q_energy
 
 
 def update_field_force_q(
     charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field,
-    elec_forces, layout_q, pm, positions, config,
+    elec_forces, layout_q, hamiltonian, pm, positions, config,
 ):
     """Calculate the electrostatic particle-field forces on the grid
 
@@ -380,6 +414,9 @@ def update_field_force_q(
         system. Used as blueprint by :code:`pmesh.pm.paint` and
         :code:`pmesh.pm.readout` for exchange of particle information across
         MPI ranks as necessary.
+    hamiltonian : Hamiltonian
+        Particle-field interaction energy handler object. Defines the
+        grid-independent filtering function, :math:`H`.
     pm : pmesh.pm.ParticleMesh
         Pmesh :code:`ParticleMesh` object interfacing to the CIC window
         function and the PFFT discrete Fourier transform library.
@@ -392,18 +429,19 @@ def update_field_force_q(
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
+    
+    # charges to grid
     pm.paint(positions, layout=layout_q, mass=charges, out=phi_q)
     phi_q /= volume_per_cell
     phi_q.r2c(out=phi_q_fourier)
 
-    def phi_transfer_function(k, v):
-        return v * np.exp(-0.5 * config.sigma**2 * k.normp(p=2, zeromode=1))
-
-    phi_q_fourier.apply(phi_transfer_function, out=phi_q_fourier)
+    # smear charges with filter
+    phi_q_fourier.apply(hamiltonian.H, out=phi_q_fourier)
     phi_q_fourier.c2r(out=phi_q)
+
+    # compute electric field directly from smeared charged densities in Fourier
     n_dimensions = config.box_size.size
     elec_conversion_factor = config.coulomb_constant / config.dielectric_const
-
     for _d in np.arange(n_dimensions):
 
         def poisson_transfer_function(k, v, d=_d):
@@ -416,6 +454,7 @@ def update_field_force_q(
         )
         elec_field_fourier[_d].c2r(out=elec_field[_d])
 
+    # get electrostatic force from electric field
     for _d in np.arange(n_dimensions):
         elec_forces[:, _d] = charges * (
             elec_field[_d].readout(positions, layout=layout_q)
@@ -1203,7 +1242,7 @@ def domain_decomposition(
         args = (*args, bonds, molecules)
     else:
         layout = pm.decompose(positions, smoothing=0)
-    if verbose > 2:
+    if verbose > 1:
         Logger.rank0.log(
             logging.INFO,
             "DOMAIN_DECOMP: Total number of particles to be exchanged = %d",
