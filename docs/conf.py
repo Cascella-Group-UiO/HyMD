@@ -43,6 +43,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx_rtd_theme',
     'sphinxcontrib.bibtex',
+    'sphinx_tabs.tabs',
+    'sphinx_panels',
     'sphinx.ext.intersphinx',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',

@@ -1,5 +1,7 @@
 sphinx
 sphinx-rtd-theme
+sphinx-tabs
+sphinx-panels
 sphinxcontrib.bibtex
 matplotlib
 numpy

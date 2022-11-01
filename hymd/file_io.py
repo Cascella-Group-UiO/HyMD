@@ -6,7 +6,7 @@ import os
 import logging
 import getpass
 from mpi4py import MPI
-from .logger import Logger
+from .logger import Logger, get_version
 
 
 class OutDataset:
@@ -59,13 +59,24 @@ class OutDataset:
                 comm=comm
             )
 
+    def is_open(self, comm=MPI.COMM_WORLD):
+        """Check if HDF5 output file is open
+
+        Parameters
+        ----------
+        comm : mpi4py.Comm
+            MPI communicator to use for rank communication.
+        """
+        comm.Barrier()
+        return self.file.__bool__()
+
     def close_file(self, comm=MPI.COMM_WORLD):
         """Closes the HDF5 output file
 
         Parameters
         ----------
         comm : mpi4py.Comm
-            MPI communicator to use for rank commuication.
+            MPI communicator to use for rank communication.
         """
         comm.Barrier()
         self.file.close()
@@ -171,31 +182,20 @@ def store_static(
     creator_group = h5md_group.create_group("creator")
     creator_group.attrs["name"] = np.string_("Hylleraas MD")
 
-    # Check if we are in a git repo and grab the commit hash and the branch if
-    # we are, append it to the version number in the output specification. Also
-    # grab the user email from git config if we can find it.
+    # Get HyMD version. Also grab the user email from git config if we
+    # can find it.
+    creator_group.attrs["version"] = np.string_(get_version())
     try:
         import git
 
         try:
-            repo_dir = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), os.pardir)
-            )
-            repo = git.Repo(repo_dir)
-            commit = repo.head.commit
-            branch = repo.active_branch
-            version_add = f"[{branch}-branch commit {commit}]"
-            try:
-                reader = repo.config_reader()
-                user_email = reader.get_value("user", "email")
-                author_group.attrs["email"] = np.string_(user_email)
-            except KeyError:
-                ...
-        except git.exc.InvalidGitRepositoryError:
-            version_add = ""
-    except ModuleNotFoundError:
-        version_add = ""
-    creator_group.attrs["version"] = np.string_("0.0 " + version_add)
+            reader = repo.config_reader()
+            user_email = reader.get_value("user", "email")
+            author_group.attrs["email"] = np.string_(user_email)
+        except:
+            pass
+    except:
+        pass
 
     h5md.particles_group = h5md.file.create_group("/particles")
     h5md.all_particles = h5md.particles_group.create_group("all")
@@ -225,6 +225,8 @@ def store_static(
     if np.mod(config.n_steps - 1, config.n_print) != 0:
         n_frames += 1
     if np.mod(config.n_steps, config.n_print) == 1:
+        n_frames += 1
+    if n_frames == config.n_steps:
         n_frames += 1
 
     species = h5md.all_particles.create_dataset(
@@ -555,7 +557,7 @@ def store_data(
     for dset in (
         h5md.positions_step,
         h5md.total_energy_step,
-        h5md.potential_energy,
+        h5md.potential_energy_step,
         h5md.kinetc_energy_step,
         h5md.bond_energy_step,
         h5md.angle_energy_step,
@@ -640,7 +642,6 @@ def store_data(
         h5md.box_value[frame,d,d] = box_size[d]
     h5md.thermostat_work[frame] = config.thermostat_work
 
-    header_ = 15 * "{:>13}"
     fmt_ = [
         "step",
         "time",
@@ -658,6 +659,20 @@ def store_data(
         "Pz",
         "ΔH" if config.target_temperature else "ΔE",
     ]
+    fmt_ = np.array(fmt_)
+    
+    # create mask to show only energies != 0
+    en_array = np.array([
+        field_energy,
+        field_q_energy,
+        bond2_energy,
+        bond3_energy,
+        bond4_energy,
+    ])
+    mask = np.full_like(fmt_, True, dtype=bool)
+    mask[range(6,11)] = en_array != 0.
+
+    header_ = fmt_[mask].shape[0] * "{:>13}"
     if config.initial_energy is None:
         fmt_[-1] = ""
 
@@ -678,9 +693,9 @@ def store_data(
     else:
         H_tilde = 0.0
 
-    header = header_.format(*fmt_)
-    data_fmt = f'{"{:13}"}{14 * "{:13.5g}" }'
-    data = data_fmt.format(
+    header = header_.format(*fmt_[mask])
+    data_fmt = f'{"{:13}"}{(fmt_[mask].shape[0]-1) * "{:13.5g}" }'
+    all_data = [
         step,
         time_step * step,
         temperature,
@@ -696,7 +711,8 @@ def store_data(
         total_momentum[1] / divide_by,
         total_momentum[2] / divide_by,
         H_tilde / divide_by,
-    )
+    ]
+    data = data_fmt.format(*[val for i,val in enumerate(all_data) if mask[i]])
     Logger.rank0.log(logging.INFO, ("\n" + header + "\n" + data))
 
 

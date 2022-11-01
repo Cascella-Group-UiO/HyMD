@@ -156,7 +156,7 @@ class Config:
         Four-particle bond type dataclass.
     """
     gas_constant: ClassVar[float] = 0.0083144621  # kJ mol-1 K-1
-    coulomb_constant: ClassVar[float] = 138.935458  # kJ mn mol-1 e-2
+    coulomb_constant: ClassVar[float] = 138.935458  # kJ nm mol-1 e-2
 
     n_steps: int
     time_step: float
@@ -189,7 +189,6 @@ class Config:
     thermostat_coupling_groups: List[List[str]] = field(default_factory=list)
     initial_energy: float = None
     cancel_com_momentum: Union[int, bool] = False
-    ## samirans version cancel_com_momentum: bool = False
     coulombtype: str = None
     convergence_type: str = None
     pol_mixing: float = None
@@ -204,9 +203,9 @@ class Config:
     a: float = None
     pressure: bool = False
     barostat: str = None
+    barostat_type: str = None
     tau_p: float = None
     target_pressure : List[Target_pressure] = field(default_factory=list)
-    alpha_0: float = None
     n_b: int = None
     m: List[float] = field(default_factory=list)
 
@@ -304,13 +303,26 @@ class Config:
 
         ret_str = f'\n\n\tConfig: {self.file_name}\n\t{50 * "-"}\n'
         for k, v in self.__dict__.items():
-            #, "dielectric_type") below possibility:
-            if k not in ("target_pressure", "bonds", "angle_bonds", "dihedrals", "chi", "K_coupl", "thermostat_coupling_groups"):
-                    ret_str += f"\t{k}: {v}\n"
-        ret_str += target_pressure_str + bonds_str + angle_str + dihedrals_str + chi_str + K_coupl_str + thermostat_coupling_groups_str
-        #   + dielectric_type_str
+            if k not in (
+                "target_pressure", 
+                "bonds", 
+                "angle_bonds", 
+                "dihedrals", 
+                "chi", 
+                "K_coupl", 
+                "thermostat_coupling_groups"
+            ):
+                ret_str += f"\t{k}: {v}\n"
+        ret_str += (
+            target_pressure_str 
+            + bonds_str 
+            + angle_str 
+            + dihedrals_str 
+            + chi_str 
+            + K_coupl_str 
+            + thermostat_coupling_groups_str
+        )
         return ret_str
-
 
 
 def read_config_toml(file_path):
@@ -390,19 +402,14 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "pol_mixing",
         "conv_crit",
         "dielectric_type",
-        "alpha_0",
         "n_b",
         "box_size",
-        "alpha_0",
-        "n_b",
-        "box_size"
+        "n_flush",
     ):
         config_dict[n] = None
 
     # Defaults = []
 
-    ### note: check if order makes sense in how it is parsed
-    ## in denfac
     for n in ("bonds", "angle_bonds", "dihedrals", "chi", "K_coupl",
             "tags", "m","dielectric_type","target_pressure"):
         config_dict[n] = []
@@ -799,31 +806,6 @@ def check_K_coupl(config, names, comm=MPI.COMM_WORLD):
     #add warnings and error remarks here
     return config
 
-"""
-def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
-    if config.box_size is not None:
-        config.box_size = np.array(config.box_size, dtype=np.float32)
-        if input_box.all() and not np.allclose(config.box_size, input_box, atol = 0.009):
-            err_str = (
-                f"Box size specified in {config.file_name}: "
-                f"{config.box_size} does not match input box:"
-                f"{input_box}"
-            )
-            Logger.rank0.log(logging.ERROR, err_str)
-            if comm.Get_rank() == 0:
-                raise ValueError(err_str)
-    else:
-        if input_box.all():
-            config.box_size = input_box
-        else:
-            err_str = (
-                f"No box information found"
-            )
-            Logger.rank0.log(logging.ERROR, err_str)
-            if comm.Get_rank() == 0:
-                raise ValueError(err_str)
-"""
-
 def check_box_size(config, input_box, comm=MPI.COMM_WORLD):
     if config.box_size is not None:
         config.box_size = np.array(config.box_size, dtype=np.float32)
@@ -871,36 +853,33 @@ def check_integrator(config, comm=MPI.COMM_WORLD):
             raise ValueError(err_str)
 
     if config.integrator.lower() == "respa":
-        if not isinstance(config.respa_inner, int):
-            if isinstance(config.respa_inner, float):
-                if config.respa_inner.is_int():
-                    warn_str = (
-                        f"Number of inner rRESPA time steps in "
-                        f"{config.file_name}: {config.respa_inner} specified "
-                        f"as float, using {int(config.respa_inner)}"
-                    )
-                    Logger.rank0.log(logging.WARNING, err_str)
-                    if comm.Get_rank() == 0:
-                        warnings.warn(warn_str)
-                    config.respa_inner = int(config.respa_inner)
-                else:
-                    err_str = (
-                        f"Invalid number of inner rRESPA time steps in "
-                        f"{config.file_name}: {config.respa_inner}. Must be "
-                        f"positive integer"
-                    )
-                    Logger.rank0.log(logging.ERROR, err_str)
-                    if comm.Get_rank() == 0:
-                        raise ValueError(err_str)
-            else:
-                err_str = (
-                    f"Invalid number of inner rRESPA time steps in "
-                    f"{config.file_name}: {config.respa_inner}. Must be "
-                    f"positive integer"
-                )
-                Logger.rank0.log(logging.ERROR, err_str)
-                if comm.Get_rank() == 0:
-                    raise TypeError(err_str)
+        if isinstance(config.respa_inner, float):
+            warn_str = (
+                f"Number of inner rRESPA time steps in "
+                f"{config.file_name}: {config.respa_inner} specified "
+                f"as float, using {int(config.respa_inner)}"
+            )
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0:
+                warnings.warn(warn_str)
+            config.respa_inner = int(config.respa_inner)
+        elif not isinstance(config.respa_inner, int):
+            err_str = (
+                f"Invalid number of inner rRESPA time steps in "
+                f"{config.file_name}: {config.respa_inner}. Must be "
+                f"positive integer"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            raise TypeError(err_str)
+
+        if config.respa_inner <= 0:
+            err_str = (
+                f"Invalid number of inner rRESPA time steps in "
+                f"{config.file_name}: {config.respa_inner}. Must be "
+                f"positive integer"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            raise ValueError(err_str)
 
     if (
         config.integrator.lower() == "velocity-verlet"
@@ -920,6 +899,8 @@ def check_integrator(config, comm=MPI.COMM_WORLD):
 
 
 def check_hamiltonian(config, comm=MPI.COMM_WORLD):
+    valid_hamiltonians = ["defaultnochi", "defaultwithchi", "squaredphi"]
+
     if config.hamiltonian is None:
         if len(config.chi) == 0:
             warn_str = (
@@ -940,17 +921,38 @@ def check_hamiltonian(config, comm=MPI.COMM_WORLD):
             if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
             config.hamiltonian = "DefaultWithChi"
+    elif config.hamiltonian.lower() not in valid_hamiltonians:
+        err_str = (
+            f"The specified Hamiltonian {config.hamiltonian} was not "
+            f"recognized as a valid Hamiltonian."
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+        raise NotImplementedError(err_str)
+
+    return config
+
+
+def check_n_flush(config, comm=MPI.COMM_WORLD):
+    if config.n_print:
+        if config.n_flush is None:
+            config.n_flush = 10000 // config.n_print
     return config
 
 
 def check_n_print(config, comm=MPI.COMM_WORLD):
-    if config.n_print is None or config.n_print < 0:
+    if (not isinstance(config.n_print, int) and
+        not isinstance(config.n_print, float) and
+        config.n_print is not None):
+        err_str = (
+            f"invalid value for n_print ({config.n_print})"
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+        raise RuntimeError(err_str)        
+    
+    if config.n_print is None or config.n_print <= 0:
         config.n_print = False
-        return config
     elif not isinstance(config.n_print, int):
-        if isinstance(config.n_print, float) and config.n_print.is_int():
-            config.n_print = int(config.n_print)
-        elif isinstance(config.n_print, float):
+        if isinstance(config.n_print, float):
             warn_str = (
                 f"n_print is a float ({config.n_print}), not int, using "
                 f"{int(round(config.n_print))}"
@@ -959,11 +961,13 @@ def check_n_print(config, comm=MPI.COMM_WORLD):
             if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
 
-            n_print = int(round(config.n_print))
-            if n_print > 0:
-                config.n_print = n_print
-            else:
-                config.n_print = False
+            config.n_print = int(round(config.n_print))
+        else:
+            err_str = (
+                f"invalid value for n_print ({config.n_print})"
+            )
+            Logger.rank0.log(logging.ERROR, err_str)
+            raise RuntimeError(err_str)
     return config
 
 
@@ -1025,38 +1029,33 @@ def check_start_and_target_temperature(config, comm=MPI.COMM_WORLD):
 
 
 def check_mass(config, comm=MPI.COMM_WORLD):
-    if config.mass is not None:
-        try:
-            config.mass = float(config.mass)
-            return config
-        except ValueError:
-            pass
-
     if config.mass is None:
         info_str = "no mass specified, defaulting to 72.0"
         config.mass = 72.0
         Logger.rank0.log(logging.INFO, info_str)
-    elif isinstance(config.mass, int) or isinstance(config.mass, float):
+    elif not isinstance(config.mass, int) and not isinstance(config.mass, float):
         err_str = (
             f"specified mass is invalid type {config.mass}, "
             f"({type(config.mass)})"
         )
         Logger.rank0.log(logging.ERROR, err_str)
-        if comm.Get_rank() == 0:
-            raise TypeError(err_str)
+        raise TypeError(err_str)
     elif config.mass < 0:
         err_str = f"invalid mass specified, {config.mass}"
         Logger.rank0.log(logging.ERROR, err_str)
-        if comm.Get_rank() == 0:
-            raise TypeError(err_str)
+        raise ValueError(err_str)
+    else:
+        config.mass = float(config.mass)
+
     return config
 
 
 def check_domain_decomposition(config, comm=MPI.COMM_WORLD):
-    if config.domain_decomposition is None:
-        config.domain_decomposition = False
     dd = config.domain_decomposition
-    assert isinstance(dd, int) or isinstance(dd, float) or (dd is None)
+    if dd is None or dd is False:
+        config.domain_decomposition = False
+        return config
+
     if isinstance(dd, int):
         if dd < 0:
             warn_str = "negative domain_decomposition specified, using False"
@@ -1064,16 +1063,25 @@ def check_domain_decomposition(config, comm=MPI.COMM_WORLD):
             Logger.rank0.log(logging.WARNING, warn_str)
             if comm.Get_rank() == 0:
                 warnings.warn(warn_str)
-    if isinstance(dd, float):
-        if not dd.is_int():
+    elif isinstance(dd, float):
+        if dd < 0.0:
+            warn_str = "negative domain_decomposition specified, using False"
+            config.domain_decomposition = False
+        else:
             warn_str = (
-                f"domain_decomposition ({config.domain_decomposition})is not "
+                f"domain_decomposition ({config.domain_decomposition}) is not "
                 f"an integer, using {int(round(dd))}"
             )
             config.domain_decomposition = int(round(dd))
-            Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0:
-                warnings.warn(warn_str)
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0:
+            warnings.warn(warn_str)
+    else:
+        err_str = (f"invalid value for domain_decomposition "
+                   f"({config.domain_decomposition}) use an integer")
+        Logger.rank0.log(logging.ERROR, err_str)
+        raise ValueError(err_str)
+
     return config
 
 
@@ -1088,11 +1096,14 @@ def check_name(config, comm=MPI.COMM_WORLD):
 
         if config.name is None:
             config.name = "sim" + current_time
+    else:
+        config.name = str(config.name)
     return config
 
 def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
     """
-    Check validity of barostat, a, rho0, target_pressure, tau_p
+    Check validity of barostat_type, barostat,
+    a, rho0, target_pressure, tau_p
     """
     if config.barostat is None:
         if(config.tau_p is not None
@@ -1114,6 +1125,13 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
             if comm.Get_rank() == 0: warnings.warn(warn_str)
 
     if config.barostat is not None:
+        if not config.barostat_type:
+            config.barostat_type = 'berendsen'
+            warn_str = "barostat_type not specified,"\
+                       "setting to berendsen"
+            Logger.rank0.log(logging.WARNING, warn_str)
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
         if (config.barostat != 'isotropic' and config.barostat != 'semiisotropic'):
             err_str = "barostat option not recognised. Valid options: isotropic, semiisotropic"
             Logger.rank0.log(logging.ERROR, err_str)
@@ -1126,7 +1144,8 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
                 config.target_pressure.P_N = 1.0 #bar
             warn_str = "barostat specified but no target_pressure, defaulting to 1.0 bar"
             Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0: warnings.warn(warn_str)
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
         if config.tau_p is None:
             if config.tau <= 0.1:
                 config.tau_p = config.tau * 10.0
@@ -1134,7 +1153,8 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
                 config.tau_p = 1.0
             warn_str = "barostat specified but no tau_p, defaulting to "+str(config.tau_p)
             Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0: warnings.warn(warn_str)
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
         if not config.a:
             err_str = "a not specified; cannot start simulation {config.a}"
             Logger.rank0.log(logging.ERROR, err_str)
@@ -1144,10 +1164,11 @@ def check_NPT_conditions(config, comm=MPI.COMM_WORLD):
             warn_str = "rho0 not specified;"\
                     "setting rho0 to average density"
             Logger.rank0.log(logging.WARNING, warn_str)
-            if comm.Get_rank() == 0: warnings.warn(warn_str)
-
+            if comm.Get_rank() == 0: 
+                warnings.warn(warn_str)
 
     return config
+
 
 def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
     if any(config.thermostat_coupling_groups):
@@ -1185,11 +1206,6 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                         "were found in the system"
                     )
                     raise ValueError(err_str)
-    return config
-
-def check_alpha_0(config, comm = MPI.COMM_WORLD):
-    if config.alpha_0 is None:
-        config.alpha_0 = 0.9999999
     return config
 
 def check_m(config, comm = MPI.COMM_WORLD):
@@ -1310,7 +1326,6 @@ def check_dielectric(config, comm = MPI.COMM_WORLD):
 
 
 def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
-    ## Note input_box from pressure
     """Performs various checks on the specfied config to ensure consistency
 
     Parameters
@@ -1350,10 +1365,34 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = check_dihedrals(config, names, comm=comm)
     config = check_hamiltonian(config, comm=comm)
     config = check_NPT_conditions(config, comm=comm)
-    config = check_alpha_0(config, comm=comm)
     config = check_n_b(config, comm=comm)
     config = check_m(config, comm=comm)
     config = check_thermostat_coupling_groups(config, comm=comm)
     config = check_cancel_com_momentum(config, comm=comm)
     config = check_dielectric(config,comm=comm)
+    config = check_n_print(config, comm=comm)
+    config = check_n_flush(config, comm=comm)
     return config
+
+
+def check_charges(charges, comm=MPI.COMM_WORLD):
+    """Check if charges across ranks sum to zero.
+
+    Parameters
+    ----------
+    charges : (N,) numpy.ndarray
+        Array of floats with charges for :code:`N` particles.
+    comm : mpi4py.Comm, optional
+        MPI communicator, defaults to :code:`mpi4py.COMM_WORLD`.
+    """  
+    total_charge = comm.allreduce(np.sum(charges), MPI.SUM)
+
+    if not np.isclose(total_charge, 0.):
+        warn_str = (
+            f"Charges in the input file do not sum to zero. "
+            f"Total charge is {total_charge}."
+        )
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0:
+            warnings.warn(warn_str)
+

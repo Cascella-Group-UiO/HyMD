@@ -23,7 +23,9 @@ subroutine caf(f, r, box, a, b, c, t0, k, energy, angle_pr)
     ! Returns
     ! -------
     ! energy : float
-    !     Total energy of all two-particle bonds.
+    !     Total energy of all three-particle bonds.
+    ! angle_pr : (3,) numpy.ndarray
+    !     Total angle pressure due all three-particle bonds.
     !
     implicit none
 

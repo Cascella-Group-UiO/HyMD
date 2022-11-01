@@ -71,7 +71,6 @@ class Hamiltonian:
         self.H = H
 
 
-
 class SquaredPhi(Hamiltonian):
     """Simple squared density interaction energy functional
 
@@ -161,7 +160,7 @@ class SquaredPhi(Hamiltonian):
         ]
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
@@ -175,13 +174,15 @@ class DefaultNoChi(Hamiltonian):
     .. math::
 
         w[\\tilde\\phi] = \\frac{1}{2\\kappa} \\left(
-            \\sum_k \\tilde\\phi_k - \\rho_0
+            \\sum_k \\tilde\\phi_k - a
         \\right)^2,
 
-    where :math:`\\kappa` is the compressibility and :math:`\\rho_0` is the
-    average density of the fully homogenous system. The :code:`SquaredPhi`
-    Hamiltonian implements a similar functional with an additional linear term
-    component depending on
+    where :math:`\\kappa` is the compressibility and :math:`a=\\rho_0` for
+    NVT runs where :math:`\\rho_0` is the average density of the fully
+    homogenous system. In case of NPT runs, :math:`a` is a calibrated
+    parameter to obtain the correct average density at the target temperature
+    and pressure. The :code:`SquaredPhi` Hamiltonian implements a similar
+    functional with an additional linear term component depending on
 
     .. math::
 
@@ -213,11 +214,8 @@ class DefaultNoChi(Hamiltonian):
         super(DefaultNoChi, self)._setup()
         self.setup()
 
-# old vs: of setup     def w(phi, kappa=self.config.kappa, rho0=self.config.rho0):
-#        return 0.5 / (kappa * rho0) * (sum(phi) - rho0) ** 2
     def setup(self):
-        """
-        Set in comment here
+        """Setup the interaction energy potential and the external potential
         """
         def w(
                 phi,
@@ -243,7 +241,7 @@ class DefaultNoChi(Hamiltonian):
             for k in range(len(self.config.unique_names))
         ]
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
@@ -257,16 +255,19 @@ class DefaultWithChi(Hamiltonian):
     .. math::
 
         w[\\tilde\\phi] =
-            \\frac{1}{2\\phi_0}
+            \\frac{1}{2\\rho_0}
                 \\sum_{k,l}\\chi_{kl} \\tilde\\phi_k \\tilde\\phi_l
             +
             \\frac{1}{2\\kappa} \\left(
-                \\sum_k \\tilde\\phi_k - \\phi_0
+                \\sum_k \\tilde\\phi_k - a
             \\right)^2,
 
-    where :math:`\\kappa` is the incompressibility, :math:`\\phi_0` is the
-    average density of the fully homogenous system and :math:`\\chi_{ij}` is
-    the Flory-Huggins-like inter-species mixing energy.
+    where :math:`\\kappa` is the compressibility and :math:`a=\\rho_0` for
+    NVT runs where :math:`\\rho_0` is the average density of the fully
+    homogenous system. In case of NPT runs, :math:`a` is a calibrated
+    parameter to obtain the correct average density at the target temperature
+    and pressure. :math:`\\chi_{ij}` is the Flory-Huggins-like
+    inter-species mixing energy.
     """
     def __init__(self, config, unique_names, type_to_name_map):
         """Constructor
@@ -329,18 +330,13 @@ class DefaultWithChi(Hamiltonian):
             interaction = 0
             for i in range(self.config.n_types):
                 for j in range(i + 1, self.config.n_types):
-
-                # use line below instead to count diagonal chi:
-                #for j in range(i, self.config.n_types):
-
                     ni = type_to_name_map[i]
                     nj = type_to_name_map[j]
                     names = sorted([ni, nj])
                     c = chi_type_dictionary[tuple(names)]
+
                     interaction += c * phi[i] * phi[j] / rho0
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
-
-
             return incompressibility + interaction
 
         def V_bar(
@@ -367,7 +363,6 @@ class DefaultWithChi(Hamiltonian):
                 #uncomment to count diagonal chi terms:
                 #c = chi_type_dictionary[tuple(names)]
                 V_interaction += c * phi[i] / rho0
-
             return (V_interaction,V_incompressibility)
 
         self.V_bar = [
@@ -376,10 +371,11 @@ class DefaultWithChi(Hamiltonian):
         ]
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), "phi%d" % (i)))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
             for i in range(len(self.config.unique_names))
         ]
         self.w = sympy.lambdify([self.phi], w(self.phi))
+
 
     def w1(
         self,
@@ -419,6 +415,31 @@ class DefaultWithChi(Hamiltonian):
                     c = K_coupl_type_dictionary[tuple(names)]
                 else:
                     c = 0
-                #uncomment to include diagonal K_coupl terms:
-                #c = K_coupl_type_dictionary[tuple(names)]
+
                 v_ext1[k] += -1 * c / rho0 * phi_lap_filtered[l]
+
+
+def get_hamiltonian(config):
+    """Return appropriate Hamiltonian object based on the 
+    config.hamiltonian string.
+
+    Parameters
+    ----------
+    config : Config
+        Configuration object.
+
+    Returns
+    ----------
+    hamiltonian : Hamiltonian
+        Hamiltonian object.
+    """
+    if config.hamiltonian.lower() == "defaultnochi":
+        hamiltonian = DefaultNoChi(config)
+    elif config.hamiltonian.lower() == "defaultwithchi":
+        hamiltonian = DefaultWithChi(
+            config, config.unique_names, config.type_to_name_map
+        )
+    elif config.hamiltonian.lower() == "squaredphi":
+        hamiltonian = SquaredPhi(config)
+
+    return hamiltonian
