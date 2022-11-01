@@ -139,6 +139,12 @@ class Config:
         using helical propensity dihedrals, this keyword must be specified—even
         if electrostatics are not included with the :code:`coulombtype`
         keyword.
+    dielectric_type: list[float], optional
+        Specifies the relative dielectric constant of the simulation medium
+        which regulates the strength of the electrostatic interactions. The list assigns
+        relative dielectric values to each bead type, and an anisotropic
+        dielectric function is obtained from a weighted average.
+
 
     See also
     --------
@@ -267,7 +273,7 @@ class Config:
             ]
         )
 
-        """ If you want to print out dielectric type to terminal
+        """ If dielectric wanted as dictionary
             dielectric_type_str = "\tdielectric_type:\n" + "".join(
                     [
                         (f"\t\t{k.atom_1}: " + f"{k.dielectric_value}\n")
@@ -1215,6 +1221,10 @@ def check_cancel_com_momentum(config, comm=MPI.COMM_WORLD):
     return config
 
 def sort_dielectric_by_type_id(config, charges,types):
+    """
+    Creates a list of length N CG-particles, sorted after the charges from
+    the input HDF5 file. Used in file_io.py
+    """
     dielectric_val = np.zeros(config.n_types)
     for j in range(config.n_types):
         name = config.dielectric_type[j][0][0]
@@ -1234,7 +1244,10 @@ def sort_dielectric_by_type_id(config, charges,types):
     return dielectric_by_types # by types with each particle id
 
 def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
-    # in case no type t in rank
+    """
+    Creates a list of charge values oflength types.
+    Charges are sorted according to type ID. Used in field.py.
+    """
     check_val = -100.0 # some random value that will never be encountered
     charges_list = np.full(config.n_types, check_val) # gatherv cant handle None
     rank = comm.Get_rank()
@@ -1242,16 +1255,13 @@ def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     for t_ in range(config.n_types):
         if t_ in types:
             charges_list[t_] = charges[types == t_][0]
-        #else:
-        #    print("type not in rank ", rank)
-    #print(charges_list)
-    #if rank == 0:
+
     nprocs = int(comm.Get_size())
     recv_charges = None
     if rank == 0:
         recv_charges = np.full(config.n_types*nprocs, check_val) # gatherv cant handle None
     comm.Gather(charges_list, recv_charges,  root = 0)
-    #print(recv_charges)
+
     ## make a charges list
     if rank == 0:
         config_charges = np.zeros(config.n_types)
@@ -1280,6 +1290,10 @@ def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     return config_charges
 
 def check_dielectric(config, comm = MPI.COMM_WORLD):
+    """
+    Error handling for electrostatics.
+    Unit testing of toml/tomli input.
+    """
     err_str_const = "Dielectric constant not given."
     if config.coulombtype == 'PIC_Spectral':
         assert config.dielectric_const != None,err_str_const

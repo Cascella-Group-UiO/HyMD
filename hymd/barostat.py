@@ -82,7 +82,7 @@ def isotropic(
 
         #pmesh re-initialize
         pm_stuff  = initialize_pm(pmesh, config, comm)
-    return (pm_stuff, False)
+    return (pm_stuff, change)
 
 def semiisotropic(
         pmesh,

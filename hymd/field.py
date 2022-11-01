@@ -182,7 +182,7 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
         Pmesh :code:`RealField` objects containing discretized particle-field
         force density values on the computational grid; :code:`D` fields in D
         dimensions for each particle type. Local for each MPI rank--the full
-        computaional grid is represented by the collective fields of all MPI
+        computational grid is represented by the collective fields of all MPI
         ranks.
     force : (N,D) numpy.ndarray
         Array of forces for :code:`N` particles in :code:`D` dimensions. Local
@@ -235,14 +235,14 @@ def compute_field_energy_q(
     phi_q_fourier : pmesh.pm.ComplexField
         Pmesh :code:`ComplexField` object containing the discretized
         electrostatic potential values in reciprocal space on the
-        computational grid. Local for each MPI rank--the full computaional grid
+        computational grid. Local for each MPI rank--the full computational grid
         is represented by the collective fields of all MPI ranks.
     elec_energy_field : pmesh.pm.ComplexField
         Pmesh :code:`ComplexField` object for storing calculated discretized
         electrostatic energy density values in reciprocal space on the
         computational grid. Pre-allocated, but empty; any values in this field
         are discarded. Changed in-place. Local for each MPI rank--the full
-        computaional grid is represented by the collective fields of all MPI
+        computational grid is represented by the collective fields of all MPI
         ranks.
     field_q_energy : float
         Total elecrostatic energy.
@@ -331,26 +331,26 @@ def update_field_force_q(
         Pmesh :code:`RealField` object for storing calculated discretized
         charge density density values on the computational grid. Pre-allocated,
         but empty; any values in this field are discarded. Changed in-place.
-        Local for each MPI rank--the full computaional grid is represented by
+        Local for each MPI rank--the full computational grid is represented by
         the collective fields of all MPI ranks.
     phi_q_fourier : pmesh.pm.ComplexField
         Pmesh :code:`ComplexField` object for storing calculated discretized
         Fourier transformed charge density values in reciprocal space on the
         computational grid. Pre-allocated, but empty; any values in this field
         are discarded. Changed in-place. Local for each MPI rank--the full
-        computaional grid is represented by the collective fields of all MPI
+        computational grid is represented by the collective fields of all MPI
         ranks.
     elec_field_fourier : pmesh.pm.ComplexField
         Pmesh :code:`ComplexField` object for storing calculated discretized
         electric field values in reciprocal space on the computational grid.
         Pre-allocated, but empty; any values in this field are discarded.
-        Changed in-place. Local for each MPI rank--the full computaional grid
+        Changed in-place. Local for each MPI rank--the full computational grid
         is represented by the collective fields of all MPI ranks.
     elec_field : pmesh.pm.RealField
         Pmesh :code:`RealField` object for storing calculated discretized
         electric field values on the computational grid. Pre-allocated,
         but empty; any values in this field are discarded. Changed in-place.
-        Local for each MPI rank--the full computaional grid is represented by
+        Local for each MPI rank--the full computational grid is represented by
         the collective fields of all MPI ranks.
     elec_forces : (N,D) numpy.ndarray
         Array of electrostatic forces on :code:`N` particles in :code:`D`
@@ -401,8 +401,6 @@ def update_field_force_q(
             elec_field[_d].readout(positions, layout=layout_q)
         )
 
-    #print("PE F max", np.max(elec_forces))
-    #print("elec_field PE", elec_field[2][0,0,0])
 
 def update_field_force_energy_q(
     charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field, elec_forces,
@@ -425,26 +423,26 @@ def update_field_force_energy_q(
         Pmesh :code:`RealField` object for storing calculated discretized
         charge density density values on the computational grid. Pre-allocated,
         but empty; any values in this field are discarded. Changed in-place.
-        Local for each MPI rank--the full computaional grid is represented by
+        Local for each MPI rank--the full computational grid is represented by
         the collective fields of all MPI ranks.
     phi_q_fourier : pmesh.pm.ComplexField
         Pmesh :code:`ComplexField` object for storing calculated discretized
         Fourier transformed charge density values in reciprocal space on the
         computational grid. Pre-allocated, but empty; any values in this field
         are discarded. Changed in-place. Local for each MPI rank--the full
-        computaional grid is represented by the collective fields of all MPI
+        computational grid is represented by the collective fields of all MPI
         ranks.
     elec_field_fourier : pmesh.pm.ComplexField
         Pmesh :code:`ComplexField` object for storing calculated discretized
         electric field values in reciprocal space on the computational grid.
         Pre-allocated, but empty; any values in this field are discarded.
-        Changed in-place. Local for each MPI rank--the full computaional grid
+        Changed in-place. Local for each MPI rank--the full computational grid
         is represented by the collective fields of all MPI ranks.
     elec_field : pmesh.pm.RealField
         Pmesh :code:`RealField` object for storing calculated discretized
         electric field values on the computational grid. Pre-allocated,
         but empty; any values in this field are discarded. Changed in-place.
-        Local for each MPI rank--the full computaional grid is represented by
+        Local for each MPI rank--the full computational grid is represented by
         the collective fields of all MPI ranks.
     elec_forces : (N,D) numpy.ndarray
         Array of electrostatic forces on :code:`N` particles in :code:`D`
@@ -454,7 +452,7 @@ def update_field_force_energy_q(
         electrostatic energy density values in reciprocal space on the
         computational grid. Pre-allocated, but empty; any values in this field
         are discarded. Changed in-place. Local for each MPI rank--the full
-        computaional grid is represented by the collective fields of all MPI
+        computational grid is represented by the collective fields of all MPI
         ranks.
     field_q_energy : float
         Total elecrostatic energy.
@@ -684,7 +682,7 @@ def update_field(
         Pmesh :code:`RealField` objects containing discretized particle number
         density values on the computational grid; one for each particle type.
         Pre-allocated, but empty; any values in this field are discarded.
-        Changed in-place. Local for each MPI rank--the full computaional grid
+        Changed in-place. Local for each MPI rank--the full computational grid
         is represented by the collective fields of all MPI ranks.
     layouts : list[pmesh.domain.Layout]
         Pmesh communication layout objects for domain decompositions of each
@@ -695,7 +693,7 @@ def update_field(
         force density values on the computational grid; :code:`D` fields in D
         dimensions for each particle type. Pre-allocated, but empty; any values
         in this field are discarded. Changed in-place. Local for each MPI
-        rank--the full computaional grid is represented by the collective
+        rank--the full computational grid is represented by the collective
         fields of all MPI ranks.
     hamiltonian : Hamiltonian
         Particle-field interaction energy handler object. Defines the
@@ -716,14 +714,14 @@ def update_field(
         external potential values on the computational grid; one for each
         particle type. Pre-allocated, but empty; any values in this field are
         discarded Changed in-place. Local for each MPI rank--the full
-        computaional grid is represented by the collective fields of all MPI
+        computational grid is represented by the collective fields of all MPI
         ranks.
     phi_fourier : list[pmesh.pm.ComplexField]
         Pmesh :code:`ComplexField` objects containing discretized particle
         number density values in reciprocal space on the computational grid;
         one for each particle type. Pre-allocated, but empty; any values in
         this field are discarded Changed in-place. Local for each MPI rank--the
-        full computaional grid is represented by the collective fields of all
+        full computational grid is represented by the collective fields of all
         MPI ranks.
     v_ext_fourier : list[pmesh.pm.ComplexField]
         Pmesh :code:`ComplesField` objects containing discretized
@@ -734,7 +732,7 @@ def update_field(
         application differentiates the field in-place, ruining the contents
         for differentiation in the remaining :code:`D-1` spatial directions.
         Pre-allocated, but empty; any values in this field are discarded.
-        Changed in-place. Local for each MPI rank--the full computaional grid
+        Changed in-place. Local for each MPI rank--the full computational grid
         is represented by the collective fields of all MPI ranks.
     compute_potential : bool, optional
         If :code:`True`, a :code:`D+1`-th copy of the Fourier transformed
@@ -838,7 +836,7 @@ def compute_field_and_kinetic_energy(
     phi : list[pmesh.pm.RealField]
         Pmesh :code:`RealField` objects containing discretized particle number
         density values on the computational grid; one for each particle type.
-        Local for each MPI rank--the full computaional grid is represented by
+        Local for each MPI rank--the full computational grid is represented by
         the collective fields of all MPI ranks.
     velocity : (N,D) numpy.ndarray
         Array of velocities for :code:`N` particles in :code:`D` dimensions.
@@ -855,7 +853,7 @@ def compute_field_and_kinetic_energy(
     v_ext : list[pmesh.pm.RealField]
         Pmesh :code:`RealField` objects containing discretized particle-field
         external potential values on the computational grid; one for each
-        particle type. Local for each MPI rank--the full computaional grid is
+        particle type. Local for each MPI rank--the full computational grid is
         represented by the collective fields of all MPI ranks.
     config : Config
         Configuration object.
@@ -888,8 +886,41 @@ def compute_field_energy_q_GPE(
     config,phi_eps, field_q_energy, dot_elec, comm=MPI.COMM_WORLD,
 ):
     """
-    - added for general poisson equation (GPE)
-    - used phi_q_effective_fourier (from iterative method) to calculate E_field
+    Compute the electrostatic energy after electrosatic forces is
+    calculated.
+
+    From the definition of the elecrostatic potential :math:`\\Psi`, the energy
+    is
+
+        W = \\frac{1}{2}\\int\\mathrm{d}\\mathbf{r}\\,
+            \\epsilon(\\mathbf{r})} \\left(\\mathbf{E}\\cdot \\mathbf{E}\\right),
+
+    where :math:`\\epsilon(\\mathbf{r})}` is the anisotropic, spatially dependent,
+    relative dielectric of the simulation medium.
+
+    Parameters
+    ----------
+    config : hymd.input_parser.Config
+        Configuration object.
+    phi_eps : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        relative dielectric values on the computational grid.
+        Local for each MPI rank--the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    field_q_energy : float
+        Total elecrostatic energy.
+    dot_elec : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing :math:`|\\mathbf{E(r)}|^{2}`
+        on the computational grid. Local for each MPI rank -- the full computational
+        grid is represented by the collective fields of all MPI ranks.
+    comm : mpi4py.Comm
+        MPI communicator to use  for rank commuication.
+
+    See also
+    --------
+    update_field_force_q_GPE:
+        Compute the electrosatic force from an anisotropic dielectric general
+        Poisson equation.
     """
 
     V = np.prod(config.box_size)
@@ -909,16 +940,183 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     hamiltonian,layout_q, layouts,pm,positions,config,comm = MPI.COMM_WORLD,
 ):
     """
-    - added for the general poisson equation (GPE) eletrostatics (follow PIC_Spectral_GPE)
-    - this function get the electrostatic forces
-    - add more details/documentation here
+    Calculate the electrostatic particle-field forces on the grid, arising from
+    a general Poisson equation, i.e. anisotropic permittivity/dielectric.
+    The function is called when tomli input config.coulombtype = "PIC_Spectral_GPE."
+
+    Computes the electrostatic potential :math:`\\Psi` from particle charges
+    through the smoothed charge density :math:`\\tilde\\rho`. With :math:`P`
+    being the cloud-in-cell (CIC) window function, the charge density and
+    filtered charge densities are computed as
+
+    .. math::
+
+        \\rho(\\mathbf{r}) = \\sum_i q_i P(\\mathbf{r}-\\mathbf{r}_i),
+
+    and
+
+    .. math::
+
+        \\tilde\\rho(\\mathbf{r}) = \\int\\mathrm{x}\\mathbf{r}\\,
+            \\rho(\\mathbf{x})H(\\mathbf{r}-\\mathbf{x}),
+
+    where :math:`H` is the grid-independent filtering function. The
+    electrostatic potential for a variable dielectric does not have an
+    analytical expression, and is computed in reciprocal through an iterative
+    method.
+
+    The GPE states that
+
+    .. math::
+
+            \\nabla \\cdot \\left(\\epsilon(\\mathbf{r})
+            \\nabla{\\mathbf{\\psi(r)}}\\right) = -\\rho({\\mathbf{r}}).
+
+    where :math:`\\epsilon(\\mathbf{r})` is the relative dielectric function.
+
+    Parameters
+    ----------
+    conv_fun : Convergence function.
+        Returns a scalar. Depends on MPI allreduce for similar convergence
+        across MPI ranks.
+    phi : list[pmesh.pm.RealField]
+        Pmesh :code:`RealField` objects containing discretized particle number
+        density values on the computational grid; one for each particle type.
+        Local for each MPI rank--the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    types : (N,) numpy.ndarray
+        Array of type indices for each of :code:`N` particles. Local for each
+        MPI rank.
+    charges : (N,) numpy.ndarray
+        Array of particle charge values for :code:`N` particles. Local for each
+        MPI rank.
+    config_charges: (types,) numpy.ndarray
+        Array of particle charge values for each type ID. The same across
+        MPI ranks.
+    phi_q : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        charge density density values on the computational grid. Pre-allocated,
+        but empty. Changed in-place.
+        Local for each MPI rank--the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    phi_q_fourier : pmesh.pm.ComplexField
+        Pmesh :code:`ComplexField` object for storing calculated discretized
+        Fourier transformed charge density values in reciprocal space on the
+        computational grid. Pre-allocated, but empty. Changed in-place.
+        Local for each MPI rank--the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    phi_eps : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        relative dielectric values on the computational grid. Pre-allocated,
+        but empty. Changed in-place.
+        Local for each MPI rank--the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    phi_eps_fourier : pmesh.pm.ComplexField
+        Pmesh :code:`ComplexField` object for storing calculated discretized
+        Fourier transformed relative dielectric values in reciprocal space on the
+        computational grid. Pre-allocated, but empty. Changed in-place.
+        Local for each MPI rank--the full computational grid is represented
+        by the collective fields of all MPI ranks.
+    phi_eta : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        gradients of the relative dielectric values on the computational grid.
+        Pre-allocated,but empty. Changed in-place.Local for each MPI rank--the
+        full computational grid is represented by the collective fields of all MPI ranks.
+    phi_eta_fourier : pmesh.pm.ComplexField
+        Pmesh :code:`ComplexField` object for storing the calculated discretized
+        Fourier transformed gradient relative dielectric values in reciprocal space on the
+        computational grid. Pre-allocated, but empty.  Changed in-place.
+        Local for each MPI rank--the full computational grid is represented
+        by the collective fields of all MPI ranks.
+    phi_pol_prev : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        polarization charge values on the computational grid. Parameter in
+        the iterative method.Pre-allocated,but empty. Changedin-place.
+        Local for each MPI rank--the full computational grid is represented
+        by the collective fields of all MPI ranks.
+    phi_pol : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        polarization charges on the computational grid. Parameter in the iterative
+        method, updating the next quess in solving for the electrostatic potential.
+        Pre-allocated,but empty.  Changed in-place.Local for each MPI rank--
+        the full computational grid is represented by the collective fields of
+        all MPI ranks.
+    elec_field : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        electric field values on the computational grid. Pre-allocated,
+        but empty. Changed in-place. Local for each MPI rank--the full
+        computational grid is represented by the collective fields of all
+        MPI ranks.
+    elec_forces : (N,D) numpy.ndarray
+        Array of electrostatic forces on :code:`N` particles in :code:`D`
+        dimensions.
+    elec_field_contrib : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing
+        :math:`|\\mathbf{E(r)}|^2/\\phi_{0}` on the computational grid.
+        Pre-allocated, but empty. Changed in-place.
+        Local for each MPI rank-- the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    elec_potential : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing electrostatic potential
+        on the computational grid. Pre-allocated, but empty. Changed in-place.
+        Local for each MPI rank-- the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    Vbar_elec : mesh.pm.RealField
+        Pmesh :code:`RealField` object for storing functional derivatives of
+        :math:`\\|w(\\{ \\phi \\})_{elec}`on the computational grid.
+        Pre-allocated, but empty. Changed in-place. Local for each MPI rank--
+        the full computational grid is represented by the collective fields of
+         all MPI ranks.
+    Vbar_elec_fourier : pmesh.pm.ComplexField
+        Pmesh :code:`ComplexField` object for storing the calculated functional
+        derivatives of :math:`\\|w(\\{ \\phi \\})_{elec}` in reciprocal space on the
+        computational grid. Pre-allocated, but empty.  Changed in-place.
+        Local for each MPI rank--the full computational grid is represented
+        by the collective fields of all MPI ranks.
+    force_mesh_elec : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing electrostatic force values
+        on the computational grid. Pre-allocated, but empty. Changed in-place.
+        Local for each MPI rank-- the full computational grid is represented by
+        the collective fields of all MPI ranks.
+    force_mesh_elec_fourier : pmesh.pm.ComplexField
+        Pmesh :code:`ComplexField` object for storing the calculated electrostatic
+        force values in reciprocal space on the computational grid. Local for
+        each MPI rank--the full computational grid is represented by the collective
+        fields of all MPI ranks.
+    hamiltonian : Hamiltonian
+        Particle-field interaction energy handler object. Defines the
+        grid-independent filtering function, :math:`H`.
+    layout_q : pmesh.domain.Layout
+        Pmesh communication layout object for domain decomposition of the full
+        system. Used as blueprint by :code:`pmesh.pm.paint` and
+        :code:`pmesh.pm.readout` for exchange of particle information across
+        MPI ranks as necessary.
+    layouts: list[pmesh.domain.Layout]
+        Pmesh communication layout objects for domain decompositions of each
+        particle type. Used as blueprint by :code:`pmesh.pm.readout` for
+        exchange of particle information across MPI ranks as necessary.
+    pm : pmesh.pm.ParticleMesh
+        Pmesh :code:`ParticleMesh` object interfacing to the CIC window
+        function and the PFFT discrete Fourier transform library.
+    positions : (N,D) numpy.ndarray
+        Array of positions for :code:`N` particles in :code:`D` dimensions.
+        Local for each MPI rank.
+    config : hymd.input_parser.Config
+        Configuration object.
+    comm: mpi4py.Comm
+        MPI communicator to use for rank commuication.
+
+    See also
+    --------
+    compute_field_energy_q_GPE:
+        Compute the electrostatic energy after electrosatic force is
+        calculated for a variable (anisotropic) dielectric general Poisson equation.
     """
 
     ## basic setup
     V = np.prod(config.box_size)
     n_mesh_cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh_cells
-    ## paint  ## pm.paint(positions[types == t], layout=layouts[t], out=phi[t])
     ## old protocol in gen_qe_hpf_use_self
     pm.paint(positions, layout=layout_q, mass=charges, out=phi_q) ##
     ## scale and fft
@@ -928,39 +1126,30 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
 
     phi_q_fourier.apply(hamiltonian.H, out=phi_q_fourier)
     ## ^------ use the same gaussian as the \kai interaciton
-    ## ^------ tbr; phi_transfer_funciton by hamiltonian.H ??
     phi_q_fourier.c2r(out=phi_q) ## this phi_q is after applying the smearing function
 
-    ## possible to move denom_phi_tot out and calculate when phi t is decomposed/updated
     denom_phi_tot =  pm.create("real", value=0.0)
     num_types =  pm.create("real", value=0.0)
     ### ^ ----- Calculate the relative dielectric (permittivity) to field
     ### ------- from a mean contribution of particle number densities
 
-    for t_ in range(config.n_types): # do this with painting? (possible?)
-        num_types = num_types  + (config.dielectric_type[t_])*phi[t_] #+ phi[t_].apply(dielectric_transfer_function, out = phi_eps)
+    for t_ in range(config.n_types):
+        num_types = num_types  + (config.dielectric_type[t_])*phi[t_]
         denom_phi_tot = denom_phi_tot + phi[t_]
 
     np.divide(num_types,denom_phi_tot,
     where = np.abs(denom_phi_tot > 1e-6),
     out = phi_eps)
 
-    #print("shapes: denom, phi", np.shape(denom_phi_tot), np.shape(phi))
-    #print("rank {:d} : max eps {:2f} , min eps {:2f}".format(comm.Get_rank(), np.max(phi_eps), np.min(phi_eps)))
-    #print("mean", np.mean(phi_eps), "rank ", comm.Get_rank())
-    phi_eps.r2c(out=phi_eps_fourier)
-    ###  ^ ------  Alternatively with dielectric given by id list
+    phi_eps.r2c(out=phi_eps_fourier) # FFT dielectric
 
     #phi_q_eps = (phi_q/phi_eps)
     np.divide(phi_q,phi_eps,
     where = np.abs(phi_eps > 1e-6),
     out = phi_q)
 
-    #phi_q.r2c(out = phi_q_fourier)
-    ##^ Get effective charge densities
 
     _SPACE_DIM = 3
-    #COULK_GMX = 138.935458 # the 1/(4pi eps0) Gromacs units
     ##^--------- constants needed throughout the calculations
 
     ### method for finding the gradient (fourier space), using the spatial dimension of k
@@ -973,7 +1162,6 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
         np.divide(phi_eta[_d],phi_eps,
                 where = np.abs(phi_eps > 1e-6),
                 out = phi_eta[_d])
-        #phi_eta[_d] = phi_eta[_d]/phi_eps # the eta param used in the iterative method
 
     ### iterative GPE solver ###
     ### ----------------------------------------------
@@ -994,14 +1182,13 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
         phi_pol = -(phi_eta[0]*elec_field[0] + \
                      phi_eta[1]*elec_field[1] +  phi_eta[2]*elec_field[2]);
         ### ^-- Following a negative sign convention (-ik) of the FT, a neg sign is
-        ### --- mathematically correct by the definition of the GPE
+        ### --- mathematically correct by the definition of the GPE (double  - -> +)
         phi_pol = w*phi_pol + (1.0-w)*phi_pol_prev
         diff = np.abs(phi_pol - phi_pol_prev)
         delta = conv_fun(comm,diff) # decided from toml input
         phi_pol_prev = phi_pol.copy()
         i = i + 1
     #print("Stopping after iteration {:d} with stop crit {:.2e}, delta {:.2e}".format(i,conv_criteria,delta))
-    #+ phi_pol
 
     #compute_potential = True
     def k_norm_divide(k, potential):
@@ -1015,19 +1202,15 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     phi_q_fourier.c2r(out = elec_potential)
     ### ^ electrostatic potential for the GPE
 
-    ## elec p to txt
-    #halfway = int(config.mesh_size[0]/2) - 1
-    #np.save('./analysis/potential',elec_potential)#[halfway,halfway,:])
-
     for _d in np.arange(_SPACE_DIM):
         def field_transfer_function(k,x, d =_d):
-            return  -1j*k[_d]*x         ## negative sign relation here due to E = - nabla psi relation
+            return  -1j*k[_d]*x         ## negative sign relation, due to E = - nabla psi relation
 
         phi_q_fourier.apply(field_transfer_function, out = phi_eta_fourier[_d])
         phi_eta_fourier[_d].c2r(out=elec_field[_d])
     ## ^-------- Method: Obtaining the electric field from electrostatic potential
     ## Assuming the electric field is conserved.
-    ## If we assume no magnetic flux (magnetic induced fields)
+    ## Assumption holds if no magnetic flux (magnetic induced fields)
 
     ##############  Obtain forces  ##############
     elec_dot = (elec_field[0]*elec_field[0] + \
@@ -1036,11 +1219,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     np.divide(elec_dot,denom_phi_tot,
     where = np.abs(denom_phi_tot > 1e-6),
     out = elec_field_contrib)
-    #elec_field_contrib = elec_dot/denom_phi_tot;
-    #print("max E field val {:.2f} rank {:d}".format(np.max(elec_field),comm.Get_rank()))
 
-    # Must be able to handle type not in rank
-    ## suggestion 1:
     eps0_inv = config.coulomb_constant*4*np.pi
 
     for t_ in range(config.n_types):
@@ -1051,57 +1230,16 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     for t_ in range(config.n_types):
         Vbar_elec[t_].r2c(out = Vbar_elec_fourier[t_])
         Vbar_elec_fourier[t_].apply(hamiltonian.H, out = Vbar_elec_fourier[t_])
-    #
 
     # force terms
-    # gradient F = - grad Vext
+    # F = - grad Vext
     for t_ in range(config.n_types):
         for _d in np.arange(_SPACE_DIM):
             def force_transfer_function(k,x, d =_d):
-                return  - 1j * k[_d] * x        ## derivative
+                return  - 1j * k[_d] * x        ## negative gradient
             Vbar_elec_fourier[t_].apply(force_transfer_function, out = force_mesh_elec_fourier[t_][_d])
             force_mesh_elec_fourier[t_][_d].c2r(out = force_mesh_elec[t_][_d])
             elec_forces[types == t_, _d] = force_mesh_elec[t_][_d].readout(positions[types == t_], layout = layouts[t_])
-
-    #print("max F", np.max(elec_forces))
-    #in pressure dppc system, max forces  14 (w/o) ---> 2.0 (w/volume_per_cell)
-    # in lipid A pressure, goes from 7.78 to  0.061326362 <- seems a bit small ...
-    # PE F max is 9. something for lipid A system w pressure, dielectric constant 80. For variable dielectric w
-    # all dielectric values set to 80, GPE F max is 5.73. This is the effect of
-    # filtering, since electric field is the same (check.)
-    # will have a lot to say wrt accumulation of momentum in finer grids/sharp varying dielectric.
-    # Note: electrostatics will be weaker
-
-    """
-    in hamiltonian formalism multiply with
-    volume_per_cell
-    """
-    # PS: Can do this in update field (negative gradient) and compute field force (read out)?
-
-
-    #################################################
-    # plot analysis write to file
-    ## write to txt
-    ## epsilon
-    #print(config.mesh_size)
-    """
-    #halfway = int(config.mesh_size[0]/2) - 1
-    np.save('./analysis/epsilon',phi_eps) #[halfway,:,halfway])# delimiter = ',')
-    ## gradient of epsilon
-    np.save('./analysis/grad_e',phi_eps_grad)# [1][halfway,:,halfway])
-
-    ## phi_q
-    np.save('./analysis/phi_q',phi_q) #[halfway,:,halfway])
-
-    ## phi_q_eps
-    np.save('./analysis/q_e',phi_q_eps) #[halfway,:,halfway])
-
-    ## phi_pol
-    np.save('./analysis/q_pol',phi_pol) #[halfway,:,halfway])
-
-    ## electric field z
-    np.save('./analysis/E_field',elec_field) #[2][halfway,halfway,:])
-    """
 
     return Vbar_elec, phi_eps, elec_dot
 

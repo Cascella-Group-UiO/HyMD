@@ -144,6 +144,8 @@ def store_static(
         If :code:`True`, forces are written to output HDF5 file.
     charges : (N,) numpy.ndarray
         Array of particle charge values for :code:`N` particles.
+    dielectrics : (N,) numpy.ndarray
+        Array of particle relative dielectric values for :code:`N` particles.
     comm : mpi4py.Comm
         MPI communicator to use for rank commuication.
 
@@ -211,7 +213,7 @@ def store_static(
         dielectric = h5md.all_particles.create_dataset(
             "dielectric", (config.n_particles,), dtype="float32"
         )
-        dielectric[indices] = dielectrics # need to be sure this is correctly inputed
+        dielectric[indices] = dielectrics
 
     box = h5md.all_particles.create_group("box")
     box.attrs["dimension"] = 3

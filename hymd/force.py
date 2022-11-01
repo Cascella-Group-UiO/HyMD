@@ -25,7 +25,7 @@ from force_kernels import (  # noqa: F401
 )
 
 
-@dataclass # unsure if this is at all needed (?)
+@dataclass # might not be needed
 class Dielectric_type:
     atom_1: str
     dielectric_value: float
