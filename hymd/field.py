@@ -1231,14 +1231,13 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     where = np.abs(phi_eps > 1e-6),
     out = phi_q)
 
-
     _SPACE_DIM = 3
     ##^--------- constants needed throughout the calculations
 
     ### method for finding the gradient (fourier space), using the spatial dimension of k
     for _d in np.arange(_SPACE_DIM):
         def gradient_transfer_function(k,x, d =_d):
-            return  1j*k[_d]*x
+            return  1j*k[d]*x
 
         phi_eps_fourier.apply(gradient_transfer_function, out = phi_eta_fourier[_d])
         phi_eta_fourier[_d].c2r(out = phi_eta[_d])
@@ -1248,9 +1247,6 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
 
     ### iterative GPE solver ###
     ### ----------------------------------------------
-    def iterate_apply_k_vec(k,additive_terms,d = _d):
-        return additive_terms * (- 1j * k[_d]) / k.normp(p=2, zeromode=1)
-
     max_iter = 100; i = 0; delta = 1.0
     #phi_pol_prev = pm.create("real", value = 0.0)
     ### ^------ set to zero before each iterative procedure or soft start
@@ -1259,6 +1255,9 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
     while (i < max_iter and delta > conv_criteria):
         (phi_q + phi_pol_prev).r2c(out=phi_q_fourier)
         for _d in np.arange(_SPACE_DIM):
+            def iterate_apply_k_vec(k,additive_terms,d = _d):
+                return additive_terms * (- 1j * k[d]) / k.normp(p=2, zeromode=1)
+
             phi_q_fourier.apply(iterate_apply_k_vec,out = phi_eta_fourier[_d])
             phi_eta_fourier[_d].c2r(out = elec_field[_d])
 
@@ -1287,7 +1286,7 @@ def update_field_force_q_GPE(conv_fun,phi, types, charges, config_charges, phi_q
 
     for _d in np.arange(_SPACE_DIM):
         def field_transfer_function(k,x, d =_d):
-            return  -1j*k[_d]*x         ## negative sign relation, due to E = - nabla psi relation
+            return  -1j*k[d]*x         ## negative sign relation, due to E = - nabla psi relation
 
         phi_q_fourier.apply(field_transfer_function, out = phi_eta_fourier[_d])
         phi_eta_fourier[_d].c2r(out=elec_field[_d])
