@@ -18,7 +18,7 @@ from .field import (compute_field_force, update_field,
                     compute_field_and_kinetic_energy, domain_decomposition,
                     update_field_force_q, compute_field_energy_q,
                     update_field_force_q_GPE, compute_field_energy_q_GPE,
-                    initialize_pm, compute_self_energy_q)
+                    initialize_pm, compute_self_energy_q, compute_vbar_elec)
 from .thermostat import (csvr_thermostat, cancel_com_momentum,
                          generate_initial_velocities)
 from .force import dipole_forces_redistribution, prepare_bonds
@@ -120,7 +120,6 @@ def main():
 
     ## dielectric from toml
     if config.coulombtype == 'PIC_Spectral_GPE':
-        config_charges = get_charges_types_list(config, types, charges, comm = comm)
         dielectric_sorted = sort_dielectric_by_type_id(config,charges,types)
         dielectric_flag = True
 
@@ -343,6 +342,7 @@ def main():
         )
 
     if charges_flag:
+        config_charges = get_charges_types_list(config, types, charges, comm = comm)
         layout_q = pm.decompose(positions)
         if config.coulombtype == 'PIC_Spectral_GPE': #dielectric_flag
             Vbar_elec, phi_eps, elec_dot = update_field_force_q_GPE(
@@ -364,7 +364,6 @@ def main():
                 )
 
 
-
         if config.coulombtype == "PIC_Spectral":
             field_q_self_energy = compute_self_energy_q(config, charges, comm=comm)
             update_field_force_q(
@@ -377,6 +376,10 @@ def main():
                 elec_potential_fourier,
                 field_q_self_energy, comm=comm,
             )
+            if config.pressure:
+                Vbar_elec = compute_vbar_elec(
+                    config_charges, elec_potential, Vbar_elec
+                )
 
     if molecules_flag:
         if not (args.disable_bonds
@@ -815,6 +818,10 @@ def main():
                         elec_potential_fourier,
                         field_q_self_energy, comm=comm,
                     )
+                    if config.pressure:
+                        Vbar_elec = compute_vbar_elec(
+                            config_charges, elec_potential, Vbar_elec
+                        )
 
             if protein_flag and not args.disable_dipole:
                 dipole_positions = np.reshape(
@@ -1049,6 +1056,10 @@ def main():
                                 elec_potential_fourier,
                                 field_q_self_energy, comm=comm,
                             )
+                            if config.pressure:
+                                Vbar_elec = compute_vbar_elec(
+                                    config_charges, elec_potential, Vbar_elec
+                                )
                 else:
                     kinetic_energy = comm.allreduce(
                         0.5 * config.mass * np.sum(velocities ** 2)
@@ -1185,6 +1196,10 @@ def main():
                         elec_potential_fourier,
                         field_q_self_energy, comm=comm,
                     )
+                    if config.pressure:
+                        vbar_elec = compute_vbar_elec(
+                            config_charges, elec_potential, vbar_elec
+                        )
 
         else:
             kinetic_energy = comm.allreduce(

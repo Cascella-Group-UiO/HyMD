@@ -1208,10 +1208,12 @@ def check_thermostat_coupling_groups(config, comm=MPI.COMM_WORLD):
                     raise ValueError(err_str)
     return config
 
+
 def check_m(config, comm = MPI.COMM_WORLD):
     if config.m==[]:
         config.m = [1.0 for t in range(config.n_types)]
     return config
+
 
 def check_n_b(config, comm = MPI.COMM_WORLD):
     if config.n_b is None:
@@ -1236,6 +1238,7 @@ def check_cancel_com_momentum(config, comm=MPI.COMM_WORLD):
         raise ValueError(err_str)
     return config
 
+
 def sort_dielectric_by_type_id(config, charges,types):
     """
     Creates a list of length N CG-particles, sorted after the charges from
@@ -1259,9 +1262,10 @@ def sort_dielectric_by_type_id(config, charges,types):
     #print(config.name_to_type_map)
     return dielectric_by_types # by types with each particle id
 
+
 def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     """
-    Creates a list of charge values oflength types.
+    Creates a list of charge values of length types.
     Charges are sorted according to type ID. Used in field.py.
     """
     check_val = -100.0 # some random value that will never be encountered
@@ -1276,7 +1280,7 @@ def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     recv_charges = None
     if rank == 0:
         recv_charges = np.full(config.n_types*nprocs, check_val) # gatherv cant handle None
-    comm.Gather(charges_list, recv_charges,  root = 0)
+    comm.Gather(charges_list, recv_charges, root=0)
 
     ## make a charges list
     if rank == 0:
@@ -1304,6 +1308,7 @@ def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     #rank = comm.Get_rank()
     #print(all_charges)
     return config_charges
+
 
 def check_dielectric(config, comm = MPI.COMM_WORLD):
     """

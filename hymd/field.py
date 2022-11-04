@@ -101,7 +101,7 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         # Can run elecPE with pressure by adding this
         Vbar_elec = [
             pm.create("real", value=0.0) for _ in range(config.n_types)
-        ] # no update in elec PE though (no contrib since poisson equation used directly (?))
+        ]
 
         coulomb_list = [
             elec_field_fourier,
@@ -206,6 +206,41 @@ def compute_field_force(layouts, r, force_mesh, force, types, n_types):
         ind = types == t
         for d in range(3):
             force[ind, d] = force_mesh[t][d].readout(r[ind], layout=layouts[t])
+
+
+def comput_vbar_elec(config_charges, elec_potential, Vbar_elec):
+    """Compute the derivative of W with respect to the density.
+    This is equal to q*elec_potential in the homogeneous dielectric.
+
+    config_charges: (types,) numpy.ndarray
+        Array of particle charge values for each type ID. The same across
+        MPI ranks.
+    elec_potential : pmesh.pm.RealField
+        Pmesh :code:`RealField` object for storing calculated discretized
+        electrostatic potential values in real space on the
+        computational grid. Pre-allocated, but empty; any values in this field
+        are discarded. Changed in-place. Local for each MPI rank--the full
+        computaional grid is represented by the collective fields of all MPI
+        ranks.
+    Vbar_elec : mesh.pm.RealField
+        Pmesh :code:`RealField` object for storing functional derivatives of
+        :math:`\\|w(\\{ \\phi \\})_{elec}`on the computational grid.
+        Pre-allocated, but empty. Changed in-place. Local for each MPI rank--
+        the full computational grid is represented by the collective fields of
+         all MPI ranks.
+
+    Returns
+    -------
+    Vbar_elec : mesh.pm.RealField
+        Pmesh :code:`RealField` object for storing functional derivatives of
+        :math:`\\|w(\\{ \\phi \\})_{elec}`on the computational grid.
+        Pre-allocated, but empty. Changed in-place. Local for each MPI rank--
+        the full computational grid is represented by the collective fields of
+         all MPI ranks.
+    """
+    for _t in len(config_charges):
+        Vbar_elec[_t] = config_charges[_t] * elec_potential
+    return Vbar_elec
 
 
 def compute_self_energy_q(config, charges, comm=MPI.COMM_WORLD):
@@ -842,8 +877,9 @@ def update_field(
         # gradient
         comp_gradient(phi_fourier, phi_transfer, phi_gradient, config)
         # laplacian
-        comp_laplacian(phi_fourier, phi_transfer, phi_laplacian, phi_grad_lap_fourier, phi_grad_lap, hamiltonian, config, phi_lap_filtered_fourier)
-
+        comp_laplacian(phi_fourier, phi_transfer, phi_laplacian, 
+                       phi_grad_lap_fourier, phi_grad_lap, hamiltonian,
+                       config, phi_lap_filtered_fourier)
 
     # External potential
     if config.squaregradient:
