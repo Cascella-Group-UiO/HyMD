@@ -110,7 +110,7 @@ def main():
                           input_box, comm=comm)
     
     # import barostat if necessary
-    if config.barostat_type is 'berendsen':
+    if config.barostat_type == 'berendsen':
         from .barostat import (
             isotropic, semiisotropic
         )
@@ -185,6 +185,10 @@ def main():
     dihedral_energy = 0.0
     kinetic_energy = 0.0
     field_q_energy = 0.0
+
+    # more initialization
+    bond_pr_ = np.zeros(3, dtype=dtype)
+    angle_pr_ = np.zeros(3, dtype=dtype)
 
     hamiltonian = get_hamiltonian(config)
 
@@ -1049,7 +1053,7 @@ def main():
                 if args.disable_field:
                     field_energy = 0.0
 
-                if config.pressure:
+                if config.pressure or config.barostat:
                     pressure = comp_pressure(
                             phi,
                             phi_q,
@@ -1188,7 +1192,7 @@ def main():
         if args.disable_field:
             field_energy = 0.0
 
-        if config.pressure:
+        if config.pressure or config.barostat:
             pressure = comp_pressure(
                     phi,
                     phi_q,
