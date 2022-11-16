@@ -195,6 +195,8 @@ class Config:
     dielectric_const: float = None
     conv_crit: float = None
     dielectric_type: List[Dielectric_type] = field(default_factory=list)
+    self_energy: float = None
+    type_charges: Union[List[float], np.ndarray] = None
 
     squaregradient: bool = False
 
@@ -405,13 +407,15 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "n_b",
         "box_size",
         "n_flush",
+        "self_energy",
     ):
         config_dict[n] = None
 
     # Defaults = []
 
     for n in ("bonds", "angle_bonds", "dihedrals", "chi", "K_coupl",
-            "tags", "m","dielectric_type","target_pressure"):
+              "tags", "m", "dielectric_type", "target_pressure", 
+              "type_charges"):
         config_dict[n] = []
 
     # Defaults: bool
@@ -509,6 +513,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                 config_dict["chi"][i] = Chi(
                     atom_1=c_[0], atom_2=c_[1], interaction_energy=c[2]
                 )
+
         """
         if k == "dielectric_type":
             config_dict["dielectric_type"] = [None] * len(v)
@@ -1263,11 +1268,16 @@ def sort_dielectric_by_type_id(config, charges,types):
     return dielectric_by_types # by types with each particle id
 
 
-def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
+def check_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     """
     Creates a list of charge values of length types.
     Charges are sorted according to type ID. Used in field.py.
+    # TODO: this is messy, we should fix it
     """
+    if charges is None:
+        config.type_charges = [0.] * config.n_types
+        return config
+
     check_val = -100.0 # some random value that will never be encountered
     charges_list = np.full(config.n_types, check_val) # gatherv cant handle None
     rank = comm.Get_rank()
@@ -1307,7 +1317,8 @@ def get_charges_types_list(config, types, charges, comm = MPI.COMM_WORLD):
     #print(recv_charges)
     #rank = comm.Get_rank()
     #print(all_charges)
-    return config_charges
+    config.type_charges = config_charges
+    return config
 
 
 def check_dielectric(config, comm = MPI.COMM_WORLD):
@@ -1330,7 +1341,38 @@ def check_dielectric(config, comm = MPI.COMM_WORLD):
     return config
 
 
-def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
+def check_charges(config, charges, comm=MPI.COMM_WORLD):
+    """Check if charges across ranks sum to zero.
+
+    Parameters
+    ----------
+    charges : (N,) numpy.ndarray
+        Array of floats with charges for :code:`N` particles.
+    comm : mpi4py.Comm, optional
+        MPI communicator, defaults to :code:`mpi4py.COMM_WORLD`.
+    """  
+    total_charge = comm.allreduce(np.sum(charges), MPI.SUM)
+
+    if not np.isclose(total_charge, 0.):
+        warn_str = (
+            f"Charges in the input file do not sum to zero. "
+            f"Total charge is {total_charge}."
+        )
+        Logger.rank0.log(logging.WARNING, warn_str)
+        if comm.Get_rank() == 0:
+            warnings.warn(warn_str)
+
+    # if charges are ok, compute self energy
+    if config.coulombtype == "PIC_Spectral":
+        from .field import compute_self_energy_q
+
+        config.self_energy = compute_self_energy_q(config, charges, comm=comm)
+
+    return config
+
+
+def check_config(config, indices, names, types, charges, input_box, 
+                 comm=MPI.COMM_WORLD):
     """Performs various checks on the specfied config to ensure consistency
 
     Parameters
@@ -1343,6 +1385,8 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
         Array of string names for :code:`N` particles.
     types : (N,) numpy.ndarray
         Array of integer type indices for :code:`N` particles.
+    charges : (N,) numpy.ndarray
+        Array of floats charges for :code:`N` particles.
     comm : mpi4py.Comm, optional
         MPI communicator, defaults to :code:`mpi4py.COMM_WORLD`.
 
@@ -1377,27 +1421,8 @@ def check_config(config, indices, names, types, input_box, comm=MPI.COMM_WORLD):
     config = check_dielectric(config,comm=comm)
     config = check_n_print(config, comm=comm)
     config = check_n_flush(config, comm=comm)
+    config = check_charges_types_list(config, types, charges, comm=comm)
+    if charges is not None:
+        config = check_charges(config, charges, comm=comm)
+
     return config
-
-
-def check_charges(charges, comm=MPI.COMM_WORLD):
-    """Check if charges across ranks sum to zero.
-
-    Parameters
-    ----------
-    charges : (N,) numpy.ndarray
-        Array of floats with charges for :code:`N` particles.
-    comm : mpi4py.Comm, optional
-        MPI communicator, defaults to :code:`mpi4py.COMM_WORLD`.
-    """  
-    total_charge = comm.allreduce(np.sum(charges), MPI.SUM)
-
-    if not np.isclose(total_charge, 0.):
-        warn_str = (
-            f"Charges in the input file do not sum to zero. "
-            f"Total charge is {total_charge}."
-        )
-        Logger.rank0.log(logging.WARNING, warn_str)
-        if comm.Get_rank() == 0:
-            warnings.warn(warn_str)
-

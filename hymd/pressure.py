@@ -7,6 +7,8 @@ from .field import comp_laplacian
 
 def comp_pressure(
         phi,
+        phi_q,
+        psi,
         phi_gradient,
         hamiltonian,
         velocities,
@@ -19,7 +21,6 @@ def comp_pressure(
         positions,
         bond_pr,
         angle_pr,
-        Vbar_elec,
         comm=MPI.COMM_WORLD
 ):
     """
@@ -96,11 +97,16 @@ def comp_pressure(
     V = np.prod(config.box_size)
     n_mesh__cells = np.prod(np.full(3, config.mesh_size))
     volume_per_cell = V / n_mesh__cells
-    w = hamiltonian.w(phi) * volume_per_cell
-    w1 = 0.0
-    if config.squaregradient:
-        w1 = hamiltonian.w1(phi_gradient) * volume_per_cell
 
+    w_0 = hamiltonian.w_0(phi) * volume_per_cell
+    w_elec = 0.
+    if ((config.coulombtype == 'PIC_Spectral_GPE')
+        or (config.coulombtype == 'PIC_Spectral')):
+        w_elec = hamiltonian.w_elec([phi_q,psi]) * volume_per_cell  
+    w_1 = 0.
+    if config.squaregradient:
+        w_1 = hamiltonian.w_1(phi_gradient) * volume_per_cell
+    w = w_0 + w_elec
 
     #Kinetic term
     kinetic_energy = 0.5 * config.mass * np.sum(velocities ** 2)
@@ -111,15 +117,10 @@ def comp_pressure(
 
     #Term 2
     V_bar_tuple = [
-        hamiltonian.V_bar[k](phi) for k in range(config.n_types)
+        hamiltonian.V_bar[k]([phi,psi]) for k in range(config.n_types)
     ]
 
     V_bar = [sum(list(V_bar_tuple[i])) for i in range(len(V_bar_tuple))]
-    #print("shape before", np.shape(V_bar))
-
-    if Vbar_elec:
-        V_bar = [sum(n) for n in zip(V_bar,Vbar_elec)]
-    #print("shape after", np.shape(V_bar))
 
     p1 = [
         1/V
@@ -155,7 +156,7 @@ def comp_pressure(
     p_w1_1 = [0.0, 0.0, 0.0]
     p_w1_2 = [0.0, 0.0, 0.0]
     if config.squaregradient:
-        p_w1_0 = 1/V * np.sum(w1)
+        p_w1_0 = 1/V * np.sum(w_1)
         #p_w1_1 and p_w1_2
         config.K_coupl_type_dictionary = {
             tuple(sorted([c.atom_1, c.atom_2])): c.squaregradient_energy

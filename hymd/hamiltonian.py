@@ -51,8 +51,14 @@ class Hamiltonian:
             self.config.rho0 = (
                 self.config.n_particles / self.config.simulation_volume
             )
-        self.phi = sympy.var("phi:%d" % (len(self.config.unique_names)))
+        self.phi = sympy.var("phi:%d" % (self.config.n_types))
         k = sympy.var("k:%d" % (3))
+
+        # electrostatics variables
+        self.psi = sympy.var("psi")
+        self.phi_q = sympy.var("phi_q")
+        if not self.config.self_energy:
+            self.config.self_energy = 0.
 
         def fourier_space_window_function(k):
             return sympy.functions.elementary.exponential.exp(
@@ -144,7 +150,15 @@ class SquaredPhi(Hamiltonian):
         def w(phi, kappa=self.config.kappa, rho0=self.config.rho0):
             return 0.5 / (kappa * rho0) * (sum(phi)) ** 2
 
-        def V_bar(
+        def w_elec(
+            phi_q,
+            psi,
+            volume = self.config.simulation_volume,
+            self_energy = self.config.self_energy):
+            self_energy /= volume
+            return 0.5 * phi_q*psi - self_energy
+
+        def V_bar_0(
                 phi,
                 k,
                 kappa=self.config.kappa,
@@ -152,18 +166,35 @@ class SquaredPhi(Hamiltonian):
         ):
             V_incompressibility = 1/(kappa*rho0)*sum(phi)
             V_interaction = 0
-            return (V_interaction,V_incompressibility)
+            return [V_interaction, V_incompressibility]
+
+        def V_bar_elec(
+            psi,
+            t,
+            type_charges=self.config.type_charges,
+        ):
+            return [type_charges[t] * psi]
 
         self.V_bar = [
-            sympy.lambdify([self.phi], V_bar(self.phi, k))
-            for k in range(len(self.config.unique_names))
+            sympy.lambdify(
+                [(self.phi, self.psi)], 
+                V_bar_0(self.phi, t) + V_bar_elec(self.psi, t)
+            )
+            for t in range(self.config.n_types)
         ]
 
         self.v_ext = [
             sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
-            for i in range(len(self.config.unique_names))
+            for i in range(self.config.n_types)
         ]
-        self.w = sympy.lambdify([self.phi], w(self.phi))
+
+        self.w_0 = sympy.lambdify([self.phi], w(self.phi))
+        self.w_elec = sympy.lambdify([(self.phi_q, self.psi)], w_elec(self.phi_q,self.psi))
+
+        if self.config.coulombtype == "PIC_Spectral":
+            self.w = sympy.lambdify([(self.phi,self.phi_q,self.psi)], w(self.phi) + w_elec(self.phi_q,self.psi))
+        else:
+            self.w = self.w_0
 
 
 class DefaultNoChi(Hamiltonian):
@@ -225,7 +256,15 @@ class DefaultNoChi(Hamiltonian):
         ):
             return 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
 
-        def V_bar(
+        def w_elec(
+            phi_q,
+            psi,
+            volume = self.config.simulation_volume,
+            self_energy = self.config.self_energy):
+            self_energy /= volume
+            return 0.5 * phi_q*psi - self_energy
+
+        def V_bar_0(
                 phi,
                 k,
                 kappa=self.config.kappa,
@@ -234,17 +273,35 @@ class DefaultNoChi(Hamiltonian):
         ):
             V_incompressibility = 1/(kappa*rho0)*(sum(phi) - a)
             V_interaction = 0
-            return (V_interaction,V_incompressibility)
+            return [V_interaction,V_incompressibility]
+
+        def V_bar_elec(
+            psi,
+            t,
+            type_charges=self.config.type_charges,
+        ):
+            return [type_charges[t] * psi]
 
         self.V_bar = [
-            sympy.lambdify([self.phi], V_bar(self.phi, k))
-            for k in range(len(self.config.unique_names))
+            sympy.lambdify(
+                [(self.phi, self.psi)], 
+                V_bar_0(self.phi, t) + V_bar_elec(self.psi, t)
+            )
+            for t in range(self.config.n_types)
         ]
+
         self.v_ext = [
             sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
-            for i in range(len(self.config.unique_names))
+            for i in range(self.config.n_types)
         ]
-        self.w = sympy.lambdify([self.phi], w(self.phi))
+
+        self.w_0 = sympy.lambdify([self.phi], w(self.phi))
+        self.w_elec = sympy.lambdify([(self.phi_q, self.psi)], w_elec(self.phi_q,self.psi))
+
+        if self.config.coulombtype == "PIC_Spectral":
+            self.w = sympy.lambdify([(self.phi,self.phi_q,self.psi)], w(self.phi) + w_elec(self.phi_q,self.psi))
+        else:
+            self.w = self.w_0
 
 
 class DefaultWithChi(Hamiltonian):
@@ -316,7 +373,10 @@ class DefaultWithChi(Hamiltonian):
             tuple(sorted([c.atom_1, c.atom_2])): c.squaregradient_energy
             for c in self.config.K_coupl
         }
-        self.phi_laplacian = [ sympy.var("phi_laplacian%d(0:%d)" %(t,3)) for t in range(len(self.config.unique_names)) ]
+        self.phi_laplacian = [ 
+            sympy.var("phi_laplacian%d(0:%d)" %(t,3)) 
+            for t in range(self.config.n_types) 
+        ]
 
         def w(
             phi,
@@ -327,7 +387,7 @@ class DefaultWithChi(Hamiltonian):
             type_to_name_map=self.type_to_name_map,
             chi_type_dictionary=self.chi_type_dictionary,
         ):
-            interaction = 0
+            interaction = 0.
             for i in range(self.config.n_types):
                 for j in range(i + 1, self.config.n_types):
                     ni = type_to_name_map[i]
@@ -339,9 +399,17 @@ class DefaultWithChi(Hamiltonian):
             incompressibility = 0.5 / (kappa * rho0) * (sum(phi) - a) ** 2
             return incompressibility + interaction
 
-        def V_bar(
+        def w_elec(
+            phi_q,
+            psi,
+            volume = self.config.simulation_volume,
+            self_energy = self.config.self_energy):
+            self_energy /= volume
+            return 0.5 * phi_q*psi - self_energy
+
+        def V_bar_0(
                 phi,
-                k,
+                t,
                 kappa=self.config.kappa,
                 rho0=self.config.rho0,
                 a=self.config.a,
@@ -351,33 +419,50 @@ class DefaultWithChi(Hamiltonian):
         ):
             V_incompressibility = 1/(kappa*rho0)*(sum(phi) - a)
 
-            V_interaction = 0
-            nk = type_to_name_map[k]
+            V_interaction = 0.
+            nk = type_to_name_map[t]
             for i in range(self.config.n_types):
                 ni = type_to_name_map[i]
                 names = sorted([nk, ni])
                 if ni!=nk:
                     c = chi_type_dictionary[tuple(names)]
                 else:
-                    c = 0
+                    c = 0.
                 #uncomment to count diagonal chi terms:
                 #c = chi_type_dictionary[tuple(names)]
                 V_interaction += c * phi[i] / rho0
-            return (V_interaction,V_incompressibility)
+            return [V_interaction,V_incompressibility]
+
+        def V_bar_elec(
+            psi,
+            t,
+            type_charges=self.config.type_charges,
+        ):
+            return [type_charges[t] * psi]
 
         self.V_bar = [
-            sympy.lambdify([self.phi], V_bar(self.phi, k))
-            for k in range(len(self.config.unique_names))
+            sympy.lambdify(
+                [(self.phi, self.psi)], 
+                V_bar_0(self.phi, t) + V_bar_elec(self.psi, t)
+            )
+            for t in range(self.config.n_types)
         ]
 
         self.v_ext = [
-            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[i]))
-            for i in range(len(self.config.unique_names))
+            sympy.lambdify([self.phi], sympy.diff(w(self.phi), self.phi[t]))
+            for t in range(self.config.n_types)
         ]
-        self.w = sympy.lambdify([self.phi], w(self.phi))
 
+        self.w_0 = sympy.lambdify([self.phi], w(self.phi))
+        self.w_elec = sympy.lambdify([(self.phi_q, self.psi)], w_elec(self.phi_q,self.psi))
 
-    def w1(
+        if self.config.coulombtype == "PIC_Spectral":
+            self.w = sympy.lambdify([(self.phi,self.phi_q,self.psi)], w(self.phi) + w_elec(self.phi_q,self.psi))
+        else:
+            self.w = self.w_0
+
+    # FIXME: remove this or move to setup and define self.w_1
+    def w_1(
         self,
         phi_gradient,
     ):

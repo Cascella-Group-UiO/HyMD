@@ -759,6 +759,7 @@ def test_input_parser_check_config(config_toml, dppc_single):
     _, config_toml_str = config_toml
     config = parse_config_toml(config_toml_str)
     config.n_particles = 13
+    charges = np.zeros(config.n_particles, dtype=np.float32)
     input_box = np.array(config.box_size)
     config.n_b = 1
     config.barostat_type = "berendsen"
@@ -771,7 +772,7 @@ def test_input_parser_check_config(config_toml, dppc_single):
     types = np.array([names_to_types[n.decode('UTF-8')] for n in names],
                      dtype=int)
 
-    config = check_config(config, indices, names, types, input_box)
+    config = check_config(config, indices, names, types, charges, input_box)
     assert isinstance(config, Config)
 
 
@@ -853,8 +854,13 @@ def test_input_parser__setup_type_to_name_map(config_toml, dppc_single):
 
 
 @pytest.mark.mpi()
-def test_input_parser_check_charges(caplog):
+def test_input_parser_check_charges(config_toml, caplog):
     caplog.set_level(logging.WARNING)
+    _, config_toml_str = config_toml
+    config = parse_config_toml(config_toml_str)
+    config.coulombtype = "PIC_Spectral"
+    config.dielectric_const = 80.
+
     charges = np.array(
         [1.0, 0.0, 0.5, 0.2, -0.3, 0.0, 0.3, 0.0, -0.5, 0.0, -0.5, 0.99, -0.2,
         0.3, 0.5, 0.0, 0.0, -0.3, 0.0, 0.0, -0.99, -1.0],
@@ -873,15 +879,16 @@ def test_input_parser_check_charges(caplog):
 
     rank_charges = charges[ind_rank[rank]:ind_rank[rank+1]]
 
-    check_charges(rank_charges, comm=comm) # warnings are not expected
+    newconf = check_charges(config, rank_charges, comm=comm) # warnings are not expected
     assert len(caplog.text) == 0
+    assert newconf.self_energy != 0. # TODO: compare to the right value
 
     # change charges to generate a warning
     charges[1] = 1000.
     rank_charges = charges[ind_rank[rank]:ind_rank[rank+1]]
 
     with pytest.warns(Warning) as recorded_warning:
-        config = check_charges(rank_charges)
+        newconf = check_charges(config, rank_charges)
         # only rank 0 gives the warning
         if rank == 0:
             message = recorded_warning[0].message.args[0]

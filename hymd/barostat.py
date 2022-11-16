@@ -43,6 +43,8 @@ def isotropic(
         pmesh,
         pm_stuff,
         phi,
+        phi_q,
+        psi,
         phi_gradient,
         hamiltonian,
         positions,
@@ -55,7 +57,6 @@ def isotropic(
         phi_grad_lap,
         bond_pr,
         angle_pr,
-        Vbar_elec,
         step,
         prng,
         comm=MPI.COMM_WORLD
@@ -136,6 +137,8 @@ def isotropic(
         #compute pressure
         pressure = comp_pressure(
                 phi,
+                phi_q,
+                psi,
                 phi_gradient,
                 hamiltonian,
                 velocities,
@@ -148,7 +151,6 @@ def isotropic(
                 positions,
                 bond_pr,
                 angle_pr,
-                Vbar_elec,
                 comm=comm
         )
 
@@ -178,6 +180,8 @@ def semiisotropic(
         pmesh,
         pm_stuff,
         phi,
+        phi_q,
+        psi,
         phi_gradient,
         hamiltonian,
         positions,
@@ -190,7 +194,6 @@ def semiisotropic(
         phi_grad_lap,
         bond_pr,
         angle_pr,
-        Vbar_elec,
         step,
         prng,
         comm=MPI.COMM_WORLD
@@ -271,6 +274,8 @@ def semiisotropic(
         #compute pressure
         pressure = comp_pressure(
                 phi,
+                phi_q,
+                psi,
                 phi_gradient,
                 hamiltonian,
                 velocities,
@@ -283,7 +288,6 @@ def semiisotropic(
                 positions,
                 bond_pr,
                 angle_pr,
-                Vbar_elec,
                 comm=comm
         )
 
