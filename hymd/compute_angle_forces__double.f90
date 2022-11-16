@@ -27,7 +27,7 @@ subroutine caf_d(f, r, box, a, b, c, t0, k, energy, angle_pr)
     !
     implicit none
 
-    real(8), dimension(:,:),     intent(in out) :: f
+    real(8), dimension(:,:),     intent(inout)  :: f
     real(8), dimension(:,:),     intent(in)     :: r
     real(8), dimension(:),       intent(in)     :: box
     integer, dimension(:),       intent(in)     :: a

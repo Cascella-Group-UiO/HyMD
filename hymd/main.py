@@ -10,15 +10,13 @@ import pmesh.pm as pmesh
 import warnings
 from .configure_runtime import configure_runtime
 from .hamiltonian import get_hamiltonian
-from .input_parser import (check_config, check_charges,
-                           sort_dielectric_by_type_id, get_charges_types_list)
+from .input_parser import check_config, sort_dielectric_by_type_id
 from .logger import Logger, format_timedelta
 from .file_io import distribute_input, OutDataset, store_static, store_data
 from .field import (compute_field_force, update_field,
                     compute_field_and_kinetic_energy, domain_decomposition,
-                    update_field_force_q, compute_field_energy_q,
-                    update_field_force_q_GPE, compute_field_energy_q_GPE,
-                    initialize_pm, compute_self_energy_q)
+                    update_field_force_q, update_field_force_q_GPE,
+                    compute_field_energy_q_GPE, initialize_pm)
 from .thermostat import (csvr_thermostat, cancel_com_momentum,
                          generate_initial_velocities)
 from .force import dipole_forces_redistribution, prepare_bonds
@@ -64,6 +62,7 @@ def main():
             compute_dihedral_forces__fortran as compute_dihedral_forces
         )
 
+    # read input .hdf5
     driver = "mpio" if not args.disable_mpio else None
     _kwargs = {"driver": driver, "comm": comm} if not args.disable_mpio else {}
     with h5py.File(args.input, "r", **_kwargs) as in_file:
@@ -88,6 +87,7 @@ def main():
 
         types = None
         bonds = None
+        charges = None
         molecules = []
         if "types" in in_file:
             types = in_file["types"][rank_range]
@@ -105,11 +105,12 @@ def main():
         else:
             input_box = np.array( [None, None, None] )
 
-    if charges_flag:
-        check_charges(charges, comm=comm)
-
-    config = check_config(config, indices, names, types, input_box, comm=comm)
-    if config.barostat_type is 'berendsen':
+    # finishes config setup and checks
+    config = check_config(config, indices, names, types, charges, 
+                          input_box, comm=comm)
+    
+    # import barostat if necessary
+    if config.barostat_type == 'berendsen':
         from .barostat import (
             isotropic, semiisotropic
         )
@@ -118,9 +119,8 @@ def main():
             isotropic, semiisotropic
         )
 
-    ## dielectric from toml
+    # dielectric from toml
     if config.coulombtype == 'PIC_Spectral_GPE':
-        config_charges = get_charges_types_list(config, types, charges, comm = comm)
         dielectric_sorted = sort_dielectric_by_type_id(config,charges,types)
         dielectric_flag = True
 
@@ -139,7 +139,7 @@ def main():
                     res = comm.allreduce(sendobj=msg, op=MPI.MAX)
                     return res
 
-        else: ## default choice is the max difference if not specified
+        else: # default choice is the max difference if not specified
             config.convergence_type = 'max_diff'
             def conv_fun(comm,diffmesh):
                 msg = np.max(diffmesh)
@@ -185,12 +185,15 @@ def main():
     dihedral_energy = 0.0
     kinetic_energy = 0.0
     field_q_energy = 0.0
-    field_q_self_energy = 0.0
+
+    # more initialization
+    bond_pr_ = np.zeros(3, dtype=dtype)
+    angle_pr_ = np.zeros(3, dtype=dtype)
 
     hamiltonian = get_hamiltonian(config)
 
     pm_objs = initialize_pm(pmesh, config, comm)
-    (pm, field_list, elec_common_list, coulomb_list) = pm_objs
+    pm, field_list, elec_common_list, coulomb_list = pm_objs
     (
         phi,
         phi_fourier,
@@ -207,23 +210,20 @@ def main():
         v_ext1
     ) = field_list
 
-    if len(elec_common_list) == 3:
-        (phi_q, phi_q_fourier, elec_field) = elec_common_list
+    # when electrostatics is not used, these objs are None
+    phi_q, phi_q_fourier, psi, elec_field = elec_common_list
 
-    Vbar_elec = None # needed if electrostatics is not used
-    if len(coulomb_list) == 4:
+    if len(coulomb_list) == 2:
         (
             elec_field_fourier,
-            elec_potential,
-            elec_potential_fourier,
-            Vbar_elec
+            psi_fourier,
         ) = coulomb_list
 
-    elif len(coulomb_list) == 13:
+    elif len(coulomb_list) == 12:
             [
                 phi_eps, phi_eps_fourier,
                 phi_eta, phi_eta_fourier, phi_pol,
-                phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
+                phi_pol_prev, elec_dot, elec_field_contrib, Vbar_elec, Vbar_elec_fourier,
                 force_mesh_elec, force_mesh_elec_fourier
                 ] = coulomb_list
 
@@ -321,8 +321,14 @@ def main():
             config.m,
             compute_potential=True,
         )
-        field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+        (
+            field_energy, 
+            kinetic_energy, 
+            field_q_energy
+        ) = compute_field_and_kinetic_energy(
             phi,
+            phi_q,
+            psi,
             phi_gradient,
             velocities,
             hamiltonian,
@@ -350,11 +356,10 @@ def main():
                 phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
                 phi_eta,
                 phi_eta_fourier, phi_pol_prev, phi_pol,
-                elec_field, elec_forces, elec_field_contrib, elec_potential,
+                elec_field, elec_forces, elec_field_contrib, psi,
                 Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                 hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
                 )
-
 
 
             field_q_energy = compute_field_energy_q_GPE(
@@ -364,18 +369,10 @@ def main():
                 )
 
 
-
         if config.coulombtype == "PIC_Spectral":
-            field_q_self_energy = compute_self_energy_q(config, charges, comm=comm)
             update_field_force_q(
-                charges, phi_q, phi_q_fourier, elec_field_fourier, elec_field,
-                elec_forces, layout_q, hamiltonian, pm, positions, config,
-            )
-
-            field_q_energy = compute_field_energy_q(
-                config, phi_q, phi_q_fourier, elec_potential,
-                elec_potential_fourier,
-                field_q_self_energy, comm=comm,
+                charges, phi_q, phi_q_fourier, psi, psi_fourier, elec_field_fourier, 
+                elec_field, elec_forces, layout_q, hamiltonian, pm, positions, config,
             )
 
     if molecules_flag:
@@ -435,6 +432,8 @@ def main():
                 )
                 phi_dipoles = pm.create("real", value=0.0)
                 phi_dipoles_fourier = pm.create("complex", value=0.0)
+                psi_dipoles = pm.create("real", value=0.0)
+                psi_dipoles_fourier = pm.create("complex", value=0.0)
                 dipoles_field_fourier = [
                     pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
                 ]
@@ -483,8 +482,9 @@ def main():
             layout_dipoles = pm.decompose(dipole_positions)
             update_field_force_q(
                 dipole_charges, phi_dipoles, phi_dipoles_fourier,
-                dipoles_field_fourier, dipoles_field, dipole_forces,
-                layout_dipoles, hamiltonian, pm, dipole_positions, config,
+                psi_dipoles, psi_dipoles_fourier, dipoles_field_fourier, 
+                dipoles_field, dipole_forces, layout_dipoles, hamiltonian, pm,
+                dipole_positions, config,
             )
 
             dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3))
@@ -523,9 +523,13 @@ def main():
         step = 0
         frame = 0
         if not args.disable_field:
-            field_energy, kinetic_energy = compute_field_and_kinetic_energy(
-                phi, phi_gradient, velocities, hamiltonian, positions, types, v_ext, config,
-                layouts, comm=comm,
+            (
+                field_energy, 
+                kinetic_energy,
+                field_q_energy
+            ) = compute_field_and_kinetic_energy(
+                phi, phi_q, psi, phi_gradient, velocities, hamiltonian,
+                positions, types, v_ext, config, layouts, comm=comm,
             )
         else:
             kinetic_energy = comm.allreduce(
@@ -539,6 +543,8 @@ def main():
         if config.pressure or config.barostat:
             pressure = comp_pressure(
                     phi,
+                    phi_q,
+                    psi,
                     phi_gradient,
                     hamiltonian,
                     velocities,
@@ -551,7 +557,6 @@ def main():
                     positions,
                     bond_pr_,
                     angle_pr_,
-                    Vbar_elec,
                     comm=comm
             )
 
@@ -689,50 +694,52 @@ def main():
         if config.barostat:
             if config.barostat.lower() == 'isotropic':
                 pm_objs, change = isotropic(
-                     pmesh,
-                     pm_objs,
-                     phi,
-                     phi_gradient,
-                     hamiltonian,
-                     positions,
-                     velocities,
-                     config,
-                     phi_fourier,
-                     phi_laplacian,
-                     phi_transfer,
-                     phi_grad_lap_fourier,
-                     phi_grad_lap,
-                     bond_pr_,
-                     angle_pr_,
-                     Vbar_elec,
-                     step,
-                     prng,
-                     comm=comm
+                    pmesh,
+                    pm_objs,
+                    phi,
+                    phi_q,
+                    psi,
+                    phi_gradient,
+                    hamiltonian,
+                    positions,
+                    velocities,
+                    config,
+                    phi_fourier,
+                    phi_laplacian,
+                    phi_transfer,
+                    phi_grad_lap_fourier,
+                    phi_grad_lap,
+                    bond_pr_,
+                    angle_pr_,
+                    step,
+                    prng,
+                    comm=comm
                 )
 
             elif config.barostat.lower() == 'semiisotropic':
                 pm_objs, change = semiisotropic(
-                     pmesh,
-                     pm_objs,
-                     phi,
-                     phi_gradient,
-                     hamiltonian,
-                     positions,
-                     velocities,
-                     config,
-                     phi_fourier,
-                     phi_laplacian,
-                     phi_transfer,
-                     phi_grad_lap_fourier,
-                     phi_grad_lap,
-                     bond_pr_,
-                     angle_pr_,
-                     Vbar_elec,
-                     step,
-                     prng,
-                     comm=comm
+                    pmesh,
+                    pm_objs,
+                    phi,
+                    phi_q,
+                    psi,
+                    phi_gradient,
+                    hamiltonian,
+                    positions,
+                    velocities,
+                    config,
+                    phi_fourier,
+                    phi_laplacian,
+                    phi_transfer,
+                    phi_grad_lap_fourier,
+                    phi_grad_lap,
+                    bond_pr_,
+                    angle_pr_,
+                    step,
+                    prng,
+                    comm=comm
                 )
-            (pm, field_list, elec_common_list, coulomb_list) = pm_objs
+            pm, field_list, elec_common_list, coulomb_list = pm_objs
             (
                 phi,
                 phi_fourier,
@@ -749,24 +756,18 @@ def main():
                 v_ext1
             ) = field_list
 
-            if len(elec_common_list) == 3:
-                (phi_q, phi_q_fourier, elec_field) = elec_common_list
+            phi_q, phi_q_fourier, psi, elec_field = elec_common_list
 
-            if len(coulomb_list) == 4:
+            if len(coulomb_list) == 2:
+                elec_field_fourier, psi_fourier = coulomb_list
+
+            elif len(coulomb_list) == 12:
                 (
-                    elec_field_fourier,
-                    elec_potential,
-                    elec_potential_fourier,
-                    Vbar_elec
+                    phi_eps, phi_eps_fourier,
+                    phi_eta, phi_eta_fourier, phi_pol,
+                    phi_pol_prev, elec_dot, elec_field_contrib, psi, Vbar_elec,
+                    Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier
                 ) = coulomb_list
-
-            elif len(coulomb_list) == 13:
-                [
-                        phi_eps, phi_eps_fourier,
-                        phi_eta, phi_eta_fourier, phi_pol,
-                        phi_pol_prev, elec_dot, elec_field_contrib, elec_potential, Vbar_elec, Vbar_elec_fourier,
-                        force_mesh_elec, force_mesh_elec_fourier
-                        ] = coulomb_list
 
         # Update slow forces
         if not args.disable_field:
@@ -792,7 +793,7 @@ def main():
                         phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
                         phi_eta,
                         phi_eta_fourier, phi_pol_prev, phi_pol,
-                        elec_field, elec_forces, elec_field_contrib, elec_potential,
+                        elec_field, elec_forces, elec_field_contrib, psi,
                         Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                         hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
                         )
@@ -806,14 +807,9 @@ def main():
 
                 if config.coulombtype == "PIC_Spectral":
                     update_field_force_q(
-                        charges, phi_q, phi_q_fourier, elec_field_fourier,
-                        elec_field, elec_forces, layout_q, hamiltonian,
-                        pm, positions, config,
-                    )
-                    field_q_energy = compute_field_energy_q(
-                        config, phi_q, phi_q_fourier, elec_potential,
-                        elec_potential_fourier,
-                        field_q_self_energy, comm=comm,
+                        charges, phi_q, phi_q_fourier, psi, psi_fourier, 
+                        elec_field_fourier, elec_field, elec_forces, layout_q, 
+                        hamiltonian, pm, positions, config,
                     )
 
             if protein_flag and not args.disable_dipole:
@@ -827,8 +823,9 @@ def main():
                 layout_dipoles = pm.decompose(dipole_positions)
                 update_field_force_q(
                     dipole_charges, phi_dipoles, phi_dipoles_fourier,
-                    dipoles_field_fourier, dipoles_field, dipole_forces,
-                    layout_dipoles, hamiltonian, pm, dipole_positions, config,
+                    psi_dipoles, psi_dipoles_fourier, dipoles_field_fourier,
+                    dipoles_field, dipole_forces, layout_dipoles, hamiltonian,
+                    pm, dipole_positions, config,
                 )
 
                 dipole_positions = np.reshape(dipole_positions, (n_tors, 4, 3))
@@ -1030,10 +1027,12 @@ def main():
                         compute_potential=True,
                     )
                     (
-                        field_energy, kinetic_energy,
+                        field_energy, 
+                        kinetic_energy,
+                        field_q_energy
                     ) = compute_field_and_kinetic_energy(
-                        phi, phi_gradient, velocities, hamiltonian, positions, types, v_ext,
-                        config, layouts, comm=comm,
+                        phi, phi_q, psi, phi_gradient, velocities, hamiltonian,
+                        positions, types, v_ext, config, layouts, comm=comm,
                     )
 
                     if charges_flag:
@@ -1042,12 +1041,6 @@ def main():
                                 config, phi_eps,
                                 field_q_energy,elec_dot,
                                 comm=comm
-                            )
-                        if config.coulombtype == "PIC_Spectral":
-                            field_q_energy = compute_field_energy_q(
-                                config, phi_q, phi_q_fourier, elec_potential,
-                                elec_potential_fourier,
-                                field_q_self_energy, comm=comm,
                             )
                 else:
                     kinetic_energy = comm.allreduce(
@@ -1060,9 +1053,11 @@ def main():
                 if args.disable_field:
                     field_energy = 0.0
 
-                if config.pressure:
+                if config.pressure or config.barostat:
                     pressure = comp_pressure(
                             phi,
+                            phi_q,
+                            psi,
                             phi_gradient,
                             hamiltonian,
                             velocities,
@@ -1075,7 +1070,6 @@ def main():
                             positions,
                             bond_pr_,
                             angle_pr_,
-                            Vbar_elec,
                             comm=comm
                     )
                 else:
@@ -1140,8 +1134,14 @@ def main():
                 config.m,
                 compute_potential=True,
             )
-            field_energy, kinetic_energy = compute_field_and_kinetic_energy(
+            (
+                field_energy, 
+                kinetic_energy,
+                field_q_energy
+            ) = compute_field_and_kinetic_energy(
                 phi,
+                phi_q,
+                psi,
                 phi_gradient,
                 velocities,
                 hamiltonian,
@@ -1161,7 +1161,7 @@ def main():
                         phi_q, phi_q_fourier, phi_eps, phi_eps_fourier,
                         phi_eta,
                         phi_eta_fourier, phi_pol_prev, phi_pol,
-                        elec_field, elec_forces, elec_field_contrib, elec_potential,
+                        elec_field, elec_forces, elec_field_contrib, psi,
                         Vbar_elec, Vbar_elec_fourier, force_mesh_elec, force_mesh_elec_fourier,
                         hamiltonian, layout_q, layouts, pm, positions, config, comm = comm,
                         )
@@ -1175,15 +1175,9 @@ def main():
 
                 if config.coulombtype == "PIC_Spectral":
                     update_field_force_q(
-                        charges, phi_q, phi_q_fourier, elec_field_fourier,
-                        elec_field, elec_forces, layout_q, hamiltonian, pm,
-                        positions, config,
-                    )
-
-                    field_q_energy = compute_field_energy_q(
-                        config, phi_q, phi_q_fourier, elec_potential,
-                        elec_potential_fourier,
-                        field_q_self_energy, comm=comm,
+                        charges, phi_q, phi_q_fourier, psi, psi_fourier, 
+                        elec_field_fourier, elec_field, elec_forces, layout_q, 
+                        hamiltonian, pm, positions, config,
                     )
 
         else:
@@ -1198,9 +1192,11 @@ def main():
         if args.disable_field:
             field_energy = 0.0
 
-        if config.pressure:
+        if config.pressure or config.barostat:
             pressure = comp_pressure(
                     phi,
+                    phi_q,
+                    psi,
                     phi_gradient,
                     hamiltonian,
                     velocities,

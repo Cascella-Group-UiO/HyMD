@@ -25,7 +25,7 @@ subroutine cbf_d(f, r, box, i, j, r0, k, energy, bond_pr)
     !
     implicit none
 
-    real(8), dimension(:,:), intent(in out) :: f
+    real(8), dimension(:,:), intent(inout)  :: f
     real(8), dimension(:,:), intent(in)     :: r
     real(8), dimension(:),   intent(in)     :: box
     integer, dimension(:),   intent(in)     :: i
