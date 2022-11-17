@@ -4,7 +4,7 @@ import h5py
 import math
 import numpy as np
 from openbabel import openbabel
-# openbabel.obErrorLog.SetOutputLevel(0) # uncomment to suppress warnings
+openbabel.obErrorLog.SetOutputLevel(0) # uncomment to suppress warnings
 
 def extant_file(x):
     """
@@ -38,8 +38,8 @@ def pdb_to_input(pdb_file, charges=None, bonds=None, out_path=None, overwrite=Fa
                 charge_dict[beadtype] = float(beadchrg)
 
     # read bonds
+    bonds_list = []
     if bonds:
-        bonds_list = []
         with open(bonds, "r") as f:
             for line in f:
                 bnd1 = "{} {}".format(line.split()[0], line.split()[1])
@@ -56,9 +56,10 @@ def pdb_to_input(pdb_file, charges=None, bonds=None, out_path=None, overwrite=Fa
     # read molecule to OBMol object
     mol = openbabel.OBMol()
     obConversion.ReadFile(mol, pdb_file)
-    if not bonds:
-        mol.ConnectTheDots() # necessary because of the 'b' INOPTION
+    # if not bonds:
+    #     mol.ConnectTheDots() # necessary because of the 'b' INOPTION
     n_particles = mol.NumAtoms()
+    print("Found {} particles in .pdb".format(n_particles))
 
     # get atomic labels from pdb
     atom_to_lbl = {}
@@ -142,8 +143,9 @@ def pdb_to_input(pdb_file, charges=None, bonds=None, out_path=None, overwrite=Fa
             molecules_dataset[i] = atom_to_mol[atom.GetId()]
             names_dataset[i] = np.string_(atom_to_lbl[atom.GetId()])
             types_dataset[i] = lbl_to_type[atom_to_lbl[atom.GetId()]]
-            for j, nbr in enumerate(openbabel.OBAtomAtomIter(atom)):
-                bonds_dataset[i, j] = nbr.GetId()
+            if len(bonds_list) != 0:
+                for j, nbr in enumerate(openbabel.OBAtomAtomIter(atom)):
+                    bonds_dataset[i, j] = nbr.GetId()
 
 
 if __name__ == '__main__':
