@@ -12,7 +12,7 @@ from .logger import Logger, print_header
 from .input_parser import read_config_toml, parse_config_toml
 
 
-def configure_runtime(args_in, comm):
+def configure_runtime(comm):
     """Parse command line arguments and configuration file
 
     Parameters
@@ -32,7 +32,7 @@ def configure_runtime(args_in, comm):
     ap = ArgumentParser()
 
     ap.add_argument(
-        "-v", "--verbose", default=1, type=int, nargs="?",
+        "-v", "--verbose", const=1, type=int, nargs="?",
         help="Increase logging verbosity",
     )
     ap.add_argument(
@@ -97,10 +97,13 @@ def configure_runtime(args_in, comm):
         help="Redirect event logging to specified file",
     )
     ap.add_argument(
+        "-p", "--topol", default=None, help="Gmx-like topology file in toml format"
+    )
+    ap.add_argument(
         "config", help="Config .py or .toml input configuration script"
     )
     ap.add_argument("input", help="input.hdf5")
-    args = ap.parse_args(args_in)
+    args = ap.parse_args()
 
     if comm.Get_rank() == 0:
         os.makedirs(args.destdir, exist_ok=True)
@@ -156,6 +159,20 @@ def configure_runtime(args_in, comm):
             logging.INFO,
             f"Attempting to parse config file {args.config} as "".toml",
         )
+
+        if args.topol is not None:
+            topol = read_config_toml(args.topol)
+            # Check if we have single "itp" files and add their keys to topol
+            if os.path.dirname(args.topol) == "":
+                args.topol = "./" + args.topol
+            if "include" in topol["system"]:
+                for file in topol["system"]["include"]:
+                    path = f"{os.path.dirname(args.topol)}/{file}"
+                    itps = read_config_toml(path)
+                    for mol, itp in itps.items():
+                        topol[mol] = itp
+        else:
+            topol = None
         toml_config = read_config_toml(args.config)
         config = parse_config_toml(
             toml_config, file_path=os.path.abspath(args.config), comm=comm
@@ -170,4 +187,4 @@ def configure_runtime(args_in, comm):
             f"Unable to parse configuration file {args.config}"
             f"\n\ntoml parse traceback:" + repr(ve)
         )
-    return args, config, prng
+    return args, config, prng, topol
