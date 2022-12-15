@@ -34,33 +34,32 @@ from typing import Union
 from .pressure import comp_pressure
 from .field import initialize_pm
 
+
 @dataclass
 class Target_pressure:
     P_L: Union[bool, float]
     P_N: Union[bool, float]
 
+
 def isotropic(
-        pmesh,
-        pm_stuff,
-        phi,
-        phi_q,
-        psi,
-        phi_gradient,
-        hamiltonian,
-        positions,
-        velocities,
-        config,
-        phi_fft,
-        phi_laplacian,
-        phi_transfer,
-        phi_grad_lap_fourier,
-        phi_grad_lap,
-        bond_pr,
-        angle_pr,
-        step,
-        prng,
-        comm=MPI.COMM_WORLD
-    ):
+    pmesh,
+    pm_stuff,
+    phi,
+    phi_q,
+    psi,
+    hamiltonian,
+    positions,
+    velocities,
+    config,
+    phi_fft,
+    phi_laplacian,
+    phi_transfer,
+    bond_pr,
+    angle_pr,
+    step,
+    prng,
+    comm=MPI.COMM_WORLD,
+):
     """
     Implements an isotropic Berendsen barostat.
     The box and particle positions are scaled uniformly
@@ -77,9 +76,6 @@ def isotropic(
         :code:`M`. Pre-allocated, but empty; any values in this field are discarded.
         Changed in-place. Local for each MPI rank--the full computaional grid
         is represented by the collective fields of all MPI ranks.
-    phi_gradient : list[pmesh.pm.RealField], (M, 3)
-        Like phi, but containing the gradient of particle number densities.
-        Needed only for vestigial squaregradient term.
     hamiltonian : Hamiltonian
         Particle-field interaction energy handler object. Defines the
         grid-independent filtering function, :math:`H`.
@@ -102,14 +98,7 @@ def isotropic(
     phi_transfer : list[pmesh.pm.ComplexField], (3,)
         Like phi_fourier, used as an intermediary to perform FFT operations
         to obtain the gradient or laplacian of particle number densities.
-    phi_grad_lap_fourier : list[pmesh.pm.ComplexField], (3,)
-        Like phi_fourier, used as a second intermediary after phi_transfer
-        to perform FFT operations to obtain gradient of laplacian of particle
-        number densities. Needed only for vestigial squaregradient term.
-    phi_grad_lap : list[pmesh.pm.RealField], (M, 3, 3)
-        Like phi, to obtain the gradient of laplacian in all 3x3 directions.
-        Needed only for vestigial squaregradient term.
-    bond_pr : (3,) numpy.ndarray 
+    bond_pr : (3,) numpy.ndarray
         Total bond pressure due all two-particle bonds.
     angle_pr : (3,) numpy.ndarray
         Total angle pressure due all three-particle bonds.
@@ -129,75 +118,72 @@ def isotropic(
         Indicates whether or not any pmesh objects were reinitialized.
     """
     rank = comm.Get_rank()
-    beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
+    beta = 4.6 * 10 ** (-5)  # bar^(-1) #isothermal compressibility of water
     change = False
 
-    if(np.mod(step, config.n_b)==0):
+    if np.mod(step, config.n_b) == 0:
         change = True
-        #compute pressure
+        # compute pressure
         pressure = comp_pressure(
-                phi,
-                phi_q,
-                psi,
-                phi_gradient,
-                hamiltonian,
-                velocities,
-                config,
-                phi_fft,
-                phi_laplacian,
-                phi_transfer,
-                phi_grad_lap_fourier,
-                phi_grad_lap,
-                positions,
-                bond_pr,
-                angle_pr,
-                comm=comm
+            phi,
+            phi_q,
+            psi,
+            hamiltonian,
+            velocities,
+            config,
+            phi_fft,
+            phi_laplacian,
+            phi_transfer,
+            positions,
+            bond_pr,
+            angle_pr,
+            comm=comm,
         )
 
-        #Total pressure across all ranks
-        P = np.average(pressure[-3:-1]) #kJ/(mol nm^3)
-        P = P * 16.61 #bar
+        # Total pressure across all ranks
+        P = np.average(pressure[-3:-1])  # kJ/(mol nm^3)
+        P = P * 16.61  # bar
 
-        #scaling factor
-        alpha = 1 - config.time_step * config.n_b/ config.tau_p * beta * (config.target_pressure.P_L - P)
+        # scaling factor
+        alpha = (
+            1.0
+            - config.time_step
+            * config.n_b
+            / config.tau_p
+            * beta
+            * (config.target_pressure.P_L - P)
+        ) ** (1 / 3)
 
-        #length scaling
-        L0 = alpha**(1/3) * config.box_size[0]
-        L1 = alpha**(1/3) * config.box_size[1]
-        L2 = alpha**(1/3) * config.box_size[2]
-        config.box_size[0] = L0
-        config.box_size[1] = L1
-        config.box_size[2] = L2
+        # length scaling
+        config.box_size *= alpha
 
-        #position coordinates scaling
-        positions[:] = alpha**(1/3) * positions
+        # position coordinates scaling
+        positions *= alpha
 
-        #pmesh re-initialize
-        pm_stuff  = initialize_pm(pmesh, config, comm)
+        # pmesh re-initialize
+        pm_stuff = initialize_pm(pmesh, config, comm)
     return (pm_stuff, change)
 
+
 def semiisotropic(
-        pmesh,
-        pm_stuff,
-        phi,
-        phi_q,
-        psi,
-        phi_gradient,
-        hamiltonian,
-        positions,
-        velocities,
-        config,
-        phi_fft,
-        phi_laplacian,
-        phi_transfer,
-        phi_grad_lap_fourier,
-        phi_grad_lap,
-        bond_pr,
-        angle_pr,
-        step,
-        prng,
-        comm=MPI.COMM_WORLD
-    ):
+    pmesh,
+    pm_stuff,
+    phi,
+    phi_q,
+    psi,
+    hamiltonian,
+    positions,
+    velocities,
+    config,
+    phi_fft,
+    phi_laplacian,
+    phi_transfer,
+    bond_pr,
+    angle_pr,
+    step,
+    prng,
+    comm=MPI.COMM_WORLD,
+):
     """
     Implements a semiisotropic Berendsen barostat.
     The box and particle positions are scaled by :math:`\\alpha_L^{\\frac{1}{3}}`
@@ -214,9 +200,6 @@ def semiisotropic(
         :code:`M`. Pre-allocated, but empty; any values in this field are discarded.
         Changed in-place. Local for each MPI rank--the full computaional grid
         is represented by the collective fields of all MPI ranks.
-    phi_gradient : list[pmesh.pm.RealField], (M, 3)
-        Like phi, but containing the gradient of particle number densities.
-        Needed only for vestigial squaregradient term.
     hamiltonian : Hamiltonian
         Particle-field interaction energy handler object. Defines the
         grid-independent filtering function, :math:`H`.
@@ -239,14 +222,7 @@ def semiisotropic(
     phi_transfer : list[pmesh.pm.ComplexField], (3,)
         Like phi_fourier, used as an intermediary to perform FFT operations
         to obtain the gradient or laplacian of particle number densities.
-    phi_grad_lap_fourier : list[pmesh.pm.ComplexField], (3,)
-        Like phi_fourier, used as a second intermediary after phi_transfer
-        to perform FFT operations to obtain gradient of laplacian of particle
-        number densities. Needed only for vestigial squaregradient term.
-    phi_grad_lap : list[pmesh.pm.RealField], (M, 3, 3)
-        Like phi, to obtain the gradient of laplacian in all 3x3 directions.
-        Needed only for vestigial squaregradient term.
-    bond_pr : (3,) numpy.ndarray 
+    bond_pr : (3,) numpy.ndarray
         Total bond pressure due all two-particle bonds.
     angle_pr : (3,) numpy.ndarray
         Total angle pressure due all three-particle bonds.
@@ -266,56 +242,68 @@ def semiisotropic(
         Indicates whether or not any pmesh objects were reinitialized.
     """
     rank = comm.Get_rank()
-    beta = 4.6 * 10**(-5) #bar^(-1) #isothermal compressibility of water
+    beta = 4.6 * 10 ** (-5)  # bar^(-1) #isothermal compressibility of water
     change = False
-    if(np.mod(step, config.n_b)==0):
+    if np.mod(step, config.n_b) == 0:
         change = True
 
-        #compute pressure
+        # compute pressure
         pressure = comp_pressure(
-                phi,
-                phi_q,
-                psi,
-                phi_gradient,
-                hamiltonian,
-                velocities,
-                config,
-                phi_fft,
-                phi_laplacian,
-                phi_transfer,
-                phi_grad_lap_fourier,
-                phi_grad_lap,
-                positions,
-                bond_pr,
-                angle_pr,
-                comm=comm
+            phi,
+            phi_q,
+            psi,
+            hamiltonian,
+            velocities,
+            config,
+            phi_fft,
+            phi_laplacian,
+            phi_transfer,
+            positions,
+            bond_pr,
+            angle_pr,
+            comm=comm,
         )
 
-        #Total pressure across all ranks
-        #L: Lateral; N: Normal
+        # Total pressure across all ranks
+        # L: Lateral; N: Normal
         [PL, PN] = [0, 0]
-        PL = (pressure[-3] + pressure[-2])/2 #kJ/(mol nm^3)
-        PN = pressure[-1] #kJ/(mol nm^3)
-        PL = PL * 16.61 #bar
-        PN = PN * 16.61 #bar
+        PL = (pressure[-3] + pressure[-2]) / 2  # kJ/(mol nm^3)
+        PN = pressure[-1]  # kJ/(mol nm^3)
+        PL = PL * 16.61  # bar
+        PN = PN * 16.61  # bar
         alphaL = 1.0
         alphaN = 1.0
 
         if config.target_pressure.P_L:
-            #scaling factor
-            alphaL = 1 - config.time_step  * config.n_b/ config.tau_p * beta * (config.target_pressure.P_L - PL)
-            #length scaling
-            config.box_size[0] = alphaL**(1/3) * config.box_size[0]
-            config.box_size[1] = alphaL**(1/3) * config.box_size[1]
-            for i in range(len(positions)):
-                positions[i][0:2] = alphaL**(1/3) * positions[i][0:2]
+            # scaling factor
+            alphaL = (
+                1.0
+                - config.time_step
+                * config.n_b
+                / config.tau_p
+                * beta
+                * (config.target_pressure.P_L - PL)
+            ) ** (1 / 3)
+            # length scaling
+            config.box_size[0:2] *= alphaL
+
+            positions[:][0:2] *= alphaL
+
         if config.target_pressure.P_N:
-            #scaling factor
-            alphaN = 1 - config.time_step  * config.n_b/ config.tau_p * beta * (config.target_pressure.P_N - PN)
-            #length scaling
-            config.box_size[2] = alphaN**(1/3) * config.box_size[2]
-            for i in range(len(positions)):
-                positions[i][2] = alphaN**(1/3) * positions[i][2]
-        #pmesh re-initialize
-        pm_stuff  = initialize_pm(pmesh, config, comm)
+            # scaling factor
+            alphaN = (
+                1.0
+                - config.time_step
+                * config.n_b
+                / config.tau_p
+                * beta
+                * (config.target_pressure.P_N - PN)
+            ) ** (1 / 3)
+            # length scaling
+            config.box_size[2] *= alphaN
+
+            positions[:][2] *= alphaN
+
+        # pmesh re-initialize
+        pm_stuff = initialize_pm(pmesh, config, comm)
     return (pm_stuff, change)
