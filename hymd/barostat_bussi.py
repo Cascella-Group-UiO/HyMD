@@ -24,221 +24,261 @@ from typing import Union
 from .pressure import comp_pressure
 from .field import initialize_pm
 
+
 @dataclass
 class Target_pressure:
     P_L: Union[bool, float]
     P_N: Union[bool, float]
 
+
 def isotropic(
-        pmesh,
-        pm_stuff,
-        phi,
-        phi_q,
-        psi,
-        phi_gradient,
-        hamiltonian,
-        positions,
-        velocities,
-        config,
-        phi_fft,
-        phi_laplacian,
-        phi_transfer,
-        phi_grad_lap_fourier,
-        phi_grad_lap,
-        bond_pr,
-        angle_pr,
-        step,
-        prng,
-        comm=MPI.COMM_WORLD
-    ):
+    pmesh,
+    pm_stuff,
+    phi,
+    phi_q,
+    psi,
+    hamiltonian,
+    positions,
+    velocities,
+    config,
+    phi_fft,
+    phi_laplacian,
+    phi_transfer,
+    bond_pr,
+    angle_pr,
+    step,
+    prng,
+    comm=MPI.COMM_WORLD,
+):
     """
     It calculates the scaling factor according to
 
     .. math::
-    
+
         \\log \\alpha' = - \\frac{n_b\,dt\,\\beta}{\\tau_p}(P^t - P) + \\sqrt{\\frac{2n_b^2k_BT\\beta\,dt}{\mathcal{V}\\tau_p}}dW
 
     .. math::
-    
+
         \\alpha = \\exp{\\frac{1}{3}\\log \\alpha'}
-    
+
     where :math:`dt` is the outer rRESPA time-step, :math:`n_b` is the frequency
     of barostat calls, :math:`\\tau_p` is the pressure coupling time constant,
-    :math:`\\beta` is the isothermal compressibility, :math:`P_{L,N}^t` and 
-    :math:`P_{L,N}` is the target and instantaneous internal pressure in the 
+    :math:`\\beta` is the isothermal compressibility, :math:`P_{L,N}^t` and
+    :math:`P_{L,N}` is the target and instantaneous internal pressure in the
     lateral (L) and normal (N) directions respectively. Convention: Cartesian
     z-direction is considered normal.
     """
     rank = comm.Get_rank()
-    beta = 7.6 * 10**(-4) #bar^(-1) #isothermal compressibility of water
+    beta = 7.6 * 10 ** (-4)  # bar^(-1) #isothermal compressibility of water
     change = False
 
-    if(np.mod(step, config.n_b)==0):
+    if np.mod(step, config.n_b) == 0:
 
         R = prng.normal()
 
         change = True
-        #compute pressure
+        # compute pressure
         pressure = comp_pressure(
-                phi,
-                phi_q,
-                psi,
-                phi_gradient,
-                hamiltonian,
-                velocities,
-                config,
-                phi_fft,
-                phi_laplacian,
-                phi_transfer,
-                phi_grad_lap_fourier,
-                phi_grad_lap,
-                positions,
-                bond_pr,
-                angle_pr,
-                comm=comm
+            phi,
+            phi_q,
+            psi,
+            hamiltonian,
+            velocities,
+            config,
+            phi_fft,
+            phi_laplacian,
+            phi_transfer,
+            positions,
+            bond_pr,
+            angle_pr,
+            comm=comm,
         )
 
-        #Total pressure across all ranks
-        P = np.average(pressure[-3:-1]) #kJ/(mol nm^3)
-        P = P * 16.61 #bar
+        # Total pressure across all ranks
+        P = np.average(pressure[-3:-1])  # kJ/(mol nm^3)
+        P = P * 16.61  # bar
 
         V = np.prod(config.box_size)
-        noise_term = np.sqrt(2 * config.n_b * config.gas_constant * config.target_temperature * beta * config.time_step * config.n_b / (V * config.tau_p)) * R
-        log_alpha = - config.n_b * config.time_step * beta / config.tau_p * (config.target_pressure.P_L - P)
+        noise_term = (
+            np.sqrt(
+                2.0
+                * config.n_b
+                * config.gas_constant
+                * config.target_temperature
+                * beta
+                * config.time_step
+                * config.n_b
+                / (V * config.tau_p)
+            )
+            * R
+        )
+        log_alpha = (
+            -config.n_b
+            * config.time_step
+            * beta
+            / config.tau_p
+            * (config.target_pressure.P_L - P)
+        )
         log_alpha = log_alpha + noise_term
         alpha = np.exp(log_alpha / 3.0)
 
-        L0 = alpha * config.box_size[0]
-        L1 = alpha * config.box_size[1]
-        L2 = alpha * config.box_size[2]
+        config.box_size *= alpha
 
-        config.box_size[0] = L0
-        config.box_size[1] = L1
-        config.box_size[2] = L2
+        # position coordinates scaling
+        positions *= alpha
 
-        #position coordinates scaling
-        positions[:, :] = alpha * positions
-
-        #pmesh re-initialize
-        pm_stuff  = initialize_pm(pmesh, config, comm)
+        # pmesh re-initialize
+        pm_stuff = initialize_pm(pmesh, config, comm)
     return (pm_stuff, False)
 
+
 def semiisotropic(
-        pmesh,
-        pm_stuff,
-        phi,
-        phi_q,
-        psi,
-        phi_gradient,
-        hamiltonian,
-        positions,
-        velocities,
-        config,
-        phi_fft,
-        phi_laplacian,
-        phi_transfer,
-        phi_grad_lap_fourier,
-        phi_grad_lap,
-        bond_pr,
-        angle_pr,
-        step,
-        prng,
-        comm=MPI.COMM_WORLD
-    ):
+    pmesh,
+    pm_stuff,
+    phi,
+    phi_q,
+    psi,
+    hamiltonian,
+    positions,
+    velocities,
+    config,
+    phi_fft,
+    phi_laplacian,
+    phi_transfer,
+    bond_pr,
+    angle_pr,
+    step,
+    prng,
+    comm=MPI.COMM_WORLD,
+):
     """
     It calculates the scaling factor according to
 
     .. math::
-    
+
         \\log \\alpha'_{L} = - \\frac{2n_b\,dt\,\\beta}{3\\tau_p}(P_L^t - P_L - \\frac{\\gamma}{L_z}) + \\sqrt{\\frac{4n_b^2k_BT\\beta\,dt}{3\mathcal{V}\\tau_p}}dW_L
 
     .. math::
-    
+
         \\alpha_L = \\exp{\\frac{1}{2}\\log \\alpha'_L}
-    
+
     .. math::
-    
+
         \\log \\alpha'_{N} = - \\frac{n_b\,dt\,\\beta}{3\\tau_p}(P_N^t - P_N) + \\sqrt{\\frac{2n_b^2k_BT\\beta\,dt}{3\mathcal{V}\\tau_p}}dW_N
 
     .. math::
-    
+
         \\alpha_L = \\log \\alpha'_N
-    
+
     where :math:`dt` is the outer rRESPA time-step, :math:`n_b` is the frequency
     of barostat calls, :math:`\\tau_p` is the pressure coupling time constant,
-    :math:`\\beta` is the isothermal compressibility, :math:`P_{L,N}^t` and 
-    :math:`P_{L,N}` is the target and instantaneous internal pressure in the 
+    :math:`\\beta` is the isothermal compressibility, :math:`P_{L,N}^t` and
+    :math:`P_{L,N}` is the target and instantaneous internal pressure in the
     lateral (L) and normal (N) directions respectively, :math:`\\gamma` is the
     surface tension. Convention: Cartesian z-direction is considered normal.
     """
     rank = comm.Get_rank()
-    beta = 7.6 * 10**(-4)  # isothermal compressibility of water
+    beta = 7.6 * 10 ** (-4)  # isothermal compressibility of water
     change = False
-    if(np.mod(step, config.n_b)==0):
+    if np.mod(step, config.n_b) == 0:
         Rxy = prng.normal()
         Rz = prng.normal()
         change = True
-        #compute pressure
+        # compute pressure
         pressure = comp_pressure(
-                phi,
-                phi_q,
-                psi,
-                phi_gradient,
-                hamiltonian,
-                velocities,
-                config,
-                phi_fft,
-                phi_laplacian,
-                phi_transfer,
-                phi_grad_lap_fourier,
-                phi_grad_lap,
-                positions,
-                bond_pr,
-                angle_pr,
-                comm=comm
+            phi,
+            phi_q,
+            psi,
+            hamiltonian,
+            velocities,
+            config,
+            phi_fft,
+            phi_laplacian,
+            phi_transfer,
+            positions,
+            bond_pr,
+            angle_pr,
+            comm=comm,
         )
 
-        #Total pressure across all ranks
-        #L: Lateral; N: Normal
+        # Total pressure across all ranks
+        # L: Lateral; N: Normal
         [PL, PN] = [0, 0]
-        PL = (pressure[-3] + pressure[-2])/2 #kJ/(mol nm^3)
-        PN = pressure[-1] #kJ/(mol nm^3)
-        PL = PL * 16.61 #bar
-        PN = PN * 16.61 #bar
+        PL = (pressure[-3] + pressure[-2]) / 2  # kJ/(mol nm^3)
+        PN = pressure[-1]  # kJ/(mol nm^3)
+        PL = PL * 16.61  # bar
+        PN = PN * 16.61  # bar
         alphaL = 1.0
         alphaN = 1.0
-        config.surface_tension = config.box_size[2]/2 * (PN - PL) #bar nm
+        config.surface_tension = config.box_size[2] / 2 * (PN - PL)  # bar nm
 
         if config.target_pressure.P_L:
             V = np.prod(config.box_size)
-            noise_term = np.sqrt(4 * config.n_b * config.gas_constant * config.target_temperature * beta * config.time_step * config.n_b / (3 * V * config.tau_p)) * Rxy
-            log_alpha = - 2 * config.n_b * config.time_step * beta / (3 * config.tau_p) * (config.target_pressure.P_L - PL - config.surface_tension / config.box_size[2])
+            noise_term = (
+                np.sqrt(
+                    4.0
+                    * config.n_b
+                    * config.gas_constant
+                    * config.target_temperature
+                    * beta
+                    * config.time_step
+                    * config.n_b
+                    / (3 * V * config.tau_p)
+                )
+                * Rxy
+            )
+            log_alpha = (
+                -2.0
+                * config.n_b
+                * config.time_step
+                * beta
+                / (3 * config.tau_p)
+                * (
+                    config.target_pressure.P_L
+                    - PL
+                    - config.surface_tension / config.box_size[2]
+                )
+            )
             log_alpha = log_alpha + noise_term
-            alpha = np.exp(log_alpha / 2.0)  # not 100% sure about this factor 2, have to check it out <<< TODO
+            alpha = np.exp(
+                log_alpha / 2.0
+            )  # not 100% sure about this factor 2, have to check it out <<< TODO
 
-            L0 = alpha * config.box_size[0]
-            L1 = alpha * config.box_size[1]
+            config.box_size[0:2] *= alpha
 
-            config.box_size[0] = L0
-            config.box_size[1] = L1
-
-            for i in range(len(positions)):
-                positions[i][0:2] = alpha * positions[i][0:2]
+            positions[:][0:2] *= alpha
 
         if config.target_pressure.P_N:
             V = np.prod(config.box_size)
-            noise_term = np.sqrt(2 * config.n_b * config.gas_constant * config.target_temperature * beta * config.time_step * config.n_b / (3 * V * config.tau_p)) * Rz
-            log_alpha = - config.n_b * config.time_step * beta / (3 * config.tau_p) * (config.target_pressure.P_N - PN)
+            noise_term = (
+                np.sqrt(
+                    2.0
+                    * config.n_b
+                    * config.gas_constant
+                    * config.target_temperature
+                    * beta
+                    * config.time_step
+                    * config.n_b
+                    / (3 * V * config.tau_p)
+                )
+                * Rz
+            )
+            log_alpha = (
+                -config.n_b
+                * config.time_step
+                * beta
+                / (3 * config.tau_p)
+                * (config.target_pressure.P_N - PN)
+            )
             log_alpha = log_alpha + noise_term
-            alpha = np.exp(log_alpha / 1.0)  # not 100% sure about this factor 2, have to check it out <<< TODO
+            alpha = np.exp(
+                log_alpha / 1.0
+            )  # not 100% sure about this factor 2, have to check it out <<< TODO
 
-            L2 = alpha * config.box_size[2]
+            config.box_size[2] *= alpha
 
-            config.box_size[2] = L2
+            positions[:][2] *= alpha
 
-            for i in range(len(positions)):
-                positions[i][2] = alpha * positions[i][2]
-
-        #pmesh re-initialize
-        pm_stuff  = initialize_pm(pmesh, config, comm)
+        # pmesh re-initialize
+        pm_stuff = initialize_pm(pmesh, config, comm)
     return (pm_stuff, change)
