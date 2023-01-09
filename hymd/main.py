@@ -190,7 +190,7 @@ def main():
 
     hamiltonian = get_hamiltonian(config)
 
-    pm_objs = initialize_pm(pmesh, config, comm)
+    pm_objs = initialize_pm(pmesh, config, dtype, comm)
     pm, field_list, elec_common_list, coulomb_list = pm_objs
     (
         phi,
@@ -319,23 +319,23 @@ def main():
             config.m,
             compute_potential=True,
         )
-        (
-            field_energy,
-            kinetic_energy,
-            field_q_energy,
-        ) = compute_field_and_kinetic_energy(
-            phi,
-            phi_q,
-            psi,
-            velocities,
-            hamiltonian,
-            positions,
-            types,
-            v_ext,
-            config,
-            layouts,
-            comm=comm,
-        )
+        # (
+        #     field_energy,
+        #     kinetic_energy,
+        #     field_q_energy,
+        # ) = compute_field_and_kinetic_energy(
+        #     phi,
+        #     phi_q,
+        #     psi,
+        #     velocities,
+        #     hamiltonian,
+        #     positions,
+        #     types,
+        #     v_ext,
+        #     config,
+        #     layouts,
+        #     comm=comm,
+        # )
         compute_field_force(
             layouts, positions, force_on_grid, field_forces, types, config.n_types
         )
@@ -381,7 +381,7 @@ def main():
             )
 
         if config.coulombtype == "PIC_Spectral":
-            update_field_force_q(
+            phi_q, psi = update_field_force_q(
                 charges,
                 phi_q,
                 phi_q_fourier,
