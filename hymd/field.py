@@ -366,10 +366,7 @@ def update_field_force_q(
     phi_q.r2c(out=phi_q_fourier)
 
     # smear charges with filter
-    phi_q_fourier.apply(hamiltonian.H, out=Ellipsis)
-    phi_q_fourier.c2r(out=phi_q)
-    # print("volume_per_cell", volume_per_cell)
-    # print("phi_q_fourier", np.sum(phi_q_fourier))
+    phi_q_fourier.apply(hamiltonian.H, out=phi_q_fourier)
 
     # solve Poisson equation in Fourier space to get electrostatic potential
     def poisson_transfer_function(k, v):
@@ -405,7 +402,6 @@ def update_field_force_q(
             elec_field[_d].readout(positions, layout=layout_q)
         )
 
-    return phi_q, psi
 
 
 def comp_laplacian(
