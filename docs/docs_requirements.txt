@@ -6,3 +6,4 @@ sphinxcontrib.bibtex
 matplotlib
 numpy
 numpydoc
+Jinja2<3.1
