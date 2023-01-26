@@ -111,13 +111,13 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     if (sin_gamma < 0.1) then
       print *, "DIHEDRAL ROUTINE WARNING (bending potential):"
-      print '(a, f5.2, a)', "The angle γ =", gamm, " is too close to 0 or π."
-      print *, "There's probably something wrong with the simulation. Setting sin(γ) = 0.1"
+      print '(a, f5.2, a)', "The angle gamma =", gamm, " is too close to 0 or pi."
+      print *, "There's probably something wrong with the simulation. Setting sin(gamma) = 0.1"
       sin_gamma = 0.1
     end if
 
     ! Bending "forces" == f_gamma_i in the paper
-    ! 1/sin(γ) ∂cos(γ)/∂γ
+    ! 1 / sin(gamma) d cos(gamma) / d gamma
     fa = (v - cos_gamma * w) / norm_a
     fc = (w - cos_gamma * v) / norm_c
 
@@ -143,7 +143,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     end if
 
     ! 2 - Dipole reconstruction
-    ! θ(γ)
+    ! theta(gamma)
     ! This function needs to be fit again
     fac = exp((gamm - 1.73d0) / 0.025d0)
     theta = -1.607d0 * gamm + 0.094d0 + 1.883d0 / (1.d0 + fac)
@@ -186,7 +186,7 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
 
     ! Last term is 0 for N_a, second term is 0 for N_c (S19)
     ! Minus in the last term because inverse cross_matrix
-    ! 1 / sin(γ) is already inside fa, fb, and fc
+    ! 1 / sin(gamma) is already inside fa, fb, and fc
     N_a = (cos_gamma * outer_product(fa, n) + cross_matrix(W_a, v)                       ) / sin_gamma
     N_b = (cos_gamma * outer_product(fb, n) + cross_matrix(W_b, v) - cross_matrix(V_b, w)) / sin_gamma
     N_c = (cos_gamma * outer_product(fc, n)                        - cross_matrix(V_c, w)) / sin_gamma
@@ -195,9 +195,9 @@ subroutine reconstruct(rab, rb, rcb, box, c_k, d_k, phi, dipole_flag, energy_cbt
     M_b = cross_matrix(N_b, v) - cross_matrix(V_b, n)
     M_c = cross_matrix(N_c, v) - cross_matrix(V_c, n)
 
-    ! A lot of terms in (S10) go away because ∂φ/∂γ = 0,
-    ! since φ = const.
-    ! 1 / sin(γ) is already inside fa, fb, and fc
+    ! A lot of terms in (S10) go away because d phi / d gamma = 0,
+    ! since phi = const.
+    ! 1 / sin(gamma) is already inside fa, fb, and fc
     FN_a = sin_theta * d_theta * outer_product(fa, n)
     FN_b = sin_theta * d_theta * outer_product(fb, n)
     FN_c = sin_theta * d_theta * outer_product(fc, n)
