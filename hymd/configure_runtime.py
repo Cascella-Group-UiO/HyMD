@@ -12,7 +12,7 @@ from .logger import Logger, print_header
 from .input_parser import read_config_toml, parse_config_toml
 
 
-def configure_runtime(comm):
+def configure_runtime(args_in, comm):
     """Parse command line arguments and configuration file
 
     Parameters
@@ -103,7 +103,7 @@ def configure_runtime(comm):
         "config", help="Config .py or .toml input configuration script"
     )
     ap.add_argument("input", help="input.hdf5")
-    args = ap.parse_args()
+    args = ap.parse_args(args_in)
 
     if comm.Get_rank() == 0:
         os.makedirs(args.destdir, exist_ok=True)

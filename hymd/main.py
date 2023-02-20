@@ -36,7 +36,7 @@ def main():
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config, prng, topol = configure_runtime(comm)
+    args, config, prng, topol = configure_runtime(sys.argv[1:], comm)
 
     if args.double_precision:
         dtype = np.float64
