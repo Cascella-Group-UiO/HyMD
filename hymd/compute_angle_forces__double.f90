@@ -74,7 +74,7 @@ subroutine caf_d(f, r, box, a, b, c, t0, k, energy)
 
         xrasin = -ff / (norm_a * sinphi)
         xrcsin = -ff / (norm_c * sinphi)
-        ! 𝜕θ/𝜕cos(θ) * 𝜕cos(θ)/𝜕r
+        ! d theta / d cos(theta) * d cos(theta) / dr
         fa = (ec - cosphi * ea) * xrasin
         fc = (ea - cosphi * ec) * xrcsin
 
