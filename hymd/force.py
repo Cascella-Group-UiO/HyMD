@@ -460,7 +460,6 @@ def prepare_index_based_bonds(molecules, topol):
     bonds_2 = []
     bonds_3 = []
     bonds_4 = []
-    impr_dih = []
 
     different_molecules = np.unique(molecules)
     for mol in different_molecules:
@@ -482,8 +481,7 @@ def prepare_index_based_bonds(molecules, topol):
             for bond in topol[resname]["bonds"]:
                 index_i = bond[0] - 1 + first_id
                 index_j = bond[1] - 1 + first_id
-                # bond[2] is the bond type, inherited by the itp format,
-                # we don't use it
+                # bond[2] is the bond type, inherited by the itp format. Not used
                 equilibrium = bond[3]
                 strength = bond[4]
                 bonds_2.append([index_i, index_j, equilibrium, strength])
@@ -494,8 +492,7 @@ def prepare_index_based_bonds(molecules, topol):
                 index_i = angle[0] - 1 + first_id
                 index_j = angle[1] - 1 + first_id
                 index_k = angle[2] - 1 + first_id
-                # angle[3] is the angle type, inherited by the itp format
-                # we don't use it
+                # angle[3] is the angle type, inherited by the itp format. Not used
                 equilibrium = np.radians(angle[4])
                 strength = angle[5]
                 bonds_3.append([index_i, index_j, index_k, equilibrium, strength])
@@ -510,20 +507,7 @@ def prepare_index_based_bonds(molecules, topol):
                 dih_type = angle[4]
                 coeff = angle[5]
                 bonds_4.append([index_i, index_j, index_k, index_l, coeff, dih_type, 0])
-
-        if "impropers" in topol[resname]:
-            first_id = np.where(molecules == mol)[0][0]
-            for angle in topol[resname]["impropers"]:
-                index_i = angle[0] - 1 + first_id
-                index_j = angle[1] - 1 + first_id
-                index_k = angle[2] - 1 + first_id
-                index_l = angle[3] - 1 + first_id
-                equilibrium = np.radians(angle[4])
-                strength = angle[5]
-                impr_dih.append(
-                    [index_i, index_j, index_k, index_l, equilibrium, strength]
-                )
-    return bonds_2, bonds_3, bonds_4, impr_dih
+    return bonds_2, bonds_3, bonds_4
 
 
 def prepare_bonds(molecules, names, bonds, indices, config, topol=None):
@@ -609,7 +593,7 @@ def prepare_bonds(molecules, names, bonds, indices, config, topol=None):
         bonded types specified in the configuration file.
     """
     if topol is not None:
-        bonds_2, bonds_3, bonds_4, _ = prepare_index_based_bonds(
+        bonds_2, bonds_3, bonds_4 = prepare_index_based_bonds(
             molecules, topol
         )
     else:
