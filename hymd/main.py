@@ -36,7 +36,7 @@ def main():
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config, prng = configure_runtime(sys.argv[1:], comm)
+    args, config, prng, topol = configure_runtime(sys.argv[1:], comm)
 
     if args.double_precision:
         dtype = np.float64
@@ -83,6 +83,18 @@ def main():
 
         names = in_file["names"][rank_range]
 
+        if "box" in in_file.attrs:
+            config.box_size = np.array(in_file.attrs["box"])
+        else:
+            if getattr(config, "box_size") is None:
+                err_str = (
+                    f"No box size present in either config or input file. Unable to start"
+                    f" simulation."
+                )
+                Logger.rank0.log(logging.ERROR, err_str)
+                if comm.Get_rank() == 0:
+                    raise ValueError(err_str)
+
         types = None
         bonds = None
         molecules = []
@@ -90,7 +102,8 @@ def main():
             types = in_file["types"][rank_range]
         if molecules_flag:
             molecules = in_file["molecules"][rank_range]
-            bonds = in_file["bonds"][rank_range]
+            if topol is None:
+                bonds = in_file["bonds"][rank_range]
         if "charge" in in_file:
             charges = in_file["charge"][rank_range]
             charges_flag = True
@@ -101,6 +114,7 @@ def main():
         check_charges(charges, comm=comm)
 
     config = check_config(config, indices, names, types, comm=comm)
+
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, prng, comm=comm)
@@ -286,7 +300,7 @@ def main():
                 and args.disable_dihedrals):
 
             bonds_prep = prepare_bonds(
-                molecules, names, bonds, indices, config
+                molecules, names, bonds, indices, config, topol 
             )
             (
                 # two-particle bonds
@@ -457,6 +471,7 @@ def main():
     for step in range(1, config.n_steps + 1):
         current_step_time = datetime.datetime.now()
 
+        print(args.verbose)
         if step == 1 and args.verbose > 1:
             Logger.rank0.log(logging.INFO, f"MD step = {step:10d}")
         else:
@@ -696,7 +711,7 @@ def main():
                 ]
                 if molecules_flag:
                     bonds_prep = prepare_bonds(
-                        molecules, names, bonds, indices, config
+                        molecules, names, bonds, indices, config, topol
                     )
                     (
                         # two-particle bonds

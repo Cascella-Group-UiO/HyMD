@@ -456,7 +456,61 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
     return bonds_2, bonds_3, bonds_4, bb_index
 
 
-def prepare_bonds(molecules, names, bonds, indices, config):
+def prepare_index_based_bonds(molecules, topol):
+    bonds_2 = []
+    bonds_3 = []
+    bonds_4 = []
+
+    different_molecules = np.unique(molecules)
+    for mol in different_molecules:
+        resid = mol + 1
+        top_summary = topol["system"]["molecules"]
+        resname = None
+        test_mol_number = 0
+        for molname in top_summary:
+            test_mol_number += molname[1]
+            if resid <= test_mol_number:
+                resname = molname[0]
+                break
+
+        if resname is None:
+            break
+
+        if "bonds" in topol[resname]:
+            first_id = np.where(molecules == mol)[0][0]
+            for bond in topol[resname]["bonds"]:
+                index_i = bond[0] - 1 + first_id
+                index_j = bond[1] - 1 + first_id
+                # bond[2] is the bond type, inherited by the itp format. Not used
+                equilibrium = bond[3]
+                strength = bond[4]
+                bonds_2.append([index_i, index_j, equilibrium, strength])
+
+        if "angles" in topol[resname]:
+            first_id = np.where(molecules == mol)[0][0]
+            for angle in topol[resname]["angles"]:
+                index_i = angle[0] - 1 + first_id
+                index_j = angle[1] - 1 + first_id
+                index_k = angle[2] - 1 + first_id
+                # angle[3] is the angle type, inherited by the itp format. Not used
+                equilibrium = np.radians(angle[4])
+                strength = angle[5]
+                bonds_3.append([index_i, index_j, index_k, equilibrium, strength])
+
+        if "dihedrals" in topol[resname]:
+            first_id = np.where(molecules == mol)[0][0]
+            for angle in topol[resname]["dihedrals"]:
+                index_i = angle[0] - 1 + first_id
+                index_j = angle[1] - 1 + first_id
+                index_k = angle[2] - 1 + first_id
+                index_l = angle[3] - 1 + first_id
+                dih_type = angle[4]
+                coeff = angle[5]
+                bonds_4.append([index_i, index_j, index_k, index_l, coeff, dih_type, 0])
+    return bonds_2, bonds_3, bonds_4
+
+
+def prepare_bonds(molecules, names, bonds, indices, config, topol=None):
     """Rearrange the bond information for usage in compiled Fortran kernels
 
     Restructures the lists resulting from the execution of
@@ -538,9 +592,14 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         connectivity information in the structure/topology input file and the
         bonded types specified in the configuration file.
     """
-    bonds_2, bonds_3, bonds_4, bb_index = prepare_bonds_old(
-        molecules, names, bonds, indices, config
-    )
+    if topol is not None:
+        bonds_2, bonds_3, bonds_4 = prepare_index_based_bonds(
+            molecules, topol
+        )
+    else:
+        bonds_2, bonds_3, bonds_4, bb_index = prepare_bonds_old(
+            molecules, names, bonds, indices, config
+        )
 
     # Bonds
     bonds_2_atom1 = np.empty(len(bonds_2), dtype=int)
@@ -565,7 +624,6 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_3_atom3[i] = b[2]
         bonds_3_equilibrium[i] = b[3]
         bonds_3_strength[i] = b[4]
-
     # Dihedrals
     bonds_4_atom1 = np.empty(len(bonds_4), dtype=int)
     bonds_4_atom2 = np.empty(len(bonds_4), dtype=int)
@@ -585,7 +643,10 @@ def prepare_bonds(molecules, names, bonds, indices, config):
         bonds_4_atom4[i] = b[3]
         bonds_4_coeff[i] = np.resize(b[4], (number_of_coeff, len_of_coeff))
         bonds_4_type[i] = b[5]
-    bonds_4_last[bb_index] = 1
+        if topol is not None:
+            bonds_4_last[i] = b[6]
+    if topol is None:
+        bonds_4_last[bb_index] = 1
 
     return (
         bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium, bonds_2_strength,
