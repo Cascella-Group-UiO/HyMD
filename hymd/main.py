@@ -85,6 +85,15 @@ def main():
 
         if "box" in in_file.attrs:
             config.box_size = np.array(in_file.attrs["box"])
+        else:
+            if getattr(config, "box_size") is None:
+                err_str = (
+                    f"No box size present in either config or input file. Unable to start"
+                    f" simulation."
+                )
+                Logger.rank0.log(logging.ERROR, err_str)
+                if comm.Get_rank() == 0:
+                    raise ValueError(err_str)
 
         types = None
         bonds = None
