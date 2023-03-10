@@ -7,7 +7,7 @@ from .logger import Logger
 import warnings
 
 
-def initialize_pm(pmesh, config, dtype, comm=MPI.COMM_WORLD):
+def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
     """
     Creates the necessary pmesh objects for pfft operations.
 
@@ -29,7 +29,7 @@ def initialize_pm(pmesh, config, dtype, comm=MPI.COMM_WORLD):
         Additional list of pmesh objects required for electrostatics.
     """
 
-    if dtype == np.float64:
+    if config.dtype == np.float64:
         pmeshtype = "f8"
     else:
         pmeshtype = "f4"

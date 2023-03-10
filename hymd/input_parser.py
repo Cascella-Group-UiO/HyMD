@@ -165,6 +165,7 @@ class Config:
     sigma: float
     kappa: float
 
+    dtype: np.dtype = None
     box_size: Union[List[float], np.ndarray] = None
     n_print: int = None
     tau: float = None
@@ -392,6 +393,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "box_size",
         "n_flush",
         "self_energy",
+        "dtype",
     ):
         config_dict[n] = None
 

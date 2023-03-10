@@ -50,6 +50,7 @@ def main():
 
     if args.double_precision:
         dtype = np.float64
+        config.dtype = dtype
         from .force import compute_bond_forces__fortran__double as compute_bond_forces
         from .force import compute_angle_forces__fortran__double as compute_angle_forces
         from .force import (
@@ -57,6 +58,7 @@ def main():
         )
     else:
         dtype = np.float32
+        config.dtype = dtype
         from .force import compute_bond_forces__fortran as compute_bond_forces
         from .force import compute_angle_forces__fortran as compute_angle_forces
         from .force import compute_dihedral_forces__fortran as compute_dihedral_forces
@@ -190,7 +192,7 @@ def main():
 
     hamiltonian = get_hamiltonian(config)
 
-    pm_objs = initialize_pm(pmesh, config, dtype, comm)
+    pm_objs = initialize_pm(pmesh, config, comm)
     pm, field_list, elec_common_list, coulomb_list = pm_objs
     (
         phi,
@@ -401,7 +403,6 @@ def main():
         if not (
             args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals
         ):
-
             bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
             (
                 # two-particle bonds
