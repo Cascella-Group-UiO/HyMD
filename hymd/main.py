@@ -383,7 +383,7 @@ def main():
             )
 
         if config.coulombtype == "PIC_Spectral":
-            phi_q, psi = update_field_force_q(
+            update_field_force_q(
                 charges,
                 phi_q,
                 phi_q_fourier,
