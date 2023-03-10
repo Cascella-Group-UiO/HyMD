@@ -403,7 +403,6 @@ def update_field_force_q(
         )
 
 
-
 def comp_laplacian(
     phi_fourier,
     phi_transfer,
@@ -696,13 +695,7 @@ def compute_field_and_kinetic_energy(
     kinetic_energy = comm.allreduce(0.5 * config.mass * np.sum(velocity**2))
 
     if config.coulombtype == "PIC_Spectral":
-        # print("volume per cell", volume_per_cell)
-        # print("phi_q * psi energy", np.sum(phi_q * psi))
-
-        capw_elec = hamiltonian.w_elec([phi_q, psi])
-        # w_elec = hamiltonian.w_elec([phi_q, psi]) * volume_per_cell
-        w_elec = capw_elec * volume_per_cell
-        # print("elec", np.sum(capw_elec))
+        w_elec = hamiltonian.w_elec([phi_q, psi]) * volume_per_cell
         field_q_energy = w_elec.csum()
     else:
         field_q_energy = 0.0
