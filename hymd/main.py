@@ -46,7 +46,7 @@ def main():
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config, prng = configure_runtime(sys.argv[1:], comm)
+    args, config, prng, topol = configure_runtime(sys.argv[1:], comm)
 
     if args.double_precision:
         dtype = np.float64
@@ -86,6 +86,18 @@ def main():
 
         names = in_file["names"][rank_range]
 
+        if "box" in in_file.attrs:
+            config.box_size = np.array(in_file.attrs["box"])
+        else:
+            if getattr(config, "box_size") is None:
+                err_str = (
+                    f"No box size present in either config or input file. Unable to start"
+                    f" simulation."
+                )
+                Logger.rank0.log(logging.ERROR, err_str)
+                if comm.Get_rank() == 0:
+                    raise ValueError(err_str)
+
         types = None
         bonds = None
         charges = None
@@ -94,7 +106,8 @@ def main():
             types = in_file["types"][rank_range]
         if molecules_flag:
             molecules = in_file["molecules"][rank_range]
-            bonds = in_file["bonds"][rank_range]
+            if topol is None:
+                bonds = in_file["bonds"][rank_range]
         if "charge" in in_file:
             charges = in_file["charge"][rank_range]
             charges_flag = True
@@ -148,6 +161,7 @@ def main():
 
     else:
         dielectric_flag = False
+
 
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, prng, comm=comm)
@@ -321,23 +335,23 @@ def main():
             config.m,
             compute_potential=True,
         )
-        # (
-        #     field_energy,
-        #     kinetic_energy,
-        #     field_q_energy,
-        # ) = compute_field_and_kinetic_energy(
-        #     phi,
-        #     phi_q,
-        #     psi,
-        #     velocities,
-        #     hamiltonian,
-        #     positions,
-        #     types,
-        #     v_ext,
-        #     config,
-        #     layouts,
-        #     comm=comm,
-        # )
+        (
+            field_energy,
+            kinetic_energy,
+            field_q_energy,
+        ) = compute_field_and_kinetic_energy(
+            phi,
+            phi_q,
+            psi,
+            velocities,
+            hamiltonian,
+            positions,
+            types,
+            v_ext,
+            config,
+            layouts,
+            comm=comm,
+        )
         compute_field_force(
             layouts, positions, force_on_grid, field_forces, types, config.n_types
         )
@@ -400,10 +414,13 @@ def main():
             )
 
     if molecules_flag:
-        if not (
-            args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals
-        ):
-            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+        if not (args.disable_bonds
+                and args.disable_angle_bonds
+                and args.disable_dihedrals):
+
+            bonds_prep = prepare_bonds(
+                molecules, names, bonds, indices, config, topol 
+            )
             (
                 # two-particle bonds
                 bonds_2_atom1,
@@ -690,6 +707,7 @@ def main():
     for step in range(1, config.n_steps + 1):
         current_step_time = datetime.datetime.now()
 
+        print(args.verbose)
         if step == 1 and args.verbose > 1:
             Logger.rank0.log(logging.INFO, f"MD step = {step:10d}")
         else:
@@ -1107,7 +1125,9 @@ def main():
                     for t in range(config.n_types)  # noqa: E501
                 ]
                 if molecules_flag:
-                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+                    bonds_prep = prepare_bonds(
+                        molecules, names, bonds, indices, config, topol
+                    )
                     (
                         # two-particle bonds
                         bonds_2_atom1,
