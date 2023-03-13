@@ -1,4 +1,4 @@
-subroutine caf_d(f, r, box, a, b, c, t0, k, energy)
+subroutine caf_d(f, r, box, a, b, c, t0, k, energy, angle_pr)
     ! Compute three-particle bond forces and energy
     !
     ! Parameters
@@ -27,7 +27,7 @@ subroutine caf_d(f, r, box, a, b, c, t0, k, energy)
     !
     implicit none
 
-    real(8), dimension(:,:),     intent(in out) :: f
+    real(8), dimension(:,:),     intent(inout)  :: f
     real(8), dimension(:,:),     intent(in)     :: r
     real(8), dimension(:),       intent(in)     :: box
     integer, dimension(:),       intent(in)     :: a
@@ -35,7 +35,8 @@ subroutine caf_d(f, r, box, a, b, c, t0, k, energy)
     integer, dimension(:),       intent(in)     :: c
     real(8), dimension(:),       intent(in)     :: t0
     real(8), dimension(:),       intent(in)     :: k
-    real(8),                    intent(out)     :: energy
+    real(8),                     intent(out)    :: energy
+    real(8), dimension(3),       intent(out)    :: angle_pr
 
     integer :: ind, aa, bb, cc
     real(8), dimension(3) :: ra, rc, ea, ec, fa, fc
@@ -44,6 +45,7 @@ subroutine caf_d(f, r, box, a, b, c, t0, k, energy)
     real(8) :: cosphi, cosphi2, sinphi, theta
 
     energy = 0.0d00
+    angle_pr = 0.0d00
     f = 0.0d00
 
     do ind = 1, size(a)
@@ -74,7 +76,7 @@ subroutine caf_d(f, r, box, a, b, c, t0, k, energy)
 
         xrasin = -ff / (norm_a * sinphi)
         xrcsin = -ff / (norm_c * sinphi)
-        ! 𝜕θ/𝜕cos(θ) * 𝜕cos(θ)/𝜕r
+        ! d theta / d cos(theta) * d cos(theta) / dr
         fa = (ec - cosphi * ea) * xrasin
         fc = (ea - cosphi * ec) * xrcsin
 
@@ -83,6 +85,7 @@ subroutine caf_d(f, r, box, a, b, c, t0, k, energy)
         f(bb, :) = f(bb, :) + fa + fc
 
         energy = energy + 0.5d0 * ff * d
+        angle_pr = angle_pr - (fa * ra) - (fc * rc)
       end if
     end do
 end subroutine

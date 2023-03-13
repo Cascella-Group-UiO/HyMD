@@ -10,6 +10,7 @@ from hymd.file_io import (
 )
 from hymd.input_parser import Config, parse_config_toml, _setup_type_to_name_map
 from hymd.force import prepare_bonds
+from hymd.barostat import Target_pressure
 
 def test_OutDataset(config_toml, tmp_path):
     _, config_toml_str = config_toml
@@ -108,7 +109,8 @@ def test_store_static(molecules_with_solvent, tmp_path):
     box_size = np.array([10, 10, 10], dtype=np.float64)
     config = Config(n_steps=0, n_print=1, time_step=0.03, box_size=box_size,
                     mesh_size=[5, 5, 5], sigma=0.5, kappa=0.05,
-                    n_particles=len(indices))
+                    n_particles=len(indices), 
+                    target_pressure=Target_pressure(P_L=None,P_N=None))
     Bond = collections.namedtuple(
         "Bond", ["atom_1", "atom_2", "equilibrium", "strength"]
     )
@@ -186,7 +188,8 @@ def test_store_data(molecules_with_solvent, tmp_path):
     box_size = np.array([10, 10, 10], dtype=np.float64)
     config = Config(n_steps=100, n_print=1, time_step=0.03, box_size=box_size,
                     mesh_size=[5, 5, 5], sigma=0.5, kappa=0.05,
-                    n_particles=len(indices), mass=72.)
+                    n_particles=len(indices), mass=72.,
+                    target_pressure=Target_pressure(P_L=None,P_N=None))
     Bond = collections.namedtuple(
         "Bond", ["atom_1", "atom_2", "equilibrium", "strength"]
     )
@@ -246,7 +249,7 @@ def test_store_data(molecules_with_solvent, tmp_path):
 
     store_data(
         out, 0, 0, indices_, positions_, velocities_, forces,
-        box_size, 300., 1., 2., 3., 4., 5., 6., 7., 0.02, config,
+        box_size, 300., 1., 1., 2., 3., 4., 5., 6., 7., 0.02, config,
         charge_out=True, plumed_out=True
     )
 
@@ -293,6 +296,7 @@ def test_store_data(molecules_with_solvent, tmp_path):
     assert out.potential_energy[0] == pytest.approx(20.)
     assert out.kinetc_energy[0] == pytest.approx(1.)
     assert out.temperature[0] == pytest.approx(300.)
+    assert out.pressure[0] == pytest.approx(1.)
     assert out.bond_energy[0] == pytest.approx(2.)
     assert out.angle_energy[0] == pytest.approx(3.)
     assert out.dihedral_energy[0] == pytest.approx(4.)
