@@ -32,85 +32,117 @@ def configure_runtime(args_in, comm):
     ap = argparse.ArgumentParser()
 
     ap.add_argument(
-        "-v", "--verbose", default=1, type=int, nargs="?",
+        "-v",
+        "--verbose",
+        default=1,
+        type=int,
+        nargs="?",
         help="Increase logging verbosity",
     )
     ap.add_argument(
-        "--profile", default=False, action="store_true",
+        "--profile",
+        default=False,
+        action="store_true",
         help="Profile program execution with cProfile",
     )
     ap.add_argument(
-        "--disable-field", default=False, action="store_true",
+        "--disable-field",
+        default=False,
+        action="store_true",
         help="Disable field forces",
     )
     ap.add_argument(
-        "--disable-bonds", default=False, action="store_true",
+        "--disable-bonds",
+        default=False,
+        action="store_true",
         help="Disable two-particle bond forces",
     )
     ap.add_argument(
-        "--disable-angle-bonds", default=False, action="store_true",
+        "--disable-angle-bonds",
+        default=False,
+        action="store_true",
         help="Disable three-particle angle bond forces",
     )
     ap.add_argument(
-        "--disable-dihedrals", default=False, action="store_true",
+        "--disable-dihedrals",
+        default=False,
+        action="store_true",
         help="Disable four-particle dihedral forces",
     )
     ap.add_argument(
-        "--disable-dipole", default=False, action="store_true",
+        "--disable-dipole",
+        default=False,
+        action="store_true",
         help="Disable BB dipole calculation",
     )
     ap.add_argument(
-        "--double-precision", default=False, action="store_true",
+        "--double-precision",
+        default=False,
+        action="store_true",
         help="Use double precision positions/velocities",
     )
     ap.add_argument(
-        "--double-output", default=False, action="store_true",
+        "--double-output",
+        default=False,
+        action="store_true",
         help="Use double precision in output h5md",
     )
     ap.add_argument(
-        "--dump-per-particle", default=False, action="store_true",
+        "--dump-per-particle",
+        default=False,
+        action="store_true",
         help="Log energy values per particle, not total",
     )
     ap.add_argument(
-        "--force-output", default=False, action="store_true",
+        "--force-output",
+        default=False,
+        action="store_true",
         help="Dump forces to h5md output",
     )
     ap.add_argument(
-        "--velocity-output", default=False, action="store_true",
+        "--velocity-output",
+        default=False,
+        action="store_true",
         help="Dump velocities to h5md output",
     )
     ap.add_argument(
-        "--disable-mpio", default=False, action="store_true",
-        help=(
-            "Avoid using h5py-mpi, potentially decreasing IO " "performance"
-        ),
+        "--disable-mpio",
+        default=False,
+        action="store_true",
+        help=("Avoid using h5py-mpi, potentially decreasing IO " "performance"),
     )
     ap.add_argument(
         "--destdir", default=".", help="Write output to specified directory"
     )
     ap.add_argument(
-        "--seed", default=None, type=int,
+        "--seed",
+        default=None,
+        type=int,
         help="Set the numpy random generator seed for every rank",
     )
     ap.add_argument(
-        "--logfile", default="sim.log",
+        "--logfile",
+        default="sim.log",
         help="Redirect event logging to specified file",
     )
     ap.add_argument(
-        "--plumed", type=extant_file,
+        "--plumed", 
+        type=extant_file,
         help="PLUMED input file",
     )
     ap.add_argument(
-        "--plumed-outfile", default="plumed.out",
+        "--plumed-outfile",
+        default="plumed.out",
         help="PLUMED input file",
     )
     ap.add_argument(
-        "-p", "--topol", default=None, type=extant_file, 
+        "-p",
+        "--topol",
+        default=None,
+        type=extant_file,
         help="Gmx-like topology file in toml format"
     )
-    ap.add_argument(
-        "config", help="Config .py or .toml input configuration script"
-    )
+    ap.add_argument("config", help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args(args_in)
 
@@ -120,7 +152,7 @@ def configure_runtime(args_in, comm):
 
     # Safely define seeds
     seeds = None
-    if comm.Get_rank() == 0:    
+    if comm.Get_rank() == 0:
         if args.seed is not None:
             ss = np.random.SeedSequence(args.seed)
         else:
@@ -166,7 +198,7 @@ def configure_runtime(args_in, comm):
     try:
         Logger.rank0.log(
             logging.INFO,
-            f"Attempting to parse config file {args.config} as "".toml",
+            f"Attempting to parse config file {args.config} as " ".toml",
         )
 
         if args.topol is not None:

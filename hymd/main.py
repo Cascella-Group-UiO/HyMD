@@ -163,7 +163,6 @@ def main():
     else:
         dielectric_flag = False
 
-
     if config.start_temperature:
         velocities = generate_initial_velocities(velocities, config, prng, comm=comm)
     elif config.cancel_com_momentum:
@@ -423,13 +422,10 @@ def main():
             )
 
     if molecules_flag:
-        if not (args.disable_bonds
-                and args.disable_angle_bonds
-                and args.disable_dihedrals):
-
-            bonds_prep = prepare_bonds(
-                molecules, names, bonds, indices, config, topol 
-            )
+        if not (
+            args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals
+        ):
+            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, topol)
             (
                 # two-particle bonds
                 bonds_2_atom1,
@@ -488,6 +484,7 @@ def main():
                 phi_dipoles_fourier = pm.create("complex", value=0.0)
                 psi_dipoles = pm.create("real", value=0.0)
                 psi_dipoles_fourier = pm.create("complex", value=0.0)
+                _SPACE_DIM = 3
                 dipoles_field_fourier = [
                     pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
                 ]
