@@ -152,12 +152,12 @@ class PlumedBias:
             Logger.rank0.log(logging.INFO, f"Setting PLUMED pointers for step {step}")
         self.plumed_forces = forces.astype(np.double)
         self.charges = charges.astype(np.double)
-        self.positions = positions.ravel()  # get C-contiguous array
+        self.positions = positions.ravel().astype(np.double)  # get C-contiguous array
 
         needs_energy = np.zeros(1, np.intc)
         # plumed_virial = np.zeros((3,3), dtype=np.double)
         masses = np.full_like(indices, config.mass, dtype=np.double)
-        box = np.diag(config.box_size)
+        box = np.diag(config.box_size).astype(np.double)
 
         self.plumed_obj.cmd("setAtomsNlocal", indices.shape[0])
         self.plumed_obj.cmd("setAtomsGatindex", indices)
