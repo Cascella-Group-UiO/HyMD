@@ -46,10 +46,11 @@ def main():
     if rank == 0:
         start_time = datetime.datetime.now()
 
-    args, config, prng = configure_runtime(sys.argv[1:], comm)
+    args, config, prng, topol = configure_runtime(sys.argv[1:], comm)
 
     if args.double_precision:
         dtype = np.float64
+        config.dtype = dtype
         from .force import compute_bond_forces__fortran__double as compute_bond_forces
         from .force import compute_angle_forces__fortran__double as compute_angle_forces
         from .force import (
@@ -57,6 +58,7 @@ def main():
         )
     else:
         dtype = np.float32
+        config.dtype = dtype
         from .force import compute_bond_forces__fortran as compute_bond_forces
         from .force import compute_angle_forces__fortran as compute_angle_forces
         from .force import compute_dihedral_forces__fortran as compute_dihedral_forces
@@ -84,6 +86,18 @@ def main():
 
         names = in_file["names"][rank_range]
 
+        if "box" in in_file.attrs:
+            config.box_size = np.array(in_file.attrs["box"])
+        else:
+            if getattr(config, "box_size") is None:
+                err_str = (
+                    f"No box size present in either config or input file. Unable to start"
+                    f" simulation."
+                )
+                Logger.rank0.log(logging.ERROR, err_str)
+                if comm.Get_rank() == 0:
+                    raise ValueError(err_str)
+
         types = None
         bonds = None
         charges = None
@@ -92,7 +106,8 @@ def main():
             types = in_file["types"][rank_range]
         if molecules_flag:
             molecules = in_file["molecules"][rank_range]
-            bonds = in_file["bonds"][rank_range]
+            if topol is None:
+                bonds = in_file["bonds"][rank_range]
         if "charge" in in_file:
             charges = in_file["charge"][rank_range]
             charges_flag = True
@@ -401,8 +416,7 @@ def main():
         if not (
             args.disable_bonds and args.disable_angle_bonds and args.disable_dihedrals
         ):
-
-            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+            bonds_prep = prepare_bonds(molecules, names, bonds, indices, config, topol)
             (
                 # two-particle bonds
                 bonds_2_atom1,
@@ -461,6 +475,7 @@ def main():
                 phi_dipoles_fourier = pm.create("complex", value=0.0)
                 psi_dipoles = pm.create("real", value=0.0)
                 psi_dipoles_fourier = pm.create("complex", value=0.0)
+                _SPACE_DIM = 3
                 dipoles_field_fourier = [
                     pm.create("complex", value=0.0) for _ in range(_SPACE_DIM)
                 ]
@@ -1106,7 +1121,9 @@ def main():
                     for t in range(config.n_types)  # noqa: E501
                 ]
                 if molecules_flag:
-                    bonds_prep = prepare_bonds(molecules, names, bonds, indices, config)
+                    bonds_prep = prepare_bonds(
+                        molecules, names, bonds, indices, config, topol
+                    )
                     (
                         # two-particle bonds
                         bonds_2_atom1,

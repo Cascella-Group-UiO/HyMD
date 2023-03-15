@@ -165,6 +165,7 @@ class Config:
     sigma: float
     kappa: float
 
+    dtype: np.dtype = None
     box_size: Union[List[float], np.ndarray] = None
     n_print: int = None
     tau: float = None
@@ -312,8 +313,8 @@ class Config:
 
 
 def read_config_toml(file_path):
-    with open(file_path, "r") as in_file:
-        toml_content = in_file.read()
+    with open(file_path, "rb") as in_file:
+        toml_content = tomli.load(in_file)
     return toml_content
 
 
@@ -366,11 +367,11 @@ def propensity_potential_coeffs(x: float, comm):
 
 
 def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
-    parsed_toml = tomli.loads(toml_content)
     config_dict = {}
 
     # Defaults = None
     for n in (
+        "box_size",
         "n_print",
         "tau",
         "start_temperature",
@@ -392,6 +393,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         "box_size",
         "n_flush",
         "self_energy",
+        "dtype",
     ):
         config_dict[n] = None
 
@@ -415,8 +417,10 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
 
     # Flatten the .toml dictionary, ignoring the top level [tag] directives (if
     # any).
-    for k, v in parsed_toml.items():
+    for k, v in toml_content.items():
         if isinstance(v, dict):
+            if k == "nn": # Don't parse diff-hymd optimization options
+                continue
             for nested_k, nested_v in v.items():
                 config_dict[nested_k] = nested_v
         else:
@@ -488,9 +492,6 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
                     coeffs=coeff,
                     dih_type=dih_type,
                 )
-        # if k == "improper dihedrals":
-        #     config_dict["improper dihedrals"] = [None] * len(v)
-        # ...
         if k == "chi":
             config_dict["chi"] = [None] * len(v)
             for i, c in enumerate(v):
@@ -523,12 +524,7 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
         config_dict["file_name"] = file_path
 
     for n in (
-        "n_steps",
-        "time_step",
-        "box_size",
-        "mesh_size",
-        "sigma",
-        "kappa",
+        "n_steps", "time_step", "mesh_size", "sigma", "kappa"
     ):
         if n not in config_dict:
             err_str = (

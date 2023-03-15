@@ -29,6 +29,10 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         Additional list of pmesh objects required for electrostatics.
     """
 
+    if config.dtype == np.float64:
+        pmeshtype = "f8"
+    else:
+        pmeshtype = "f4"
     # Ignore numpy numpy.VisibleDeprecationWarning: Creating an ndarray from
     # ragged nested sequences until it is fixed in pmesh
     with warnings.catch_warnings():
@@ -39,7 +43,7 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
         )
         # The first argument of ParticleMesh has to be a tuple
         pm = pmesh.ParticleMesh(
-            config.mesh_size, BoxSize=config.box_size, dtype="f4", comm=comm
+            config.mesh_size, BoxSize=config.box_size, dtype=pmeshtype, comm=comm
         )
     phi = [pm.create("real", value=0.0) for _ in range(config.n_types)]
     phi_fourier = [
@@ -358,6 +362,7 @@ def update_field_force_q(
     # charges to grid
     pm.paint(positions, layout=layout_q, mass=charges, out=phi_q)
     phi_q /= volume_per_cell
+    # print("phi_q", np.sum(phi_q))
     phi_q.r2c(out=phi_q_fourier)
 
     # smear charges with filter
@@ -368,7 +373,11 @@ def update_field_force_q(
         return 4.0 * np.pi * elec_conversion_factor * v / k.normp(p=2, zeromode=1)
 
     phi_q_fourier.apply(poisson_transfer_function, out=psi_fourier)
+    # print("psi_fourier", np.sum(psi_fourier))
     psi_fourier.c2r(out=psi)
+    # print("phi_q * psi update_field", np.sum(phi_q * psi))
+
+    # exit()
 
     # compute electric field directly from smeared charged densities in Fourier
     for _d in np.arange(n_dimensions):
@@ -392,148 +401,6 @@ def update_field_force_q(
         elec_forces[:, _d] = charges * (
             elec_field[_d].readout(positions, layout=layout_q)
         )
-
-
-def update_field_force_energy_q(
-    charges,
-    phi_q,
-    phi_q_fourier,
-    elec_field_fourier,
-    elec_field,
-    elec_forces,
-    elec_energy_field,
-    field_q_energy,
-    layout_q,
-    pm,
-    positions,
-    config,
-    compute_energy=False,
-    comm=MPI.COMM_WORLD,
-):
-    """Calculate the electrostatic particle-field energy and forces on the grid
-
-    .. deprecated:: 1.0.0
-        :code:`update_field_force_energy_q` was deprecated in favour of
-        :code:`update_field_force_q` and independent calls to
-        :code:`compute_field_energy_q` prior to 1.0.0 release.
-
-    Parameters
-    ----------
-    charges : (N,) numpy.ndarray
-        Array of particle charge values for :code:`N` particles. Local for each
-        MPI rank.
-    phi_q : pmesh.pm.RealField
-        Pmesh :code:`RealField` object for storing calculated discretized
-        charge density density values on the computational grid. Pre-allocated,
-        but empty; any values in this field are discarded. Changed in-place.
-        Local for each MPI rank--the full computational grid is represented by
-        the collective fields of all MPI ranks.
-    phi_q_fourier : pmesh.pm.ComplexField
-        Pmesh :code:`ComplexField` object for storing calculated discretized
-        Fourier transformed charge density values in reciprocal space on the
-        computational grid. Pre-allocated, but empty; any values in this field
-        are discarded. Changed in-place. Local for each MPI rank--the full
-        computational grid is represented by the collective fields of all MPI
-        ranks.
-    elec_field_fourier : pmesh.pm.ComplexField
-        Pmesh :code:`ComplexField` object for storing calculated discretized
-        electric field values in reciprocal space on the computational grid.
-        Pre-allocated, but empty; any values in this field are discarded.
-        Changed in-place. Local for each MPI rank--the full computational grid
-        is represented by the collective fields of all MPI ranks.
-    elec_field : pmesh.pm.RealField
-        Pmesh :code:`RealField` object for storing calculated discretized
-        electric field values on the computational grid. Pre-allocated,
-        but empty; any values in this field are discarded. Changed in-place.
-        Local for each MPI rank--the full computational grid is represented by
-        the collective fields of all MPI ranks.
-    elec_forces : (N,D) numpy.ndarray
-        Array of electrostatic forces on :code:`N` particles in :code:`D`
-        dimensions.
-    elec_energy_field : pmesh.pm.ComplexField
-        Pmesh :code:`ComplexField` object for storing calculated discretized
-        electrostatic energy density values in reciprocal space on the
-        computational grid. Pre-allocated, but empty; any values in this field
-        are discarded. Changed in-place. Local for each MPI rank--the full
-        computational grid is represented by the collective fields of all MPI
-        ranks.
-    field_q_energy : float
-        Total elecrostatic energy.
-    layout_q : pmesh.domain.Layout
-        Pmesh communication layout object for domain decomposition of the full
-        system. Used as blueprint by :code:`pmesh.pm.paint` and
-        :code:`pmesh.pm.readout` for exchange of particle information across
-        MPI ranks as necessary.
-    pm : pmesh.pm.ParticleMesh
-        Pmesh :code:`ParticleMesh` object interfacing to the CIC window
-        function and the PFFT discrete Fourier transform library.
-    positions : (N,D) numpy.ndarray
-        Array of positions for :code:`N` particles in :code:`D` dimensions.
-        Local for each MPI rank.
-    config : Config
-        Configuration object.
-    compute_energy : bool, optional
-        Computes the electrostatic energy if :code:`True`, otherwise only
-        computes the electrostatic forces.
-    comm : mpi4py.Comm
-        MPI communicator to use for rank commuication.
-
-    Returns
-    -------
-    elec_field_energy : float
-        Total electrostatic energy.
-    """
-    V = np.prod(config.box_size)
-    n_mesh_cells = np.prod(np.full(3, config.mesh_size))
-    volume_per_cell = V / n_mesh_cells
-    pm.paint(positions, layout=layout_q, mass=charges, out=phi_q)
-    phi_q /= volume_per_cell
-    phi_q.r2c(out=phi_q_fourier)
-
-    def phi_transfer_function(k, v):
-        return v * np.exp(-0.5 * config.sigma**2 * k.normp(p=2, zeromode=1))
-
-    phi_q_fourier.apply(phi_transfer_function, out=phi_q_fourier)
-    phi_q_fourier.c2r(out=phi_q)
-    n_dimensions = config.box_size.size
-    elec_conversion_factor = config.coulomb_constant / config.dielectric_const
-
-    for _d in np.arange(n_dimensions):
-
-        def poisson_transfer_function(k, v, d=_d):
-            return (
-                -1j
-                * k[d]
-                * 4.0
-                * np.pi
-                * elec_conversion_factor
-                * v
-                / k.normp(p=2, zeromode=1)
-            )
-
-        phi_q_fourier.apply(poisson_transfer_function, out=elec_field_fourier[_d])
-        elec_field_fourier[_d].c2r(out=elec_field[_d])
-
-    for _d in np.arange(n_dimensions):
-        elec_forces[:, _d] = charges * (
-            elec_field[_d].readout(positions, layout=layout_q)
-        )
-
-    if compute_energy:
-
-        def transfer_energy(k, v):
-            return (
-                4.0
-                * np.pi
-                * elec_conversion_factor
-                * np.abs(v) ** 2
-                / k.normp(p=2, zeromode=1)
-            )
-
-        phi_q_fourier.apply(transfer_energy, kind="wavenumber", out=elec_energy_field)
-        field_q_energy = 0.5 * comm.allreduce(np.sum(elec_energy_field.value))
-
-    return field_q_energy.real
 
 
 def comp_laplacian(
