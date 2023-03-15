@@ -113,7 +113,8 @@ def setup_time_dependent_element(
     time = group.create_dataset("time", (n_frames,), "float32")
     value = group.create_dataset("value", (n_frames, *shape), dtype)
     if units is not None:
-        group.attrs["units"] = units
+        value.attrs["unit"] = units
+        time.attrs["unit"] = "ps"
     return group, step, time, value
 
 
