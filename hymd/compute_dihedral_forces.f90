@@ -2,10 +2,10 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
   use dipole_reconstruction
   implicit none
 
-  real(4), intent(in out) :: force(:,:)
+  real(4), intent(inout) :: force(:,:)
   real(4), intent(in) :: r(:,:)
-  real(4), intent(in out) :: dipoles(:,:,:)
-  real(4), intent(in out) :: transfer_matrix(:,:,:,:)
+  real(4), intent(inout) :: dipoles(:,:,:)
+  real(4), intent(inout) :: transfer_matrix(:,:,:,:)
   real(8), intent(in) :: box(:)
   integer, intent(in) :: a(:), b(:), c(:), d(:), dtype(:), bb_index(:), dipole_flag
   real(4), intent(in) :: coeff(:,:,:)

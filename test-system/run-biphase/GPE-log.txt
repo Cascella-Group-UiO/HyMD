@@ -1,0 +1,252 @@
+2022-03-13 16:39:06,300 INFO     [configure_runtime.py:146] <configure_runtime> {rank 0/2} Attempting to parse config file config-5mM-eps5.toml as .toml
+2022-03-13 16:39:06,302 INFO     [configure_runtime.py:154] <configure_runtime> {rank 0/2} Successfully parsed config-5mM-eps5.toml as .toml file
+2022-03-13 16:39:06,303 INFO     [configure_runtime.py:158] <configure_runtime> {rank 0/2} 
+
+	Config: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	--------------------------------------------------
+	n_steps: 50000
+	time_step: 0.05
+	mesh_size: [100, 40, 40]
+	sigma: 0.5
+	kappa: 0.05
+	box_size: [29.8, 14.9, 14.9]
+	n_print: 20
+	tau: 0.1
+	start_temperature: False
+	target_temperature: False
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 50000
+	integrator: respa
+	respa_inner: 1
+	file_name: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	name: partition
+	tags: ['C', 'W', 'A', 'B']
+	n_particles: 55240
+	max_molecule_size: 15
+	n_flush: 10
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	coulombtype: PIC_Spectral_GPE
+	convergence_type: None
+	pol_mixing: None
+	dielectric_const: None
+	conv_crit: None
+	dielectric_type: [[['C'], [5.0]], [['W'], [80.0]], [['A'], [80.0]], [['B'], [80.0]]]
+	squaregradient: False
+	rho0: None
+	a: None
+	pressure: False
+	barostat: None
+	tau_p: None
+	alpha_0: 8.86
+	n_b: None
+	m: []
+	command_line_full: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/hymd/__main__.py config-5mM-eps5.toml partition5mM.h5 --double-precision --verbose --velocity-output --logfile GPE-log.txt
+	target_pressure:
+		P_L: None
+		P_N: None
+	bonds:
+	angle_bonds:
+	dihedrals:
+	chi:
+		C W: 60.0
+		A C: 0.0
+		B C: 0.0
+		A W: 0.0
+		B W: 0.0
+		A B: 0.0
+	K_coupl:
+
+2022-03-13 16:39:06,968 WARNING  [input_parser.py:1201] <check_n_b> {rank 0/2} config.n_b not specified.Defaulting to 1
+2022-03-13 16:39:10,020 INFO     [main.py:213] <main> {rank 0/2} pfft-python processor mesh: (2, 1)
+2022-03-13 16:41:33,656 INFO     [configure_runtime.py:146] <configure_runtime> {rank 0/2} Attempting to parse config file config-5mM-eps5.toml as .toml
+2022-03-13 16:41:33,658 INFO     [configure_runtime.py:154] <configure_runtime> {rank 0/2} Successfully parsed config-5mM-eps5.toml as .toml file
+2022-03-13 16:41:33,658 INFO     [configure_runtime.py:158] <configure_runtime> {rank 0/2} 
+
+	Config: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	--------------------------------------------------
+	n_steps: 50000
+	time_step: 0.05
+	mesh_size: [100, 40, 40]
+	sigma: 0.5
+	kappa: 0.05
+	box_size: [29.8, 14.9, 14.9]
+	n_print: 20
+	tau: 0.1
+	start_temperature: False
+	target_temperature: False
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 50000
+	integrator: respa
+	respa_inner: 1
+	file_name: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	name: partition
+	tags: ['C', 'W', 'A', 'B']
+	n_particles: 55240
+	max_molecule_size: 15
+	n_flush: 10
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	coulombtype: PIC_Spectral_GPE
+	convergence_type: None
+	pol_mixing: None
+	dielectric_const: None
+	conv_crit: None
+	dielectric_type: [[['C'], [5.0]], [['W'], [80.0]], [['A'], [80.0]], [['B'], [80.0]]]
+	squaregradient: False
+	rho0: None
+	a: None
+	pressure: False
+	barostat: None
+	tau_p: None
+	alpha_0: 8.86
+	n_b: None
+	m: []
+	command_line_full: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/hymd/__main__.py config-5mM-eps5.toml partition5mM.h5 --verbose --velocity-output --logfile GPE-log.txt
+	target_pressure:
+		P_L: None
+		P_N: None
+	bonds:
+	angle_bonds:
+	dihedrals:
+	chi:
+		C W: 60.0
+		A C: 0.0
+		B C: 0.0
+		A W: 0.0
+		B W: 0.0
+		A B: 0.0
+	K_coupl:
+
+2022-03-13 16:41:33,907 WARNING  [input_parser.py:1201] <check_n_b> {rank 0/2} config.n_b not specified.Defaulting to 1
+2022-03-13 16:41:34,993 INFO     [main.py:213] <main> {rank 0/2} pfft-python processor mesh: (2, 1)
+2022-03-13 16:44:08,140 INFO     [configure_runtime.py:146] <configure_runtime> {rank 0/1} Attempting to parse config file config-5mM-eps5.toml as .toml
+2022-03-13 16:44:08,141 INFO     [configure_runtime.py:154] <configure_runtime> {rank 0/1} Successfully parsed config-5mM-eps5.toml as .toml file
+2022-03-13 16:44:08,141 INFO     [configure_runtime.py:158] <configure_runtime> {rank 0/1} 
+
+	Config: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	--------------------------------------------------
+	n_steps: 50000
+	time_step: 0.05
+	mesh_size: [40, 40, 40]
+	sigma: 0.5
+	kappa: 0.05
+	box_size: [29.8, 14.9, 14.9]
+	n_print: 20
+	tau: 0.1
+	start_temperature: False
+	target_temperature: False
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 50000
+	integrator: respa
+	respa_inner: 1
+	file_name: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	name: partition
+	tags: ['C', 'W', 'A', 'B']
+	n_particles: 55240
+	max_molecule_size: 15
+	n_flush: 10
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	coulombtype: PIC_Spectral_GPE
+	convergence_type: None
+	pol_mixing: None
+	dielectric_const: None
+	conv_crit: None
+	dielectric_type: [[['C'], [5.0]], [['W'], [80.0]], [['A'], [80.0]], [['B'], [80.0]]]
+	squaregradient: False
+	rho0: None
+	a: None
+	pressure: False
+	barostat: None
+	tau_p: None
+	alpha_0: 8.86
+	n_b: None
+	m: []
+	command_line_full: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/hymd/__main__.py config-5mM-eps5.toml partition5mM.h5 --verbose --velocity-output --logfile GPE-log.txt
+	target_pressure:
+		P_L: None
+		P_N: None
+	bonds:
+	angle_bonds:
+	dihedrals:
+	chi:
+		C W: 60.0
+		A C: 0.0
+		B C: 0.0
+		A W: 0.0
+		B W: 0.0
+		A B: 0.0
+	K_coupl:
+
+2022-03-13 16:44:08,508 WARNING  [input_parser.py:1201] <check_n_b> {rank 0/1} config.n_b not specified.Defaulting to 1
+2022-03-13 16:44:09,030 INFO     [main.py:213] <main> {rank 0/1} pfft-python processor mesh: (1, 1)
+2022-03-13 16:47:00,029 INFO     [configure_runtime.py:146] <configure_runtime> {rank 0/2} Attempting to parse config file config-5mM-eps5.toml as .toml
+2022-03-13 16:47:00,032 INFO     [configure_runtime.py:154] <configure_runtime> {rank 0/2} Successfully parsed config-5mM-eps5.toml as .toml file
+2022-03-13 16:47:00,032 INFO     [configure_runtime.py:158] <configure_runtime> {rank 0/2} 
+
+	Config: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	--------------------------------------------------
+	n_steps: 50000
+	time_step: 0.05
+	mesh_size: [40, 40, 40]
+	sigma: 0.5
+	kappa: 0.05
+	box_size: [29.8, 14.9, 14.9]
+	n_print: 20
+	tau: 0.1
+	start_temperature: False
+	target_temperature: False
+	mass: 72.0
+	hamiltonian: DefaultWithChi
+	domain_decomposition: 50000
+	integrator: respa
+	respa_inner: 1
+	file_name: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/test-system/run-biphase/config-5mM-eps5.toml
+	name: partition
+	tags: ['C', 'W', 'A', 'B']
+	n_particles: 55240
+	max_molecule_size: 15
+	n_flush: 10
+	thermostat_work: 0.0
+	initial_energy: None
+	cancel_com_momentum: False
+	coulombtype: PIC_Spectral_GPE
+	convergence_type: None
+	pol_mixing: None
+	dielectric_const: None
+	conv_crit: None
+	dielectric_type: [[['C'], [5.0]], [['W'], [80.0]], [['A'], [80.0]], [['B'], [80.0]]]
+	squaregradient: False
+	rho0: None
+	a: None
+	pressure: False
+	barostat: None
+	tau_p: None
+	alpha_0: 8.86
+	n_b: None
+	m: []
+	command_line_full: /Users/Lasse/Documents/GitHub/Ms-CS-Physics/HyMD/hymd/__main__.py config-5mM-eps5.toml partition5mM.h5 --verbose --velocity-output --logfile GPE-log.txt
+	target_pressure:
+		P_L: None
+		P_N: None
+	bonds:
+	angle_bonds:
+	dihedrals:
+	chi:
+		C W: 60.0
+		A C: 0.0
+		B C: 0.0
+		A W: 0.0
+		B W: 0.0
+		A B: 0.0
+	K_coupl:
+
+2022-03-13 16:47:00,319 WARNING  [input_parser.py:1201] <check_n_b> {rank 0/2} config.n_b not specified.Defaulting to 1
+2022-03-13 16:47:01,015 INFO     [main.py:213] <main> {rank 0/2} pfft-python processor mesh: (2, 1)

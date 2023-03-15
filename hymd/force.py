@@ -5,9 +5,7 @@ import networkx as nx
 from dataclasses import dataclass
 
 # Imported here so we can call from force import compute_bond_forces__fortran
-from force_kernels import (  # noqa: F401
-    cbf as compute_bond_forces__fortran
-)
+from force_kernels import cbf as compute_bond_forces__fortran  # noqa: F401
 from force_kernels import (  # noqa: F401
     caf as compute_angle_forces__fortran,
 )
@@ -23,6 +21,12 @@ from force_kernels import (  # noqa: F401
 from force_kernels import (  # noqa: F401
     cdf_d as compute_dihedral_forces__fortran__double,
 )
+
+
+@dataclass  # might not be needed
+class Dielectric_type:
+    atom_1: str
+    dielectric_value: float
 
 
 @dataclass
@@ -57,6 +61,7 @@ class Bond:
     strength : float
         Harmonic bond strength coefficient (spring constant).
     """
+
     atom_1: str
     atom_2: str
     equilibrium: float
@@ -111,6 +116,7 @@ class Angle(Bond):
     Bond :
         Two-particle bond type dataclass
     """
+
     atom_3: str
 
 
@@ -205,6 +211,7 @@ class Dihedral:
     ----------
     Bore et al. J. Chem. Theory Comput., 14(2): 1120–1130, 2018.
     """
+
     atom_1: str
     atom_2: str
     atom_3: str
@@ -251,6 +258,7 @@ class Chi:
     hymd.hamiltonian.DefaultWithChi :
         Interaction energy functional using :math:`\\chi`-interactions.
     """
+
     atom_1: str
     atom_2: str
     interaction_energy: float
@@ -368,12 +376,8 @@ def prepare_bonds_old(molecules, names, bonds, indices, config):
                     name_j = bond_graph.nodes()[j]["name"]
 
                     for b in config.bonds:
-                        match_forward = (
-                            name_i == b.atom_1 and name_j == b.atom_2
-                        )
-                        match_backward = (
-                            name_i == b.atom_2 and name_j == b.atom_1
-                        )
+                        match_forward = name_i == b.atom_1 and name_j == b.atom_2
+                        match_backward = name_i == b.atom_2 and name_j == b.atom_1
                         if match_forward or match_backward:
                             bonds_2.append(
                                 [
@@ -649,9 +653,22 @@ def prepare_bonds(molecules, names, bonds, indices, config, topol=None):
         bonds_4_last[bb_index] = 1
 
     return (
-        bonds_2_atom1, bonds_2_atom2, bonds_2_equilibrium, bonds_2_strength,
-        bonds_3_atom1, bonds_3_atom2, bonds_3_atom3, bonds_3_equilibrium, bonds_3_strength,  # noqa: E501
-        bonds_4_atom1, bonds_4_atom2, bonds_4_atom3, bonds_4_atom4, bonds_4_coeff, bonds_4_type, bonds_4_last,  # noqa: E501
+        bonds_2_atom1,
+        bonds_2_atom2,
+        bonds_2_equilibrium,
+        bonds_2_strength,
+        bonds_3_atom1,
+        bonds_3_atom2,
+        bonds_3_atom3,
+        bonds_3_equilibrium,
+        bonds_3_strength,  # noqa: E501
+        bonds_4_atom1,
+        bonds_4_atom2,
+        bonds_4_atom3,
+        bonds_4_atom4,
+        bonds_4_coeff,
+        bonds_4_type,
+        bonds_4_last,  # noqa: E501
     )
 
 
@@ -708,7 +725,7 @@ def compute_angle_forces__plain(f_angles, r, bonds_3, box_size):
 
         cosphi = np.dot(ea, ec)
         theta = np.arccos(cosphi)
-        xsinph = 1.0 / np.sqrt(1.0 - cosphi ** 2)
+        xsinph = 1.0 / np.sqrt(1.0 - cosphi**2)
 
         d = theta - theta0
         f = -k * d
@@ -782,14 +799,14 @@ def compute_dihedral_forces__plain(f_dihedrals, r, bonds_4, box_size):
 def dipole_forces_redistribution(
     f_on_bead, f_dipoles, trans_matrices, a, b, c, d, type_array, last_bb
 ):
-    """Redistribute electrostatic forces calculated from topologically 
+    """Redistribute electrostatic forces calculated from topologically
     reconstructed ghost dipole point charges to the backcone atoms of the protein.
     """
     f_on_bead.fill(0.0)
     for i, j, k, l, fd, matrix, dih_type, is_last in zip(
         a, b, c, d, f_dipoles, trans_matrices, type_array, last_bb
     ):
-        if dih_type ==1:
+        if dih_type == 1:
             sum_force = fd[0] + fd[1]
             diff_force = fd[0] - fd[1]
             f_on_bead[i] += matrix[0] @ diff_force  # Atom A

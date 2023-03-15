@@ -107,6 +107,14 @@ The default form of the interaction energy functional in HyMD is
 
    W=\frac{1}{2\phi_0}\int\mathrm{d}\mathbf{r}\sum_{\text{i},\text{j}}\tilde\chi_{\text{i}-\text{j}}\tilde\phi_\text{i}(\mathbf{r})\tilde\phi_\text{j}(\mathbf{r}) + \frac{1}{2\kappa}\left(\sum_\text{k}\tilde\phi_\text{k}(\mathbf{r})-\phi_0\right)^2.
 
+In the case of constant pressure simulations (NPT), the interaction energy functional becomes
+
+.. math::
+
+   W=\frac{1}{2\rho_0}\int\mathrm{d}\mathbf{r}\sum_{\text{i},\text{j}}\tilde\chi_{\text{i}-\text{j}}\tilde\phi_\text{i}(\mathbf{r})\tilde\phi_\text{j}(\mathbf{r}) + \frac{1}{2\kappa}\left(\sum_\text{k}\tilde\phi_\text{k}(\mathbf{r})-a\right)^2.
+
+where, :math:`\rho_0= 1 / ν` is an intrinsic parameter corresponding to the specific volume :math:`(ν)` of a coarse-grained particle,  
+:math:`a` is a calibrated parameter to obtain the correct average density at the target temperature and pressure.
 See :ref:`functionals-label` for details.
 
 

@@ -19,6 +19,24 @@ Thermostat
    :undoc-members:
 
 
+Barostat
+--------
+
+Berendsen Barostat
+^^^^^^^^^^^^^^^^^^
+
+.. automodule:: hymd.barostat
+   :members: isotropic, semiisotropic
+   :undoc-members:
+
+SCR Barostat
+^^^^^^^^^^^^^^^^^^
+
+.. automodule:: hymd.barostat_bussi
+   :members: isotropic, semiisotropic
+   :undoc-members:
+
+
 Hamiltonian
 -----------
 
@@ -52,6 +70,14 @@ Force
 
 .. automodule:: hymd.force
    :members:
+   :undoc-members:
+
+
+Pressure
+--------
+
+.. automodule:: hymd.pressure
+   :members: comp_pressure
    :undoc-members:
 
 

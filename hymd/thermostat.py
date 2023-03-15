@@ -23,16 +23,15 @@ def generate_initial_velocities(velocities, config, prng, comm=MPI.COMM_WORLD):
     )
     velocities = cancel_com_momentum(velocities, config, comm=comm)
     kinetic_energy = comm.allreduce(
-        0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
+        0.5 * config.mass * np.sum(velocities**2), MPI.SUM
     )
     start_kinetic_energy_target = (
-        1.5 * config.gas_constant * config.n_particles
-        * config.start_temperature
+        1.5 * config.gas_constant * config.n_particles * config.start_temperature
     )
     factor = np.sqrt(1.5 * config.n_particles * kT_start / kinetic_energy)
     velocities[...] = velocities[...] * factor
     kinetic_energy = comm.allreduce(
-        0.5 * config.mass * np.sum(velocities ** 2), MPI.SUM
+        0.5 * config.mass * np.sum(velocities**2), MPI.SUM
     )
     Logger.rank0.log(
         logging.INFO,
@@ -110,11 +109,15 @@ def _random_chi_squared(prng: np.random.Generator, M: int) -> float:
 
 
 def csvr_thermostat(
-    velocity: np.ndarray, names: np.ndarray, config: Config,
+    velocity: np.ndarray,
+    names: np.ndarray,
+    config: Config,
     prng: np.random.Generator,
     comm: MPI.Intracomm = MPI.COMM_WORLD,
     random_gaussian: Callable[[np.random.Generator], float] = _random_gaussian,
-    random_chi_squared: Callable[[np.random.Generator, int, float], float] = _random_chi_squared,
+    random_chi_squared: Callable[
+        [np.random.Generator, int, float], float
+    ] = _random_chi_squared,
     remove_center_of_mass_momentum: bool = True,
 ) -> np.ndarray:
     """Canonical sampling through velocity rescaling thermostat
@@ -144,6 +147,8 @@ def csvr_thermostat(
         Array of particle names.
     config : Config
         Configuration dataclass containing simulation metadata and parameters.
+    prng : np.random.Generator
+        Numpy object that provides a stream of random bits
     comm : MPI.Intracomm, optional
         MPI communicator to use for rank commuication. Defaults to
         MPI.COMM_WORLD.
@@ -182,13 +187,11 @@ def csvr_thermostat(
         if remove_center_of_mass_momentum and group_n_particles > 1:
             com_velocity = comm.allreduce(np.sum(velocity[ind], axis=0))
             velocity_clean = velocity[ind] - com_velocity / group_n_particles
-            K = comm.allreduce(0.5 * config.mass
-                               * np.sum(velocity_clean[...]**2))
+            K = comm.allreduce(0.5 * config.mass * np.sum(velocity_clean[...] ** 2))
         else:
-            K = comm.allreduce(0.5 * config.mass * np.sum(velocity[...]**2))
+            K = comm.allreduce(0.5 * config.mass * np.sum(velocity[...] ** 2))
         K_target = (
-            1.5 * config.gas_constant * group_n_particles
-            * config.target_temperature
+            1.5 * config.gas_constant * group_n_particles * config.target_temperature
         )
         N_f = 3 * group_n_particles
         c = np.exp(-(config.time_step * config.respa_inner) / config.tau)
@@ -199,7 +202,8 @@ def csvr_thermostat(
         SNf = random_chi_squared(prng, N_f - 1)
 
         alpha2 = (
-            c + (1 - c) * (SNf + R**2) * K_target / (N_f * K)
+            c
+            + (1 - c) * (SNf + R**2) * K_target / (N_f * K)
             + 2 * R * np.sqrt(c * (1 - c) * K_target / (N_f * K))
         )
         dK = K * (alpha2 - 1)
@@ -209,9 +213,7 @@ def csvr_thermostat(
             # Assign velocities and reapply the previously removed center
             # of mass momentum removed
             velocity_clean *= alpha
-            velocity[ind] = (
-                velocity_clean + com_velocity / group_n_particles
-            )
+            velocity[ind] = velocity_clean + com_velocity / group_n_particles
         else:
             velocity *= alpha
         config.thermostat_work += dK
