@@ -17,6 +17,6 @@ RUN/
 *.so
 test-xinmeng-electrostatic/*
 *.h5
-!examples/*.h5
+examples/
 !test-xinmeng-electrostatic/run-dppc/
 #!test-xinmeng-electrostatic/run-sds/
