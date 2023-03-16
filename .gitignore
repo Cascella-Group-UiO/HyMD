@@ -1,7 +1,5 @@
 build
 _build
-_static
-_templates
 hymd.egg-info
 *.hypothesis
 *.mypy_cache
