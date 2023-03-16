@@ -8,6 +8,7 @@ import atexit
 import cProfile
 import logging
 import pstats
+import tomli
 from .logger import Logger, print_header
 from .input_parser import read_config_toml, parse_config_toml
 
@@ -161,14 +162,14 @@ def configure_runtime(args_in, comm):
         )
 
         if args.topol is not None:
-            topol = read_config_toml(args.topol)
+            topol = tomli.loads(read_config_toml(args.topol))
             # Check if we have single "itp" files and add their keys to topol
             if os.path.dirname(args.topol) == "":
                 args.topol = "./" + args.topol
             if "include" in topol["system"]:
                 for file in topol["system"]["include"]:
                     path = f"{os.path.dirname(args.topol)}/{file}"
-                    itps = read_config_toml(path)
+                    itps = tomli.loads(read_config_toml(path))
                     for mol, itp in itps.items():
                         topol[mol] = itp
         else:
