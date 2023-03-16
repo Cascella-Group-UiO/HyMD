@@ -10,11 +10,14 @@ from .logger import Logger, get_version
 
 
 class OutDataset:
-    """HDF5 dataset handler for file output
-    """
+    """HDF5 dataset handler for file output"""
 
     def __init__(
-        self, dest_directory, config, double_out=False, disable_mpio=False,
+        self,
+        dest_directory,
+        config,
+        double_out=False,
+        disable_mpio=False,
         comm=MPI.COMM_WORLD,
     ):
         """Constructor
@@ -48,15 +51,13 @@ class OutDataset:
         if disable_mpio:
             self.file = h5py.File(
                 os.path.join(
-                    dest_directory,
-                    f"sim.hdf5-{comm.rank:6d}-of-{comm.size:6d}"
+                    dest_directory, f"sim.hdf5-{comm.rank:6d}-of-{comm.size:6d}"
                 ),
                 "w",
             )
         else:
             self.file = h5py.File(
-                os.path.join(dest_directory, "sim.H5"), "w", driver="mpio",
-                comm=comm
+                os.path.join(dest_directory, "sim.H5"), "w", driver="mpio", comm=comm
             )
 
     def is_open(self, comm=MPI.COMM_WORLD):
@@ -82,8 +83,7 @@ class OutDataset:
         self.file.close()
 
     def flush(self):
-        """Flushes output buffers, forcing file writes
-        """
+        """Flushes output buffers, forcing file writes"""
         self.file.flush()
 
 
@@ -112,6 +112,7 @@ def setup_time_dependent_element(
     step = group.create_dataset("step", (n_frames,), "int32")
     time = group.create_dataset("time", (n_frames,), "float32")
     value = group.create_dataset("value", (n_frames, *shape), dtype)
+
     if units is not None:
         value.attrs["unit"] = units
         time.attrs["unit"] = "ps"
@@ -119,9 +120,20 @@ def setup_time_dependent_element(
 
 
 def store_static(
-    h5md, rank_range, names, types, indices, config, bonds_2_atom1,
-    bonds_2_atom2, molecules=None, velocity_out=False, force_out=False,
-    charges=False, comm=MPI.COMM_WORLD,
+    h5md,
+    rank_range,
+    names,
+    types,
+    indices,
+    config,
+    bonds_2_atom1,
+    bonds_2_atom2,
+    molecules=None,
+    velocity_out=False,
+    force_out=False,
+    charges=False,
+    dielectrics=False,
+    comm=MPI.COMM_WORLD,
 ):
     """Outputs all static time-independent quantities to the HDF5 output file
 
@@ -155,6 +167,8 @@ def store_static(
         If :code:`True`, forces are written to output HDF5 file.
     charges : (N,) numpy.ndarray
         Array of particle charge values for :code:`N` particles.
+    dielectrics : (N,) numpy.ndarray
+        Array of particle relative dielectric values for :code:`N` particles.
     comm : mpi4py.Comm
         MPI communicator to use for rank commuication.
 
@@ -197,9 +211,7 @@ def store_static(
 
     h5md.particles_group = h5md.file.create_group("/particles")
     h5md.all_particles = h5md.particles_group.create_group("all")
-    mass = h5md.all_particles.create_dataset(
-        "mass", (config.n_particles,), dtype
-    )
+    mass = h5md.all_particles.create_dataset("mass", (config.n_particles,), dtype)
     mass[...] = config.mass
 
     if charges is not False:
@@ -207,14 +219,17 @@ def store_static(
             "charge", (config.n_particles,), dtype="float32"
         )
         charge[indices] = charges
+    if dielectrics is not False:
+        dielectric = h5md.all_particles.create_dataset(
+            "dielectric", (config.n_particles,), dtype="float32"
+        )
+        dielectric[indices] = dielectrics
 
     box = h5md.all_particles.create_group("box")
     box.attrs["dimension"] = 3
     box.attrs["boundary"] = np.array(
         [np.string_(s) for s in 3 * ["periodic"]], dtype="S8"
     )
-    h5md.edges = box.create_dataset("edges", (3,), dtype)
-    h5md.edges[:] = np.array(config.box_size)
 
     n_frames = config.n_steps // config.n_print
     if np.mod(config.n_steps - 1, config.n_print) != 0:
@@ -225,7 +240,9 @@ def store_static(
         n_frames += 1
 
     species = h5md.all_particles.create_dataset(
-        "species", (config.n_particles,), dtype="i",
+        "species",
+        (config.n_particles,),
+        dtype="i",
     )
 
     (
@@ -267,7 +284,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="kJ nm mol-1",
+            units="kJ mol-1 nm-1",
         )
     (
         _,
@@ -275,7 +292,12 @@ def store_static(
         h5md.total_energy_time,
         h5md.total_energy,
     ) = setup_time_dependent_element(
-        "total_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        "total_energy",
+        h5md.observables,
+        n_frames,
+        (1,),
+        dtype,
+        units="kJ mol-1",  # noqa: E501
     )
     (
         _,
@@ -283,7 +305,12 @@ def store_static(
         h5md.kinetc_energy_time,
         h5md.kinetc_energy,
     ) = setup_time_dependent_element(
-        "kinetic_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        "kinetic_energy",
+        h5md.observables,
+        n_frames,
+        (1,),
+        dtype,
+        units="kJ mol-1",  # noqa: E501
     )
     (
         _,
@@ -291,7 +318,12 @@ def store_static(
         h5md.potential_energy_time,
         h5md.potential_energy,
     ) = setup_time_dependent_element(
-        "potential_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        "potential_energy",
+        h5md.observables,
+        n_frames,
+        (1,),
+        dtype,
+        units="kJ mol-1",  # noqa: E501
     )
     (
         _,
@@ -299,7 +331,12 @@ def store_static(
         h5md.bond_energy_time,
         h5md.bond_energy,
     ) = setup_time_dependent_element(
-        "bond_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        "bond_energy",
+        h5md.observables,
+        n_frames,
+        (1,),
+        dtype,
+        units="kJ mol-1",  # noqa: E501
     )
     (
         _,
@@ -307,7 +344,12 @@ def store_static(
         h5md.angle_energy_time,
         h5md.angle_energy,
     ) = setup_time_dependent_element(
-        "angle_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        "angle_energy",
+        h5md.observables,
+        n_frames,
+        (1,),
+        dtype,
+        units="kJ mol-1",  # noqa: E501
     )
     (
         _,
@@ -315,7 +357,12 @@ def store_static(
         h5md.dihedral_energy_time,
         h5md.dihedral_energy,
     ) = setup_time_dependent_element(
-        "dihedral_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        "dihedral_energy",
+        h5md.observables,
+        n_frames,
+        (1,),
+        dtype,
+        units="kJ mol-1",  # noqa: E501
     )
     (
         _,
@@ -323,7 +370,12 @@ def store_static(
         h5md.field_energy_time,
         h5md.field_energy,
     ) = setup_time_dependent_element(
-        "field_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        "field_energy",
+        h5md.observables,
+        n_frames,
+        (1,),
+        dtype,
+        units="kJ mol-1",  # noqa: E501
     )
     if charges is not False:
         (
@@ -332,8 +384,14 @@ def store_static(
             h5md.field_q_energy_time,
             h5md.field_q_energy,
         ) = setup_time_dependent_element(
-            "field_q_energy", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+            "field_q_energy",
+            h5md.observables,
+            n_frames,
+            (1,),
+            dtype,
+            units="kJ mol-1",  # noqa: E501
         )  # <-------- xinmeng
+
     (
         _,
         h5md.total_momentum_step,
@@ -387,7 +445,23 @@ def store_static(
         h5md.thermostat_work_time,
         h5md.thermostat_work,
     ) = setup_time_dependent_element(
-        "thermostat_work", h5md.observables, n_frames, (1,), "float32", units="kJ mol-1"  # noqa: E501
+        "thermostat_work",
+        h5md.observables,
+        n_frames,
+        (1,),
+        "float32",
+        units="kJ mol-1",  # noqa: E501
+    )
+    (
+        _,
+        h5md.pressure_step,
+        h5md.pressure_time,
+        h5md.pressure,
+    ) = setup_time_dependent_element(
+        "pressure", h5md.observables, n_frames, (18,), "float32", units="Bar"
+    )
+    (_, h5md.box_step, h5md.box_time, h5md.box_value,) = setup_time_dependent_element(
+        "edges", box, n_frames, (3, 3), "float32", units="nm"
     )
 
     ind_sort = np.argsort(indices)
@@ -407,7 +481,9 @@ def store_static(
     type_dataset = vmd_group.create_dataset("type", (config.n_types,), "S16")
     if molecules is not None:
         resid_dataset = vmd_group.create_dataset(
-            "resid", (config.n_particles,), "i",
+            "resid",
+            (config.n_particles,),
+            "i",
         )
 
     # Change this
@@ -440,11 +516,38 @@ def store_static(
         resid_dataset[indices[ind_sort]] = molecules
 
 
+# store data old vs
+"""
+h5md, step, frame, indices, positions, velocities, forces, box_size,
+temperature, kinetic_energy, bond2_energy, bond3_energy, bond4_energy,
+field_energy, field_q_energy, time_step, config, velocity_out=False,
+force_out=False, charge_out=False, dump_per_particle=False,
+"""
+
+
 def store_data(
-    h5md, step, frame, indices, positions, velocities, forces, box_size,
-    temperature, kinetic_energy, bond2_energy, bond3_energy, bond4_energy,
-    field_energy, field_q_energy, time_step, config, velocity_out=False,
-    force_out=False, charge_out=False, dump_per_particle=False,
+    h5md,
+    step,
+    frame,
+    indices,
+    positions,
+    velocities,
+    forces,
+    box_size,
+    temperature,
+    pressure,
+    kinetic_energy,
+    bond2_energy,
+    bond3_energy,
+    bond4_energy,
+    field_energy,
+    field_q_energy,
+    time_step,
+    config,
+    velocity_out=False,
+    force_out=False,
+    charge_out=False,
+    dump_per_particle=False,
     comm=MPI.COMM_WORLD,
 ):
     """Writes time-step data to HDF5 output file
@@ -518,6 +621,8 @@ def store_data(
         h5md.angular_momentum_step,
         h5md.torque_step,
         h5md.temperature_step,
+        h5md.pressure_step,
+        h5md.box_step,
         h5md.thermostat_work_step,
     ):
         dset[frame] = step
@@ -535,6 +640,8 @@ def store_data(
         h5md.angular_momentum_time,
         h5md.torque_time,
         h5md.temperature_time,
+        h5md.pressure_time,
+        h5md.box_time,
         h5md.thermostat_work_time,
     ):
         dset[frame] = step * time_step
@@ -560,13 +667,10 @@ def store_data(
         h5md.field_q_energy[frame] = field_q_energy
 
     potential_energy = (
-        bond2_energy + bond3_energy + bond4_energy + field_energy
-        + field_q_energy
+        bond2_energy + bond3_energy + bond4_energy + field_energy + field_q_energy
     )
 
-    total_momentum = config.mass * comm.allreduce(
-        np.sum(velocities, axis=0), MPI.SUM
-    )
+    total_momentum = config.mass * comm.allreduce(np.sum(velocities, axis=0), MPI.SUM)
     angular_momentum = config.mass * comm.allreduce(
         np.sum(np.cross(positions, velocities), axis=0), MPI.SUM
     )
@@ -584,6 +688,9 @@ def store_data(
     h5md.angular_momentum[frame, :] = angular_momentum
     h5md.torque[frame, :] = torque
     h5md.temperature[frame] = temperature
+    h5md.pressure[frame] = pressure
+    for d in range(3):
+        h5md.box_value[frame, d, d] = box_size[d]
     h5md.thermostat_work[frame] = config.thermostat_work
 
     fmt_ = [
@@ -604,17 +711,19 @@ def store_data(
         "ΔH" if config.target_temperature else "ΔE",
     ]
     fmt_ = np.array(fmt_)
-    
+
     # create mask to show only energies != 0
-    en_array = np.array([
-        field_energy,
-        field_q_energy,
-        bond2_energy,
-        bond3_energy,
-        bond4_energy,
-    ])
+    en_array = np.array(
+        [
+            field_energy,
+            field_q_energy,
+            bond2_energy,
+            bond3_energy,
+            bond4_energy,
+        ]
+    )
     mask = np.full_like(fmt_, True, dtype=bool)
-    mask[range(6,11)] = en_array != 0.
+    mask[range(6, 11)] = en_array != 0.0
 
     header_ = fmt_[mask].shape[0] * "{:>13}"
     if config.initial_energy is None:
@@ -629,9 +738,7 @@ def store_data(
     total_energy = kinetic_energy + potential_energy
     if config.initial_energy is not None:
         if config.target_temperature:
-            H_tilde = (
-                total_energy - config.initial_energy - config.thermostat_work
-            )
+            H_tilde = total_energy - config.initial_energy - config.thermostat_work
         else:
             H_tilde = total_energy - config.initial_energy
     else:
@@ -656,13 +763,12 @@ def store_data(
         total_momentum[2] / divide_by,
         H_tilde / divide_by,
     ]
-    data = data_fmt.format(*[val for i,val in enumerate(all_data) if mask[i]])
+    data = data_fmt.format(*[val for i, val in enumerate(all_data) if mask[i]])
     Logger.rank0.log(logging.INFO, ("\n" + header + "\n" + data))
 
 
 def distribute_input(
-    in_file, rank, size, n_particles, max_molecule_size=201,
-    comm=MPI.COMM_WORLD
+    in_file, rank, size, n_particles, max_molecule_size=201, comm=MPI.COMM_WORLD
 ):
     """Assign global arrays onto MPI ranks, attempting load balancing
 
@@ -718,9 +824,7 @@ def distribute_input(
     # Implicitly assuming no molecule is bigger than
     # min(max_molecule_size, n_particles // n_MPI_ranks) atoms.
     max_molecule_size += 2
-    grab_extra = (
-        max_molecule_size if np_per_MPI > max_molecule_size else np_per_MPI
-    )
+    grab_extra = max_molecule_size if np_per_MPI > max_molecule_size else np_per_MPI
     if rank == 0:
         mpi_range_start = 0
         if size == 1:
@@ -748,15 +852,12 @@ def distribute_input(
                 molecule_end_indices[molecule_end_indices >= np_per_MPI][0] + 1
             ]
     elif rank == size - 1:
-        p_mpi_range[0] = (
-            indices[molecule_end_indices[molecule_end_indices > 0][0]] + 1
-        )
+        p_mpi_range[0] = indices[molecule_end_indices[molecule_end_indices > 0][0]] + 1
         p_mpi_range[1] = n_particles
     else:
-        p_mpi_range[0] = (
-            indices[molecule_end_indices[molecule_end_indices > 0][0]] + 1
-        )
+        p_mpi_range[0] = indices[molecule_end_indices[molecule_end_indices > 0][0]] + 1
         p_mpi_range[1] = (
-            indices[molecule_end_indices[molecule_end_indices > np_per_MPI][0]] + 1  # noqa: E501
+            indices[molecule_end_indices[molecule_end_indices > np_per_MPI][0]]
+            + 1  # noqa: E501
         )
     return list(range(p_mpi_range[0], p_mpi_range[1])), molecules_flag

@@ -1,6 +1,7 @@
 import os
 import subprocess
 import argparse
+import numpy as np # unnecessary import ?
 
 
 def split_gro_molecules(path, out_path, overwrite=False):

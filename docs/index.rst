@@ -155,6 +155,7 @@ Indices and tables
    ./doc_pages/theory
    ./doc_pages/intramolecular_bonds
    ./doc_pages/electrostatics
+   ./doc_pages/pressure
 
 .. toctree::
    :maxdepth: 2

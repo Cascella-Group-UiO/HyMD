@@ -8,8 +8,8 @@ from .version import __version__
 
 
 class MPIFilterRoot(logging.Filter):
-    """Log output Filter wrapper class for the root MPI rank log
-    """
+    """Log output Filter wrapper class for the root MPI rank log"""
+
     def filter(self, record):
         """Log event message filter
 
@@ -29,8 +29,8 @@ class MPIFilterRoot(logging.Filter):
 
 
 class MPIFilterAll(logging.Filter):
-    """Log output Filter wrapper class for the all-MPI-ranks log
-    """
+    """Log output Filter wrapper class for the all-MPI-ranks log"""
+
     def filter(self, record):
         """Log event message filter
 
@@ -86,6 +86,7 @@ class Logger:
         Default logger object for messages being emitted from all MPI ranks
         simultaneously.
     """
+
     level = None
     log_file = None
     format = " %(levelname)-8s [%(filename)s:%(lineno)d] <%(funcName)s> {rank %(rank)d/%(size)d} %(message)s"  # noqa: E501
@@ -217,7 +218,7 @@ def print_header():
 
     version = f"Version {get_version()}"
     header = banner
-    header += version.center(56)+"\n\n"
+    header += version.center(56) + "\n\n"
     header += " Please read and cite accordingly the references below:"
     header += refs
 
