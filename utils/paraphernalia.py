@@ -1,3 +1,5 @@
+#Determine lower limits of barostat call frequencies by estimating
+#the significance of the box- and position- rescaling factors.
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
