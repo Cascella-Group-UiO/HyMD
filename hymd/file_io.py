@@ -284,7 +284,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="kJ nm mol-1",
+            units="kJ mol-1 nm-1",
         )
     (
         _,
