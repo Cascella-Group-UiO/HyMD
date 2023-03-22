@@ -33,6 +33,8 @@ def test_DefaultNoChi_window_function(
 
     config = _find_unique_names(config, names)
     config.sigma = sigma
+    config.type_charges = [0.] * config.n_types
+
     W = DefaultNoChi(config)
 
     k_ = np.array(
@@ -82,6 +84,7 @@ def test_DefaultNoChi_energy_functional(filter, v_ext, caplog):
     names = np.array([np.string_(x) for x in ["A", "A", "B", "B", "B"]])
     n_types = len(np.unique(types))
     config_conf = _find_unique_names(config_conf, names)
+    config_conf.type_charges = [0.] * config_conf.n_types
 
     W = DefaultNoChi(config_conf)
 
@@ -181,6 +184,7 @@ def test_Hamiltonian_no_chi_gaussian_core(v_ext, caplog):
     )
     names = np.array([np.string_(s) for s in ['A', 'A']])
     config = _find_unique_names(config, names)
+    config.type_charges = [0.] * config.n_types
     r = np.array(
         [[1.50, 0.75, 2.25],
          [2.25, 0.00, 3.00],
@@ -282,6 +286,8 @@ def test_Hamiltonian_with_chi_gaussian_core(v_ext, caplog):
     config.box_size = np.array([15.0, 15.0, 15.0])
     config.mesh_size = np.array([160, 160, 160])
     config.n_particles = 5
+    config.type_charges = [0.] * config.n_types
+
     r = np.array(
         [[1.50, 0.75, 2.25],
          [2.25, 0.00, 3.00],
@@ -366,6 +372,8 @@ def test_get_hamiltonian(config_toml):
     config.unique_names = ["N","P","G","C","W"]
     config.type_to_name_map = {0: 'N', 1: 'P', 2: 'G', 3: 'C', 4: 'W'}
     config.n_types = 5
+    config.type_charges = [0., 0., 0., 0., 0.]
+
 
     config.hamiltonian = "DefaultNoChi"
     hamiltonian = get_hamiltonian(config)

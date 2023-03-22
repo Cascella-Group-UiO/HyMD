@@ -192,3 +192,53 @@ Configuration keywords specifying electrostatics and electrostatic parameters.
    :code:`float` [**optional**, default: :code:`None`]
 
    Specifies the relative dielectric constant of the simulation medium which regulates the strength of the electrostatic interactions. When using helical propensity dihedrals, this keyword must be specified---even if electrostatics are not included with the :code:`coulombtype` keyword.
+
+Pressure keywords
+^^^^^^^^^^^^^^^^^
+Configuration keywords specifying pressure and barostat parameters.
+
+Simulation keywords
+=========================================
+
+:pressure:
+    :code:`boolean` [**optional**, default: :code:`False`]
+
+    Specifies whether or not to calculate total internal pressure vector.
+
+:barostat:
+    :code:`string` [**optional**, default: :code:`None`](options: :code:`isotropic` or :code:`semiisotropic`)
+
+    Specifies whether to apply pressure constraints equally in all 3 Cartesian directions (`isotropic`) or equally in xy and different in z (`semiisotropic`).
+
+:barostat_type:
+    :code:`string` [**optional**, default: :code:`berendsen`](options: :code:`berendsen` or :code:`scr`)
+
+    Specifies the type of barostat to use. :code:`berendsen` is more suitable for equilibration and :code:`scr` for equilibrium data collection.
+
+:n_b:
+    :code:`integer` [**optional**, default: :code:`1`]
+
+    Frequency of barostat call in number of outer rRESPA steps. 
+
+:tau_p:
+   :code:`float` [**optional**, default: :code:`10 tau` if :code:`tau < 0.1` else :code:`1.0`] {units: :math:`\text{ps}=10^{-12}~\text{s}`}
+
+   The time scale of the barostat coupling.
+
+:target_pressure:
+   :code:`array` [:code:`float`] [**optional**, default: :code:1] {units: `bar`}
+
+   Couples the system to an external pressure set to `target_pressure`.
+
+Field keywords
+=========================================
+
+:rho0:
+    :code:`float` [**optional**, default: :code:average density] {units: :math:`\text{nm}^{-3}`}
+
+    Intrinsic parameter corresponding to the specific volume of a coarse-grained particle. Typically: `8.66` 
+
+:a:
+    :code:`float` [:required:`required`] {units: :math:`\text{nm}^{-3}`}
+
+    Calibrated parameter to obtain the correct average density at the target temperature and pressure. Typically: `9.21`

@@ -19,11 +19,11 @@ def nm2a_h5md(h5md_file, overwrite=False, out_path=None):
     for k in f_in.keys():
         f_in.copy(k, f_out)
 
-    box_size = f_in['particles/all/box/edges'][:] * 10.
-    f_out['particles/all/box/edges'][:] = box_size
+    box_size = f_in['particles/all/box/edges/value'][:] * 10.
+    f_out['particles/all/box/edges/value'][:] = box_size
 
     tpos = f_in['particles/all/position/value'][:] * 10.
-    f_out['particles/all/position/value'][:] = np.mod(tpos, box_size)
+    f_out['particles/all/position/value'][:] = tpos
 
     f_in.close()
     f_out.close()

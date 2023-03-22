@@ -1,4 +1,4 @@
-subroutine cbf_d(f, r, box, a, b, r0, k, energy)
+subroutine cbf_d(f, r, box, a, b, r0, k, energy, bond_pr)
     ! Compute two-particle bond forces and energy
     !
     ! Parameters
@@ -33,6 +33,7 @@ subroutine cbf_d(f, r, box, a, b, r0, k, energy)
     real(8), dimension(:),   intent(in)     :: r0
     real(8), dimension(:),   intent(in)     :: k
     real(8),                 intent(out)    :: energy
+    real(8), dimension(3),   intent(out)    :: bond_pr
 
     integer :: ind, aa, bb
     real(8), dimension(3) :: rab, fa
@@ -56,5 +57,6 @@ subroutine cbf_d(f, r, box, a, b, r0, k, energy)
       f(bb, :) = f(bb, :) + fa
 
       energy = energy + 0.5d00 * k(ind) * (rab_norm - r0(ind))**2
+      bond_pr = bond_pr + fa * rab
     end do
 end subroutine

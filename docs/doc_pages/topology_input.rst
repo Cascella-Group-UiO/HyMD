@@ -75,3 +75,10 @@ Optional datasets
    :code:`datatype` [:code:`float32` or :code:`float64`]
 
    The shape represents one particle charge per :code:`N` particles. The data type may be either four or eight byte reals.
+
+:/box:
+   :code:`array` shape [:code:`3`,]
+
+   :code:`datatype` [:code:`float32` or :code:`float64`]
+
+   The shape represents the initial box dimensions in Cartesian coordinates.
