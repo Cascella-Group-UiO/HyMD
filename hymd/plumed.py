@@ -150,9 +150,11 @@ class PlumedBias:
         """
         if self.verbose > 1:
             Logger.rank0.log(logging.INFO, f"Setting PLUMED pointers for step {step}")
-        self.plumed_forces = forces.astype(np.double)
+        self.plumed_forces = forces.ravel(order="C").astype(np.double)
         self.charges = charges.astype(np.double)
-        self.positions = positions.ravel().astype(np.double)  # get C-contiguous array
+        self.positions = positions.ravel(order="C").astype(
+            np.double
+        )  # get C-contiguous array
 
         needs_energy = np.zeros(1, np.intc)
         # plumed_virial = np.zeros((3,3), dtype=np.double)
@@ -208,10 +210,13 @@ class PlumedBias:
             raise RuntimeError(err_str)
 
         # subtract forces to get only the bias' extra force
-        self.plumed_forces -= forces
+        self.plumed_forces -= forces.ravel(order="C")
 
         if self.verbose > 1:
             Logger.rank0.log(logging.INFO, "Done calculating PLUMED forces")
 
         self.ready = False
-        return self.plumed_forces, self.plumed_bias[0]
+        return (
+            np.asfortranarray(np.reshape(self.plumed_forces, forces.shape, order="C")),
+            self.plumed_bias[0],
+        )
