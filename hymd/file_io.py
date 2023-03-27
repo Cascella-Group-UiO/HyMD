@@ -114,7 +114,8 @@ def setup_time_dependent_element(
     value = group.create_dataset("value", (n_frames, *shape), dtype)
 
     if units is not None:
-        group.attrs["units"] = units
+        value.attrs["unit"] = units
+        time.attrs["unit"] = "ps"
     return group, step, time, value
 
 
@@ -286,7 +287,7 @@ def store_static(
             n_frames,
             (config.n_particles, 3),
             dtype,
-            units="kJ nm mol-1",
+            units="kJ mol-1 nm-1",
         )
     (
         _,

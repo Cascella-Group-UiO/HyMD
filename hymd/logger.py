@@ -194,32 +194,33 @@ def print_header():
        /____/ 
     """
 
-    refs = """
- [1] Milano, G.; Kawakatsu, T. Hybrid particle-field molecular dynamics 
- simulations for dense polymer systems. J. Chem. Phys. 2009, 130, 214106.
+    refs_set1 = """
  
- [2] Bore, S. L.; Cascella, M. Hamiltonian and alias-free hybrid 
- particle–field molecular dynamics. J. Chem. Phys. 2020, 153, 094106.
+ [1] Ledum, M.; Sen, S.; Li, X.; Carrer, M.; Feng Y.; Cascella, M.; Bore, S. L. 
+ HylleraasMD: A Domain Decomposition-Based Hybrid Particle-Field Software for Multi-Scale Simulations of Soft Matter. ChemRxiv 2021
+
+ [2] Ledum, M.; Carrer, M.; Sen, S.; Li, X.; Cascella, M.; Bore, S. L. 
+ HyMD: Massively parallel hybrid particle-field molecular dynamics in Python.
  
- [3] Kolli, H. B.; De Nicola, A.; Bore, S. L.; Schäfer, K.; Diezemann, G.;
- Gauss, J.; Kawakatsu, T.;Lu, Z.-Y.; Zhu, Y.-L.; Milano, G.; Cascella, M. 
- Hybrid Particle-Field Molecular DynamicsSimulations of Charged Amphiphiles 
- in an Aqueous Environment. J. Chem. Theory Comput. 2018, 14, 4928–4937.
- 
- [4] Bore, S. L.; Milano, G.; Cascella, M. Hybrid Particle-Field Model for
- Conformational Dynamics of Peptide Chains. J. Chem. Theory Comput. 2018,
- 14, 1120–1130.
- 
- [5] Periole, X.; Cavalli, M.; Marrink, S. J.; Ceruso, M. A. Combining an 
- elastic network with a coarse-grained molecular force field: structure, 
- dynamics, and intermolecular recognition. J. Chem. Theory Comput. 2009, 
- 5.9, 2531-2543.
+ [3] Bore, S. L.; Cascella, M. 
+ Hamiltonian and alias-free hybrid particle–field molecular dynamics. J. Chem. Phys. 2020, 153, 094106.
+
+ [4] Pippig, M. PFFT: An extension of FFTW to massively parallel architectures. SIAM J. Sci. Comput. 2013, 35, C213–C236.
+"""
+    refs_set2 = """
+
+ [5] Sen, S.; Ledum, M.; Bore, S. L.; Cascella, M. 
+ Soft Matter under Pressure: Pushing Particle–Field Molecular Dynamics to the Isobaric Ensemble. ChemRxiv 2023
 """
 
     version = f"Version {get_version()}"
     header = banner
     header += version.center(56) + "\n\n"
-    header += " Please read and cite accordingly the references below:"
-    header += refs
+    #header += " Please read and cite the references below:"
+    header += " PLEASE READ AND CITE THE REFERENCES BELOW:"
+    header += refs_set1
+    #header += " \n\n For constant pressure (NPT) simulations, please cite:"
+    header += " \n\n FOR CONSTANT PRESSURE (NPT) SIMULATIONS, PLEASE CITE:"
+    header += refs_set2
 
     return header
