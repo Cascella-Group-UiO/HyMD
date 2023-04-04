@@ -766,7 +766,6 @@ def update_field_force_q_GPE(
     phi,
     types,
     charges,
-    config_charges,
     phi_q,
     phi_q_fourier,
     phi_eps,
@@ -842,9 +841,6 @@ def update_field_force_q_GPE(
     charges : (N,) numpy.ndarray
         Array of particle charge values for :code:`N` particles. Local for each
         MPI rank.
-    config_charges: (types,) numpy.ndarray
-        Array of particle charge values for each type ID. The same across
-        MPI ranks.
     phi_q : pmesh.pm.RealField
         Pmesh :code:`RealField` object for storing calculated discretized
         charge density density values on the computational grid. Pre-allocated,
@@ -1086,7 +1082,7 @@ def update_field_force_q_GPE(
 
     for t_ in range(config.n_types):
         Vbar_elec[t_] = (
-            config_charges[t_] * psi
+            config.type_charges[t_] * psi
             - (0.5 / eps0_inv)
             * (config.dielectric_type[t_] - phi_eps)
             * elec_field_contrib
