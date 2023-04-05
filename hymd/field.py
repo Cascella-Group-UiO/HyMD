@@ -42,6 +42,7 @@ def initialize_pm(pmesh, config, comm=MPI.COMM_WORLD):
             message=r"Creating an ndarray from ragged nested sequences",
         )
         # The first argument of ParticleMesh has to be a tuple
+        print("======== box", config.box_size)
         pm = pmesh.ParticleMesh(
             config.mesh_size, BoxSize=config.box_size, dtype=pmeshtype, comm=comm
         )
