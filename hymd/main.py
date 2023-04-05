@@ -126,7 +126,7 @@ def main():
     if config.barostat_type == "berendsen":
         from .barostat import isotropic, semiisotropic
     elif config.barostat_type == "scr":
-        from .barostat_bussi import isotropic, semiisotropic
+        from .barostat_scr import isotropic, semiisotropic
 
     # dielectric from toml
     if config.coulombtype == "PIC_Spectral_GPE":
@@ -365,7 +365,6 @@ def main():
                 phi,
                 types,
                 charges,
-                config_charges,
                 phi_q,
                 phi_q_fourier,
                 phi_eps,
@@ -937,7 +936,6 @@ def main():
                         phi,
                         types,
                         charges,
-                        config_charges,
                         phi_q,
                         phi_q_fourier,
                         phi_eps,
@@ -1376,7 +1374,6 @@ def main():
                         phi,
                         types,
                         charges,
-                        config_charges,
                         phi_q,
                         phi_q_fourier,
                         phi_eps,

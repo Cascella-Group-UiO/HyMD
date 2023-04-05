@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import tables
 import MDAnalysis as mda
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors
 import itertools
@@ -11,9 +12,10 @@ import copy
 import argparse
 import warnings
 from sklearn import metrics as sklm
+import shutil
+import h5py
 
-
-def find_species_indices(names, species_name):
+def find_species_indices(names=None, species_name=None, indexrange=None):
     """Calculate the index of each particle of species `species_name` in a
     topology HDF5 file or a MDAnalysis trajectory
 
@@ -34,7 +36,9 @@ def find_species_indices(names, species_name):
     indices : numpy.ndarray
         Indices of particles with names matching `species_name`.
     """
-    if isinstance(names, np.ndarray):
+    if isinstance(indexrange, np.ndarray):
+        indices = np.arange(indexrange[0], indexrange[1]+1)
+    elif isinstance(names, np.ndarray):
         indices = np.where(names == np.string_(species_name))
     elif isinstance(names, mda.Universe):
         indices = names.atoms.select_atoms(f"type {species_name}").indices
@@ -149,14 +153,19 @@ def parse_molecule_species(names, molecules=None):
             )
         ]
     )
-    toy_lipid = (
+    tg = (
         [
-            np.string_("type:" + s) for s in ("N", "C", "C", "", "", "", "",
-                                              "", "", "", "", "", "", "",)
+            np.string_("type:" + s) for s in ("C", "G", "G", "G",  # head
+                                              "C", "C", "C", "C",  # tail 1
+                                              "C", "C", "C", "C",  # tail 2
+                                              "C", "C", "C", "C") #tail 3
         ],
         [
             "name:" + s for s in (
-                "GL0", "C1A", "C2A",
+                "TC", "TGL1", "TGL2", "TGL3",  # head
+                "TC1A", "TC2A", "TC3A", "TC4A",  # tail 1
+                "TC1B", "TC2B", "TC3B", "TC4B",  # tail 2
+                "TC1C", "TC2C", "TC3C", "TC4C",  # tail 2
             )
         ]
     )
@@ -173,7 +182,7 @@ def parse_molecule_species(names, molecules=None):
     )
 
     species = {}
-    for d in (dppc, dmpc, dspc, dopc, popg, toy_lipid, w):
+    for d in (dppc, dmpc, dspc, dopc, popg, tg, w):
         t = {s.decode("UTF-8"): None for s in d[0] if s != b"type:"}
         n = {s: None for s in d[1]}
         species = {**species, **{**t, **n}}
@@ -183,7 +192,7 @@ def parse_molecule_species(names, molecules=None):
         "lipid:DSPC": None,
         "lipid:DOPC": None,
         "lipid:POPG": None,
-        "lipid:toy": None,
+        "lipid:TG": None,
         "solvent": None,
         "all": None,
     }}
@@ -265,10 +274,23 @@ def parse_molecule_species(names, molecules=None):
                 add_(species, ("name:C1B", "type:C", "lipid:POPG"), mol[0][7])
                 add_(species, ("name:C2B", "type:C", "lipid:POPG"), mol[0][8])
                 add_(species, ("name:C3B", "type:C", "lipid:POPG"), mol[0][9])
-            elif np.array_equal(n, toy_lipid[0][:n_mol]) and n_mol == 3:
-                add_(species, ("name:GL0", "type:N", "lipid:toy"), mol[0][0])
-                add_(species, ("name:C1A", "type:C", "lipid:toy"), mol[0][1])
-                add_(species, ("name:C2A", "type:C", "lipid:toy"), mol[0][2])
+            elif np.array_equal(n, tg[0][:n_mol]) and n_mol == 16:
+                add_(species, ("name:TC", "type:C", "lipid:TG"), mol[0][0])
+                add_(species, ("name:TGL1", "type:G", "lipid:TG"), mol[0][1])
+                add_(species, ("name:TGL2", "type:G", "lipid:TG"), mol[0][2])
+                add_(species, ("name:TGL3", "type:G", "lipid:TG"), mol[0][3])
+                add_(species, ("name:TC1A", "type:C", "lipid:TG"), mol[0][4])
+                add_(species, ("name:TC2A", "type:C", "lipid:TG"), mol[0][5])
+                add_(species, ("name:TC3A", "type:C", "lipid:TG"), mol[0][6])
+                add_(species, ("name:TC4A", "type:C", "lipid:TG"), mol[0][7])
+                add_(species, ("name:TC1B", "type:C", "lipid:TG"), mol[0][8])
+                add_(species, ("name:TC2B", "type:C", "lipid:TG"), mol[0][9])
+                add_(species, ("name:TC3B", "type:C", "lipid:TG"), mol[0][10])
+                add_(species, ("name:TC4B", "type:C", "lipid:TG"), mol[0][11])
+                add_(species, ("name:TC1C", "type:C", "lipid:TG"), mol[0][12])
+                add_(species, ("name:TC2C", "type:C", "lipid:TG"), mol[0][13])
+                add_(species, ("name:TC3C", "type:C", "lipid:TG"), mol[0][14])
+                add_(species, ("name:TC4C", "type:C", "lipid:TG"), mol[0][15])
             elif np.array_equal(n, w[0][:n_mol]) and n_mol == 1:
                 add_(species, ("name:W", "type:W", "solvent"), mol[0][0])
             else:
@@ -394,6 +416,7 @@ def load_hymd_simulation(topology_file_path, trajectory_file_path):
     trajectory_file_hdf5 : tables.file
         In-memory representation of HDF5 file `trajectory_file_path`.
     """
+    print(topology_file_path)
     topology_file_hdf5 = tables.open_file(
         topology_file_path, driver="H5FD_CORE",
     )
@@ -433,10 +456,10 @@ def load_gromacs_simulation(topology_file_path, trajectory_file_path):
 def compute_centered_histogram(
     centers, positions, simulation_box, species, axis, bins=10, density=False,
     symmetrize=False, skip_first=0, skip=1, frames=None, time=None,
-    file_names="<unknown file>", silent=False, range_=None,
+    file_names="<unknown file>", silent=False, range_=None, xyrange=None
 ):
     """Calculate the density histogram along a direction of positions at
-    specified indices realative to a given simlulation box center
+    specified indices relative to a given simlulation box center
 
     Calculates the average histogram of `positions` along direction `axis`
     centered at position `center` in the `simulation_box`. Only positions
@@ -479,7 +502,7 @@ def compute_centered_histogram(
     time : (M,) np.ndarray, optional
         Array of times for each frame in the simulation.
     range_ : float, optional
-        X-axis range used to compute the histogram.
+        axis range of `axis` used to compute the histogram.
     file_names : str, optional
         Name of the files containing the trajectory data for printing to
         terminal.
@@ -513,20 +536,25 @@ def compute_centered_histogram(
         s: np.zeros(shape=(bins,), dtype=np.float64) for s in species
     }
 
-    def compute_histogram_single(p, c, b, s, h, d, bins, box, axis_range):
-        p += 0.5 * b - c
-        p[p > b] -= b
-        p[p < 0.0] += b
+    def compute_histogram_single(p, c, b, s, h, d, bins, box, axis_range, xyrange):
+        p = shift_positions(p, c, b)
         for ss, ind in s.items():
-            hist, _ = np.histogram(p[ind], bins=bins, density=d)
             if d:
                 scaling_factor = 1.0
             else:
                 box[axis, axis] = axis_range
+                if isinstance(xyrange, list):
+                    if xyrange[0]<box[0,0]: box[0, 0] = xyrange[0]
+                    if xyrange[1]<box[1,1]: box[1, 1] = xyrange[1]
                 scaling_factor = (
                     np.prod(np.diag(box)) / len(bins)
                 )
+            hist, bb = np.histogram(p[ind], bins=bins, density=d)
             h[ss] += hist / scaling_factor
+            #h[ss] += hist / np.sum(hist)
+            if ss=='name:TGL3':
+                #print('ss:',ss,' hist:',hist)#*np.mean(np.diff(bb)))
+                pass
         return h
 
     if not silent:
@@ -536,26 +564,40 @@ def compute_centered_histogram(
         L = positions.shape[0]
         M = min(L - 1, skip_first + frames * skip) if frames is not None else L
         for time_step in range(skip_first, M, skip):
-            p = positions[time_step, :, axis]
-
             box_length = simulation_box[time_step, ...]
             box_length_axis = simulation_box[time_step, axis, axis]
             box_mid = 0.5 * box_length_axis
-            x_start = box_mid - 0.5 * range_
-            x_end = box_mid + 0.5 * range_
-            range__ = (x_start, x_end)
-            axis_range = x_end - x_start
-
+            s = copy.deepcopy(species)
+            if isinstance(xyrange, list):
+                x_start = box_mid - 0.5 * xyrange[0]
+                x_end = box_mid + 0.5 * xyrange[0]
+                y_start = box_mid - 0.5 * xyrange[1]
+                y_end = box_mid + 0.5 * xyrange[1]
+                selected_particles = np.where(
+                        (positions[time_step,:,0]>x_start) & 
+                        (positions[time_step,:,0]<x_end) & 
+                        (positions[time_step,:,1]>y_start) & 
+                        (positions[time_step,:,1]<y_end) 
+                        )[0]
+                for ss, ind in species.items():
+                    s[ss] = np.intersect1d(species[ss], selected_particles)
+            p = positions[time_step, :, axis]
+            if range_ is not None:
+                x_start = box_mid - 0.5 * range_
+                x_end = box_mid + 0.5 * range_
+                range__ = (x_start, x_end)
+                axis_range = x_end - x_start
+            else:
+                range__ = (0.0, box_length_axis)
             histogram_bins = np.histogram_bin_edges(
                 np.zeros(shape=(1,)), bins=bins, range=range__,
             )
             histograms = compute_histogram_single(
-                p, centers[time_step], box_length_axis, species, histograms,
-                density, histogram_bins, box_length, axis_range,
+                p, centers[time_step], box_length_axis, s, histograms,
+                density, histogram_bins, box_length, axis_range, xyrange
             )
             last_frame = time_step
             H += 1
-
         if not silent:
             if time[skip_first] > 1000.0:
                 t0 = time[skip_first] / 1000.0
@@ -585,18 +627,21 @@ def compute_centered_histogram(
 
             box_length = simulation_box[time_step, ...] / 10.0
             box_length_axis = simulation_box[time_step, axis, axis] / 10.0
-            box_mid = 0.5 * box_length_axis
-            x_start = box_mid - 0.5 * range_
-            x_end = box_mid + 0.5 * range_
-            range__ = (x_start, x_end)
-            axis_range = x_end - x_start
-
+            if range_ is not None:
+                box_mid = 0.5 * box_length_axis
+                x_start = box_mid - 0.5 * range_
+                x_end = box_mid + 0.5 * range_
+                range__ = (x_start, x_end)
+                axis_range = x_end - x_start
+            else:
+                range__ = (0.0, box_length_axis)
             histogram_bins = np.histogram_bin_edges(
                 np.zeros(shape=(1,)), bins=bins, range=range__,
             )
             histograms = compute_histogram_single(
                 p, centers[time_step] / 10.0, box_length_axis, species,
                 histograms, density, histogram_bins, box_length, axis_range,
+                xyrange,
             )
             last_frame = time_step
             H += 1
@@ -637,10 +682,12 @@ def compute_centered_histogram(
 
 
 def plot_histogram(
-    bin_midpoints, histogram, figwidth=4.0, figheight=3.0, show=True,
+    bin_midpoints, histogram, figwidth=13.0, figheight=10, show=True,
     ignore=None, one_side=False, xlim=None, ylim=None, vmd_colors=False,
     remove_xlabel=False, remove_ylabel=False, remove_xticks=False,
-    remove_yticks=False, tight=False, no_marker=None, remove_legend=False,
+    remove_yticks=False, tight=False, no_marker=None, linestyle=None, remove_legend=False,
+    fontsize=None, box_scale=None, out=False,
+    labels=[], fig=None, ax=None,
 ):
     """Visualize a histogram
 
@@ -678,9 +725,10 @@ def plot_histogram(
         Do not display tick labels on the y axis.
     tight : bool, optional
         Use matplotlib tight_layout for the figure.
-    vmd_colors : bool, optional
-        If True, plot the bead type profiles using the same color map as used
+    vmd_colors : str, optional
+        "default": plot the bead type profiles using the same color map as used
         by default in VMD for that corresponding bead name.
+        "custom_dppc": ....color map customized for dppc on vmd
     no_marker : bool, optional
         If True, do not show markers on lines in the plot.
     remove_legend : bool, optional
@@ -693,16 +741,27 @@ def plot_histogram(
     ax : matplotlib.pyplot.Axes
         Matplotlib axes used in the plot.
     """
-    fig, ax = plt.subplots(1, 1)
-    fig.set_figwidth(figwidth)
-    fig.set_figheight(figheight)
+    c = {'blue':'#001C7F',
+       'green':'#017517',
+       'golden':'#B8860B',
+       'purple':'#633974',
+       'red':'#8C0900',
+       'teal':'#006374',
+       'brown':'#573D1C',
+      'orange':'#DC901D'}
+    matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler('color',c.values())
+    if ax is None:
+        #ax = plt.figure().add_subplot(111)
+        fig, ax = plt.subplots(1, 1)
+        fig.set_figwidth(figwidth)
+        fig.set_figheight(figheight)
 
-    colors = matplotlib.colors.TABLEAU_COLORS
+    #colors = matplotlib.colors.TABLEAU_COLORS
     markers = (
         ".", "o", "v", "^", ">", "<", "s", "p", "x", "D", "H", "1", "2", "3",
     )
-    colors_cycle = itertools.cycle(colors)
-    markers_cycle = itertools.cycle(markers)
+    colors_cycle = itertools.cycle(c.values())
+    #colors_cycle = itertools.cycle(colors)
 
     ignore = [re.compile(i) for i in ignore]
     keys = list(histogram.keys())
@@ -716,12 +775,13 @@ def plot_histogram(
         bin_midpoints -= np.mean(bin_midpoints[N//2 - 1:N//2 + 1])
     else:
         bin_midpoints -= bin_midpoints[N//2]
-
+    if not linestyle:
+        linestyle = 'solid'
     for s in keys:
         label = s
         marker = next(markers_cycle) if len(histogram[s]) < 26 else None
 
-        if vmd_colors and "type" in s:
+        if vmd_colors=="default" and "type" in s:
             if s == "type:N":
                 color = (0.0, 0.0, 1.0)  # blue
                 label = "N"
@@ -742,14 +802,42 @@ def plot_histogram(
                 color = (0.0, 0.0, 0.0)  # black
                 label = "W"
                 marker = "s"
-            elif s == "type:D":
-                color = (0.3, 0.8, 0.8)
-                label = "D"
-                marker = "<"
-            elif s == "type:L":
-                color = (0.3, 0.3, 0.3)
-                label = "L"
-                marker = ">"
+        elif vmd_colors=="custom_dppc" and "type" in s:
+            if s == "type:N":
+                color = (0.711, 0.581, 0.139)  # yellow
+                label = "N"
+                marker = "o"
+            elif s == "type:C":
+                color = (0.537, 0.537, 0.537)  # gray
+                label = "C"
+                marker = "x"
+            elif s == "type:P":
+                color = (0.567, 0.291, 0.0)  # ochre
+                label = "P"
+                marker = "^"
+            elif s == "type:G":
+                #color = (0.672, 0.0, 0.0)  # red3
+                color = '#da0e00' # bright red
+                label = "G"
+                marker = "v"
+            elif s == "type:W":
+                #color = (0.296, 0.792, 0.910)  # blue2
+                color = (0, 0.582, 0.910)  # deep bright blue
+                label = "W"
+                marker = "s"
+        elif vmd_colors=="custom_dppc" and "name" in s:
+            if s == "name:GL2":
+                color = (0.672, 0.0, 0.0)  # red3
+                label = "DPPC"
+                marker = "o"
+                labels.append(label)
+            elif s == "name:TGL3":
+                histogram[s] *= 2 #scaling up by 2 for clarity
+                #color = (0.107, 0.211, 0.255)  # blue2
+                color = (0.296, 0.792, 0.910) # blue2
+                label = "TG"
+                marker = "o"
+                labels.append(label)
         else:
             color = next(colors_cycle)
 
@@ -757,24 +845,31 @@ def plot_histogram(
             if no_marker:
                 marker = ""
 
+        if box_scale:
+            xaxis = np.linspace(-int(box_scale)/2, int(box_scale)/2, len(bin_midpoints))
+        else:
+            xaxis = bin_midpoints
+
         ax.plot(
-            bin_midpoints, histogram[s], color=color, label=label,
-            marker=marker,
+            xaxis, histogram[s], color=color, label=label,
+            marker=marker, linestyle=linestyle, linewidth = 3.4,
         )
 
-    fontsize = 15
-    plt.subplots_adjust(bottom=0.2, left=0.22, right=0.97, top=0.97)
+    #plt.subplots_adjust(bottom=0.2, left=0.22, right=0.97, top=0.97)
 
     if not remove_legend:
-        ax.legend(loc="best", fontsize=fontsize, framealpha=0)
+        #ax.legend(loc=(0.03,0.25), fontsize=fontsize, framealpha=0)
+        ax.legend(loc=(0.003,0.25), fontsize=fontsize, framealpha=0)
 
-    ax.tick_params(axis='both', which='major', labelsize=15)
-    ax.tick_params(axis='both', which='minor', labelsize=15)
+    ax.tick_params(axis='both', which='major', labelsize=fontsize)
+    ax.tick_params(axis='both', which='minor', labelsize=fontsize)
 
     if not remove_xlabel:
-        ax.set_xlabel("Position along normal, nm", fontsize=fontsize)
+        ax.set_xlabel("Position along normal "+r"$\mathrm{(nm)}$", fontsize=fontsize)
+        # ax.xaxis.label.set_color("white")
     if not remove_ylabel:
-        ax.set_ylabel("Number density, nm⁻³", fontsize=fontsize)
+        ax.set_ylabel("Number density "+r"$\mathrm{(nm^{-3})}$", fontsize=fontsize)
+        # ax.yaxis.label.set_color("white")
 
     if remove_xticks:
         # https://stackoverflow.com/a/4762002/4179419
@@ -795,15 +890,10 @@ def plot_histogram(
     if tight:
         fig.set_tight_layout(True)
 
-    if show:
-        plt.show()
-
-    return fig, ax
-
 
 def compute_histogram_fitness(
     bin_midpoints, histogram_reference, histogram_test, ignore=None,
-    resolution="names", area_per_lipid_test=None, area_per_lipid_ref=None,
+    resolution="names",
 ):
     """Computes various metrics of the similarity between two histograms
 
@@ -879,6 +969,13 @@ def compute_histogram_fitness(
                 ), 2,
             ).T
             print("Area per lipid: ", y[0])
+            """
+            y_true = np.tile(
+                np.array(  # area per lipid in Å
+                    [100 * np.mean(area_per_lipid_ref)], dtype=np.float64
+                ), 2,
+            ).T
+            """
             y_true = np.array([63.0, 63.0], dtype=np.float64)
 
         else:
@@ -907,8 +1004,6 @@ def compute_histogram_fitness(
                 where=(np.abs(y_true) + np.abs(y)) > np.finfo(np.float64).eps,
             )
         )
-        if s == "area_per_lipid":
-            accuracy[s]["SMAPE"] = accuracy[s]["MSE"]
 
     if resolution == "names":
         total_re = re.compile("name:.*")
@@ -1050,8 +1145,29 @@ def action_compute_histogram(parser, ref=False):
         top_file_hdf5, traj_file_hdf5 = load_hymd_simulation(
             top_path, traj_path
         )
+#        simulation_box = (
+#            traj_file_hdf5.root.particles.all.box.edges.value.read()
+#        )
+#
+#        simulation_box = (
+#            np.array([list(val.diagonal()) for val in simulation_box])
+#        )
+#
         names = top_file_hdf5.root.names.read()
         molecules = top_file_hdf5.root.molecules.read()
+#        try:
+#            #still allowing old format
+#            #if box exists as .../box.edges.value (timeframes,3,3)
+#            #using just the first frame value:
+#            simulation_box = np.array([list(val.diagonal()) for val in  simulation_box])
+#        except:
+#            #if box exists as .../box.edges (3,)
+#            warnings.warn("------------------ \
+#                    Using old box format (3,). Soon to be deprecated. \
+#                    Not valid for NPT runs."
+#                    )
+#        first_frame = parser.skip_first+1
+#        last_frame = parser.skip_first+1+parser.frames
         positions = traj_file_hdf5.root.particles.all.position.value.read()
         times = traj_file_hdf5.root.particles.all.position.time.read()
 
@@ -1084,7 +1200,7 @@ def action_compute_histogram(parser, ref=False):
             skip_first=parser.skip_first, frames=parser.frames,
             time=times, file_names=(
                 os.path.abspath(top_path) + ", " + os.path.abspath(traj_path)
-            ), range_=parser.range,
+            ), range_=parser.range, xyrange=parser.xyrange,
         )
         top_file_hdf5.close()
         traj_file_hdf5.close()
@@ -1135,8 +1251,33 @@ def action_compute_histogram(parser, ref=False):
             area_per_lipid = None
     return histogram_bins, histograms, area_per_lipid
 
+def action_multiplot(parser):
+    samiran_signature = plt.style.use('samiran-signature')
+    #using matplotlibstyle: /Users/samiransen23/anaconda3/envs/py38/lib/python3.8/site-packages/matplotlib/mpl-data/stylelib/samiran-signature.mplstyle
+    fig, ax = plt.subplots(1, 1)
+    fig.set_size_inches(15.6, 8.0)
+    linestyles = (
+        "solid", "dashed", "dotted",
+    )
+    linestyles_cycle = itertools.cycle(linestyles)
+    fontsize = 32
+    labels = []
+    for i in range(len(parser.traj)):
+        print(parser.traj[i], )
+        linestyle = next(linestyles_cycle) if len(parser.traj) < 4 else None
+        parser_single = copy.deepcopy(parser)
+        parser_single.traj = parser_single.traj[i]
+        parser_single.top = parser_single.top[i]
+        parser_single.skip_first = parser_single.skip_first[i]
+        parser_single.frames = parser_single.frames[i]
+        action_plot(parser_single, linestyle=linestyle, remove_legend=True, fontsize=fontsize,
+                labels=labels, fig=fig, ax=ax)
+    ax.legend(labels[:len(parser.traj)], loc='best', fontsize=fontsize, framealpha=0)
+    #ax.legend(loc=(0.03,0.45), fontsize=fontsize, framealpha=0)
 
-def action_plot(parser):
+
+def action_plot(parser, linestyle=None, remove_legend=False, fontsize=34,
+        labels=[], fig=None, ax=None,):
     """Execute the 'plot' action of hymd_optimize
 
     Parameters
@@ -1154,22 +1295,23 @@ def action_plot(parser):
     histogram_bins, histograms, area_per_lipid = action_compute_histogram(
         parser
     )
-    fig, ax = plot_histogram(
+
+    plot_histogram(
         histogram_bins, histograms, ignore=parser.ignore,
         show=not parser.no_show, one_side=parser.one_side, xlim=parser.xlim,
         ylim=parser.ylim, vmd_colors=parser.vmd_colors,
         remove_xlabel=parser.remove_xlabel, remove_ylabel=parser.remove_ylabel,
         remove_yticks=parser.remove_yticks, remove_xticks=parser.remove_xticks,
-        tight=parser.tight, no_marker=parser.no_marker,
-        remove_legend=parser.remove_legend,
+        tight=parser.tight, no_marker=parser.no_marker, linestyle=linestyle,
+        remove_legend=remove_legend,
+        fontsize=fontsize, box_scale=parser.box_scale, out=parser.out,
+        labels=labels, fig=fig, ax=ax,
     )
     """
     import pickle
     pickle.dump(histogram_bins, open("bins_tmp.p", "wb",),)
     pickle.dump(histograms, open("hist_tmp.p", "wb",),)
     """
-    return fig, ax
-
 
 def action_fitness(parser):
     """Execute the 'fitness' action of hymd_optimize
@@ -1356,6 +1498,103 @@ def action_fitness_range(parser, figwidth=4.0, figheight=3.0, show=True):
 
     return fitness_range
 
+def shift_positions(p,c,b):
+    p_new = p + 0.5 * b - c
+    p_new[p_new > b] -= b
+    p_new[p_new < 0.0] += b
+    return p_new
+
+def action_centre_sim(parser):
+    """Execute the 'centre-sim' action of hymd_optimize
+    Parameters
+    ----------
+    parser : Argparse.Namespace
+        Parsed command line arguments given to hymd_optimize.
+    """
+
+    def write_sim_new(p, parser):
+        #make copy of trajectory
+        if parser.out is None:
+            parser.out = os.path.join(os.path.abspath(os.path.dirname(parser.traj)),
+                                    #os.path.split(parser.traj)[-1] + 
+                                    'sim_centred.h5')
+        src = os.path.abspath(parser.traj[0])
+        shutil.copyfile(src, parser.out)
+        f = h5py.File(parser.out,'r+')
+        #rewrite positions/value with p
+        f['particles/all/position/value'][:, :, axis] = p[:, :, axis]
+        f.close()
+
+    axis = parser.axis
+    #assuming only 1 file is sent at a time
+    traj_path = parser.traj[0]
+    top_path = parser.top[0]
+    skip_first = parser.skip_first[0]
+    frames = parser.frames[0]
+
+    skip = parser.skip
+
+    top_file_hdf5, traj_file_hdf5 = load_hymd_simulation(
+        top_path, traj_path
+    )
+    names = top_file_hdf5.root.names.read()
+    molecules = top_file_hdf5.root.molecules.read()
+    simulation_box_group = traj_file_hdf5.root.particles.all.box
+    if isinstance(simulation_box_group.edges, tables.Leaf):
+        simulation_box = np.zeros(
+            shape=(positions.shape[0], 3, 3,), dtype=np.float64,
+        )
+        for i in range(positions.shape[0]):
+            simulation_box[i, ...] = np.diag(simulation_box_group.edges[:])
+    elif isinstance(simulation_box_group.edges, tables.group.Group):
+        simulation_box = simulation_box_group.edges.value[...]
+    else:
+        raise TypeError(
+            f"Expected /root/particles/all/box/edges to be either a "
+            f"h5py.Group or a h5py.Dataset, not "
+            f"{type(simulation_box_group.edges)}"
+        )
+    #try:
+    #    #if box exists as .../box.edges.value (timeframes,3,3)
+    #    simulation_box = np.array([list(val.diagonal()) for val in  simulation_box])
+    #except:
+    #    #if box exists as .../box.edges (3,)
+    #    warnings.warn("""
+    #            Using old box format (3,). Soon to be deprecated.
+    #            """
+    #            )
+    first_frame = skip_first+1
+    last_frame = skip_first+1+frames
+    positions = traj_file_hdf5.root.particles.all.position.value.read()
+    times = traj_file_hdf5.root.particles.all.position.time.read()
+    top_file_hdf5.close()
+    traj_file_hdf5.close()
+    if isinstance(parser.indexrange, list):
+        indexrange = np.array(parser.indexrange)
+        custom_indices = find_species_indices(indexrange=indexrange)
+        carbon_center_of_mass = calculate_center_of_mass(
+            positions, simulation_box, custom_indices, axis,
+        )
+    else:
+        carbon_indices = find_species_indices(names, "C")
+        carbon_center_of_mass = calculate_center_of_mass(
+            positions, simulation_box, carbon_indices, axis,
+        )
+    species = parse_molecule_species(names, molecules=molecules)
+
+    H = 0
+    L = positions.shape[0]
+    M = min(L - 1, skip_first + frames * skip) if frames is not None else (L-1)
+    positions_new = np.copy(positions)
+    for time_step in range(skip_first, M+1, skip):
+        p = positions[time_step, :, axis]
+        box_length = simulation_box[time_step, ...]
+        box_length_axis = simulation_box[time_step, axis, axis]
+        positions_new[time_step, :, axis] = shift_positions(
+                p,
+                carbon_center_of_mass[time_step],
+                box_length_axis)
+    write_sim_new(positions_new, parser)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -1365,7 +1604,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "action", type=str, default=None, help="action to perform",
-        choices=["plot", "fitness", "fitness-range"],
+        choices=["plot", "fitness", "fitness-range", "centre-sim"],
     )
     parser.add_argument(
         "--out", type=str, default=None, metavar="file name",
@@ -1404,20 +1643,22 @@ if __name__ == '__main__':
         help="refence topology file path (.gro)",
     )
     parser.add_argument(
-        "--traj", type=str, default=None,
+        #"--traj", type=str, default=None,
+        "--traj", nargs='+', default=None,
         help="test trajectory file path (.trr or .H5MD)",
     )
     parser.add_argument(
-        "--top", type=str, default=None,
-        help="test topology file path (.gro or HyMD-input .H5)",
+        #"--top", type=str, default=None,
+        "--top", nargs='+', default=None,
+        help="test topology file path (.gro or HyMD-input .H5)"
     )
     parser.add_argument(
         "--bins", type=int, default=25,
-        help="number of bins to use in the histograms and histogram plots",
+        help="number of bins to use in the histograms and histogram plots"
     )
     parser.add_argument(
         "--density", action="store_true",
-        help="compute density distribution histograms, not the number density",
+        help="compute density distribution histograms, not the number density"
     )
     parser.add_argument(
         "--symmetrize", action="store_true", default=False,
@@ -1437,11 +1678,11 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "--axis", type=int, choices=[0, 1, 2], default=2,
-        help="the direction in which to calculate the histogram(s)",
+        help="the direction in which to calculate the histogram(s)"
     )
     parser.add_argument(
         "--axis-ref", type=int, choices=[0, 1, 2], default=None,
-        help="the direction in which to calculate the reference histogram(s)",
+        help="the direction in which to calculate the reference histogram(s)"
     )
     parser.add_argument(
         "--ignore", default=[], nargs="+",
@@ -1488,46 +1729,63 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "--skip", type=int, default=1,
-        help="consider only every N frames when calculating the histograms",
+        help="consider only every N frames when calculating the histograms"
     )
     parser.add_argument(
-        "--skip-first", type=int, default=0,
-        help="skip the first N frames when calculating the histograms",
+        #"--skip-first", type=int, default=0,
+        "--skip-first", nargs='+', type=int, default=0,
+        help="skip the first N frames when calculating the histograms"
     )
     parser.add_argument(
-        "--frames", type=int, default=None,
+        #"--frames", type=int, default=None,
+        "--frames", nargs='+', type=int, default=None,
         help=(
             "Only consider N frames, starting at --skip_first (with step "
             "size --skip)."
-        ),
+        )
     )
     parser.add_argument(
         "--skip-ref", type=int, default=1,
         help=(
             "consider only every N reference frames when calculating the "
             "histograms"
-        ),
+        )
     )
     parser.add_argument(
         "--skip-first-ref", type=int, default=0,
         help=(
             "skip the first N reference frames when calculating the histograms"
-        ),
+        )
     )
     parser.add_argument(
         "--frames-ref", type=int, default=None,
         help=(
             "Only consider N reference frames, starting at --skip_first (with "
             "step size --skip)."
-        ),
+        )
     )
     parser.add_argument(
         "--metric", choices=["MSE", "RMSE", "MAE", "MAPE", "SMAPE", "R2"],
         default="R2", help="which fitness metric to use in the fitness-range",
     )
     parser.add_argument(
-        "--vmd-colors", "--vmdcolors", "-vmdcolors", action="store_true",
-        default=False, help="use the same colors for beads as default in vmd",
+        "--vmd-colors", "--vmdcolors", "-vmdcolors", type=str,
+        default=None, help="use the colors for beads as in vmd. See plot_histogram function\
+                for more details",
+    )
+    parser.add_argument(
+            "--box_scale", type=float, default=None,
+            help='plot profiles with box length in z scaled to this value'
+    )
+    parser.add_argument(
+            "--indexrange", type=int, default=None, nargs="+",
+            help='choose custom indices for where to center mass. Eg: 12288 13183'
+    )
+    parser.add_argument(
+            "--xyrange", type=float, default=None, nargs="+",
+            help='crop box in xy to compute histogram.\
+                    Format: x_range y_range. Eg: 16 18 means the box will be\
+                    cropped in x and y at centre+/-8 and centre +/-9 respectively'
     )
 
     args = parser.parse_args()
@@ -1546,18 +1804,48 @@ if __name__ == '__main__':
             warnings.warn(
                 "No --out path specified and, not saving plot."
             )
-        fig, _ = action_plot(args)
-        if args.out is not None:
-            if args.force and os.path.exists(args.out):
-                print(f"Saving figure to {args.out} (overwriting existing).")
-            elif os.path.exists(args.out):
-                raise FileExistsError(
-                    f"The file {args.out} already exists. To force overwrite, "
-                    "use the -f option."
-                )
+        if 'names' in args.ignore:
+            args.ignore.remove('names')
+            for s in ["NC3", "PO4", "GL1", "GL2",  # head
+                     "C1A", "C2A", "C3A", "C4A",  # tail 1
+                     "C1B", "C2B", "C3B", "C4B",  # tail 2
+                     "W"                          #water
+                     ]:
+                args.ignore.append('name:'+s)
+        if 'types' in args.ignore:
+            args.ignore.remove('types')
+            for s in ["N", "P", "G", "C",  # lipid
+                    "W",                           #water
+                     ]:
+                args.ignore.append('type:'+s)
+        if 'name:TC*' in args.ignore:
+            args.ignore.remove('name:TC*')
+            for s in ["TC1A", "TC2A", "TC3A", "TC4A",
+                    "TC1B", "TC2B", "TC3B", "TC4B",
+                    "TC1C", "TC2C", "TC3C", "TC4C",
+                    "TC",
+                     ]:
+                args.ignore.append('name:'+s)
+        if 'name:C*' in args.ignore:
+            args.ignore.remove('name:C*')
+            for s in ["C1A", "C2A", "C3A", "C4A",
+                    "C1B", "C2B", "C3B", "C4B",
+                     ]:
+                args.ignore.append('name:'+s)
+        #if isinstance(args.traj, str):
+        #    action_plot(args)
+        #elif isinstance(args.traj, list):
+        #    action_multiplot(args)
+        action_multiplot(args)
+        if not args.no_show:
+            plt.show()
+        else:
+            if args.out:
+                out = os.path.abspath(args.out)
             else:
-                print(f"Saving figure to {args.out}.")
-            fig.savefig(args.out, format="pdf", transparent=True)
+                out = os.getcwd()+'/fig_temp.pdf'
+            plt.savefig(out, format='pdf', bbox_inches='tight')
+            print('Saving fig as: ',out)
 
     elif args.action == "fitness":
         if (args.traj is None or args.top is None or
@@ -1616,3 +1904,6 @@ if __name__ == '__main__':
                 print(f"Saving fitness range to {args.out}.")
                 with open(args.out, "wb") as out_file:
                     pickle.dump(fitness_range, out_file)
+    elif args.action == 'centre-sim':
+        action_centre_sim(args)
+

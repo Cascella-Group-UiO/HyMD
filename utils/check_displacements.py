@@ -3,7 +3,8 @@ import sys
 import h5py
 
 """
-Currently, HyMD can have the error of sending random particles to the origin in specific frames.
+A possible error that can arise due to bad allocation of cores wrt system size, 
+is sending random particles to the origin in specific frames.
 This does not affect the MD but can affect post-MD analysis. To check if the trajectory suffers
 from this error, run this util as:
     python3 utils/check_displacements.py sim.h5 all
