@@ -313,10 +313,9 @@ class Config:
 
 
 def read_config_toml(file_path):
-    with open(file_path, "rb") as in_file:
-        toml_content = tomli.load(in_file)
-    return toml_content
-
+    with open(file_path, "r") as in_file:
+        file_content = in_file.read()
+    return file_content
 
 def propensity_potential_coeffs(x: float, comm):
     alpha_coeffs = np.array(
@@ -368,6 +367,9 @@ def propensity_potential_coeffs(x: float, comm):
 
 def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     config_dict = {}
+
+    # read toml to a dictionary
+    toml_content = tomli.loads(toml_content)
 
     # Defaults = None
     for n in (
