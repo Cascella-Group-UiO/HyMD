@@ -33,7 +33,6 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel numpy mpi4py cython
         python3 -m pip install -r requirements.txt
-        python3 -m pip install jinja2<3.1
     - name: Install package
       run: |
         python3 -m pip install .
