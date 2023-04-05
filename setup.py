@@ -43,7 +43,7 @@ setup(
     ext_modules=[force_kernels],
     setup_requires=[
         "cython",
-        "numpy",
+        "numpy<1.24",
         "mpi4py",
     ],
     install_requires=[
@@ -52,7 +52,7 @@ setup(
         "mpi4py",
         "mpsort",
         "networkx",
-        "numpy",
+        "numpy<1.24",
         "pfft-python",
         "pmesh",
         "sympy",
@@ -70,6 +70,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Fortran",
         "Topic :: Scientific/Engineering :: Chemistry",
         "Topic :: Scientific/Engineering :: Physics",
