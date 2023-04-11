@@ -58,6 +58,19 @@ For more information on how this documentation is built using Sphinx, Read the D
  * https://tech.michaelaltfield.net/2020/07/18/sphinx-rtd-github-pages-1
 EOF
 
+# Add index.html
+cat > index.html <<EOF
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Redirecting to main branch</title>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="0; url=./main/index.html">
+    <link rel="canonical" href="https://cascella-group-uio.github.io/HyMD/main/index.html">
+  </head>
+</html>
+EOF
+
 # copy the resulting html pages built from sphinx above to our new git repo
 git add .
 

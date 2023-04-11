@@ -48,6 +48,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'matplotlib.sphinxext.plot_directive',
     'numpydoc',
+    "sphinx_multiversion",
 ]
 
 # Bibtex configuration.
@@ -104,6 +105,12 @@ html_context = {
             '<i class="fa fa-file-text fa-fw"></i> Citation',
             "about:blank",
         ),
+    ],
+}
+
+html_sidebars = {
+    '**': [
+        'versions.html',
     ],
 }
 
