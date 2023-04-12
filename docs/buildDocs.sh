@@ -25,6 +25,12 @@ python3 -m pip install -r requirements.txt
 python3 -m pip install -r docs/docs_requirements.txt
 python3 -m pip install .
 
+######################
+# GET TAGS FOR BUILD #
+######################
+
+git fetch --all --tags
+
 ##############
 # BUILD DOCS #
 ##############
