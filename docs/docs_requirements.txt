@@ -3,6 +3,7 @@ sphinx-rtd-theme
 sphinx-tabs
 sphinx-panels
 sphinxcontrib.bibtex
+git+https://github.com/Holzhaus/sphinx-multiversion.git
 matplotlib
 numpy
 numpydoc
