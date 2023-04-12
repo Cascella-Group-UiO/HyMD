@@ -61,7 +61,6 @@ docker run -it mortele/hymd
 /app$ # Run simulation
 /app$ python3 -m hymd ideal_chain.toml ideal_chain.HDF5 --verbose
 ```
-
 ## Run tests
 Clone the repository and run tests with [pytest](https://docs.pytest.org/en/latest)
 ```bash
@@ -70,6 +69,11 @@ cd hymd
 python3 -m pip install pytest pytest-mpi
 pytest
 ```
+
+## Contributions
+We welcome contributions to our code and provide a set of guidelines to follow in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+
 Running MPI enabled pytest tests is simplified with a convenient script
 ```bash
 chmod +x pytest-mpi
