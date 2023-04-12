@@ -70,15 +70,15 @@ python3 -m pip install pytest pytest-mpi
 pytest
 ```
 
-## Contributions
-We welcome contributions to our code and provide a set of guidelines to follow in [CONTRIBUTING.md](CONTRIBUTING.md).
-
-
 Running MPI enabled pytest tests is simplified with a convenient script
 ```bash
 chmod +x pytest-mpi
 pytest-mpi -oo -n 2 -ns
 ```
+
+## Contributions and issues
+We welcome contributions to our code and provide a set of guidelines to follow in [CONTRIBUTING.md](CONTRIBUTING.md).  
+To seek support in case of any issues and bugs, we welcome you to post them using the [issue tracker](https://github.com/Cascella-Group-UiO/HyMD/issues). 
 
 ## Please cite our work
 If you use HyMD for your purposes, please cite the appropriate references from the section below.  
