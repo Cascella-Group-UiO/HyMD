@@ -89,9 +89,9 @@ Development
 ===========
 HyMD is developed and maintained by researchers at the `Hylleraas Centre for
 Quantum Molecular Sciences`_ at the `University of Oslo`_.  
-We welcome contributions from you and provide some (community guidelines)[https://github.com/Cascella-Group-UiO/HyMD/blob/main/CONTRIBUTING.md] in the GitHub repository.  
+We welcome contributions from you and provide some `community guidelines <http://github.com/Cascella-Group-UiO/HyMD/blob/main/CONTRIBUTING.md>`_ for it in the GitHub repository.  
 To seek support in case of any issues and bugs, we welcome you to post them using the 
-[issue tracker](https://github.com/Cascella-Group-UiO/HyMD/issues) in our GitHub repository. 
+`issue tracker <http://github.com/Cascella-Group-UiO/HyMD/issues>`_ in our GitHub repository.  
 
 |pic1| |pic2|
 
