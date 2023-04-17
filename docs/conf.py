@@ -119,5 +119,5 @@ numpydoc_show_class_members = False
 # whitelists tags and branch to build the docs for
 smv_tag_whitelist = r'^v\d+\.\d+.\d+$' # vX.Y.Z
 
-smv_branch_whitelist = r'^(?!gh-pages).*$' # all branches except gh-pages
+smv_branch_whitelist = r'^(?!gh-pages|joss-paper-final).*$' # all branches except gh-pages
 
