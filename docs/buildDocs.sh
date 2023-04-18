@@ -30,6 +30,7 @@ python3 -m pip install .
 ######################
 
 git fetch --all --tags
+git checkout main
 
 ##############
 # BUILD DOCS #
