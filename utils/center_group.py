@@ -45,10 +45,6 @@ def get_centers(positions, box):
     return centers
 
 
-def recebi(x, y):
-    print("recebi", x, "e", y)
-
-
 def center_trajectory(h5md_file, bead_list, overwrite=False, out_path=None):
     if out_path is None:
         out_path = os.path.join(
