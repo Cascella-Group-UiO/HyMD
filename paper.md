@@ -28,7 +28,7 @@ authors:
 affiliations:
   - name: Department of Chemistry, and Hylleraas Centre for Quantum Molecular Sciences, University of Oslo, PO Box 1033 Blindern, 0315 Oslo, Norway
     index: 1
-  - name: Department of Chemistry and Biochemistry, University of California San Diego, La Jolla, California 92093, United States
+  - name: Department of Chemistry and Biochemistry, University of California San Diego, La Jolla, California 92093, United States of America
     index: 2
 date: 7 January 2022
 bibliography: paper.bib
