@@ -2,7 +2,8 @@
   <img src="https://github.com/Cascella-Group-UiO/HyMD/blob/main/docs/img/hymd_logo_text_black.png?raw=true" width="500" title="HylleraasMD">
 </a>
 
-[![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/Cascella-Group-UiO/HyMD-2021/workflows/build/badge.svg) [![docs](https://github.com/Cascella-Group-UiO/HyMD/actions/workflows/docs_pages.yml/badge.svg)](https://cascella-group-uio.github.io/HyMD/) [![codecov](https://codecov.io/gh/Cascella-Group-UiO/HyMD/branch/main/graph/badge.svg?token=BXZ7B9RXV9)](https://codecov.io/gh/Cascella-Group-UiO/HyMD) [![PyPI version](https://badge.fury.io/py/hymd.svg)](https://badge.fury.io/py/hymd)
+[![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/Cascella-Group-UiO/HyMD-2021/workflows/build/badge.svg) [![docs](https://github.com/Cascella-Group-UiO/HyMD/actions/workflows/docs_pages.yml/badge.svg)](https://cascella-group-uio.github.io/HyMD/) [![codecov](https://codecov.io/gh/Cascella-Group-UiO/HyMD/branch/main/graph/badge.svg?token=BXZ7B9RXV9)](https://codecov.io/gh/Cascella-Group-UiO/HyMD) [![PyPI version](https://badge.fury.io/py/hymd.svg)](https://badge.fury.io/py/hymd) [![status](https://joss.theoj.org/papers/5ea61fe1ad1657834b9efb30c66bc64d/status.svg)](https://joss.theoj.org/papers/5ea61fe1ad1657834b9efb30c66bc64d)
+
 
 ---------
 **HylleraasMD** (HyMD) is a massively parallel Python package for Hamiltonian hybrid particle-field molecular dynamics (HhPF-MD) simulations of coarse-grained bio- and soft-matter systems.
@@ -13,6 +14,8 @@ It can run simulations in constant energy (NVE), constant volume (NVT) [[1]](#1)
 
 HyMD uses the [pmesh](github.com/rainwoodman/pmesh) library for particle-mesh operations, with the PPFT [[5]](#5) backend for FFTs through the [pfft-python bindings](github.com/rainwoodman/pfft-python).
 File IO is done via HDF5 formats to allow MPI parallel reads.
+
+If you use HyMD, [please cite our paper(s)](#citehead). 
 
 ## User Guide
 Detailed installation and user guide, together with comprehensive example simulations are located in the [HylleraasMD documentation](https://cascella-group-uio.github.io/HyMD/index.html).
@@ -80,9 +83,24 @@ pytest-mpi -oo -n 2 -ns
 We welcome contributions to our code and provide a set of guidelines to follow in [CONTRIBUTING.md](CONTRIBUTING.md).  
 To seek support in case of any issues and bugs, we welcome you to post them using the [issue tracker](https://github.com/Cascella-Group-UiO/HyMD/issues). 
 
-## Please cite our work
-If you use HyMD for your purposes, please cite the appropriate references from the section below.  
-If you cannot cite all, the fundamental works to be cited are [[1]](#1) and [[4]](#4). 
+## <a name="citehead"></a>Please cite our work
+If you use HyMD, please cite:
+
+> Ledum, M., Carrer, M., Sen, S., Li, X., Cascella, M., & Bore, S. L. (2023). HylleraasMD: Massively parallel hybrid particle-field molecular dynamics in Python. Journal of Open Source Software, 8(84), 4149. https://doi.org/10.21105/joss.04149
+
+```bibtex
+@article{
+  Ledum_HylleraasMD_Massively_parallel_2023,
+  author = {Ledum, Morten and Carrer, Manuel and Sen, Samiran and Li, Xinmeng and Cascella, Michele and Bore, Sigbjørn Løland},
+  doi = {10.21105/joss.04149},
+  journal = {Journal of Open Source Software},
+  month = apr,
+  number = {84},
+  pages = {4149},
+  title = {{HylleraasMD: Massively parallel hybrid particle-field molecular dynamics in Python}},
+  url = {https://joss.theoj.org/papers/10.21105/joss.04149},volume = {8},year = {2023}
+}
+```
 
 ---------
 
