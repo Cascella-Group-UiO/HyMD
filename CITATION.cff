@@ -1,0 +1,62 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Ledum
+  given-names: Morten
+  orcid: "https://orcid.org/0000-0003-4244-4876"
+- family-names: Carrer
+  given-names: Manuel
+  orcid: "https://orcid.org/0000-0002-8777-4310"
+- family-names: Sen
+  given-names: Samiran
+  orcid: "https://orcid.org/0000-0002-1922-7796"
+- family-names: Li
+  given-names: Xinmeng
+  orcid: "https://orcid.org/0000-0002-6863-6078"
+- family-names: Cascella
+  given-names: Michele
+  orcid: "https://orcid.org/0000-0003-2266-5399"
+- family-names: Bore
+  given-names: Sigbjørn Løland
+  orcid: "https://orcid.org/0000-0002-8620-4885"
+contact:
+- family-names: Ledum
+  given-names: Morten
+  orcid: "https://orcid.org/0000-0003-4244-4876"
+doi: 10.5281/zenodo.7839898
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Ledum
+    given-names: Morten
+    orcid: "https://orcid.org/0000-0003-4244-4876"
+  - family-names: Carrer
+    given-names: Manuel
+    orcid: "https://orcid.org/0000-0002-8777-4310"
+  - family-names: Sen
+    given-names: Samiran
+    orcid: "https://orcid.org/0000-0002-1922-7796"
+  - family-names: Li
+    given-names: Xinmeng
+    orcid: "https://orcid.org/0000-0002-6863-6078"
+  - family-names: Cascella
+    given-names: Michele
+    orcid: "https://orcid.org/0000-0003-2266-5399"
+  - family-names: Bore
+    given-names: Sigbjørn Løland
+    orcid: "https://orcid.org/0000-0002-8620-4885"
+  date-published: 2023-04-22
+  doi: 10.21105/joss.04149
+  issn: 2475-9066
+  issue: 84
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 4149
+  title: "HylleraasMD: Massively parallel hybrid particle-field
+    molecular dynamics in Python"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.04149"
+  volume: 8
+title: "HylleraasMD: Massively parallel hybrid particle-field molecular
+  dynamics in Python"
