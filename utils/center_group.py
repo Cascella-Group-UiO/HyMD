@@ -23,24 +23,35 @@ def parse_bead_list(string):
     return list(range(start, end + 1))
 
 
-def get_centers(positions, box):
+def get_centers(positions, box, nrefs=3):
     centers = np.empty((0, positions.shape[2]))
     # based on the position of the first atom get minimal distances
     for frame in range(positions.shape[0]):
-        deltas = positions[frame, 1:, :] - positions[frame, 0, :]
-        subtract = np.where(deltas > 0.5 * np.diag(box[frame]), True, False)
-        add = np.where(-deltas > 0.5 * np.diag(box[frame]), True, False)
+        prevpos = np.copy(positions[frame,:,:])
+        
+        # select a few random references to apply minimal image convention
+        for i in range(nrefs):
+            refbead = np.random.randint(positions.shape[1])
+            mask = np.ones(positions.shape[1], bool)
+            mask[refbead] = False
 
-        newpos = np.where(
-            subtract,
-            positions[frame, 1:, :] - np.diag(box[frame]),
-            positions[frame, 1:, :],
-        )
-        newpos = np.where(
-            add, positions[frame, 1:, :] + np.diag(box[frame]), newpos[:, :]
-        )
-        newpos = np.insert(newpos, 0, positions[frame, 0, :], axis=0)
-        centers = np.append(centers, [newpos.mean(axis=0)], axis=0)  # get the centroid
+            deltas = prevpos[mask, :] - prevpos[refbead, :]
+            subtract = np.where(deltas > 0.5 * np.diag(box[frame]), True, False)
+            add = np.where(-deltas > 0.5 * np.diag(box[frame]), True, False)
+
+            newpos = np.where(
+                subtract,
+                prevpos[mask, :] - np.diag(box[frame]),
+                prevpos[mask, :],
+            )
+            newpos = np.where(
+                add, prevpos[mask, :] + np.diag(box[frame]), newpos[:, :]
+            )
+            newpos = np.insert(newpos, refbead, prevpos[refbead, :], axis=0)
+            prevpos = newpos
+
+        # get the centroid with (hopefully) the minimal image convention
+        centers = np.append(centers, [newpos.mean(axis=0)], axis=0)
 
     return centers
 
