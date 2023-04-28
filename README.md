@@ -84,25 +84,38 @@ We welcome contributions to our code and provide a set of guidelines to follow i
 To seek support in case of any issues and bugs, we welcome you to post them using the [issue tracker](https://github.com/Cascella-Group-UiO/HyMD/issues). 
 
 ## <a name="citehead"></a>Please cite our work
-If you use HyMD, please cite:
-
-> Ledum, M., Carrer, M., Sen, S., Li, X., Cascella, M., & Bore, S. L. (2023). HylleraasMD: Massively parallel hybrid particle-field molecular dynamics in Python. Journal of Open Source Software, 8(84), 4149. https://doi.org/10.21105/joss.04149
-
+You will find information about our publications and archived data since 2023 at the open repository: [Publications](https://github.com/Cascella-Group-UiO/Publications).  
+If you use HyMD, please cite:  
 ```bibtex
 @article{
   Ledum_HylleraasMD_Massively_parallel_2023,
   author = {Ledum, Morten and Carrer, Manuel and Sen, Samiran and Li, Xinmeng and Cascella, Michele and Bore, Sigbjørn Løland},
   doi = {10.21105/joss.04149},
   journal = {Journal of Open Source Software},
-  month = apr,
+  month = {apr},
   number = {84},
   pages = {4149},
   title = {{HylleraasMD: Massively parallel hybrid particle-field molecular dynamics in Python}},
-  url = {https://joss.theoj.org/papers/10.21105/joss.04149},volume = {8},year = {2023}
+  url = {https://joss.theoj.org/papers/10.21105/joss.04149},
+  volume = {8},
+  year = {2023}
 }
-```
 
-You will find information about our publications and archived data since 2023 at the open repository: [Publications](https://github.com/Cascella-Group-UiO/Publications)
+@article{
+   Sen_HylleraasMD_2023,
+   author = {Sen, Samiran and Ledum, Morten and Bore, Sigbjørn Løland and Cascella, Michele},
+   title = {Soft Matter under Pressure: Pushing Particle–Field Molecular Dynamics to the Isobaric Ensemble},
+   doi = {10.1021/acs.jcim.3c00186},
+   journal = {Journal of Chemical Information and Modeling},
+   month= mar,
+   year = {2023},
+   volume = {63},
+   number = {7},
+   pages = {2207-2217},
+   URL = {https://doi.org/10.1021/acs.jcim.3c00186},
+}
+
+```
 
 ---------
 
