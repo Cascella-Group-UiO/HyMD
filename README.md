@@ -102,6 +102,8 @@ If you use HyMD, please cite:
 }
 ```
 
+You will find information about our publications and archived data since 2023 at the open repository: [Publications](https://github.com/Cascella-Group-UiO/Publications)
+
 ---------
 
 ### References
