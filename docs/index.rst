@@ -12,25 +12,18 @@ HylleraasMD documentation
 :Date:
    |today|
 
-**HylleraasMD** (HyMD) is a massively parallel Python package for hybrid
-particle-field molecular dynamics (hPF-MD) simulations of coarse-grained bio-
+**HylleraasMD** (HyMD) is a massively parallel Python package for Hamiltonian hybrid
+particle-field molecular dynamics (HhPF-MD) simulations of coarse-grained bio-
 and soft-matter systems.
 
-HyMD can run canonical hPF-MD simulations :cite:`Milano2009JCP`, or filtered
-density Hamiltonian hPF (HhPF-MD) simulations :cite:`bore2020hamiltonian`, with
-or without explicit PME electrostatic interactions :cite:`kolli2018JCTC`. It
-includes all standard  intramolecular interactions, including stretching,
-bending, torsional, and combined bending-dihedral potentials. Additionally,
-topological reconstruction of permanent peptide chain backbone dipoles is
-possible for accurate recreation of protein conformational dynamics
-:cite:`Cascella2008,bore2018hybrid`. Martini
-style elastic networks (ElNeDyn) :cite:`periole2009combining` are also
-supported.
+HyMD can run canonical hPF-MD simulations, or filtered density HhPF-MD simulations :cite:`hymd_domain2023,hymd_massive2023,hymd_pressure2023,hymd_alias2020`
+with or without explicit PME electrostatic interactions. It includes all standard intramolecular interactions,
+including stretching, bending, torsional, and combined bending-dihedral potentials. Additionally, topological reconstruction of permanent peptide chain backbone
+dipoles is possible for accurate recreation of protein conformational dynamics. It can run simulations in constant energy (NVE), constant volume (NVT) :cite:`hymd_domain2023,hymd_massive2023`
+or constant pressure (NPT) conditions :cite:`hymd_pressure2023`.
 
-HyMD uses the pmesh (`github.com/rainwoodman/pmesh`_) library for particle-mesh
-operations, with the PPFT :cite:`pippig2013pfft` backend for FFTs through the
-pfft-python bindings (`github.com/rainwoodman/pfft-python`_). File IO is done
-via HDF5 formats to allow MPI parallel reads.
+HyMD uses the pmesh library for particle-mesh operations, with the PPFT :cite:`pippig2013` backend for FFTs through the pfft-python bindings.
+File IO is done via HDF5 formats to allow MPI parallel reads.
 
 User Guide
 ==========
@@ -88,10 +81,7 @@ License v3.0`_. Obtain the source code with `git`_:
 Development
 ===========
 HyMD is developed and maintained by researchers at the `Hylleraas Centre for
-Quantum Molecular Sciences`_ at the `University of Oslo`_.  
-We welcome contributions from you and provide some `community guidelines <http://github.com/Cascella-Group-UiO/HyMD/blob/main/CONTRIBUTING.md>`_ for it in the GitHub repository.  
-To seek support in case of any issues and bugs, we welcome you to post them using the 
-`issue tracker <http://github.com/Cascella-Group-UiO/HyMD/issues>`_ in our GitHub repository.  
+Quantum Molecular Sciences`_ at the `University of Oslo`_.
 
 |pic1| |pic2|
 
