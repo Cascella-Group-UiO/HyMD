@@ -171,6 +171,13 @@ class SquaredPhi(Hamiltonian):
         ):
             return type_charges[t] * psi
 
+        self.V_bar_0 = [
+            sympy.lambdify(
+                [(self.phi)], V_bar_0(self.phi, t)
+            )
+            for t in range(self.config.n_types)
+        ]
+
         self.V_bar = [
             sympy.lambdify(
                 [(self.phi, self.psi)], V_bar_0(self.phi, t) + V_bar_elec(self.psi, t)
@@ -278,6 +285,13 @@ class DefaultNoChi(Hamiltonian):
             type_charges=self.config.type_charges,
         ):
             return type_charges[t] * psi
+
+        self.V_bar_0 = [
+            sympy.lambdify(
+                [(self.phi)], V_bar_0(self.phi, t)
+            )
+            for t in range(self.config.n_types)
+        ]
 
         self.V_bar = [
             sympy.lambdify(
@@ -438,6 +452,13 @@ class DefaultWithChi(Hamiltonian):
             type_charges=self.config.type_charges,
         ):
             return type_charges[t] * psi
+
+        self.V_bar_0 = [
+            sympy.lambdify(
+                [(self.phi)], V_bar_0(self.phi, t)
+            )
+            for t in range(self.config.n_types)
+        ]
 
         self.V_bar = [
             sympy.lambdify(
