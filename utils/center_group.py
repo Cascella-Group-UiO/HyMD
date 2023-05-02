@@ -23,33 +23,40 @@ def parse_bead_list(string):
     return list(range(start, end + 1))
 
 
-def get_centers(positions, box):
+def get_centers(positions, box, nrefs=3):
     centers = np.empty((0, positions.shape[2]))
     # based on the position of the first atom get minimal distances
     for frame in range(positions.shape[0]):
-        deltas = positions[frame, 1:, :] - positions[frame, 0, :]
-        subtract = np.where(deltas > 0.5 * np.diag(box[frame]), True, False)
-        add = np.where(-deltas > 0.5 * np.diag(box[frame]), True, False)
+        prevpos = np.copy(positions[frame, :, :])
 
-        newpos = np.where(
-            subtract,
-            positions[frame, 1:, :] - np.diag(box[frame]),
-            positions[frame, 1:, :],
-        )
-        newpos = np.where(
-            add, positions[frame, 1:, :] + np.diag(box[frame]), newpos[:, :]
-        )
-        newpos = np.insert(newpos, 0, positions[frame, 0, :], axis=0)
-        centers = np.append(centers, [newpos.mean(axis=0)], axis=0)  # get the centroid
+        # select a few random references to apply minimum image convention
+        for _ in range(nrefs):
+            refbead = np.random.randint(positions.shape[1])
+            mask = np.ones(positions.shape[1], bool)
+            mask[refbead] = False
+
+            deltas = prevpos[mask, :] - prevpos[refbead, :]
+            subtract = np.where(deltas > 0.5 * np.diag(box[frame]), True, False)
+            add = np.where(-deltas > 0.5 * np.diag(box[frame]), True, False)
+
+            newpos = np.where(
+                subtract,
+                prevpos[mask, :] - np.diag(box[frame]),
+                prevpos[mask, :],
+            )
+            newpos = np.where(add, prevpos[mask, :] + np.diag(box[frame]), newpos[:, :])
+            newpos = np.insert(newpos, refbead, prevpos[refbead, :], axis=0)
+            prevpos = newpos
+
+        # get the centroid with (hopefully) the minimum image convention
+        centers = np.append(centers, [newpos.mean(axis=0)], axis=0)
 
     return centers
 
 
-def recebi(x, y):
-    print("recebi", x, "e", y)
-
-
-def center_trajectory(h5md_file, bead_list, overwrite=False, out_path=None):
+def center_trajectory(
+    h5md_file, bead_list, nrefbeads, overwrite=False, out_path=None, center_last=False
+):
     if out_path is None:
         out_path = os.path.join(
             os.path.abspath(os.path.dirname(h5md_file)),
@@ -76,7 +83,7 @@ def center_trajectory(h5md_file, bead_list, overwrite=False, out_path=None):
     box_size = f_in["particles/all/box/edges/value"][:]
 
     beads_pos = f_in["particles/all/position/value"][:][:, bead_list, :]
-    centers = get_centers(beads_pos, box_size)
+    centers = get_centers(beads_pos, box_size, nrefbeads)
 
     box_diag = np.diag(box_size[0])
     for frame in range(1, box_size.shape[0]):
@@ -89,7 +96,11 @@ def center_trajectory(h5md_file, bead_list, overwrite=False, out_path=None):
         axis=1,
     )
 
-    tpos = f_in["particles/all/position/value"] + translations
+    if center_last:
+        tpos = f_in["particles/all/position/value"] + translations[-1]
+    else:
+        tpos = f_in["particles/all/position/value"] + translations
+
     f_out["particles/all/position/value"][:] = np.mod(
         tpos, np.repeat(box_diag[:, np.newaxis, :], tpos.shape[1], axis=1)
     )
@@ -128,6 +139,20 @@ if __name__ == "__main__":
         dest="force",
         help="overwrite existing output file",
     )
+    parser.add_argument(
+        "--reference-beads",
+        type=int,
+        default=3,
+        dest="nrefs",
+        help="number of reference beads considered when applying the minimum image convention (default=3)",
+    )
+    parser.add_argument(
+        "--center-wrt-last-frame",
+        action="store_true",
+        default=False,
+        dest="center_last",
+        help="instead of centering the groups for every frame, translate all frames with respect to the center of the last frame",
+    )
     args = parser.parse_args()
 
     bead_list = []
@@ -137,5 +162,10 @@ if __name__ == "__main__":
     bead_list = np.array(sorted(bead_list)) - 1
 
     center_trajectory(
-        args.h5md_file, bead_list, overwrite=args.force, out_path=args.out_path
+        args.h5md_file,
+        bead_list,
+        nrefbeads=args.nrefs,
+        overwrite=args.force,
+        out_path=args.out_path,
+        center_last=args.center_last,
     )

@@ -2,7 +2,8 @@
   <img src="https://github.com/Cascella-Group-UiO/HyMD/blob/main/docs/img/hymd_logo_text_black.png?raw=true" width="500" title="HylleraasMD">
 </a>
 
-[![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/Cascella-Group-UiO/HyMD-2021/workflows/build/badge.svg) [![docs](https://github.com/Cascella-Group-UiO/HyMD/actions/workflows/docs_pages.yml/badge.svg)](https://cascella-group-uio.github.io/HyMD/) [![codecov](https://codecov.io/gh/Cascella-Group-UiO/HyMD/branch/main/graph/badge.svg?token=BXZ7B9RXV9)](https://codecov.io/gh/Cascella-Group-UiO/HyMD) [![PyPI version](https://badge.fury.io/py/hymd.svg)](https://badge.fury.io/py/hymd)
+[![License: GPL v3](https://img.shields.io/badge/License-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html) ![build](https://github.com/Cascella-Group-UiO/HyMD-2021/workflows/build/badge.svg) [![docs](https://github.com/Cascella-Group-UiO/HyMD/actions/workflows/docs_pages.yml/badge.svg)](https://cascella-group-uio.github.io/HyMD/) [![codecov](https://codecov.io/gh/Cascella-Group-UiO/HyMD/branch/main/graph/badge.svg?token=BXZ7B9RXV9)](https://codecov.io/gh/Cascella-Group-UiO/HyMD) [![PyPI version](https://badge.fury.io/py/hymd.svg)](https://badge.fury.io/py/hymd) [![status](https://joss.theoj.org/papers/5ea61fe1ad1657834b9efb30c66bc64d/status.svg)](https://joss.theoj.org/papers/5ea61fe1ad1657834b9efb30c66bc64d)
+
 
 ---------
 **HylleraasMD** (HyMD) is a massively parallel Python package for Hamiltonian hybrid particle-field molecular dynamics (HhPF-MD) simulations of coarse-grained bio- and soft-matter systems.
@@ -13,6 +14,8 @@ It can run simulations in constant energy (NVE), constant volume (NVT) [[1]](#1)
 
 HyMD uses the [pmesh](github.com/rainwoodman/pmesh) library for particle-mesh operations, with the PPFT [[5]](#5) backend for FFTs through the [pfft-python bindings](github.com/rainwoodman/pfft-python).
 File IO is done via HDF5 formats to allow MPI parallel reads.
+
+If you use HyMD, [please cite our paper(s)](#citehead). 
 
 ## User Guide
 Detailed installation and user guide, together with comprehensive example simulations are located in the [HylleraasMD documentation](https://cascella-group-uio.github.io/HyMD/index.html).
@@ -61,7 +64,6 @@ docker run -it mortele/hymd
 /app$ # Run simulation
 /app$ python3 -m hymd ideal_chain.toml ideal_chain.HDF5 --verbose
 ```
-
 ## Run tests
 Clone the repository and run tests with [pytest](https://docs.pytest.org/en/latest)
 ```bash
@@ -70,15 +72,50 @@ cd hymd
 python3 -m pip install pytest pytest-mpi
 pytest
 ```
+
 Running MPI enabled pytest tests is simplified with a convenient script
 ```bash
 chmod +x pytest-mpi
 pytest-mpi -oo -n 2 -ns
 ```
 
-## Please cite our work
-If you use HyMD for your purposes, please cite the appropriate references from the section below.  
-If you cannot cite all, the fundamental works to be cited are [[1]](#1) and [[4]](#4). 
+## Contributions and issues
+We welcome contributions to our code and provide a set of guidelines to follow in [CONTRIBUTING.md](CONTRIBUTING.md).  
+To seek support in case of any issues and bugs, we welcome you to post them using the [issue tracker](https://github.com/Cascella-Group-UiO/HyMD/issues). 
+
+## <a name="citehead"></a>Please cite our work
+You will find information about our publications and archived data since 2023 at the open repository: [Publications](https://github.com/Cascella-Group-UiO/Publications).  
+If you use HyMD, please cite:  
+```bibtex
+@article{
+  Ledum_HylleraasMD_Massively_parallel_2023,
+  author = {Ledum, Morten and Carrer, Manuel and Sen, Samiran and Li, Xinmeng and Cascella, Michele and Bore, Sigbjørn Løland},
+  doi = {10.21105/joss.04149},
+  journal = {Journal of Open Source Software},
+  month = {apr},
+  number = {84},
+  pages = {4149},
+  title = {{HylleraasMD: Massively parallel hybrid particle-field molecular dynamics in Python}},
+  url = {https://joss.theoj.org/papers/10.21105/joss.04149},
+  volume = {8},
+  year = {2023}
+}
+
+@article{
+   Sen_HylleraasMD_2023,
+   author = {Sen, Samiran and Ledum, Morten and Bore, Sigbjørn Løland and Cascella, Michele},
+   title = {Soft Matter under Pressure: Pushing Particle–Field Molecular Dynamics to the Isobaric Ensemble},
+   doi = {10.1021/acs.jcim.3c00186},
+   journal = {Journal of Chemical Information and Modeling},
+   month= mar,
+   year = {2023},
+   volume = {63},
+   number = {7},
+   pages = {2207-2217},
+   URL = {https://doi.org/10.1021/acs.jcim.3c00186},
+}
+
+```
 
 ---------
 
@@ -87,13 +124,13 @@ If you cannot cite all, the fundamental works to be cited are [[1]](#1) and [[4]
 Ledum, M.; Sen, S.; Li, X.; Carrer, M.; Feng Y.; Cascella, M.; Bore, S. L. HylleraasMD: A Domain Decomposition-Based Hybrid Particle-Field Software for Multi-Scale Simulations of Soft Matter. ChemRxiv 2021
 
 <a id="2">[2]</a>
-Ledum, M.; Carrer, M.; Sen, S.; Li, X.; Cascella, M.; Bore, S. L. HyMD: Massively parallel hybrid particle-field molecular dynamics in Python.
+Ledum, M.; Carrer, M.; Sen, S.; Li, X.; Cascella, M.; Bore, S. L. HyMD: Massively parallel hybrid particle-field molecular dynamics in Python. Journal of Open Source Software (JOSS) 2023, 8(84), 2475-9066, 4149.
 
 <a id="3">[3]</a>
 Bore, S. L.; Cascella, M. Hamiltonian and alias-free hybrid particle–field molecular dynamics. J. Chem. Phys. 2020, 153, 094106.
 
 <a id="4">[4]</a>
-Sen, S.; Ledum, M.; Bore, S. L.; Cascella, M. Soft Matter under Pressure: Pushing Particle–Field Molecular Dynamics to the Isobaric Ensemble. ChemRxiv 2023
+Sen, S.; Ledum, M.; Bore, S. L.; Cascella, M. Soft Matter under Pressure: Pushing Particle–Field Molecular Dynamics to the Isobaric Ensemble. J Chem Inf Model 2023, 63(7), 1549-9596.
 
 <a id="5">[5]</a>
 Pippig, M. PFFT: An extension of FFTW to massively parallel architectures. SIAM J. Sci. Comput. 2013, 35, C213–C236.

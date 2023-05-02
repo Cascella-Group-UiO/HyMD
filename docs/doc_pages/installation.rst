@@ -6,15 +6,6 @@ Installation
 Dependencies
 ============
 
-.. note::
-    HyMD requires Python ≥3.6. Python version 3.9 is most likely fine
-    to use, but HyMD is only regularly tested with Python3.8 at the moment.
-
-.. warning::
-    MPI-enabled h5py may fail to build under Python3.10. In this case, a
-    fall-back to Python3.9 or lower may be necessary.
-
-
 **Installing non-Python dependencies** may be done by
 
 .. tabs::
@@ -70,9 +61,9 @@ Dependencies
            brew install curl wget
 
 .. warning::
-    There might be memory leaks when using HyMD with OpenMPI 4.1.1.
-    Therefore, using a newer version of OpenMPI is recommended.
-    See `Issue #186 <https://github.com/Cascella-Group-UiO/HyMD/issues/186>`_ for more details.
+   There might be memory leaks when using HyMD with OpenMPI 4.1.1.
+   Therefore, using a newer version of OpenMPI is recommended.
+   See `Issue #186 <https://github.com/Cascella-Group-UiO/HyMD/issues/186>`_ for more details.
 
 
 **Installing Python dependencies** may be done by
@@ -125,28 +116,28 @@ Dependencies
 
 .. warning::
 
-    If MPI-enabled HDF5 and :code:`h5py` can not be installed, limited support
-    for serial HDF5 is available. Note that having MPI-enabled file IO is
-    **highly recommended**, and simulation performance under serial HDF5 will
-    potentially be very low.
+   If MPI-enabled HDF5 and :code:`h5py` can not be installed, limited support
+   for serial HDF5 is available. Note that having MPI-enabled file IO is
+   **highly recommended**, and simulation performance under serial HDF5 will
+   potentially be very low.
 
-    Example dependency install on Ubuntu (apt) using serial HDF5:
+   Example dependency install on Ubuntu (apt) using serial HDF5:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        sudo apt-get update -y
-        sudo apt-get install -y python3 python3-pip  # Install python3 and pip
-        sudo apt-get install -y libopenmpi-dev       # Install MPI development headers
-        sudo apt-get install -y libhdf5-serial-dev   # Install serial HDF5
-        sudo apt-get install -y curl wget
+       sudo apt-get update -y
+       sudo apt-get install -y python3 python3-pip  # Install python3 and pip
+       sudo apt-get install -y libopenmpi-dev       # Install MPI development headers
+       sudo apt-get install -y libhdf5-serial-dev   # Install serial HDF5
+       sudo apt-get install -y curl wget
 
-        python3 -m pip install h5py mpi4py numpy cython
+       python3 -m pip install h5py mpi4py numpy cython
 
-    Running parallel simulations without a
-    MPI-enabled HDF5 library available necessitates the use of the
-    :code:`--disable-mpio` argument to HyMD, see :ref:`commandline-label`. Note that
-    due to the way HyMD is built, a working MPI compiler is required even if all
-    intended simulations are serial.
+   Running parallel simulations without a
+   MPI-enabled HDF5 library available necessitates the use of the
+   :code:`--disable-mpio` argument to HyMD, see :ref:`commandline-label`. Note that
+   due to the way HyMD is built, a working MPI compiler is required even if all
+   intended simulations are serial.
 
 
 Installing HyMD

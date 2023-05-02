@@ -101,7 +101,10 @@ def comp_pressure(
     p0 = -1 / V * np.sum(w)
 
     # Term 2
-    V_bar = np.array([hamiltonian.V_bar[k]([phi, psi]) for k in range(config.n_types)])
+    if psi is not None: # if using electrostatics
+        V_bar = np.array([hamiltonian.V_bar[k]([phi, psi]) for k in range(config.n_types)])
+    else:
+        V_bar = np.array([hamiltonian.V_bar_0[k](phi) for k in range(config.n_types)])
 
     p1 = np.sum((volume_per_cell / V) * V_bar * phi)
 

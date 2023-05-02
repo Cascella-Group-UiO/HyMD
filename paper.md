@@ -28,7 +28,7 @@ authors:
 affiliations:
   - name: Department of Chemistry, and Hylleraas Centre for Quantum Molecular Sciences, University of Oslo, PO Box 1033 Blindern, 0315 Oslo, Norway
     index: 1
-  - name: Department of Chemistry and Biochemistry, University of California San Diego, La Jolla, California 92093, United States
+  - name: Department of Chemistry and Biochemistry, University of California San Diego, La Jolla, California 92093, United States of America
     index: 2
 date: 7 January 2022
 bibliography: paper.bib
@@ -36,9 +36,9 @@ bibliography: paper.bib
 
 # Summary
 
-Molecular dynamics (MD) is a computational methodology in which the dynamical behavior of systems of interacting atoms and molecules is investigated by integrating the corresponding classical equations of motion. The analysis of the molecular trajectories yields an incredibly powerful computational microscope with atomic resolution. While prominent examples of molecular dynamics involving all-atom models exist, many systems operate on time- and lengths scales too large, precluding the use of such an approach. The intrinsic complexity of biological soft matter systems has necessitated the development of *coarse-grained* (CG) MD models wherein groups of atoms are treated as individual entities. To probe experimentally relevant length- (nm&ndash;\textmu m) and time- (ps&ndash;ms) scales, further reduction of computational complexity may be warranted through the removal of explicit particle\textendash particle interactions in favor of particle&ndash;density field interactions. Such *hybrid particle&ndash;field* (hPF) models recast the interactions between particle pairs into a system of free particles interacting with an external potential dependent on the density, in analogy with self-consistent field theories.
+Molecular dynamics (MD) is a computational methodology in which the dynamical behavior of systems of interacting atoms and molecules is investigated by integrating the corresponding classical equations of motion. The analysis of the molecular trajectories yields an incredibly powerful computational microscope with atomic resolution. While prominent examples of molecular dynamics involving all-atom models exist, many systems operate on time- and lengths scales too large, precluding the use of such an approach. The intrinsic complexity of biological soft-matter systems has necessitated the development of *coarse-grained* (CG) MD models wherein groups of atoms are treated as individual entities. To probe experimentally relevant length- (nm&ndash;\textmu m) and time- (ps&ndash;ms) scales, further reduction of computational complexity may be warranted through the removal of explicit particle\textendash particle interactions in favor of particle&ndash;density field interactions. Such *hybrid particle&ndash;field* (hPF) models recast the interactions between particle pairs into a system of free particles interacting with an external potential dependent on the density, in analogy with self-consistent field theories.
 
-HylleraasMD (named after our affiliate centre, the *Hylleraas Centre for Quantum Molecular Sciences*) (HyMD) is a Python package capable of highly parallel hPF-MD simulations of a wide range of surfactants and other biological systems in a CG representation. At present, it is the only open source implementation of the hPF formalism freely available to computational researchers.
+HylleraasMD (named after our affiliate centre, the *Hylleraas Centre for Quantum Molecular Sciences*) (HyMD) is a Python package capable of highly parallel hPF-MD simulations of a wide range of surfactants and other biological systems in a CG representation. At present, it is the only open-source implementation of the hPF formalism freely available to computational researchers.
 
 # Theoretical background
 
@@ -46,11 +46,11 @@ Hybrid particle&ndash;field methods are computationally efficient schemes for si
 
 # Statement of need
 
-Elucidating fundamental aspects of the complexity of biological systems often require atomically resolved mesoscale simulations. One crucial example is the large-scale macromolecular self-assembly of lipids and proteins into eukaryotic cell membranes or intracellular organelle structures. Some such systems are computationally accessible today at the CG-MD level, but this is far from routine and not achievable for the broad scientific community. Hybrid particle&ndash;field models allow in principle exploration of such systems at near-atomistic resolution, with good chemical accuracy.
+Elucidating fundamental aspects of the complexity of biological systems often requires atomically resolved mesoscale simulations. One crucial example is the large-scale macromolecular self-assembly of lipids and proteins into eukaryotic cell membranes or intracellular organelle structures. Some such systems are computationally accessible today at the CG-MD level, but this is far from routine and not achievable for the broad scientific community. Hybrid particle&ndash;field models allow in principle exploration of such systems at near-atomistic resolution, with good chemical accuracy.
 
 Since the hPF scheme was proposed [@Milano:2013], two main codes have been used to perform such simulations. (i) OCCAM [@Zhao:2012], a proprietary Fortran software developed by Milano and co-workers; and (ii) GALAMOST [@Zhu:2013], a CUDA-GPU accelerated C++ code developed by researchers at Jilin University. Unfortunately, neither are open source and freely available to scientists wishing to run hPF simulations of bio- and soft-matter systems.
 
-HyMD is, to date, the only available open-source hPF simulation software. Furthermore, through a recent reformulation of the hPF formalism [@Bore:2020:2], which decouples the computational mesh grid and the length scale of the particle\textendash grid interaction, a new *Hamiltonian* hPF (HhPF) method has emerged. Currently, HyMD constitutes the only software for performing HhPF simulations, open-source or otherwise. This new scheme has a number of advantages over canonical hPF, such as rigorous energy and momentum conservation, rotationally and translationally-invariant forces, and a tunable coarse-graining length scale representing the size extent of particles. Additionally, the new formulation naturally lends itself to calculation in reciprocal space, enabling us to take advantage of highly optimized FFT algorithms.
+HyMD is, to date, the only available open-source hPF simulation software. Furthermore, through a recent reformulation of the hPF formalism [@Bore:2020:2], which decouples the computational mesh grid and the length scale of the particle\textendash grid interaction, a new *Hamiltonian* hPF (HhPF) method has emerged. Currently, HyMD constitutes the only software for performing HhPF simulations, open-source or otherwise. This new scheme has a number of advantages over canonical hPF, such as rigorous energy and momentum conservation, rotationally and translationally invariant forces, and a tunable coarse-graining length scale representing the size extent of particles. Additionally, the new formulation naturally lends itself to calculations in reciprocal space, enabling us to take advantage of highly optimized FFT algorithms.
 
 # Features
 
@@ -58,7 +58,7 @@ Apart from a minimal set of high-performance Fortran kernels, the entirety of Hy
 
 - Standard hPF interaction functionals, with the option to specify *any* (local or otherwise) functional, which is automatically handled through symbolic differentiation and numpy vectorization.
 - Density filtering (with any user-provided filter function), enabling canonical hPF or HhPF simulations with tunable coarse-graining scale which can be changed *on-the-fly*.
-- Optional explicit electrostatic interactions through our custom long-range Particle-Mesh Ewald.
+- Optional explicit electrostatic interactions through our custom long-range Particle-Mesh Ewald implementation.
 - All standard intramolecular bonded interactions, including stretching, bending, torsional potentials, and combined bending&ndash;torsional potentials describing peptide backbone conformations [@Bore:2018].
 - Topological reconstruction of permanent peptide chain backbone dipoles, enabling realistic protein conformational simulations [@Cascella:2008; @Alemani:2010; @Bore:2018].
 
@@ -66,7 +66,7 @@ To probe experimentally relevant structures, parallelization through mpi4py is u
 
 # Availability
 
-HyMD is free and open-source, published under a permissive GNU Lesser General Public License v3.0 (LGPLv3). The source code is available at [/github.com/Cascella-Group-UiO/HyMD](https://github.com/Cascella-Group-UiO/HyMD). Documentation, usage guides, and tutorials can be accessed via [cascella-group-uio.github.io/HyMD](https://cascella-group-uio.github.io/HyMD).
+HyMD is free and open-source, published under a permissive GNU Lesser General Public License v3.0 (LGPLv3). The source code is available at [github.com/Cascella-Group-UiO/HyMD](https://github.com/Cascella-Group-UiO/HyMD). Documentation, usage guides, and tutorials can be accessed via [cascella-group-uio.github.io/HyMD](https://cascella-group-uio.github.io/HyMD).
 
 # Acknowledgements
 

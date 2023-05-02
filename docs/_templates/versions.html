@@ -8,8 +8,16 @@
   <div class="rst-other-versions">
     {%- if versions.tags %}
     <dl>
-      <dt>Tags</dt>
+      <dt>Releases</dt>
       {%- for item in versions.tags %}
+      <dd><a href="{{ item.url }}">{{ item.name }}</a></dd>
+      {%- endfor %}
+    </dl>
+    {%- endif %}
+    {%- if versions.branches %}
+    <dl>
+      <dt>Development</dt>
+      {%- for item in versions.branches %}
       <dd><a href="{{ item.url }}">{{ item.name }}</a></dd>
       {%- endfor %}
     </dl>
