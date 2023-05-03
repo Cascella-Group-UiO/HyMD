@@ -106,7 +106,7 @@ def isotropic(
                 * config.gas_constant
                 * config.target_temperature
                 * beta
-                * config.time_step
+                * config.time_step * config.respa_inner
                 * config.n_b
                 / (V * config.tau_p)
             )
@@ -114,7 +114,7 @@ def isotropic(
         )
         log_alpha = (
             -config.n_b
-            * config.time_step
+            * config.time_step * config.respa_inner
             * beta
             / config.tau_p
             * (config.target_pressure.P_L - P)
@@ -221,7 +221,7 @@ def semiisotropic(
                     * config.gas_constant
                     * config.target_temperature
                     * beta
-                    * config.time_step
+                    * config.time_step * config.respa_inner
                     * config.n_b
                     / (3 * V * config.tau_p)
                 )
@@ -230,7 +230,7 @@ def semiisotropic(
             log_alpha = (
                 -2.0
                 * config.n_b
-                * config.time_step
+                * config.time_step * config.respa_inner
                 * beta
                 / (3 * config.tau_p)
                 * (
@@ -257,7 +257,7 @@ def semiisotropic(
                     * config.gas_constant
                     * config.target_temperature
                     * beta
-                    * config.time_step
+                    * config.time_step * config.respa_inner
                     * config.n_b
                     / (3 * V * config.tau_p)
                 )
@@ -265,7 +265,7 @@ def semiisotropic(
             )
             log_alpha = (
                 -config.n_b
-                * config.time_step
+                * config.time_step * config.respa_inner
                 * beta
                 / (3 * config.tau_p)
                 * (config.target_pressure.P_N - PN)
