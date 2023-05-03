@@ -194,23 +194,27 @@ def print_header():
        /____/ 
     """
 
-    refs_set1 = """
+    refs_set = """
  
  [1] Ledum, M.; Sen, S.; Li, X.; Carrer, M.; Feng Y.; Cascella, M.; Bore, S. L. 
- HylleraasMD: A Domain Decomposition-Based Hybrid Particle-Field Software for Multi-Scale Simulations of Soft Matter. ChemRxiv 2021
+ HylleraasMD: A Domain Decomposition-Based Hybrid Particle-Field Software for Multi-Scale Simulations of Soft Matter.
+ J. Chem. Theory Comput. 2023.
 
  [2] Ledum, M.; Carrer, M.; Sen, S.; Li, X.; Cascella, M.; Bore, S. L. 
  HyMD: Massively parallel hybrid particle-field molecular dynamics in Python.
+ J. Open Source Softw. 8(84), 4149, 2023.
  
- [3] Bore, S. L.; Cascella, M. 
- Hamiltonian and alias-free hybrid particle–field molecular dynamics. J. Chem. Phys. 2020, 153, 094106.
+ [3] Sen, S.; Ledum, M.; Bore, S. L.; Cascella, M. 
+ Soft Matter under Pressure: Pushing Particle–Field Molecular Dynamics to the Isobaric Ensemble.
+ J Chem Inf Model 2023, 63(7), 1549-9596.
 
- [4] Pippig, M. PFFT: An extension of FFTW to massively parallel architectures. SIAM J. Sci. Comput. 2013, 35, C213–C236.
-"""
-    refs_set2 = """
+ [4] Bore, S. L.; Cascella, M. 
+ Hamiltonian and alias-free hybrid particle–field molecular dynamics.
+ J. Chem. Phys. 2020, 153, 094106.
 
- [5] Sen, S.; Ledum, M.; Bore, S. L.; Cascella, M. 
- Soft Matter under Pressure: Pushing Particle–Field Molecular Dynamics to the Isobaric Ensemble. ChemRxiv 2023
+ [5] Pippig, M. PFFT: An extension of FFTW to massively parallel architectures.
+ SIAM J. Sci. Comput. 2013, 35, C213–C236.
+
 """
 
     version = f"Version {get_version()}"
@@ -218,9 +222,6 @@ def print_header():
     header += version.center(56) + "\n\n"
     #header += " Please read and cite the references below:"
     header += " PLEASE READ AND CITE THE REFERENCES BELOW:"
-    header += refs_set1
-    #header += " \n\n For constant pressure (NPT) simulations, please cite:"
-    header += " \n\n FOR CONSTANT PRESSURE (NPT) SIMULATIONS, PLEASE CITE:"
-    header += refs_set2
+    header += refs_set
 
     return header
