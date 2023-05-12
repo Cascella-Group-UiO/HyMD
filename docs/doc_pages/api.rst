@@ -114,3 +114,9 @@ File input/output
 
 .. automodule:: hymd.file_io
    :members:
+
+PLUMED
+------
+
+.. automodule:: hymd.plumed
+   :members:
