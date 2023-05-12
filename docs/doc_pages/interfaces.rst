@@ -8,7 +8,7 @@ To use the interface, the Python package of PLUMED must be installed, and the us
 In the current version, only simulations using a single replica are supported.
 
 .. warning::
-PLUMED versions prior to :code:`2.8.1` did not have a working Python interface with MPI. Therefore, you **must** use PLUMED :code:`2.8.1` or greater when installing the PLUMED library in Python. Older versions for the kernel are supported if the Python interface was correctly installed with version :code:`2.8.1`.
+   PLUMED versions prior to :code:`2.8.1` did not have a working Python interface with MPI. Therefore, you **must** use PLUMED :code:`2.8.1` or greater when installing the PLUMED library in Python. Older versions for the kernel are supported if the Python interface was correctly installed with version :code:`2.8.1`.
 
 Running simulations using PLUMED
 ================================
