@@ -89,10 +89,10 @@ def test_configure_runtime(h5py_molecules_file, config_toml,
     parsed, _, _, _ = configure_runtime(["--logfile", "test.log"]+basearg, comm)
     assert parsed.logfile == "test.log"
 
-    parsed, _, _ = configure_runtime(["--plumed", "test.log"]+basearg, comm)
+    parsed, _, _, _ = configure_runtime(["--plumed", "test.log"]+basearg, comm)
     assert parsed.plumed == "test.log"
 
-    parsed, _, _ = configure_runtime(
+    parsed, _, _, _ = configure_runtime(
                        ["--plumed-outfile", "test.plumed.out"]+basearg,
                        comm
                    )
