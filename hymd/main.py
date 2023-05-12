@@ -31,6 +31,7 @@ from .thermostat import (
 from .force import dipole_forces_redistribution, prepare_bonds
 from .integrator import integrate_velocity, integrate_position
 from .pressure import comp_pressure
+from .plumed import PlumedBias
 
 
 def main():
@@ -177,6 +178,7 @@ def main():
     reconstructed_forces = np.zeros_like(positions)
     field_forces = np.zeros_like(positions)
     elec_forces = np.zeros_like(positions)
+    plumed_forces = np.zeros_like(positions)
 
     positions = np.mod(positions, config.box_size[None, :])
 
@@ -198,6 +200,7 @@ def main():
     dihedral_energy = 0.0
     kinetic_energy = 0.0
     field_q_energy = 0.0
+    plumed_bias = 0.0
 
     # more initialization
     bond_pr_ = np.zeros(3, dtype=dtype)
@@ -261,6 +264,8 @@ def main():
         args_in.append(elec_forces)
     if dielectric_flag:
         args_in.append(dielectric_sorted)
+    if args.plumed:
+        args_in.append(plumed_forces)
 
     if config.domain_decomposition:
         (
@@ -290,6 +295,8 @@ def main():
             elec_forces = optional.pop(0)
         if dielectric_flag:
             dielectric_sorted = optional.pop(0)
+        if args.plumed:
+            plumed_forces = optional.pop(0)
         if molecules_flag:
             bonds = optional.pop(0)
             molecules = optional.pop(0)
@@ -312,6 +319,8 @@ def main():
             args_in.append(elec_forces)
         if dielectric_flag:
             args_in.append(dielectric_sorted)
+        if args.plumed:
+            args_in.append(plumed_forces)
 
     if not args.disable_field:
         layouts = [
@@ -605,6 +614,7 @@ def main():
         force_out=args.force_output,
         charges=charges if charges_flag else False,
         dielectrics=dielectric_sorted if dielectric_flag else False,
+        plumed_out=True if args.plumed else False,
         comm=comm,
     )
 
@@ -669,6 +679,47 @@ def main():
         )
         if charges_flag:
             forces_out += elec_forces
+
+    # initialize PLUMED and get initial forces and bias
+    if args.plumed:
+        plumed = PlumedBias(
+            config, 
+            args.plumed, 
+            args.plumed_outfile, 
+            comm=comm,
+            verbose=args.verbose
+        )
+
+        current_forces = (bond_forces + angle_forces + dihedral_forces
+                        + field_forces + reconstructed_forces)
+        if charges_flag:
+            current_forces += elec_forces
+
+        # pass info and check if PLUMED also needs the energy
+        needs_energy = plumed.prepare(
+            0,
+            current_forces,
+            positions,
+            indices,
+            config,
+            (
+                np.zeros_like(indices, dtype=np.double) 
+                if not charges_flag else charges
+            )
+        )
+
+        # PLUMED likes the energy per rank
+        poteng = (field_energy + bond_energy + angle_energy
+                 + dihedral_energy + field_q_energy) / size
+
+        # get the forces and bias from PLUMED
+        plumed_forces, plumed_bias = plumed.calc(current_forces, poteng)
+
+    # log after PLUMED forces and bias have been calculated
+    if config.n_print > 0:
+        if args.plumed:
+            forces_out += plumed_forces
+
         store_data(
             out_dataset,
             step,
@@ -686,11 +737,13 @@ def main():
             dihedral_energy,
             field_energy,
             field_q_energy,
+            plumed_bias,
             config.time_step,
             config,
             velocity_out=args.velocity_output,
             force_out=args.force_output,
             charge_out=charges_flag,
+            plumed_out=True if args.plumed else False,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
@@ -744,7 +797,11 @@ def main():
             field_forces / config.mass,
             config.respa_inner * config.time_step,
         )
-
+        if args.plumed:
+            velocities = integrate_velocity(
+                velocities, plumed_forces / config.mass,
+                config.respa_inner * config.time_step,
+            )
         if charges_flag and (
             config.coulombtype == "PIC_Spectral"
             or config.coulombtype == "PIC_Spectral_GPE"
@@ -897,6 +954,16 @@ def main():
                     force_mesh_elec_fourier,
                 ) = coulomb_list
 
+        # Only compute and keep the molecular bond energy from the last rRESPA
+        # inner step
+        if molecules_flag:
+            if not args.disable_bonds:
+                bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
+            if not args.disable_angle_bonds:
+                angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
+            if not args.disable_dihedrals:
+                dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
+
         # Update slow forces
         if not args.disable_field:
             layouts = [
@@ -1019,6 +1086,52 @@ def main():
                     bonds_4_last,
                 )
 
+        if args.plumed:
+            current_forces = (bond_forces + angle_forces + dihedral_forces
+                            + field_forces + reconstructed_forces)
+            if charges_flag:
+                current_forces += elec_forces
+
+            # pass info and check if PLUMED also needs the energy
+            needs_energy = plumed.prepare(
+                step,
+                current_forces,
+                positions,
+                indices,
+                config,
+                (
+                    np.zeros_like(indices, dtype=np.double) 
+                    if not charges_flag else charges
+                )
+            )
+
+            if needs_energy:
+                if not args.disable_field:
+                    (
+                        field_energy, kinetic_energy,
+                    ) = compute_field_and_kinetic_energy(
+                        phi, velocities, hamiltonian, positions, types, v_ext,
+                        config, layouts, comm=comm,
+                    )
+
+                    if charges_flag and config.coulombtype == "PIC_Spectral":
+                        field_q_energy = compute_field_energy_q(
+                            config, phi_q_fourier, elec_energy_field,
+                            field_q_energy, comm=comm,
+                        )
+                else:
+                    field_energy = 0.0
+                    field_q_energy = 0.0
+
+                # PLUMED likes the energy per rank
+                poteng = (field_energy + bond_energy + angle_energy
+                         + dihedral_energy + field_q_energy) / size
+            else:
+                poteng = 0.0
+
+            # get the forces and bias from PLUMED
+            plumed_forces, plumed_bias = plumed.calc(current_forces, poteng)
+
         # Second rRESPA velocity step
         velocities = integrate_velocity(
             velocities,
@@ -1026,6 +1139,11 @@ def main():
             config.respa_inner * config.time_step,
         )
 
+        if args.plumed:
+            velocities = integrate_velocity(
+                velocities, plumed_forces / config.mass,
+                config.respa_inner * config.time_step,
+            )
         if charges_flag and (
             config.coulombtype == "PIC_Spectral"
             or config.coulombtype == "PIC_Spectral_GPE"
@@ -1042,22 +1160,14 @@ def main():
                 config.respa_inner * config.time_step,
             )
 
-        # Only compute and keep the molecular bond energy from the last rRESPA
-        # inner step
-        if molecules_flag:
-            if not args.disable_bonds:
-                bond_energy = comm.allreduce(bond_energy_, MPI.SUM)
-            if not args.disable_angle_bonds:
-                angle_energy = comm.allreduce(angle_energy_, MPI.SUM)
-            if not args.disable_dihedrals:
-                dihedral_energy = comm.allreduce(dihedral_energy_, MPI.SUM)
-
         if config.domain_decomposition:
             if np.mod(step, config.domain_decomposition) == 0:
                 positions = np.ascontiguousarray(positions)
                 bond_forces = np.ascontiguousarray(bond_forces)
                 angle_forces = np.ascontiguousarray(angle_forces)
                 dihedral_forces = np.ascontiguousarray(dihedral_forces)
+                if args.plumed:
+                    plumed_forces = np.ascontiguousarray(plumed_forces)
 
                 (
                     positions,
@@ -1086,6 +1196,8 @@ def main():
                     elec_forces = optional.pop(0)
                 if dielectric_flag:
                     dielectric_sorted = optional.pop(0)
+                if args.plumed:
+                    plumed_forces = optional.pop(0)
                 if molecules_flag:
                     bonds = optional.pop(0)
                     molecules = optional.pop(0)
@@ -1108,6 +1220,8 @@ def main():
                     args_in.append(elec_forces)
                 if dielectric_flag:
                     args_in.append(dielectric_sorted)
+                if args.plumed:
+                    args_in.append(plumed_forces)
 
                 positions = np.asfortranarray(positions)
                 bond_forces = np.asfortranarray(bond_forces)
@@ -1285,6 +1399,8 @@ def main():
                 )
                 if charges_flag:
                     forces_out += elec_forces
+                if args.plumed:
+                    forces_out += plumed_forces
                 store_data(
                     out_dataset,
                     step,
@@ -1302,11 +1418,13 @@ def main():
                     dihedral_energy,
                     field_energy,
                     field_q_energy,
+                    plumed_bias,
                     config.respa_inner * config.time_step,
                     config,
                     velocity_out=args.velocity_output,
                     force_out=args.force_output,
                     charge_out=charges_flag,
+                    plumed_out=True if args.plumed else False,
                     dump_per_particle=args.dump_per_particle,
                     comm=comm,
                 )
@@ -1458,6 +1576,8 @@ def main():
         )
         if charges_flag:
             forces_out += elec_forces
+        if args.plumed:
+            forces_out += plumed_forces
         store_data(
             out_dataset,
             step,
@@ -1475,13 +1595,17 @@ def main():
             dihedral_energy,
             field_energy,
             field_q_energy,
+            plumed_bias,
             config.respa_inner * config.time_step,
             config,
             velocity_out=args.velocity_output,
             force_out=args.force_output,
             charge_out=charges_flag,
+            plumed_out=True if args.plumed else False,
             dump_per_particle=args.dump_per_particle,
             comm=comm,
         )
 
     out_dataset.close_file()
+    if args.plumed:
+        plumed.finalize()
