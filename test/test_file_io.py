@@ -163,7 +163,7 @@ def test_store_static(molecules_with_solvent, tmp_path):
 
     store_static(
         out, rank_range, names_, types_, indices_, config, bonds_2_atom1,
-        bonds_2_atom2, molecules=molecules_
+        bonds_2_atom2, molecules=molecules_, charges=True, plumed_out=True
     )
 
     groups = ['connectivity', 'h5md', 'observables', 'parameters', 'particles']
@@ -174,7 +174,8 @@ def test_store_static(molecules_with_solvent, tmp_path):
         'angle_energy', 'angular_momentum', 'bond_energy', 
         'dihedral_energy', 'field_energy', 'kinetic_energy', 
         'potential_energy', 'temperature', 'thermostat_work', 
-        'torque', 'total_energy', 'total_momentum'
+        'torque', 'total_energy', 'total_momentum', 'field_q_energy',
+        'plumed_bias'
     ]
     assert all((k in out.file['observables']) for k in groups)
     assert 'vmd_structure' in out.file['parameters'].keys()
@@ -242,14 +243,15 @@ def test_store_data(molecules_with_solvent, tmp_path):
     # call it to prepare OutDataset
     store_static(
         out, rank_range, names_, types_, indices_, config, bonds_2_atom1,
-        bonds_2_atom2, molecules=molecules_
+        bonds_2_atom2, molecules=molecules_, charges=True, plumed_out=True
     )
 
     forces = np.copy(positions_)
 
     store_data(
         out, 0, 0, indices_, positions_, velocities_, forces,
-        box_size, 300., 1., 1., 2., 3., 4., 5., 6., 0.02, config
+        box_size, 300., 1., 1., 2., 3., 4., 5., 6., 7., 0.02, config,
+        charge_out=True, plumed_out=True
     )
 
     outdataset_step = [
@@ -286,7 +288,6 @@ def test_store_data(molecules_with_solvent, tmp_path):
 
     for dset in outdataset_step:
         assert isinstance(dset, h5py.Dataset)
-        print(dset)
         assert dset[0] == 0
 
     for dset in outdataset_time:
@@ -301,5 +302,7 @@ def test_store_data(molecules_with_solvent, tmp_path):
     assert out.angle_energy[0] == pytest.approx(3.)
     assert out.dihedral_energy[0] == pytest.approx(4.)
     assert out.field_energy[0] == pytest.approx(5.)
+    assert out.field_q_energy[0] == pytest.approx(6.)
+    assert out.plumed_bias[0] == pytest.approx(7.)
 
     out.close_file()

@@ -133,6 +133,7 @@ def store_static(
     force_out=False,
     charges=False,
     dielectrics=False,
+    plumed_out=False,
     comm=MPI.COMM_WORLD,
 ):
     """Outputs all static time-independent quantities to the HDF5 output file
@@ -169,6 +170,8 @@ def store_static(
         Array of particle charge values for :code:`N` particles.
     dielectrics : (N,) numpy.ndarray
         Array of particle relative dielectric values for :code:`N` particles.
+    plumed_out : bool, optional
+        If :code:`True`, PLUMED bias is written to output HDF5 file.
     comm : mpi4py.Comm
         MPI communicator to use for rank commuication.
 
@@ -391,7 +394,15 @@ def store_static(
             dtype,
             units="kJ mol-1",  # noqa: E501
         )  # <-------- xinmeng
-
+    if plumed_out is not False:
+        (
+            _,
+            h5md.plumed_bias_step,
+            h5md.plumed_bias_time,
+            h5md.plumed_bias,
+        ) = setup_time_dependent_element(
+            "plumed_bias", h5md.observables, n_frames, (1,), dtype, units="kJ mol-1"  # noqa: E501
+        )
     (
         _,
         h5md.total_momentum_step,
@@ -542,11 +553,13 @@ def store_data(
     bond4_energy,
     field_energy,
     field_q_energy,
+    plumed_bias,
     time_step,
     config,
     velocity_out=False,
     force_out=False,
     charge_out=False,
+    plumed_out=False,
     dump_per_particle=False,
     comm=MPI.COMM_WORLD,
 ):
@@ -585,8 +598,10 @@ def store_data(
         Calculated instantaneous dihedral four-particle torsion energy.
     field_energy : float
         Calculated instantaneous particle-field energy.
-    field_energy_q : float
+    field_q_energy : float
         Calculated instantaneous electrostatic energy.
+    plumed_bias : float
+        PLUMED instantaneous bias energy.
     time_step : float
         Value of the time step.
     config : Config
@@ -598,6 +613,8 @@ def store_data(
     charge_out : bool, optional
         If :code:`True`, electrostatic energies are written to the output
         HDF5 file.
+    plumed_out : bool, optional
+        If :code:`True`, PLUMED bias is written to the output HDF5 file.
     dump_per_particle : bool, optional
         If :code:`True`, all quantities are written **per particle**.
     comm : mpi4py.Comm
@@ -655,6 +672,9 @@ def store_data(
     if charge_out:
         h5md.field_q_energy_step[frame] = step
         h5md.field_q_energy_time[frame] = step * time_step
+    if plumed_out:
+        h5md.plumed_bias_step[frame] = step
+        h5md.plumed_bias_time[frame] = step * time_step
 
     ind_sort = np.argsort(indices)
     h5md.positions[frame, indices[ind_sort]] = positions[ind_sort]
@@ -665,6 +685,8 @@ def store_data(
         h5md.forces[frame, indices[ind_sort]] = forces[ind_sort]
     if charge_out:
         h5md.field_q_energy[frame] = field_q_energy
+    if plumed_out:
+        h5md.plumed_bias[frame] = plumed_bias
 
     potential_energy = (
         bond2_energy + bond3_energy + bond4_energy + field_energy + field_q_energy
@@ -705,6 +727,7 @@ def store_data(
         "bond E",
         "ang E",
         "dih E",
+        "bias E",
         "Px",
         "Py",
         "Pz",
@@ -713,17 +736,16 @@ def store_data(
     fmt_ = np.array(fmt_)
 
     # create mask to show only energies != 0
-    en_array = np.array(
-        [
-            field_energy,
-            field_q_energy,
-            bond2_energy,
-            bond3_energy,
-            bond4_energy,
-        ]
-    )
+    en_array = np.array([
+        field_energy,
+        field_q_energy,
+        bond2_energy,
+        bond3_energy,
+        bond4_energy,
+        plumed_bias,
+    ])
     mask = np.full_like(fmt_, True, dtype=bool)
-    mask[range(6, 11)] = en_array != 0.0
+    mask[range(6,12)] = en_array != 0.
 
     header_ = fmt_[mask].shape[0] * "{:>13}"
     if config.initial_energy is None:
@@ -758,6 +780,7 @@ def store_data(
         bond2_energy / divide_by,
         bond3_energy / divide_by,
         bond4_energy / divide_by,
+        plumed_bias / divide_by,
         total_momentum[0] / divide_by,
         total_momentum[1] / divide_by,
         total_momentum[2] / divide_by,

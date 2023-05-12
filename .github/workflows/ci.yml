@@ -23,6 +23,14 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
           ${{ runner.os }}-
+    - name: Cache PLUMED
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/opt
+          ~/.ccache
+        key: ccache-v2-${{ runner.os }}-${{ github.sha }}
+        restore-keys: ccache-v2-${{ runner.os }}-
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -34,15 +42,36 @@ jobs:
         python3 -m pip install --upgrade wheel numpy mpi4py cython
         CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
         python3 -m pip install -r requirements.txt
+    - name: Install PLUMED
+      run: |
+        mkdir -p $HOME/opt/
+        sudo apt-get install -y build-essential
+        sudo apt-get install -y openmpi-bin libopenmpi-dev git
+        sudo apt-get install gsl-bin libgsl0-dev libboost-serialization-dev
+        sudo apt-get install -y ccache
+        sudo ln -s ccache /usr/local/bin/mpic++
+        export PATH=/usr/lib/ccache:${PATH}
+        git clone https://github.com/plumed/plumed2.git $HOME/plumed2
+        ccache -s
+        CXX="mpic++" PYTHON_BIN=python3 .ci/install.plumed program_path=$HOME/plumed2
+        ccache -s
+    - name: Install PLUMED python wrapper
+      run: |
+        current_path=$PWD
+        cd $HOME/plumed2/python
+        make pip
+        python3 -m pip install .
+        cd $current_path
     - name: Install package
       run: |
         python3 -m pip install .
     - name: Test with pytest
       run: |
         python3 -m pip install pytest pytest-cov pytest-mpi coverage
+        export PLUMED_KERNEL=$HOME/opt/lib/libplumedKernel.so
         pytest --cov=./
         chmod +x pytest-mpi
-        ./pytest-mpi -c -ca -n 2 -ns -oo
+        ./pytest-mpi -c -ca -n 2 -ns -oo -s -lc -v
     - name: Coverage report and upload
       run: |
         coverage report

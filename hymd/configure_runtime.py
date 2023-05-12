@@ -1,6 +1,6 @@
 """Parses command line arguments to HyMD
 """
-from argparse import ArgumentParser
+import argparse
 import os
 import sys
 import numpy as np
@@ -30,7 +30,7 @@ def configure_runtime(args_in, comm):
     config : hymd.input_parser.Config
         Parsed configuration object.
     """
-    ap = ArgumentParser()
+    ap = argparse.ArgumentParser()
 
     ap.add_argument(
         "-v",
@@ -127,7 +127,21 @@ def configure_runtime(args_in, comm):
         help="Redirect event logging to specified file",
     )
     ap.add_argument(
-        "-p", "--topol", default=None, help="Gmx-like topology file in toml format"
+        "--plumed", 
+        type=extant_file,
+        help="PLUMED input file",
+    )
+    ap.add_argument(
+        "--plumed-outfile",
+        default="plumed.out",
+        help="PLUMED input file",
+    )
+    ap.add_argument(
+        "-p",
+        "--topol",
+        default=None,
+        type=extant_file,
+        help="Gmx-like topology file in toml format"
     )
     ap.add_argument("config", help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
@@ -216,3 +230,16 @@ def configure_runtime(args_in, comm):
             f"\n\ntoml parse traceback:" + repr(ve)
         )
     return args, config, prng, topol
+
+
+def extant_file(x):
+    """
+    'Type' for argparse - checks that file exists but does not open.
+    From https://stackoverflow.com/a/11541495
+    """
+    if not os.path.exists(x):
+        # Argparse uses the ArgumentTypeError to give a rejection message like:
+        # error: argument input: x does not exist
+        raise argparse.ArgumentTypeError("{0} does not exist".format(x))
+    return x
+

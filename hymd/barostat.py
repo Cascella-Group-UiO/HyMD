@@ -147,7 +147,7 @@ def isotropic(
         # scaling factor
         alpha = (
             1.0
-            - config.time_step
+            - (config.time_step * config.respa_inner)
             * config.n_b
             / config.tau_p
             * beta
@@ -278,7 +278,7 @@ def semiisotropic(
             # scaling factor
             alphaL = (
                 1.0
-                - config.time_step
+                - (config.time_step * config.respa_inner)
                 * config.n_b
                 / config.tau_p
                 * beta
@@ -293,7 +293,7 @@ def semiisotropic(
             # scaling factor
             alphaN = (
                 1.0
-                - config.time_step
+                - (config.time_step * config.respa_inner)
                 * config.n_b
                 / config.tau_p
                 * beta

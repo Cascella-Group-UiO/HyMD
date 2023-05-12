@@ -118,3 +118,13 @@ Optional arguments
    Number of following arguments: :code:`0`
 
    Disable any particle--field interactions present in the system.
+
+:code:`--plumed`
+   :code:`type` optional
+
+   Input file for PLUMED when using the PLUMED interface. See :ref:`interfaces-label` for details.
+
+:code:`--plumed-outfile
+   :code:`type` optional
+
+   Name of PLUMED output file when running a simulation using PLUMED.
