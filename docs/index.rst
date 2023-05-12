@@ -21,6 +21,7 @@ with or without explicit PME electrostatic interactions. It includes all standar
 including stretching, bending, torsional, and combined bending-dihedral potentials. Additionally, topological reconstruction of permanent peptide chain backbone
 dipoles is possible for accurate recreation of protein conformational dynamics. It can run simulations in constant energy (NVE), constant volume (NVT) :cite:`hymd_domain2023,hymd_massive2023`
 or constant pressure (NPT) conditions :cite:`hymd_pressure2023`.
+HyMD is also interfaced with :doc:`PLUMED </doc_pages/interfaces>` and can perform simulations using enhanced sampling methods.
 
 HyMD uses the pmesh library for particle-mesh operations, with the PPFT :cite:`pippig2013` backend for FFTs through the pfft-python bindings.
 File IO is done via HDF5 formats to allow MPI parallel reads.
@@ -149,6 +150,7 @@ Indices and tables
    ./doc_pages/intramolecular_bonds
    ./doc_pages/electrostatics
    ./doc_pages/pressure
+   ./doc_pages/interfaces
 
 .. toctree::
    :maxdepth: 2
