@@ -62,11 +62,12 @@ def test_setup_time_dependent_element(config_toml, tmp_path):
 
     assert isinstance(group, h5py.Group)
     assert group.name == "/test/position"
-    assert group.attrs["units"] == "nm"
 
     assert isinstance(step, h5py.Dataset)
     assert isinstance(time, h5py.Dataset)
+    assert time.attrs["unit"] == "ps"
     assert isinstance(value, h5py.Dataset)
+    assert value.attrs["unit"] == "nm"
 
     out.close_file()
 

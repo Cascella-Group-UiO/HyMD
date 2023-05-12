@@ -16,11 +16,13 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-mpi4py python3-numpy
+        sudo apt-get install -y python3-mpi4py python3-numpy python3-distutils
+        sudo apt-get install -y libhdf5-openmpi-dev libfftw3-3 libfftw3-dev
     - name: Install python dependencies
       run: |
         python3 -m pip install --upgrade pip
-        pip3 install setuptools wheel twine cython numpy mpi4py
+        python3 -m pip install --upgrade wheel numpy mpi4py cython twine setuptools
+        python3 -m pip install -r requirements.txt
     - name: Build and publish
       env:
         TWINE_USERNAME: __token__

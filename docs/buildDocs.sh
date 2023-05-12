@@ -18,12 +18,18 @@ set -e
 ###################
 
 sudo apt-get update
-sudo apt-get -y install git make rsync wget pkg-config libhdf5-serial-dev python3-numpy python3-h5py python3-mpi4py python3-pip
+sudo apt-get -y install git make rsync wget pkg-config libhdf5-serial-dev python3-numpy python3-h5py python3-mpi4py python3-pip python3-git
 
 python3 -m pip install -U cython numpy mpi4py
 python3 -m pip install -r requirements.txt
 python3 -m pip install -r docs/docs_requirements.txt
 python3 -m pip install .
+
+######################
+# GET TAGS FOR BUILD #
+######################
+
+git fetch --all --tags
 
 ##############
 # BUILD DOCS #

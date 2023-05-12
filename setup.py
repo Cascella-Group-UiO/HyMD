@@ -15,6 +15,14 @@ def find_version(path):
 with open('README.md', 'r') as in_file:
     readme = in_file.read()
 
+with open('requirements.txt', 'r') as f:
+    requirements = [
+        s for s in [
+            line.split('#', 1)[0].strip(' \t\n') for line in f
+        ] if s != ''
+    ]
+
+
 force_kernels = Extension(
     name="force_kernels",
     sources=[
@@ -46,18 +54,7 @@ setup(
         "numpy",
         "mpi4py",
     ],
-    install_requires=[
-        "cython",
-        "h5py",
-        "mpi4py",
-        "mpsort",
-        "networkx",
-        "numpy",
-        "pfft-python",
-        "pmesh",
-        "sympy",
-        "tomli",
-    ],
+    install_requires=requirements,
     python_requires=">=3.6",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -70,6 +67,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Fortran",
         "Topic :: Scientific/Engineering :: Chemistry",
         "Topic :: Scientific/Engineering :: Physics",
