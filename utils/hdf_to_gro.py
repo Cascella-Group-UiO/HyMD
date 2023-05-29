@@ -24,7 +24,7 @@ if "molecules" in f_hd5:
 
 
 for f in range(shape):
-    fp.write("MD of %d mols, t=%.3f\n" % (Np, f_hd5["time"][f]))
+    fp.write("MD of %d mols\n" % (Np))
     fp.write("%-10d\n" % (Np))
     for i in range(Np):
         name = names[i].decode("UTF-8").strip()
@@ -45,9 +45,9 @@ for f in range(shape):
     fp.write(
         "%-5.5f\t%5.5f\t%5.5f\n"
         % (
-            f_hd5["cell_lengths"][0, 0, 0],
-            f_hd5["cell_lengths"][0, 1, 1],
-            f_hd5["cell_lengths"][0, 2, 2],
+            f_hd5.attrs["box"][0],
+            f_hd5.attrs["box"][1],
+            f_hd5.attrs["box"][2],
         )
     )
     fp.flush()
