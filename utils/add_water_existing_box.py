@@ -6,10 +6,10 @@ import numpy as np
 def expand_box(input_hdf5, ext_x, ext_y, ext_z, volw, box, out_path, overwrite, prng):
     if out_path is None:
         out_path = os.path.join(
-            os.path.abspath(os.path.dirname(h5md_file)),
-            os.path.splitext(os.path.split(h5md_file)[-1])[0]
+            os.path.abspath(os.path.dirname(input_hdf5)),
+            os.path.splitext(os.path.split(input_hdf5)[-1])[0]
             + "_new"
-            + os.path.splitext(os.path.split(h5md_file)[-1])[1],
+            + os.path.splitext(os.path.split(input_hdf5)[-1])[1],
         )
     if os.path.exists(out_path) and not overwrite:
         error_str = (

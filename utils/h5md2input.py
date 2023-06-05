@@ -1,6 +1,7 @@
 import os
 import argparse
 import h5py
+import numpy as np
 
 
 def h5md_to_input(h5md_file, old_input, frame, out_path=None, overwrite=False):
@@ -28,6 +29,10 @@ def h5md_to_input(h5md_file, old_input, frame, out_path=None, overwrite=False):
 
     in_steps = new_values["particles/all/position/step"]
     in_time = new_values["particles/all/position/time"]
+
+    # update the box
+    in_box = np.diag(new_values["particles/all/box/edges/value"][frame, :, :])
+    f_out.attrs["box"] = in_box
 
     n_frames = len(in_steps)
     if frame >= n_frames:
