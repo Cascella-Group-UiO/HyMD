@@ -277,6 +277,51 @@ def find_all_paths(G, u, n):
     return paths
 
 
+def propensity_potential_coeffs(x: float):
+    alpha_coeffs = np.array(
+        [
+            [7.406, -5.298, -2.570, 1.336, 0.739],
+            [-0.28632126, 1.2099146, 1.18122138, 0.49075168, 0.98495911],
+        ]
+    )
+    beta_coeffs = np.array(
+        [
+            [3.770, 5.929, -4.151, -0.846, 0.190],
+            [-0.2300693, -0.0583289, 0.99342396, 1.03237971, 2.90160988],
+        ]
+    )
+    coil_coeffs = np.array(
+        [
+            [1.416, -0.739, 0.990, -0.397, 0.136],
+            [1.3495933, 0.45649087, 2.30441057, -0.12274901, -0.26179939],
+        ]
+    )
+
+    zero_add = np.zeros((2, 5))
+    if np.isclose(x, -1):
+        return np.concatenate((alpha_coeffs, zero_add))
+    elif np.isclose(x, 0):
+        return np.concatenate((coil_coeffs, zero_add))
+    elif np.isclose(x, 1):
+        return np.concatenate((beta_coeffs, zero_add))
+
+    abs_x = np.abs(x)
+    if abs_x > 1:
+        err_str = (
+            f"The provided value of lambda = {x} is out of lambda definition range, "
+            f"[-1.0, 1.0]."
+        )
+        Logger.rank0.log(logging.ERROR, err_str)
+    else:
+        coil_coeffs[0] *= 1 - abs_x
+        if x < 0:
+            alpha_coeffs[0] *= 0.5 * (abs_x - x)
+            return np.concatenate((alpha_coeffs, coil_coeffs))
+        else:
+            beta_coeffs[0] *= 0.5 * (abs_x + x)
+            return np.concatenate((beta_coeffs, coil_coeffs))
+
+
 def prepare_bonds_old(molecules, names, bonds, indices, config):
     """Find bonded interactions from connectivity and bond types information
 
@@ -510,6 +555,17 @@ def prepare_index_based_bonds(molecules, topol):
                 index_l = angle[3] - 1 + first_id
                 dih_type = angle[4]
                 coeff = angle[5]
+                if dih_type == 0 and isinstance(coeff[0], (float, int)):
+                    coeff = propensity_potential_coeffs(coeff[0])
+                elif dih_type == 1 and len(coeff) == 3:
+                    coeff = np.array(
+                        propensity_potential_coeffs(coeff[0][0]).tolist()
+                        + coeff[1:]
+                    )
+                elif dih_type == 2:
+                    coeff = np.array(coeff)
+                else:
+                    coeff = np.insert(np.array(coeff), 2, np.zeros((2, 5)), axis=0)
                 bonds_4.append([index_i, index_j, index_k, index_l, coeff, dih_type, 0])
     return bonds_2, bonds_3, bonds_4
 

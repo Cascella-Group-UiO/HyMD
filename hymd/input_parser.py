@@ -9,7 +9,7 @@ import numpy as np
 from mpi4py import MPI
 from dataclasses import dataclass, field
 from typing import List, Union, ClassVar
-from .force import Bond, Angle, Dihedral, Chi, Dielectric_type
+from .force import Bond, Angle, Dihedral, Chi, Dielectric_type, propensity_potential_coeffs
 from .barostat import Target_pressure
 from .logger import Logger
 
@@ -317,54 +317,6 @@ def read_config_toml(file_path):
         file_content = in_file.read()
     return file_content
 
-def propensity_potential_coeffs(x: float, comm):
-    alpha_coeffs = np.array(
-        [
-            [7.406, -5.298, -2.570, 1.336, 0.739],
-            [-0.28632126, 1.2099146, 1.18122138, 0.49075168, 0.98495911],
-        ]
-    )
-    beta_coeffs = np.array(
-        [
-            [3.770, 5.929, -4.151, -0.846, 0.190],
-            [-0.2300693, -0.0583289, 0.99342396, 1.03237971, 2.90160988],
-        ]
-    )
-    coil_coeffs = np.array(
-        [
-            [1.416, -0.739, 0.990, -0.397, 0.136],
-            [1.3495933, 0.45649087, 2.30441057, -0.12274901, -0.26179939],
-        ]
-    )
-
-    zero_add = np.zeros((2, 5))
-    if x == -1:
-        return np.concatenate((alpha_coeffs, zero_add))
-    elif x == 0:
-        return np.concatenate((coil_coeffs, zero_add))
-    elif x == 1:
-        return np.concatenate((beta_coeffs, zero_add))
-
-    abs_x = np.abs(x)
-    if abs_x > 1:
-        err_str = (
-            f"The provided value of λ = {x} is out of λ definition range, "
-            f"[-1.0, 1.0]."
-        )
-        Logger.rank0.log(logging.ERROR, err_str)
-        if comm.Get_rank() == 0:
-            raise ValueError(err_str)
-
-    else:
-        coil_coeffs[0] *= 1 - abs_x
-        if x < 0:
-            alpha_coeffs[0] *= 0.5 * (abs_x - x)
-            return np.concatenate((alpha_coeffs, coil_coeffs))
-        else:
-            beta_coeffs[0] *= 0.5 * (abs_x + x)
-            return np.concatenate((beta_coeffs, coil_coeffs))
-
-
 def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
     config_dict = {}
 
@@ -475,10 +427,10 @@ def parse_config_toml(toml_content, file_path=None, comm=MPI.COMM_WORLD):
 
                 # FIXME: this is messy af, I don't like it
                 if dih_type == 0 and isinstance(b[1][0], (float, int)):
-                    coeff = propensity_potential_coeffs(b[1][0], comm)
+                    coeff = propensity_potential_coeffs(b[1][0])
                 elif dih_type == 1 and len(b[1]) == 3:
                     coeff = np.array(
-                        propensity_potential_coeffs(b[1][0][0], comm).tolist()
+                        propensity_potential_coeffs(b[1][0][0]).tolist()
                         + b[1][1:]
                     )
                 elif dih_type == 2:

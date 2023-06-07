@@ -48,7 +48,11 @@ subroutine cdf(force, r, dipoles, transfer_matrix, box, a, b, c, d, coeff, dtype
 
     cos_phi = dot_product(v, w)
     sin_phi = dot_product(w, f) * g_norm
-    phi = atan2(sin_phi, cos_phi)
+    if (cos_phi == 0.0 .and. sin_phi == 0.0) then
+      continue
+    else
+      phi = atan2(sin_phi, cos_phi)
+    endif
 
     f_dot_g = dot_product(f, g)
     h_dot_g = dot_product(h, g)
