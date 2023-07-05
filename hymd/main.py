@@ -286,6 +286,7 @@ def main():
             *tuple(args_in),
             molecules=molecules if molecules_flag else None,
             bonds=bonds if molecules_flag else None,
+            topol=False if topol is None else True,
             verbose=args.verbose,
             comm=comm,
         )
@@ -298,7 +299,8 @@ def main():
         if args.plumed:
             plumed_forces = optional.pop(0)
         if molecules_flag:
-            bonds = optional.pop(0)
+            if topol is None:
+                bonds = optional.pop(0)
             molecules = optional.pop(0)
 
         # rebuild args_in to point to correct arrays
@@ -1187,6 +1189,7 @@ def main():
                     *tuple(args_in),
                     molecules=molecules if molecules_flag else None,
                     bonds=bonds if molecules_flag else None,
+                    topol=False if topol is None else True,
                     verbose=args.verbose,
                     comm=comm,
                 )
@@ -1199,7 +1202,8 @@ def main():
                 if args.plumed:
                     plumed_forces = optional.pop(0)
                 if molecules_flag:
-                    bonds = optional.pop(0)
+                    if topol is None:
+                        bonds = optional.pop(0)
                     molecules = optional.pop(0)
 
                 # rebuild args_in to point to correct arrays
