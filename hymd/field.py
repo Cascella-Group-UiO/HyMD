@@ -1113,7 +1113,7 @@ def update_field_force_q_GPE(
 
 
 def domain_decomposition(
-    positions, pm, *args, molecules=None, bonds=None, verbose=0, comm=MPI.COMM_WORLD
+    positions, pm, *args, molecules=None, bonds=None, topol=False, verbose=0, comm=MPI.COMM_WORLD
 ):
     """Performs domain decomposition
 
@@ -1154,7 +1154,8 @@ def domain_decomposition(
     arrays were provided as input.
     """
     if molecules is not None:
-        assert bonds is not None, "bonds must be provided with molecules"
+        if not topol:
+            assert bonds is not None, "bonds must be provided with molecules"
         unique_molecules = np.sort(np.unique(molecules))
         molecules_com = np.empty_like(positions)
         for m in unique_molecules:
@@ -1162,7 +1163,10 @@ def domain_decomposition(
             r = positions[ind, :][0, :]
             molecules_com[ind, :] = r
         layout = pm.decompose(molecules_com, smoothing=0)
-        args = (*args, bonds, molecules)
+        if not topol:
+            args = (*args, bonds, molecules)
+        else:
+            args = (*args, molecules)
     else:
         layout = pm.decompose(positions, smoothing=0)
     if verbose > 1:
