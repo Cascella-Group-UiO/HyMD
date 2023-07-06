@@ -153,6 +153,62 @@ def parse_molecule_species(names, molecules=None):
             )
         ]
     )
+    lipid_a=(
+        [
+            np.string_("type:" + s) for s in ("P", "P", "L", "G",
+                                              "G","G", "L", "C",
+                                              "C", "C", "C", "C",
+                                              "C", "C", "C", "L",
+                                              "G", "G","G", "C",
+                                              "C", "C", "C", "C",
+                                              "C", "L", "C", "C")
+        ],
+        [
+            "name:" + s for s in (
+                "P1", "P2", "L1", "G1",
+                "G2","G3", "L2", "C1",
+                "C2", "C3", "C4", "C5",
+                "C6", "C7", "C8", "L3",
+                "G4", "G5","G6", "C9",
+                "C10", "C11", "C12", "C13",
+                "C14", "L4", "C15", "C16",
+            )
+        ]
+    )
+    lre=(
+        [
+            np.string_("type:" + s) for s in ("P", "P", "G", "G",
+                                              "G","L", "C", "C",
+                                              "C", "G", "C", "C",
+                                              "C", "C", "C", "L",
+                                              "G", "L","G", "C",
+                                              "C", "C", "C", "C",
+                                              "C", "P", "L", "L", "L",
+                                              "P", "L", "L", "L")
+        ],
+        [
+            "name:" + s for s in (
+                "P1", "P2", "G1", "G2",
+                "G3","L1", "C1","C2",
+                "C3", "G4", "C4", "C5",
+                "C6", "C7", "C8", "L2",
+                "G5", "L3","G6", "C9",
+                "C10", "C11", "C12", "C13",
+                "C14", "P3", "L4", "L5", "L6",
+                "P4","L7","L8","L9",
+            )
+        ]
+    )
+    ion = (
+        [
+            np.string_("type:" + s) for s in ("N")
+        ],
+        [
+            "name:" + s for s in (
+                "N",
+            )
+        ]
+    )
     tg = (
         [
             np.string_("type:" + s) for s in ("C", "G", "G", "G",  # head
@@ -182,7 +238,7 @@ def parse_molecule_species(names, molecules=None):
     )
 
     species = {}
-    for d in (dppc, dmpc, dspc, dopc, popg, tg, w):
+    for d in (dppc, dmpc, dspc, dopc, popg, tg, lipid_a, lre, ion, w):
         t = {s.decode("UTF-8"): None for s in d[0] if s != b"type:"}
         n = {s: None for s in d[1]}
         species = {**species, **{**t, **n}}
@@ -193,6 +249,9 @@ def parse_molecule_species(names, molecules=None):
         "lipid:DOPC": None,
         "lipid:POPG": None,
         "lipid:TG": None,
+        "lipid:LA6": None,
+        "lipid:lre": None,
+        "ions": None,
         "solvent": None,
         "all": None,
     }}
@@ -291,6 +350,71 @@ def parse_molecule_species(names, molecules=None):
                 add_(species, ("name:TC2C", "type:C", "lipid:TG"), mol[0][13])
                 add_(species, ("name:TC3C", "type:C", "lipid:TG"), mol[0][14])
                 add_(species, ("name:TC4C", "type:C", "lipid:TG"), mol[0][15])
+            elif np.array_equal(n, lipid_a[0][:n_mol]) and n_mol == 28:
+                add_(species, ("name:P1", "type:P", "lipid:LA6"), mol[0][0])
+                add_(species, ("name:P2", "type:P", "lipid:LA6"), mol[0][1])
+                add_(species, ("name:L1", "type:L", "lipid:LA6"), mol[0][2])
+                add_(species, ("name:G1", "type:G", "lipid:LA6"), mol[0][3])
+                add_(species, ("name:G2", "type:G", "lipid:LA6"), mol[0][4])
+                add_(species, ("name:G3", "type:G", "lipid:LA6"), mol[0][5])
+                add_(species, ("name:L2", "type:L", "lipid:LA6"), mol[0][6])
+                add_(species, ("name:C1", "type:C", "lipid:LA6"), mol[0][7])
+                add_(species, ("name:C2", "type:C", "lipid:LA6"), mol[0][8])
+                add_(species, ("name:C3", "type:C", "lipid:LA6"), mol[0][9])
+                add_(species, ("name:C4", "type:C", "lipid:LA6"), mol[0][10])
+                add_(species, ("name:C5", "type:C", "lipid:LA6"), mol[0][11])
+                add_(species, ("name:C6", "type:C", "lipid:LA6"), mol[0][12])
+                add_(species, ("name:C7", "type:C", "lipid:LA6"), mol[0][13])
+                add_(species, ("name:C8", "type:C", "lipid:LA6"), mol[0][14])
+                add_(species, ("name:L3", "type:L", "lipid:LA6"), mol[0][15])
+                add_(species, ("name:G4", "type:G", "lipid:LA6"), mol[0][16])
+                add_(species, ("name:G5", "type:G", "lipid:LA6"), mol[0][17])
+                add_(species, ("name:G6", "type:G", "lipid:LA6"), mol[0][18])
+                add_(species, ("name:C9", "type:C", "lipid:LA6"), mol[0][19])
+                add_(species, ("name:C10", "type:C", "lipid:LA6"), mol[0][20])
+                add_(species, ("name:C11", "type:C", "lipid:LA6"), mol[0][21])
+                add_(species, ("name:C12", "type:C", "lipid:LA6"), mol[0][22])
+                add_(species, ("name:C13", "type:C", "lipid:LA6"), mol[0][23])
+                add_(species, ("name:C14", "type:C", "lipid:LA6"), mol[0][24])
+                add_(species, ("name:L4", "type:L", "lipid:LA6"), mol[0][25])
+                add_(species, ("name:C15", "type:C", "lipid:LA6"), mol[0][26])
+                add_(species, ("name:C16", "type:C", "lipid:LA6"), mol[0][27])
+            elif np.array_equal(n, lre[0][:n_mol]) and n_mol == 33:
+                add_(species, ("name:P1", "type:P", "lipid:lre"), mol[0][0])
+                add_(species, ("name:P2", "type:P", "lipid:lre"), mol[0][1])
+                add_(species, ("name:G1", "type:G", "lipid:lre"), mol[0][2])
+                add_(species, ("name:G2", "type:G", "lipid:lre"), mol[0][3])
+                add_(species, ("name:G3", "type:G", "lipid:lre"), mol[0][4])
+                add_(species, ("name:L1", "type:L", "lipid:lre"), mol[0][5])
+                add_(species, ("name:C1", "type:C", "lipid:lre"), mol[0][6])
+                add_(species, ("name:C2", "type:C", "lipid:lre"), mol[0][7])
+                add_(species, ("name:C3", "type:C", "lipid:lre"), mol[0][8])
+                add_(species, ("name:G4", "type:G", "lipid:lre"), mol[0][9])
+                add_(species, ("name:C4", "type:C", "lipid:lre"), mol[0][10])
+                add_(species, ("name:C5", "type:C", "lipid:lre"), mol[0][11])
+                add_(species, ("name:C6", "type:C", "lipid:lre"), mol[0][12])
+                add_(species, ("name:C7", "type:C", "lipid:lre"), mol[0][13])
+                add_(species, ("name:C8", "type:C", "lipid:lre"), mol[0][14])
+                add_(species, ("name:L2", "type:L", "lipid:lre"), mol[0][15])
+                add_(species, ("name:G5", "type:G", "lipid:lre"), mol[0][16])
+                add_(species, ("name:L3", "type:L", "lipid:lre"), mol[0][17])
+                add_(species, ("name:G6", "type:G", "lipid:lre"), mol[0][18])
+                add_(species, ("name:C9", "type:C", "lipid:lre"), mol[0][19])
+                add_(species, ("name:C10", "type:C", "lipid:lre"), mol[0][20])
+                add_(species, ("name:C11", "type:C", "lipid:lre"), mol[0][21])
+                add_(species, ("name:C12", "type:C", "lipid:lre"), mol[0][22])
+                add_(species, ("name:C13", "type:C", "lipid:lre"), mol[0][23])
+                add_(species, ("name:C14", "type:C", "lipid:lre"), mol[0][24])
+                add_(species, ("name:P3", "type:P", "lipid:lre"), mol[0][25])
+                add_(species, ("name:L4", "type:L", "lipid:lre"), mol[0][26])
+                add_(species, ("name:L5", "type:L", "lipid:lre"), mol[0][27])
+                add_(species, ("name:L6", "type:L", "lipid:lre"), mol[0][28])
+                add_(species, ("name:P4", "type:P", "lipid:lre"), mol[0][29])
+                add_(species, ("name:L7", "type:L", "lipid:lre"), mol[0][30])
+                add_(species, ("name:L8", "type:L", "lipid:lre"), mol[0][31])
+                add_(species, ("name:L9", "type:L", "lipid:lre"), mol[0][32])
+            elif np.array_equal(n, ion[0][:n_mol]) and n_mol == 1:
+                add_(species, ("name:N", "type:N", "ions"), mol[0][0])
             elif np.array_equal(n, w[0][:n_mol]) and n_mol == 1:
                 add_(species, ("name:W", "type:W", "solvent"), mol[0][0])
             else:
@@ -1252,7 +1376,7 @@ def action_compute_histogram(parser, ref=False):
     return histogram_bins, histograms, area_per_lipid
 
 def action_multiplot(parser):
-    samiran_signature = plt.style.use('samiran-signature')
+    #samiran_signature = plt.style.use('samiran-signature')
     #using matplotlibstyle: /Users/samiransen23/anaconda3/envs/py38/lib/python3.8/site-packages/matplotlib/mpl-data/stylelib/samiran-signature.mplstyle
     fig, ax = plt.subplots(1, 1)
     fig.set_size_inches(15.6, 8.0)
@@ -1268,8 +1392,8 @@ def action_multiplot(parser):
         parser_single = copy.deepcopy(parser)
         parser_single.traj = parser_single.traj[i]
         parser_single.top = parser_single.top[i]
-        parser_single.skip_first = parser_single.skip_first[i]
-        parser_single.frames = parser_single.frames[i]
+        #parser_single.skip_first = parser_single.skip_first[i]
+        #parser_single.frames = parser_single.frames[i]
         action_plot(parser_single, linestyle=linestyle, remove_legend=True, fontsize=fontsize,
                 labels=labels, fig=fig, ax=ax)
     ax.legend(labels[:len(parser.traj)], loc='best', fontsize=fontsize, framealpha=0)
@@ -1732,13 +1856,13 @@ if __name__ == '__main__':
         help="consider only every N frames when calculating the histograms"
     )
     parser.add_argument(
-        #"--skip-first", type=int, default=0,
-        "--skip-first", nargs='+', type=int, default=0,
+        "--skip-first", type=int, default=0,
+        #"--skip-first", nargs='+', type=int, default=0,
         help="skip the first N frames when calculating the histograms"
     )
     parser.add_argument(
-        #"--frames", type=int, default=None,
-        "--frames", nargs='+', type=int, default=None,
+        "--frames", type=int, default=None,
+        #"--frames", nargs='+', type=int, default=None,
         help=(
             "Only consider N frames, starting at --skip_first (with step "
             "size --skip)."
@@ -1809,6 +1933,10 @@ if __name__ == '__main__':
             for s in ["NC3", "PO4", "GL1", "GL2",  # head
                      "C1A", "C2A", "C3A", "C4A",  # tail 1
                      "C1B", "C2B", "C3B", "C4B",  # tail 2
+                     "P1", "P2", "L1", "G1", "G2", "G3", "L2", 
+                     "C1", "C2", "C3", "C4", "C5", "C6", "C7", 
+                     "C8", "L3", "G4", "G5", "G6", "C9", "C10",
+                     "C11","C12","C13","C14","L4", "C15","C16",
                      "W"                          #water
                      ]:
                 args.ignore.append('name:'+s)
@@ -1832,11 +1960,10 @@ if __name__ == '__main__':
                     "C1B", "C2B", "C3B", "C4B",
                      ]:
                 args.ignore.append('name:'+s)
-        #if isinstance(args.traj, str):
-        #    action_plot(args)
-        #elif isinstance(args.traj, list):
-        #    action_multiplot(args)
-        action_multiplot(args)
+        if isinstance(args.traj, str):
+            action_plot(args)
+        elif isinstance(args.traj, list):
+            action_multiplot(args)
         if not args.no_show:
             plt.show()
         else:
