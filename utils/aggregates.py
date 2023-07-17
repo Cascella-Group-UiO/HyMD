@@ -2,8 +2,6 @@ import MDAnalysis as mda
 from MDAnalysis.analysis import distances
 import numpy as np
 import scipy.cluster.hierarchy as hcl
-from scipy.spatial.distance import squareform
-from scipy.spatial.distance import pdist
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import os
@@ -118,6 +116,7 @@ def aggregates_clustering(
     selection,
     skip,
     stride,
+    end,
     solvent_name,
     linkage_method,
     save_snaps,
@@ -144,7 +143,7 @@ def aggregates_clustering(
     # compute clusters for each snapshot
     job_list = []
     frames = []
-    for ts in tqdm(u.trajectory[skip::stride]):
+    for ts in tqdm(u.trajectory[skip:end:stride]):
         frames.append(ts.frame)
         job_list.append(
             dask.delayed(
@@ -175,7 +174,7 @@ def aggregates_clustering(
 
     # based on cluster sizes get occurence of each size
     sizes, freq = np.unique(all_sizes, return_counts=True)
-    freq = freq / len(u.trajectory[skip::stride])
+    freq = freq / len(u.trajectory[skip:end:stride])
 
     # plot results
     fig, (ax1, ax2) = plt.subplots(2, 1)
@@ -185,10 +184,12 @@ def aggregates_clustering(
     ax1.set_xlabel("Frame")
     ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
 
-    ax2.bar([f"{sizes[i]}" for i in range(len(sizes))], freq)
+    xticklabels = [f"{sizes[i]}" for i in range(len(sizes))]
+    ax2.bar(xticklabels, freq, width=0.8)
     ax2.set_ylabel("Frequency")
     ax2.set_xlabel("Aggregate size")
-
+    ax2.tick_params('x', labelrotation=60)
+    
     plt.tight_layout()
     plt.show()
 
@@ -234,6 +235,12 @@ if __name__ == "__main__":
         type=int,
         default=1,
         help="stride when analyzing the trajectory (default = 1)",
+    )
+    parser.add_argument(
+        "--end",
+        type=int,
+        default=-1,
+        help="final frame to be processed (default = -1)",
     )
     parser.add_argument(
         "--explore-methods",
@@ -293,6 +300,7 @@ if __name__ == "__main__":
             args.selection,
             args.skip,
             args.stride,
+            args.end,
             args.solvent_name,
             args.linkage_method,
             args.save_colored_snap,
