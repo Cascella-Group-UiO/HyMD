@@ -50,7 +50,7 @@ setup(
     version=find_version("hymd/version.py"),
     ext_modules=[force_kernels],
     setup_requires=[
-        "cython",
+        "cython<3",
         "numpy",
         "mpi4py",
     ],
