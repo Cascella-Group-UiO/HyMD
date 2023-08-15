@@ -1,10 +1,10 @@
-cython
 h5py
 mpi4py
-mpsort @ git+https://github.com/rainwoodman/MP-sort
 networkx
 numpy<1.25
-pfft-python @ git+https://github.com/rainwoodman/pfft-python
-pmesh @ git+https://github.com/rainwoodman/pmesh
 sympy
 tomli
+cython<3
+mpsort
+pfft-python
+pmesh @ git+https://github.com/rainwoodman/pmesh
