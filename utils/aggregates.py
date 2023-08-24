@@ -70,7 +70,7 @@ def explore_methods(
 
 
 def compute_clusters(
-    print_sel, at_sel, ts, cutoff, linkage_method, save_snaps, plot_dendrograms
+    frame, box, print_sel, at_sel, cutoff, linkage_method, save_snaps, plot_dendrograms
 ):
     # get CM for each mol (assumes each ResID is a mol)
     mol_cms = []
@@ -81,7 +81,7 @@ def compute_clusters(
     n = len(mol_cms)
     cond_distmat = np.zeros((int((n * n - n) / 2),), dtype=np.float64)
     distances.self_distance_array(
-        np.array(mol_cms), box=ts.dimensions, result=cond_distmat, backend="OpenMP"
+        np.array(mol_cms), box=box, result=cond_distmat, backend="OpenMP"
     )
 
     # get dendrogram
@@ -97,7 +97,7 @@ def compute_clusters(
             no_labels=True,
         )
         plt.axhline(cutoff, linestyle="--")
-        plt.savefig(f"./dendrograms/snap_{ts.frame}.pdf", bbox_inches="tight")
+        plt.savefig(f"./dendrograms/snap_{frame}.pdf", bbox_inches="tight")
 
     # build the clusters
     clusters = hcl.fcluster(Z, cutoff, criterion="distance")
@@ -105,14 +105,14 @@ def compute_clusters(
     if save_snaps:
         if len(print_sel.residues.resids) > len(clusters):
             resids = np.full((len(print_sel.residues.resids)), np.max(clusters) + 1)
-            resids[:len(clusters)] = clusters
+            resids[: len(clusters)] = clusters
         elif len(print_sel.residues.resids) == len(clusters):
             resids = clusters
         else:
             raise AssertionError("Something is wrong with your selection")
         print_sel.residues.resids = resids
 
-        print_sel.write(f"./colored_pdbs/snap_{ts.frame}.pdb")
+        print_sel.write(f"./colored_pdbs/snap_{frame}.pdb")
 
     return clusters
 
@@ -125,6 +125,7 @@ def aggregates_clustering(
     skip,
     stride,
     end,
+    nworkers,
     solvent_name,
     linkage_method,
     save_snaps,
@@ -162,9 +163,10 @@ def aggregates_clustering(
         job_list.append(
             dask.delayed(
                 compute_clusters(
+                    ts.frame,
+                    ts.dimensions,
                     print_sel,
                     at_sel,
-                    ts,
                     cutoff,
                     linkage_method,
                     save_snaps,
@@ -173,7 +175,7 @@ def aggregates_clustering(
             )
         )
 
-    clusters = dask.compute(job_list)
+    clusters = dask.compute(job_list, num_workers=nworkers)
 
     n_clusters = []
     clust_sizes = []
@@ -190,6 +192,11 @@ def aggregates_clustering(
     sizes, freq = np.unique(all_sizes, return_counts=True)
     freq = freq / len(u.trajectory[skip:end:stride])
 
+    # write sizes and freq to file
+    with open("summary_clustering.dat", "w") as of:
+        for s, f in zip(sizes, freq):
+            of.write(f"{s}\t{f}\n")
+
     # plot results
     fig, (ax1, ax2) = plt.subplots(2, 1)
 
@@ -205,6 +212,7 @@ def aggregates_clustering(
     ax2.tick_params("x", labelrotation=60)
 
     plt.tight_layout()
+    plt.savefig("summary_clustering.pdf", bbox_inches="tight")
     plt.show()
 
 
@@ -257,6 +265,12 @@ if __name__ == "__main__":
         help="final frame to be processed (default = -1)",
     )
     parser.add_argument(
+        "--n-workers",
+        type=int,
+        default=4,
+        help="number of workers to compute in parallel using dask (default = 4)",
+    )
+    parser.add_argument(
         "--explore-methods",
         action="store_true",
         default=False,
@@ -289,7 +303,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if os.path.splitext(args.h5md_file)[1] != ".h5md":
+    if os.path.splitext(args.h5md_file)[1].lower() == ".h5":
         raise AssertionError(
             "Trajectory extension should be .h5md. If you are using .H5 please rename it."
         )
@@ -326,10 +340,11 @@ if __name__ == "__main__":
             args.skip,
             args.stride,
             args.end,
+            args.n_workers,
             args.solvent_name,
             args.linkage_method,
             args.save_colored_snap,
             args.plot_dendrograms,
             args.traj_in_memory,
-            args.save_solvent
+            args.save_solvent,
         )
