@@ -45,6 +45,7 @@ def compute_rdfs(
     compute_i_rg,
     compute_pddf,
     save_centered,
+    save_agg_only,
 ):
     rdfs = {}
     for i in range(len(selections)):
@@ -104,30 +105,38 @@ def compute_rdfs(
 
             cog = (box_vectors[:3] * tetha_bar) / (2.0 * np.pi)
 
-            if save_centered:
-                dirname = f"./centered_{agg_size}"
+            # since some methods are not PBC aware, we center the
+            # aggregate in the box so it does not split in the PBCs
+            if save_agg_only or save_centered or compute_i_rg:
                 box_center = box_vectors[:3] / 2.0
                 u.atoms.translate(box_center - cog)
                 u.atoms.wrap(compound="atoms")
                 cog = box_center
 
+            if save_agg_only:
+                agg_sel = u.select_atoms(f"resid {resid}")
+
+                dirname = f"./agg_only_{agg_size}"
+
+                if not os.path.exists(dirname):
+                    os.mkdir(dirname)
+
+                agg_sel.atoms.write(
+                    os.path.join(dirname, f"centered_{os.path.basename(snapshot)}")
+                )
+
+            if save_centered:
+                dirname = f"./centered_{agg_size}"
+
                 if not os.path.exists(dirname):
                     os.mkdir(dirname)
 
                 u.atoms.write(
-                    f"./centered_{agg_size}/centered_{os.path.basename(snapshot)}"
+                    os.path.join(dirname, f"centered_{os.path.basename(snapshot)}")
                 )
 
             # compute the principal moment of inertia and Rg
             if compute_i_rg:
-                # since the methods are not PBC aware, we center the
-                # aggregate in the box so it does not split in the PBCs
-                if not save_centered:
-                    box_center = box_vectors[:3] / 2.0
-                    u.atoms.translate(box_center - cog)
-                    u.atoms.wrap(compound="atoms")
-                    cog = box_center
-
                 # set the masses
                 agg_sel = u.select_atoms(f"resid {resid}")
 
@@ -163,7 +172,7 @@ def compute_rdfs(
 
                 n = len(agg_sel)
                 cond_distmat = np.zeros((int((n * n - n) / 2),), dtype=np.float64)
-                all_distances = distances.self_distance_array(
+                distances.self_distance_array(
                     agg_sel.positions,
                     box=box_vectors,
                     result=cond_distmat,
@@ -342,6 +351,12 @@ if __name__ == "__main__":
         help='for each snapshot containing an aggregate of selected size, save the snapshot with the aggregate centered in the "centered" directory',
     )
     parser.add_argument(
+        "--save-aggregate-only",
+        action="store_true",
+        default=False,
+        help="for each snapshot, save the configuration of the aggregate only"
+    )
+    parser.add_argument(
         "--do-not-compute-rdfs",
         action="store_true",
         default=False,
@@ -385,4 +400,5 @@ if __name__ == "__main__":
         args.principal_moments_rg,
         args.compute_pddf,
         args.save_centered_aggregate,
+        args.save_aggregate_only,
     )
