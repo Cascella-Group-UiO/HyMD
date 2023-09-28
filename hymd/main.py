@@ -42,13 +42,15 @@ def main():
     the molecular dynamics loop.
     """
     comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
 
-    if rank == 0:
+    if comm.Get_rank() == 0:
         start_time = datetime.datetime.now()
 
-    args, config, prng, topol = configure_runtime(sys.argv[1:], comm)
+    args, config, prng, topol, intracomm, intercomm = configure_runtime(sys.argv[1:], comm)
+
+    # Get rank and size
+    rank = intracomm.Get_rank()
+    size = intracomm.Get_size()
 
     if args.double_precision:
         dtype = np.float64
@@ -64,30 +66,6 @@ def main():
         from .force import compute_bond_forces__fortran as compute_bond_forces
         from .force import compute_angle_forces__fortran as compute_angle_forces
         from .force import compute_dihedral_forces__fortran as compute_dihedral_forces
-
-    # multi replica setup
-    n_replicas = len(args.replica_dirs)
-    if n_replicas > 1:
-        # split COMM_WORLD in intracomm and intercomm
-        n_intra = int(size / n_replicas)
-        if (n_replicas * n_intra != size):
-            err_str = "Inconsistent number of ranks per replica"
-            Logger.rank0.log(logging.ERROR, err_str)
-
-            if rank == 0:
-                raise AssertionError(err_str)
-        intracomm = comm.Split(int(rank / n_intra), rank)
-        intercomm = comm.Split(rank % n_intra, rank)
-
-        # assign directory to each rank
-        os.chdir(args.replica_dirs[int(rank / n_intra)])
-
-        # update rank and size
-        rank = intracomm.Get_rank()
-        size = intracomm.Get_size()
-    else:
-        intracomm = comm
-        intercomm = None
 
     # read input .hdf5
     driver = "mpio" if not args.disable_mpio else None

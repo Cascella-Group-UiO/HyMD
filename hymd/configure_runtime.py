@@ -29,6 +29,14 @@ def configure_runtime(args_in, comm):
         Namespace containing command line arguments.
     config : hymd.input_parser.Config
         Parsed configuration object.
+    prng : np.random.Generator
+        Random number generator for this rank.
+    topol : dict
+        Topology dictionary.
+    intracomm : mpi4py.Comm
+        MPI communicator to use for rank communication within a replica.
+    intercomm : mpi4py.Comm
+        MPI communicator to use for rank communication between replicas.
     """
     ap = argparse.ArgumentParser()
 
@@ -151,11 +159,11 @@ def configure_runtime(args_in, comm):
     args = ap.parse_args(args_in)
 
     # check if we have at least one rank per replica
-    if comm.Get_size() < len(args.replica_dirs):
+    if comm.Get_size() < len(args.replica_dirs) and comm.Get_rank() == 0:
         raise ValueError("You should have at least one MPI rank per replica.")
     
     # block destdir with replicas
-    if (len(args.replica_dirs) > 0) and args.destdir != ".":
+    if (len(args.replica_dirs) > 0) and args.destdir != "." and comm.Get_rank() == 0:
         raise ValueError("You should not specify a destination directory when using replicas.")
 
     if comm.Get_rank() == 0:
@@ -177,11 +185,35 @@ def configure_runtime(args_in, comm):
     # Setup a PRNG for each rank
     prng = np.random.default_rng(seeds[comm.Get_rank()])
 
+    # multi replica setup
+    n_replicas = len(args.replica_dirs)
+    if n_replicas > 1:
+        # split comm=COMM_WORLD in intracomm and intercomm
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+
+        n_intra = int(size / n_replicas)
+        if (n_replicas * n_intra != size):
+            err_str = "Inconsistent number of ranks per replica"
+
+            if rank == 0:
+                raise AssertionError(err_str)
+        intracomm = comm.Split(int(rank / n_intra), rank)
+        intercomm = comm.Split(rank % n_intra, rank)
+
+        # assign directory to each rank
+        os.chdir(args.replica_dirs[int(rank / n_intra)])
+
+    else:
+        intracomm = comm
+        intercomm = None
+
     # Setup logger
     Logger.setup(
         default_level=logging.INFO,
         log_file=f"{args.destdir}/{args.logfile}",
         verbose=args.verbose,
+        comm=intracomm,
     )
 
     # print header info
@@ -241,7 +273,7 @@ def configure_runtime(args_in, comm):
             f"Unable to parse configuration file {args.config}"
             f"\n\ntoml parse traceback:" + repr(ve)
         )
-    return args, config, prng, topol
+    return args, config, prng, topol, intracomm, intercomm
 
 
 def extant_file(x):
