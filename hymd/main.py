@@ -79,15 +79,15 @@ def main():
         intracomm = comm.Split(int(rank / n_intra), rank)
         intercomm = comm.Split(rank % n_intra, rank)
 
-        rank = intracomm.Get_rank()
-        size = intracomm.Get_size()
-
         # assign directory to each rank
         os.chdir(args.replica_dirs[int(rank / n_intra)])
+
+        # update rank and size
+        rank = intracomm.Get_rank()
+        size = intracomm.Get_size()
     else:
         intracomm = comm
         intercomm = None
-
 
     # read input .hdf5
     driver = "mpio" if not args.disable_mpio else None
