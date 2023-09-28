@@ -36,8 +36,10 @@ class PlumedBias:
         Used as a pointer to an :code:`double` to store the bias energy.
     plumed_version : (1,) numpy.ndarray
         Used as a pointer to an :code:`int` to store PLUMED API version.
-    comm : mpi4py.Comm
-        MPI communicator to use for rank communication.
+    intracomm : mpi4py.Comm
+        MPI communicator to use for rank communication within a replica.
+    intercomm : mpi4py.Comm
+        MPI communicator to use for rank communication between replicas.
     ready : bool
         Stores wether the :code:`calc()` method can be called or not.
     """
@@ -48,11 +50,12 @@ class PlumedBias:
     charges = None
     plumed_bias = np.zeros(1, np.double)
     plumed_version = np.zeros(1, dtype=np.intc)
-    comm = None
+    intracomm = None
+    intercomm = None
     ready = False
     verbose = None
 
-    def __init__(self, config, plumeddat, logfile, comm=MPI.COMM_WORLD, verbose=1):
+    def __init__(self, config, plumeddat, logfile, intracomm=MPI.COMM_WORLD, intercomm=None, verbose=1):
         """Constructor
 
         Parameters
@@ -63,8 +66,10 @@ class PlumedBias:
             Path file containing PLUMED input.
         logfile : str
             Path to PLUMED's output file
-        comm : mpi4py.Comm, optional
-            MPI communicator to use for rank communication.
+        intracomm : mpi4py.Comm, optional
+            MPI communicator to use for rank communication within a replica.
+        intercomm : mpi4py.Comm, optional
+            MPI communicator to use for rank communication between replicas.
         verbose : int, optional
             Specify the logging event verbosity of this object.
 
@@ -76,12 +81,13 @@ class PlumedBias:
             import plumed
         except ImportError:
             err_str = (
-                "You are trying to use PLUMED " "but HyMD could not import py-plumed."
+                "You are trying to use PLUMED but HyMD could not import py-plumed."
             )
             Logger.rank0.log(logging.ERROR, err_str)
             raise ImportError(err_str)
 
-        self.comm = comm
+        self.intracomm = intracomm
+        self.intercomm = intercomm
         self.verbose = verbose
 
         try:
@@ -103,12 +109,19 @@ class PlumedBias:
 
         self.plumed_obj.cmd("getApiVersion", self.plumed_version)
         if self.plumed_version[0] <= 3:
-            err_str = "HyMD requires a PLUMED API > 3. " "Use a newer PLUMED kernel."
+            err_str = "HyMD requires a PLUMED API > 3. Use a newer PLUMED kernel."
             Logger.rank0.log(logging.ERROR, err_str)
             raise AssertionError(err_str)
 
         self.plumed_obj.cmd("setMDEngine", "HyMD")
-        self.plumed_obj.cmd("setMPIComm", comm)
+
+        if intercomm is not None:
+            if intracomm.Get_rank() == 0:
+                self.plumed_obj.cmd("GREX setMPIIntercomm", intercomm)
+            self.plumed_obj.cmd("GREX setMPIIntracomm", intracomm)
+            self.plumed_obj.cmd("GREX init")
+
+        self.plumed_obj.cmd("setMPIComm", intracomm)
 
         Logger.rank0.log(
             logging.INFO, f"Attempting to read PLUMED input from {plumeddat}"

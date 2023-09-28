@@ -52,7 +52,7 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
         config, 
         os.path.join(tmp_path,"plumed.dat"),
         os.path.join(tmp_path,"plumed.out"),
-        comm=comm,
+        intracomm=comm,
         verbose=2
     )
 
@@ -143,13 +143,13 @@ def test_fail_plumed_bias_obj(monkeypatch):
             break
 
     import hymd.plumed
-   
+
     with pytest.raises(RuntimeError) as recorded_error:
         with hymd.plumed.PlumedBias(
             config, 
             "test.in", 
             "test.out",
-            comm=comm,
+            intracomm=comm,
             verbose=2
         ) as _:
             if rank == 0:
@@ -185,7 +185,7 @@ def test_unavailable_plumed(hide_available_plumed):
             config, 
             "test.in", 
             "test.out",
-            comm=comm,
+            intracomm=comm,
             verbose=2
         ) as _:
             if rank == 0:

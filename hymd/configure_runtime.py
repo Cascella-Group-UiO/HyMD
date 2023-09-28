@@ -116,6 +116,9 @@ def configure_runtime(args_in, comm):
         "--destdir", default=".", help="Write output to specified directory"
     )
     ap.add_argument(
+        "--replica-dirs", type=str, nargs="+", default=[], help="Directories to store results for each replica"
+    )
+    ap.add_argument(
         "--seed",
         default=None,
         type=int,
@@ -143,12 +146,21 @@ def configure_runtime(args_in, comm):
         type=extant_file,
         help="Gmx-like topology file in toml format"
     )
-    ap.add_argument("config", help="Config .py or .toml input configuration script")
+    ap.add_argument("config", type=extant_file, help="Config .py or .toml input configuration script")
     ap.add_argument("input", help="input.hdf5")
     args = ap.parse_args(args_in)
 
+    # check if we have at least one rank per replica
+    if comm.Get_size() < len(args.replica_dirs):
+        raise ValueError("You should have at least one MPI rank per replica.")
+    
+    # block destdir with replicas
+    if (len(args.replica_dirs) > 0) and args.destdir != ".":
+        raise ValueError("You should not specify a destination directory when using replicas.")
+
     if comm.Get_rank() == 0:
         os.makedirs(args.destdir, exist_ok=True)
+
     comm.barrier()
 
     # Safely define seeds
@@ -241,5 +253,5 @@ def extant_file(x):
         # Argparse uses the ArgumentTypeError to give a rejection message like:
         # error: argument input: x does not exist
         raise argparse.ArgumentTypeError("{0} does not exist".format(x))
-    return x
+    return os.path.abspath(x)
 

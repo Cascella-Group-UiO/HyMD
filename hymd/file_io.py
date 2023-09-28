@@ -197,20 +197,8 @@ def store_static(
     creator_group = h5md_group.create_group("creator")
     creator_group.attrs["name"] = np.string_("Hylleraas MD")
 
-    # Get HyMD version. Also grab the user email from git config if we
-    # can find it.
+    # Get HyMD version
     creator_group.attrs["version"] = np.string_(get_version())
-    try:
-        import git
-
-        try:
-            reader = repo.config_reader()
-            user_email = reader.get_value("user", "email")
-            author_group.attrs["email"] = np.string_(user_email)
-        except:
-            pass
-    except:
-        pass
 
     h5md.particles_group = h5md.file.create_group("/particles")
     h5md.all_particles = h5md.particles_group.create_group("all")
