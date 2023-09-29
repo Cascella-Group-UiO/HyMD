@@ -43,14 +43,15 @@ def main():
     """
     comm = MPI.COMM_WORLD
 
-    if comm.Get_rank() == 0:
-        start_time = datetime.datetime.now()
-
     args, config, prng, topol, intracomm, intercomm = configure_runtime(sys.argv[1:], comm)
 
     # Get rank and size
     rank = intracomm.Get_rank()
     size = intracomm.Get_size()
+
+    # Start timer after configure_runtime
+    if rank == 0:
+        start_time = datetime.datetime.now()
 
     if args.double_precision:
         dtype = np.float64
