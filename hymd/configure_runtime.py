@@ -161,15 +161,6 @@ def configure_runtime(args_in, comm):
     # check if we have at least one rank per replica
     if comm.Get_size() < len(args.replica_dirs) and comm.Get_rank() == 0:
         raise ValueError("You should have at least one MPI rank per replica.")
-    
-    # block destdir with replicas
-    if (len(args.replica_dirs) > 0) and args.destdir != "." and comm.Get_rank() == 0:
-        raise ValueError("You should not specify a destination directory when using replicas.")
-
-    if comm.Get_rank() == 0:
-        os.makedirs(args.destdir, exist_ok=True)
-
-    comm.barrier()
 
     # Safely define seeds
     seeds = None
@@ -207,6 +198,11 @@ def configure_runtime(args_in, comm):
     else:
         intracomm = comm
         intercomm = None
+
+    if intracomm.Get_rank() == 0:
+        os.makedirs(args.destdir, exist_ok=True)
+
+    intracomm.barrier()
 
     # Setup logger
     Logger.setup(

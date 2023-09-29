@@ -56,6 +56,28 @@ class MPIFilterAll(logging.Filter):
         return True
 
 
+class MPIFilterStdout(logging.Filter):
+    """Log output Filter wrapper class for filtering STDOUT log"""
+
+    def filter(self, record):
+        """Log event message filter
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            LogRecord object corresponding to the log event.
+        """
+        if record.funcName == "<module>":
+            record.funcName = "main"
+        record.funcName = "replica 0 " + record.funcName
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            record.rank = MPI.COMM_WORLD.Get_rank()
+            record.size = MPI.COMM_WORLD.Get_size()
+            return True
+        else:
+            return False
+
+
 class Logger:
     """Log output handler class
 
@@ -157,6 +179,7 @@ class Logger:
             cls.stdout_handler.setLevel(level)
             cls.stdout_handler.setStream(sys.stdout)
             cls.stdout_handler.setFormatter(cls.formatter)
+            cls.stdout_handler.addFilter(MPIFilterStdout())
 
             cls.rank0.addHandler(cls.stdout_handler)
             cls.all_ranks.addHandler(cls.stdout_handler)
