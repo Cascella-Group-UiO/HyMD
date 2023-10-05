@@ -52,7 +52,7 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
         config, 
         os.path.join(tmp_path,"plumed.dat"),
         os.path.join(tmp_path,"plumed.out"),
-        comm=comm,
+        intracomm=comm,
         verbose=2
     )
 
@@ -122,7 +122,7 @@ PRINT ARG=d14 FILE={}""".format(os.path.join(tmp_path,"testdump.xyz"),
 
 @pytest.mark.mpi()
 @pytest.mark.skip(reason="Currently fails in CI due to environment variable")
-def test_fail_plumed_bias_obj(monkeypatch):
+def test_fail_plumed_bias_obj(monkeypatch, caplog):
     pytest.importorskip("plumed")
 
     comm = MPI.COMM_WORLD
@@ -143,13 +143,13 @@ def test_fail_plumed_bias_obj(monkeypatch):
             break
 
     import hymd.plumed
-   
+
     with pytest.raises(RuntimeError) as recorded_error:
         with hymd.plumed.PlumedBias(
             config, 
             "test.in", 
             "test.out",
-            comm=comm,
+            intracomm=comm,
             verbose=2
         ) as _:
             if rank == 0:
@@ -168,7 +168,7 @@ def test_fail_plumed_bias_obj(monkeypatch):
         assert all([(s in message) for s in cmp_strings])
 
 
-def test_unavailable_plumed(hide_available_plumed):
+def test_unavailable_plumed(hide_available_plumed, caplog):
     import hymd.plumed
 
     comm = MPI.COMM_WORLD
@@ -185,7 +185,7 @@ def test_unavailable_plumed(hide_available_plumed):
             config, 
             "test.in", 
             "test.out",
-            comm=comm,
+            intracomm=comm,
             verbose=2
         ) as _:
             if rank == 0:
