@@ -3,6 +3,7 @@ from MDAnalysis.lib import distances
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import sys
 from glob import glob
 import argparse
 from tqdm import tqdm
@@ -25,6 +26,9 @@ def process_topology(topol_path):
 
 
 def parse_masses(fname):
+    if not fname:
+        return None
+
     masses = {}
     with open(fname, "r") as f:
         for line in f:
@@ -37,6 +41,7 @@ def compute_rdfs(
     pdbdir,
     agg_size,
     selections,
+    name_selections,
     center,
     nbins,
     rmax,
@@ -47,6 +52,7 @@ def compute_rdfs(
     save_centered,
     save_agg_only,
 ):
+    # initialize
     rdfs = {}
     for i in range(len(selections)):
         rdfs[i] = np.zeros(nbins)
@@ -191,7 +197,7 @@ def compute_rdfs(
             if not skip_rdfs:
                 # create selections for which RDFs will be computed
                 for i, sel_string in enumerate(selections):
-                    if sel_string.strip().lower() in ["name w", "type w"]:
+                    if sel_string.strip().lower() in ["name w", "type w", "name na", "type na", "name cl", "type cl"]:
                         at_sel = u.select_atoms(sel_string)
                     else:
                         at_sel = u.select_atoms(f"resid {resid} and " + sel_string)
@@ -227,7 +233,7 @@ def compute_rdfs(
         for i, sel in enumerate(selections):
             rdfs[i] = rdfs[i] / (shell_volumes * nsnaps)
 
-            plt.plot(mid_bin / 10.0, rdfs[i], linewidth=3, label=sel)
+            plt.plot(mid_bin / 10.0, rdfs[i], linewidth=3, label=name_selections[i])
 
             np.savetxt(f"{agg_size}_" + sel.replace(" ", "_") + ".txt", rdfs[i])
 
@@ -321,6 +327,12 @@ if __name__ == "__main__":
         help='use quotes to specify the selections for the RDFs (e.g. "name C" "name TC5")',
     )
     parser.add_argument(
+        "--name-selections",
+        type=str,
+        nargs="+",
+        help='use quotes to specify the names of selections for the RDFs (e.g. "Phenyl 1" "Phenyl 2")',
+    )
+    parser.add_argument(
         "--nbins",
         type=int,
         default=100,
@@ -379,23 +391,26 @@ if __name__ == "__main__":
 
     if args.principal_moments_rg and not args.masses:
         raise AssertionError("--principal-moments-rg requires passing the masses")
+    
+    if args.name_selections and (len(args.selections) != len(args.name_selections)):
+        raise AssertionError("the number of selections must be equal to the number of names")
 
     topol = process_topology(args.topol)
 
-    if args.masses:
-        parsed_masses = parse_masses(args.masses)
-    else:
-        parsed_masses = None
+    # write options to file
+    with open("summary_compute_rdf_aggregates.txt", "w") as f:
+        f.write("Command: " + " ".join(sys.argv) + "\n")
 
     compute_rdfs(
         topol,
         args.pdb_dir,
         args.agg_size,
         args.selections,
+        args.name_selections,
         args.center,
         args.nbins,
         args.rmax,
-        parsed_masses,
+        parse_masses(args.masses),
         args.do_not_compute_rdfs,
         args.principal_moments_rg,
         args.compute_pddf,
