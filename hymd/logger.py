@@ -9,6 +9,11 @@ from .version import __version__
 
 class MPIFilterRoot(logging.Filter):
     """Log output Filter wrapper class for the root MPI rank log"""
+    
+    comm = None
+
+    def __init__(self, comm=MPI.COMM_WORLD):
+        self.comm = comm
 
     def filter(self, record):
         """Log event message filter
@@ -20,9 +25,9 @@ class MPIFilterRoot(logging.Filter):
         """
         if record.funcName == "<module>":
             record.funcName = "main"
-        if MPI.COMM_WORLD.Get_rank() == 0:
-            record.rank = MPI.COMM_WORLD.Get_rank()
-            record.size = MPI.COMM_WORLD.Get_size()
+        if self.comm.Get_rank() == 0:
+            record.rank = self.comm.Get_rank()
+            record.size = self.comm.Get_size()
             return True
         else:
             return False
@@ -31,6 +36,11 @@ class MPIFilterRoot(logging.Filter):
 class MPIFilterAll(logging.Filter):
     """Log output Filter wrapper class for the all-MPI-ranks log"""
 
+    comm = None
+
+    def __init__(self, comm=MPI.COMM_WORLD):
+        self.comm = comm
+
     def filter(self, record):
         """Log event message filter
 
@@ -41,9 +51,31 @@ class MPIFilterAll(logging.Filter):
         """
         if record.funcName == "<module>":
             record.funcName = "main"
-        record.rank = MPI.COMM_WORLD.Get_rank()
-        record.size = MPI.COMM_WORLD.Get_size()
+        record.rank = self.comm.Get_rank()
+        record.size = self.comm.Get_size()
         return True
+
+
+class MPIFilterStdout(logging.Filter):
+    """Log output Filter wrapper class for filtering STDOUT log"""
+
+    def filter(self, record):
+        """Log event message filter
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            LogRecord object corresponding to the log event.
+        """
+        if record.funcName == "<module>":
+            record.funcName = "main"
+        record.funcName = "replica 0 " + record.funcName
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            record.rank = MPI.COMM_WORLD.Get_rank()
+            record.size = MPI.COMM_WORLD.Get_size()
+            return True
+        else:
+            return False
 
 
 class Logger:
@@ -96,7 +128,7 @@ class Logger:
     all_ranks = logging.getLogger("HyMD.all_ranks")
 
     @classmethod
-    def setup(cls, default_level=logging.INFO, log_file=None, verbose=False):
+    def setup(cls, default_level=logging.INFO, log_file=None, verbose=False, comm=MPI.COMM_WORLD):
         """Sets up the logger object.
 
         If a :code:`log_file` path is provided, log event messages are output
@@ -127,8 +159,10 @@ class Logger:
         cls.rank0.setLevel(level)
         cls.all_ranks.setLevel(level)
 
-        cls.rank0.addFilter(MPIFilterRoot())
-        cls.all_ranks.addFilter(MPIFilterAll())
+        root_filter = MPIFilterRoot(comm)
+        all_filter = MPIFilterAll(comm)
+        cls.rank0.addFilter(root_filter)
+        cls.all_ranks.addFilter(all_filter)
 
         if (not log_file) and (not log_to_stdout):
             return
@@ -145,6 +179,7 @@ class Logger:
             cls.stdout_handler.setLevel(level)
             cls.stdout_handler.setStream(sys.stdout)
             cls.stdout_handler.setFormatter(cls.formatter)
+            cls.stdout_handler.addFilter(MPIFilterStdout())
 
             cls.rank0.addHandler(cls.stdout_handler)
             cls.all_ranks.addHandler(cls.stdout_handler)

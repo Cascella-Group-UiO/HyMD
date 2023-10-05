@@ -5,6 +5,7 @@ import scipy.cluster.hierarchy as hcl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import os
+import sys
 import argparse
 from tqdm import tqdm
 import warnings
@@ -70,7 +71,7 @@ def explore_methods(
 
 
 def compute_clusters(
-    print_sel, at_sel, ts, cutoff, linkage_method, save_snaps, plot_dendrograms
+    frame, box, print_sel, at_sel, cutoff, linkage_method, save_snaps, plot_dendrograms
 ):
     # get CM for each mol (assumes each ResID is a mol)
     mol_cms = []
@@ -81,7 +82,7 @@ def compute_clusters(
     n = len(mol_cms)
     cond_distmat = np.zeros((int((n * n - n) / 2),), dtype=np.float64)
     distances.self_distance_array(
-        np.array(mol_cms), box=ts.dimensions, result=cond_distmat, backend="OpenMP"
+        np.array(mol_cms), box=box, result=cond_distmat, backend="OpenMP"
     )
 
     # get dendrogram
@@ -97,7 +98,7 @@ def compute_clusters(
             no_labels=True,
         )
         plt.axhline(cutoff, linestyle="--")
-        plt.savefig(f"./dendrograms/snap_{ts.frame}.pdf", bbox_inches="tight")
+        plt.savefig(f"./dendrograms/snap_{frame}.pdf", bbox_inches="tight")
 
     # build the clusters
     clusters = hcl.fcluster(Z, cutoff, criterion="distance")
@@ -105,15 +106,16 @@ def compute_clusters(
     if save_snaps:
         if len(print_sel.residues.resids) > len(clusters):
             resids = np.full((len(print_sel.residues.resids)), np.max(clusters) + 1)
-            resids[:len(clusters)] = clusters
+            resids[: len(clusters)] = clusters
         elif len(print_sel.residues.resids) == len(clusters):
             resids = clusters
         else:
             raise AssertionError("Something is wrong with your selection")
         print_sel.residues.resids = resids
 
-        print_sel.write(f"./colored_pdbs/snap_{ts.frame}.pdb")
+        print_sel.write(f"./colored_pdbs/snap_{frame}.pdb")
 
+    plt.close()
     return clusters
 
 
@@ -125,12 +127,14 @@ def aggregates_clustering(
     skip,
     stride,
     end,
+    nworkers,
     solvent_name,
     linkage_method,
     save_snaps,
     plot_dendrograms,
     traj_in_memory,
     save_solvent,
+    summary_fig_size=(12, 8),
 ):
     u = mda.Universe(grofile, h5mdfile, in_memory=traj_in_memory)
 
@@ -162,9 +166,10 @@ def aggregates_clustering(
         job_list.append(
             dask.delayed(
                 compute_clusters(
+                    ts.frame,
+                    ts.dimensions,
                     print_sel,
                     at_sel,
-                    ts,
                     cutoff,
                     linkage_method,
                     save_snaps,
@@ -173,38 +178,91 @@ def aggregates_clustering(
             )
         )
 
-    clusters = dask.compute(job_list)
+    clusters = dask.compute(job_list, num_workers=nworkers)
 
     n_clusters = []
-    clust_sizes = []
     all_sizes = []
+    total_clust_by_size = {}
     for c in clusters[0]:
         # get the number of clusters and sizes
         unique_clusts, clust_counts = np.unique(c, return_counts=True)
+        for size in clust_counts:
+            if size not in total_clust_by_size:
+                total_clust_by_size[size] = 1
+            else:
+                total_clust_by_size[size] += 1
         n_clusters.append(len(unique_clusts))
 
-        clust_sizes.append(clust_counts)
         all_sizes += clust_counts.tolist()
 
     # based on cluster sizes get occurence of each size
     sizes, freq = np.unique(all_sizes, return_counts=True)
     freq = freq / len(u.trajectory[skip:end:stride])
 
-    # plot results
-    fig, (ax1, ax2) = plt.subplots(2, 1)
+    # overall average number of aggregates
+    avg_n_aggs = np.average(n_clusters)
 
-    ax1.plot(frames, n_clusters)
-    ax1.set_ylabel("Number of aggregates")
-    ax1.set_xlabel("Frame")
-    ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
+    # compute probability of picking cluster of size n
+    prob_by_size = {}
+    for k, v in total_clust_by_size.items():
+        prob_by_size[k] = v / np.sum(n_clusters)
+    prob_by_size = dict(sorted(prob_by_size.items()))
+
+    # compute probability of picking a random molecule and
+    # it belonging to a cluster of size n
+    prob_mol_size = {}
+    norm = len(at_sel) * len(u.trajectory[skip:end:stride])
+    for k, v in total_clust_by_size.items():
+        prob_mol_size[k] = k * v / norm
+    prob_mol_size = dict(sorted(prob_mol_size.items()))
+
+    # write summary to file
+    with open("summary_clustering.dat", "w") as of:
+        of.write("Executed command: " + " ".join(sys.argv) + "\n")
+
+        of.write(f"\nAverage number of aggregates: {avg_n_aggs}\n")
+
+        of.write("\nsize\tfrequency\n")
+        for s, f in zip(sizes, freq):
+            of.write(f"{s}\t{f}\n")
+        
+        of.write("\nsize\tprobability\n")
+        for s, p in prob_by_size.items():
+            of.write(f"{s}\t{p}\n")
+
+        of.write("\nsize\tprob molecule\n")
+        for s, p in prob_mol_size.items():
+            of.write(f"{s}\t{p}\n")
+
+    # plot results
+    _, axs = plt.subplots(2, 2, figsize=summary_fig_size)
+
+    axs[0, 0].plot(frames, n_clusters)
+    axs[0, 0].axhline(avg_n_aggs, linestyle="--")
+    axs[0, 0].set_ylabel("Num. of aggregates")
+    axs[0, 0].set_xlabel("Frame")
+    axs[0, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
 
     xticklabels = [f"{sizes[i]}" for i in range(len(sizes))]
-    ax2.bar(xticklabels, freq, width=0.8)
-    ax2.set_ylabel("Frequency")
-    ax2.set_xlabel("Aggregate size")
-    ax2.tick_params("x", labelrotation=60)
+    axs[0, 1].bar(xticklabels, freq, width=0.8)
+    axs[0, 1].set_ylabel("Avg. num. per snapshot")
+    axs[0, 1].set_xlabel("Aggregate size")
+    axs[0, 1].tick_params("x", labelrotation=60)
+
+    xticklabels = [f"{k}" for k in prob_by_size.keys()]
+    axs[1, 0].bar(xticklabels, prob_by_size.values(), width=0.8)
+    axs[1, 0].set_ylabel("Prob.")
+    axs[1, 0].set_xlabel("Aggregate size")
+    axs[1, 0].tick_params("x", labelrotation=60)
+
+    xticklabels = [f"{k}" for k in prob_mol_size.keys()]
+    axs[1, 1].bar(xticklabels, prob_mol_size.values(), width=0.8)
+    axs[1, 1].set_ylabel("Prob. molecule in agg.")
+    axs[1, 1].set_xlabel("Aggregate size")
+    axs[1, 1].tick_params("x", labelrotation=60)
 
     plt.tight_layout()
+    plt.savefig("summary_clustering.pdf", bbox_inches="tight")
     plt.show()
 
 
@@ -257,6 +315,12 @@ if __name__ == "__main__":
         help="final frame to be processed (default = -1)",
     )
     parser.add_argument(
+        "--n-workers",
+        type=int,
+        default=4,
+        help="number of workers to compute in parallel using dask (default = 4)",
+    )
+    parser.add_argument(
         "--explore-methods",
         action="store_true",
         default=False,
@@ -281,6 +345,13 @@ if __name__ == "__main__":
         help="plot the dendrograms (saved in ./dendrograms) (use with stride because its ~10x slower)",
     )
     parser.add_argument(
+        "--summary-fig-size",
+        type=int,
+        nargs=2,
+        default=(8, 6),
+        help="two integers to define the size of the summary figure (default = 8 6)",
+    )
+    parser.add_argument(
         "--traj-in-memory",
         action="store_true",
         default=False,
@@ -289,7 +360,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if os.path.splitext(args.h5md_file)[1] != ".h5md":
+    if os.path.splitext(args.h5md_file)[1].lower() == ".h5":
         raise AssertionError(
             "Trajectory extension should be .h5md. If you are using .H5 please rename it."
         )
@@ -326,10 +397,12 @@ if __name__ == "__main__":
             args.skip,
             args.stride,
             args.end,
+            args.n_workers,
             args.solvent_name,
             args.linkage_method,
             args.save_colored_snap,
             args.plot_dendrograms,
             args.traj_in_memory,
-            args.save_solvent
+            args.save_solvent,
+            tuple(args.summary_fig_size),
         )
