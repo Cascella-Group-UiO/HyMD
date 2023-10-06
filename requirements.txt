@@ -7,4 +7,4 @@ tomli
 cython<3
 mpsort
 pfft-python
-pmesh @ git+https://github.com/rainwoodman/pmesh
+pmesh
