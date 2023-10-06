@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hymd.plumed &mdash; hymd 2.2.0 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/tabs.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-main.c949a650a448cc0ae9fd3441c0e17fb0.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-bootstrap.5fd3999ee7762ccc51105388f4a9d115.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/panels-variables.06eb56fa6e07937060861dad626602ad.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                2.2.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#pressure-keywords">3.1.7. Pressure keywords</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/config_file.html#simulation-keywords-1">3.1.7.1. Simulation keywords</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/config_file.html#field-keywords-1">3.1.7.2. Field keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/pressure.html">4. Pressure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interfaces.html">5. PLUMED interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interfaces.html#running-simulations-using-plumed">5.1. Running simulations using PLUMED</a></li>
+</ul>
+</li>
+</ul>
+<p><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.integrator">4.1. Integrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.thermostat">4.2. Thermostat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#barostat">4.3. Barostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.barostat">4.3.1. Berendsen Barostat</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#references">4.3.1.1. References</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#scr-barostat">4.3.2. SCR Barostat</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#hamiltonian">4.4. Hamiltonian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.force">4.5. Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.pressure">4.6. Pressure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#logger">4.7. Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.input_parser">4.8. Input parser</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.field">4.9. Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.file_io">4.10. File input/output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.plumed">4.11. PLUMED</a></li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hymd.plumed</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hymd.plumed</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Class to wrap PLUMED for use within HyMD.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">.logger</span> <span class="kn">import</span> <span class="n">Logger</span>
+
+
+<div class="viewcode-block" id="PlumedBias"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.plumed.PlumedBias">[docs]</a><span class="k">class</span> <span class="nc">PlumedBias</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;PLUMED handler class</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This wraps the :code:`Plumed()` class, see</span>
+<span class="sd">    `https://github.com/plumed/plumed2/tree/master/python`.</span>
+
+<span class="sd">    The :code:`PlumedBias()` object is created with the arguments from</span>
+<span class="sd">    :code:`__init__` and at everystep the methods :code:`prepare()` and</span>
+<span class="sd">    :code:`calc()` should be called.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    plumed_obj : plumed.Plumed</span>
+<span class="sd">        Plumed object used to pass and request information from PLUMED.</span>
+<span class="sd">    plumed_forces : (N, D) numpy.ndarray</span>
+<span class="sd">        Array of forces of :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        After :code:`calc()`, this array contains only the forces due</span>
+<span class="sd">        to the PLUMED bias.</span>
+<span class="sd">    positions : (N, D) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">        Local for each MPI rank.</span>
+<span class="sd">        Needed because we need C-contiguous array for passing to PLUMED.</span>
+<span class="sd">    plumed_bias : (1,) numpy.ndarray</span>
+<span class="sd">        Used as a pointer to an :code:`double` to store the bias energy.</span>
+<span class="sd">    plumed_version : (1,) numpy.ndarray</span>
+<span class="sd">        Used as a pointer to an :code:`int` to store PLUMED API version.</span>
+<span class="sd">    intracomm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank communication within a replica.</span>
+<span class="sd">    intercomm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank communication between replicas.</span>
+<span class="sd">    ready : bool</span>
+<span class="sd">        Stores wether the :code:`calc()` method can be called or not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">plumed_obj</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">plumed_forces</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">charges</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">plumed_bias</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+    <span class="n">plumed_version</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intc</span><span class="p">)</span>
+    <span class="n">intracomm</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">intercomm</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ready</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">verbose</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">plumeddat</span><span class="p">,</span> <span class="n">logfile</span><span class="p">,</span> <span class="n">intracomm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span> <span class="n">intercomm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config : Config</span>
+<span class="sd">            Configuration object.</span>
+<span class="sd">        plumeddat : str</span>
+<span class="sd">            Path file containing PLUMED input.</span>
+<span class="sd">        logfile : str</span>
+<span class="sd">            Path to PLUMED&#39;s output file</span>
+<span class="sd">        intracomm : mpi4py.Comm, optional</span>
+<span class="sd">            MPI communicator to use for rank communication within a replica.</span>
+<span class="sd">        intercomm : mpi4py.Comm, optional</span>
+<span class="sd">            MPI communicator to use for rank communication between replicas.</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            Specify the logging event verbosity of this object.</span>
+
+<span class="sd">        See also</span>
+<span class="sd">        --------</span>
+<span class="sd">        hymd.input_parser.Config : Configuration dataclass handler.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">plumed</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;You are trying to use PLUMED but HyMD could not import py-plumed.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">err_str</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">intracomm</span> <span class="o">=</span> <span class="n">intracomm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intercomm</span> <span class="o">=</span> <span class="n">intercomm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">kernel_str</span> <span class="o">=</span> <span class="s2">&quot;Using PLUMED_KERNEL=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PLUMED_KERNEL&quot;</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">kernel_str</span> <span class="o">=</span> <span class="s2">&quot;The PLUMED_KERNEL environment variable is not set.&quot;</span>
+
+        <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">kernel_str</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span> <span class="o">=</span> <span class="n">plumed</span><span class="o">.</span><span class="n">Plumed</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;HyMD was not able to create a PLUMED object. &quot;</span>
+                <span class="s2">&quot;Maybe there is a problem with your PLUMED_KERNEL?&quot;</span>
+            <span class="p">)</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">err_str</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;getApiVersion&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">plumed_version</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plumed_version</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="s2">&quot;HyMD requires a PLUMED API &gt; 3. Use a newer PLUMED kernel.&quot;</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">err_str</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setMDEngine&quot;</span><span class="p">,</span> <span class="s2">&quot;HyMD&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">intercomm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">intracomm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;GREX setMPIIntercomm&quot;</span><span class="p">,</span> <span class="n">intercomm</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;GREX setMPIIntracomm&quot;</span><span class="p">,</span> <span class="n">intracomm</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;GREX init&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setMPIComm&quot;</span><span class="p">,</span> <span class="n">intracomm</span><span class="p">)</span>
+
+        <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Attempting to read PLUMED input from </span><span class="si">{</span><span class="n">plumeddat</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setPlumedDat&quot;</span><span class="p">,</span> <span class="n">plumeddat</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setLogFile&quot;</span><span class="p">,</span> <span class="n">logfile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setTimestep&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">respa_inner</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">time_step</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setNatoms&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setKbT&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">gas_constant</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">target_temperature</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setNoVirial&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;init&quot;</span><span class="p">)</span>
+
+        <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Successfully read PLUMED input. PLUMED output file is </span><span class="si">{</span><span class="n">logfile</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="PlumedBias.finalize"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.plumed.PlumedBias.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Finalize object&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Allow usage in &#39;with&#39; context&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Finalize on exit of context&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">api_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the API version got from the PLUMED kernel.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">plumed_version</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="PlumedBias.prepare"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.plumed.PlumedBias.prepare">[docs]</a>    <span class="k">def</span> <span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">forces</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">charges</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the pointers to positions and forces, and returns</span>
+<span class="sd">        wether the potential energy is being requested by PLUMED or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Setting PLUMED pointers for step </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_forces</span> <span class="o">=</span> <span class="n">forces</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">charges</span> <span class="o">=</span> <span class="n">charges</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="o">=</span> <span class="n">positions</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">double</span>
+        <span class="p">)</span>  <span class="c1"># get C-contiguous array</span>
+
+        <span class="n">needs_energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">intc</span><span class="p">)</span>
+        <span class="c1"># plumed_virial = np.zeros((3,3), dtype=np.double)</span>
+        <span class="n">masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">box_size</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setAtomsNlocal&quot;</span><span class="p">,</span> <span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setAtomsGatindex&quot;</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setStep&quot;</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setForces&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">plumed_forces</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setPositions&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setCharges&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">charges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setMasses&quot;</span><span class="p">,</span> <span class="n">masses</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setBox&quot;</span><span class="p">,</span> <span class="n">box</span><span class="p">)</span>
+        <span class="c1"># self.plumed_obj.cmd(&quot;setVirial&quot;, plumed_virial)</span>
+
+        <span class="c1"># check if PLUMED needs energy and returns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;prepareCalc&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;isEnergyNeeded&quot;</span><span class="p">,</span> <span class="n">needs_energy</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">needs_energy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="PlumedBias.calc"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.plumed.PlumedBias.calc">[docs]</a>    <span class="k">def</span> <span class="nf">calc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forces</span><span class="p">,</span> <span class="n">poteng</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Passes the energy (which can be set to any value in case</span>
+<span class="sd">        :code:`prepare()` returns PLUMED doesn&#39;t need it) to get</span>
+<span class="sd">        the forces and energy from the bias.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ready</span><span class="p">:</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;Trying to calculate PLUMED biased forces &quot;</span>
+                <span class="s2">&quot;without first calling prepare method.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">err_str</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Calculating PLUMED forces&quot;</span><span class="p">)</span>
+
+        <span class="c1"># set the energy and calc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;setEnergy&quot;</span><span class="p">,</span> <span class="n">poteng</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;performCalc&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_obj</span><span class="o">.</span><span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;getBias&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">plumed_bias</span><span class="p">)</span>
+
+        <span class="c1"># check if the returned forces are valid</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plumed_forces</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">err_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;Forces returned by PLUMED are not valid. &quot;</span>
+                <span class="s2">&quot;It means there&#39;s a NaN in the computed forces, &quot;</span>
+                <span class="s2">&quot;and your input should be checked. &quot;</span>
+            <span class="p">)</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">err_str</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_str</span><span class="p">)</span>
+
+        <span class="c1"># subtract forces to get only the bias&#39; extra force</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plumed_forces</span> <span class="o">-=</span> <span class="n">forces</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Done calculating PLUMED forces&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asfortranarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plumed_forces</span><span class="p">,</span> <span class="n">forces</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">)),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plumed_bias</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v2.2.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Releases</dt>
+      <dd><a href="../../../v1.0.1/index.html">v1.0.1</a></dd>
+      <dd><a href="../../../v1.0.2/index.html">v1.0.2</a></dd>
+      <dd><a href="../../../v1.0.3/index.html">v1.0.3</a></dd>
+      <dd><a href="../../../v1.0.4/index.html">v1.0.4</a></dd>
+      <dd><a href="../../../v1.0.5/index.html">v1.0.5</a></dd>
+      <dd><a href="../../../v1.0.6/index.html">v1.0.6</a></dd>
+      <dd><a href="../../../v1.0.7/index.html">v1.0.7</a></dd>
+      <dd><a href="../../../v1.0.8/index.html">v1.0.8</a></dd>
+      <dd><a href="../../../v1.0.9/index.html">v1.0.9</a></dd>
+      <dd><a href="../../../v2.0.0/index.html">v2.0.0</a></dd>
+      <dd><a href="../../../v2.0.1/index.html">v2.0.1</a></dd>
+      <dd><a href="../../../v2.0.2/index.html">v2.0.2</a></dd>
+      <dd><a href="../../../v2.1.0/index.html">v2.1.0</a></dd>
+      <dd><a href="plumed.html">v2.2.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Development</dt>
+      <dd><a href="../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
