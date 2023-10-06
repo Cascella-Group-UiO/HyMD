@@ -32,6 +32,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel numpy mpi4py "cython<3"
+        python3 -m pip install pmesh @ git+https://github.com/rainwoodman/pmesh
         python3 -m pip install -r requirements.txt
     - name: Install package
       run: |

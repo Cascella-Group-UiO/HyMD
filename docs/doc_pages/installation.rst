@@ -77,6 +77,7 @@ Dependencies
            python3 -m pip install --upgrade pip
            CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
            python3 -m pip install mpi4py numpy cython
+           python3 -m pip install pmesh @ git+https://github.com/rainwoodman/pmesh
 
 
    .. group-tab:: Fedora (dnf)
@@ -88,6 +89,7 @@ Dependencies
           python3.9 -m pip install mpi4py numpy cython
           export HDF5_DIR="/usr/lib64/openmpi/"
           CC="mpicc" HDF5_MPI="ON" python3.9 -m pip install --no-binary=h5py h5py
+          python3.9 -m pip install pmesh @ git+https://github.com/rainwoodman/pmesh
 
    .. group-tab:: Mac OSX (brew)
 
@@ -112,6 +114,7 @@ Dependencies
            export HDF5_DIR="/usr/local/Cellar/hdf5-mpi/1.13.0/"
            CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
            python3 -m pip install mpi4py numpy cython
+           python3 -m pip install pmesh @ git+https://github.com/rainwoodman/pmesh
 
 
 .. warning::
