@@ -41,7 +41,7 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel numpy mpi4py "cython<3"
         CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
-        python3 -m pip install pmesh @ git+https://github.com/rainwoodman/pmesh
+        python3 -m pip install "pmesh @ git+https://github.com/rainwoodman/pmesh"
         python3 -m pip install -r requirements.txt
     - name: Install PLUMED
       run: |

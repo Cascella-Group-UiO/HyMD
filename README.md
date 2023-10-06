@@ -46,7 +46,7 @@ CC="mpicc" HDF5_MPI="ON" python3 -m pip install --no-binary=h5py h5py
 Install HyMD with `pip` by
 ```bash
 python3 -m pip install --upgrade numpy mpi4py cython
-python3 -m pip install pmesh @ git+https://github.com/rainwoodman/pmesh
+python3 -m pip install "pmesh @ git+https://github.com/rainwoodman/pmesh"
 python3 -m pip install hymd
 ```
 `pmesh` is installed from the GitHub repository because fixes to be compatible with modern NumPy versions were not pushed to PyPI.
