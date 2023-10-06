@@ -21,7 +21,7 @@ jobs:
     - name: Install python dependencies
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade wheel numpy mpi4py cython twine setuptools
+        python3 -m pip install --upgrade wheel numpy mpi4py "cython<3" twine setuptools
         python3 -m pip install -r requirements.txt
     - name: Build and publish
       env:
