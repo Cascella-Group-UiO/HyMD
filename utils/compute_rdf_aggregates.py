@@ -394,6 +394,8 @@ if __name__ == "__main__":
     
     if args.name_selections and (len(args.selections) != len(args.name_selections)):
         raise AssertionError("the number of selections must be equal to the number of names")
+    elif not args.name_selections:
+        args.name_selections = args.selections
 
     topol = process_topology(args.topol)
 
