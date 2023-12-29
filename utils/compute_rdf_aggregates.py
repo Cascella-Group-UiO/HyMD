@@ -1,5 +1,6 @@
 import MDAnalysis as mda
 from MDAnalysis.lib import distances
+from scipy.spatial.distance import squareform
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -184,13 +185,41 @@ def compute_rdfs(
                     result=cond_distmat,
                     backend="OpenMP",
                 )
+                # sqdistmat = squareform(cond_distmat)
 
-                pddf_i, pddf_edges = np.histogram(
-                    cond_distmat,
-                    bins=nbins,
-                    range=(0, rmax),
-                    density=False,
-                )
+                # load the toml file with the form factors
+                with open(compute_pddf, "rb") as f:
+                    form_factors = tomli.load(f)
+
+                # Create a 2D array of form factors for all pairs of atoms
+                form_factors_array = np.array([form_factors[atom.residue.resname][atom.name][0] for atom in agg_sel])
+
+                # Compute the weights for all pairs of atoms
+                weights_matrix = np.outer(form_factors_array, form_factors_array)
+
+                # Get the upper triangular part of the weights matrix
+                weights = weights_matrix[np.triu_indices(n, k=1)]
+
+                # Compute the histogram
+                pddf_i, pddf_edges = np.histogram(cond_distmat, bins=nbins, range=(0, rmax), weights=weights, density=False)
+
+                # deltaR = rmax / nbins
+                # pddf_i = np.zeros((nbins,), dtype=np.float64)
+                # pddf_dists = np.linspace(deltaR/2.0, rmax - deltaR/2.0, nbins)
+                # for i in range(n):
+                #     for j in range(i + 1, n):
+                #         if sqdistmat[i][j] <= rmax:
+                #             bin_distance = np.floor(sqdistmat[i][j]/deltaR)
+                        
+                #         pddf_i[int(bin_distance)] += form_factors[agg_sel[i].residue.resname][agg_sel[i].name][0] * form_factors[agg_sel[j].residue.resname][agg_sel[j].name][0]
+
+
+                # pddf_i, pddf_edges = np.histogram(
+                #     cond_distmat,
+                #     bins=nbins,
+                #     range=(0, rmax),
+                #     density=False,
+                # )
 
                 pddf += pddf_i
 
@@ -382,9 +411,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--compute-pddf",
-        action="store_true",
-        default=False,
-        help="compute the pair distance distribution function (PDDF)",
+        type=str,
+        default=None,
+        help="compute the pair distance distribution function (PDDF) - needs a form factor .toml file",
     )
 
     args = parser.parse_args()
