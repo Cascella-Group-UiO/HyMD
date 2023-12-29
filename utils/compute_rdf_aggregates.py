@@ -37,6 +37,16 @@ def parse_masses(fname):
     return masses
 
 
+def parse_parametersfile(fname):
+    params = []
+    with open(fname, "r") as f:
+        for line in f:
+            if "PARAMETERS" in line:
+                right_line = line.split("=")[1].strip()
+                params.append(float(right_line.split(",")[0])) # get only the first parameter even for SAXS
+    return params
+
+
 def compute_rdfs(
     topol,
     pdbdir,
@@ -64,6 +74,9 @@ def compute_rdfs(
         Rg = []
     if compute_pddf:
         pddf = np.zeros(nbins)
+        
+        # read the form factors / scattering lengths
+        form_factors = parse_parametersfile(compute_pddf)
 
     nsnaps = 0
     for snapshot in tqdm(glob(os.path.join(pdbdir, "*.pdb"))):
@@ -187,12 +200,8 @@ def compute_rdfs(
                 )
                 # sqdistmat = squareform(cond_distmat)
 
-                # load the toml file with the form factors
-                with open(compute_pddf, "rb") as f:
-                    form_factors = tomli.load(f)
-
                 # Create a 2D array of form factors for all pairs of atoms
-                form_factors_array = np.array([form_factors[atom.residue.resname][atom.name][0] for atom in agg_sel])
+                form_factors_array = np.array([form_factors[atom.index] for atom in agg_sel])
 
                 # Compute the weights for all pairs of atoms
                 weights_matrix = np.outer(form_factors_array, form_factors_array)
