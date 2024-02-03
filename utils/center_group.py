@@ -148,17 +148,18 @@ def center_trajectory_com(h5md_file, bead_list, axis, out_path):
     centers = get_centers_com(beads_pos, box_diag, axis)
 
     mask = np.eye(1, 3, k=axis)
-    box_translate = 0.5 * mask * box_diag
-
-    translate = box_translate - centers
-    tpos = f_out["particles/all/position/value"] + np.repeat(
+    translate = 0.5 * mask * box_diag - centers
+    
+    translations = np.repeat(
         translate[:, np.newaxis, :],
-        f_out["particles/all/position/value"].shape[1],
+        f_in["particles/all/position/value"].shape[1],
         axis=1,
     )
+    
+    tpos = f_out["particles/all/position/value"] + translations
 
     f_out["particles/all/position/value"][:] = np.mod(
-        tpos[:, :, :], np.repeat(box_diag[:, np.newaxis, :], tpos.shape[1], axis=1)
+        tpos, np.repeat(box_diag[:, np.newaxis, :], tpos.shape[1], axis=1)
     )
     f_out.close()
 
