@@ -106,13 +106,13 @@ def center_trajectory_mic(h5md_file, bead_list, nrefbeads, out_path, center_last
     f_in.close()
     f_out.close()
 
-def center_of_mass(pos, n, box):
+def center_of_mass(pos, box):
     p_mapped = 2 * np.pi * pos / box
     cos_p_mapped = np.cos(p_mapped)
     sin_p_mapped = np.sin(p_mapped)
 
-    cos_average = np.sum(cos_p_mapped) / n
-    sin_average = np.sum(sin_p_mapped) / n
+    cos_average = np.mean(cos_p_mapped)
+    sin_average = np.mean(sin_p_mapped)
 
     theta = np.arctan2(-sin_average, -cos_average) + np.pi
     return box * theta / (2 * np.pi)
@@ -120,10 +120,9 @@ def center_of_mass(pos, n, box):
 
 def get_centers_com(positions, box_size, axis):
     frames = positions.shape[0]
-    n = positions.shape[1]
     centers = np.zeros((frames, 3))
     for frame in range(frames):
-        centers[frame, axis] = center_of_mass(positions[frame, :, axis], n, box_size[frame, axis])
+        centers[frame, axis] = center_of_mass(positions[frame, :, axis], box_size[frame, axis])
     return centers
 
 
