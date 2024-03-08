@@ -186,21 +186,19 @@ def aggregates_clustering(
 
     n_clusters = []
     all_sizes = []
-    total_clust_by_size = {}
+    clusters_per_frame = []
     for c in clusters[0]:
         # get the number of clusters and sizes
         unique_clusts, clust_counts = np.unique(c, return_counts=True)
-        for size in clust_counts:
-            if size not in total_clust_by_size:
-                total_clust_by_size[size] = 1
-            else:
-                total_clust_by_size[size] += 1
+
         n_clusters.append(len(unique_clusts))
 
+        clusters_per_frame.append(np.sort(clust_counts))
         all_sizes += clust_counts.tolist()
 
     # based on cluster sizes get occurence of each size
     sizes, freq = np.unique(all_sizes, return_counts=True)
+    total_clust_by_size = dict(zip(sizes, freq))
     freq = freq / len(u.trajectory[skip:end:stride])
 
     # overall average number of aggregates
@@ -237,6 +235,12 @@ def aggregates_clustering(
         of.write("\nsize\tprob molecule\n")
         for s, p in prob_mol_size.items():
             of.write(f"{s}\t{p}\n")
+
+        of.write("\nClusters sizes in each analyzed frame:\n")
+        for c in clusters_per_frame:
+            for s in c:
+                of.write(f"{s}\t")
+            of.write("\n")
 
     # plot results
     _, axs = plt.subplots(2, 2, figsize=summary_fig_size)
