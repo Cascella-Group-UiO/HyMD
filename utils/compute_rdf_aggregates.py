@@ -70,6 +70,7 @@ def compute_rdfs(
     names_prefix,
     start_colorbar,
     width_colorbar,
+    eccentricity_threshold,
     fig_size=(10, 8),
     fig_size_cdf=(12,12),
 ):
@@ -275,7 +276,7 @@ def compute_rdfs(
                 # compute eccentricity
                 e = 1.0 - np.min([I1, I2, I3]) / np.mean([I1, I2, I3])
                 eccentricities.append(e)
-                if e < 0.12:
+                if e < eccentricity_threshold:
                     type_agg = type_map["sphere"]
                 else:
                     # I3 is the lowest value (biggest axis)
@@ -697,6 +698,12 @@ if __name__ == "__main__":
         default=0.02,
         help="width of the colorbar (default = 0.02)",
     )
+    parser.add_argument(
+        "--eccentricity-threshold",
+        type=float,
+        default=0.12,
+        help="eccentricity threshold to classify the aggregate as a sphere (default = 0.12)",
+    )
 
     args = parser.parse_args()
 
@@ -738,6 +745,7 @@ if __name__ == "__main__":
         args.names_prefix,
         args.start_colorbar,
         args.width_colorbar,
+        args.eccentricity_threshold,
         tuple(args.fig_size),
         tuple(args.fig_size_cdf),
     )
