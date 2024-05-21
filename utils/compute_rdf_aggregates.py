@@ -388,7 +388,7 @@ def compute_rdfs(
             count_agg_types[i] = np.count_nonzero(np.array(agg_types) == i)
 
         # write results of agg type detection to file
-        with open("summary_compute_rdf_aggregates.txt", "a") as f:
+        with open(f"summary_compute_rdf_aggregates_{agg_size}.txt", "a") as f:
             f.write("\nNumber of aggregates classified by type:\n")
             for k, v in count_agg_types.items():
                 e_type = np.array(eccentricities)[np.array(agg_types) == k]
@@ -713,7 +713,7 @@ if __name__ == "__main__":
     topol = process_topology(args.topol)
 
     # write options to file
-    with open("summary_compute_rdf_aggregates.txt", "w") as f:
+    with open(f"summary_compute_rdf_aggregates_{args.agg_size}.txt", "w") as f:
         f.write("Command: " + " ".join(sys.argv) + "\n")
 
     compute_rdfs(
