@@ -270,14 +270,7 @@ def compute_rdfs(
                 I2 = Lambda[1][1]
                 I3 = Lambda[2][2]
 
-                # TODO: based on the three principal moments of inertia we should find
-                # if the aggregate is rod-like, disk-like or sphere-like
-                # and then compute the CDFs accordingly (separating the cases)
-                # this can be done by checking which axis are similar in length and calling them a = b != c
-                # if c/a is close to 1, then it is a sphere
-                # if c/a is greater than 1, then it is prolate
-                # if c/a is smaller than 1, then it is oblate
-                # then we can also output the amount of each type of aggregate
+                # detect the aggregate type
                 type_agg = None
                 # compute eccentricity
                 e = 1.0 - np.min([I1, I2, I3]) / np.mean([I1, I2, I3])
@@ -303,14 +296,6 @@ def compute_rdfs(
                 angle = np.degrees(mdamath.angle(pa, [0,0,1]))
                 ax = transformations.rotaxis(pa, [0,0,1])
                 u.atoms.rotateby(angle, ax, point=cog)
-                # dirname = f"./rotated_cdf_{agg_size}"
-
-                # if not os.path.exists(dirname):
-                #     os.mkdir(dirname)
-
-                # u.atoms.write(
-                #     os.path.join(dirname, f"rotated_{os.path.basename(snapshot)}")
-                # )
 
                 # create selections for which CDFs will be computed
                 for i, sel_string in enumerate(selections):
@@ -406,7 +391,8 @@ def compute_rdfs(
         with open("summary_compute_rdf_aggregates.txt", "a") as f:
             f.write("\nNumber of aggregates classified by type:\n")
             for k, v in count_agg_types.items():
-                f.write(f"{rev_type_map[k]}: {v} => {100.0 * v/nsnaps:.4f} %. <e> = {np.mean(np.array(eccentricities)[np.array(agg_types) == k]):.4f}\n")
+                e_type = np.array(eccentricities)[np.array(agg_types) == k]
+                f.write(f"{rev_type_map[k]}: {v} => {100.0 * v/nsnaps:.4f} %. <e> = {np.mean(e_type):.4f} ± {np.std(e_type):.4f} \n")
 
             f.write("\nSnapshot number by aggregate type:\n")
             snap_map = np.array(snapshots)
