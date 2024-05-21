@@ -76,9 +76,21 @@ def compute_rdfs(
     # initialize
     rdfs = {}
     cdfs = {}
-    for i in range(len(selections)):
-        rdfs[i] = np.zeros(nbins)
-        cdfs[i] = np.zeros((nbinsl, nbins))
+    if compute_cdfs:
+        type_map = {"sphere": 0, "oblate": 1, "prolate": 2}
+        rev_type_map = {v: k for k, v in type_map.items()}
+        agg_types = []
+        eccentricities = []
+
+        for k, v in type_map.items():
+            cdfs[v] = {}
+            rdfs[v] = {}
+            for i in range(len(selections)):
+                cdfs[v][i] = np.zeros((nbinsl, nbins))
+                rdfs[v][i] = np.zeros(nbins)
+    else:
+        for i in range(len(selections)):
+            rdfs[i] = np.zeros(nbins)
     if compute_i_rg:
         I1 = []
         I2 = []
@@ -94,12 +106,12 @@ def compute_rdfs(
         names_prefix = ""
 
     nsnaps = 0
+    snapshots = []
     for snapshot in tqdm(glob(os.path.join(pdbdir, "*.pdb"))):
         u = mda.Universe(snapshot)
 
         if not natoms_normalization:
             natoms_normalization = len(u.atoms)
-
 
         # based on topology and residues determine size of aggregates
         resids = {}
@@ -121,6 +133,8 @@ def compute_rdfs(
         # if size was not found, go to next pdb
         if len(agg_resids) == 0:
             continue
+
+        snapshots.append(os.path.basename(snapshot))
 
         # for each aggregate of given size, accumulate the RDFs
         for resid in agg_resids:
@@ -245,10 +259,47 @@ def compute_rdfs(
                 # first align the principal axis of the aggregate with the z-axis
                 agg_sel = u.select_atoms(f"resid {resid}")
 
-                # get principal axis
-                pa = agg_sel.principal_axes()[2]
+                # get moment of inertia and principal axis
+                I = agg_sel.moment_of_inertia()
+                UT = agg_sel.principal_axes()  # this is already transposed
+
+                # diagonalizes I
+                Lambda = UT.dot(I.dot(UT.T))
+
+                I1 = Lambda[0][0]
+                I2 = Lambda[1][1]
+                I3 = Lambda[2][2]
+
+                # TODO: based on the three principal moments of inertia we should find
+                # if the aggregate is rod-like, disk-like or sphere-like
+                # and then compute the CDFs accordingly (separating the cases)
+                # this can be done by checking which axis are similar in length and calling them a = b != c
+                # if c/a is close to 1, then it is a sphere
+                # if c/a is greater than 1, then it is prolate
+                # if c/a is smaller than 1, then it is oblate
+                # then we can also output the amount of each type of aggregate
+                type_agg = None
+                # compute eccentricity
+                e = 1.0 - np.min([I1, I2, I3]) / np.mean([I1, I2, I3])
+                eccentricities.append(e)
+                if e < 0.12:
+                    type_agg = type_map["sphere"]
+                else:
+                    # I3 is the lowest value (biggest axis)
+                    if np.abs(I1 - I2) > np.abs(I2 - I3): 
+                        type_agg = type_map["oblate"]
+                    else:
+                        type_agg = type_map["prolate"]
+                agg_types.append(type_agg)
+
+                # gets symmetry axis
+                if type_agg == type_map["oblate"]:
+                    pa = UT[0]
+                else:
+                    pa = UT[2]
 
                 # get the angle between the principal axis and the z-axis and rotate universe
+                # this does not take into consideration prolate or oblate micelles
                 angle = np.degrees(mdamath.angle(pa, [0,0,1]))
                 ax = transformations.rotaxis(pa, [0,0,1])
                 u.atoms.rotateby(angle, ax, point=cog)
@@ -268,7 +319,6 @@ def compute_rdfs(
                     else:
                         at_sel = u.select_atoms(f"resid {resid} and " + sel_string)
 
-
                     # Compute the distances between the target atoms and the center
                     distances_matrix = at_sel.positions - cog
 
@@ -285,13 +335,13 @@ def compute_rdfs(
                     cdf, yedges, xedges = np.histogram2d(
                         zdist, rdist, bins=[nbinsl, nbins], range=[[-lmax, lmax], [0, rmax]], density=False
                     )
-                    cdfs[i] += cdf * np.prod(box_vectors[:3]) / natoms_normalization
+                    cdfs[type_agg][i] += cdf * np.prod(box_vectors[:3]) / natoms_normalization
 
                     # Compute the RDF using numpy histogram
                     rdf, bin_edges = np.histogram(
                         rdist, bins=nbins, range=(0, rmax), density=False
                     )
-                    rdfs[i] += rdf * np.prod(box_vectors[:3]) / natoms_normalization
+                    rdfs[type_agg][i] += rdf * np.prod(box_vectors[:3]) / natoms_normalization
 
 
             elif not skip_rdfs:
@@ -322,12 +372,17 @@ def compute_rdfs(
     plt.rcParams["font.size"] = 22
 
     if compute_cdfs:
-        # compute the volume of each shell
-        # shell_volumes = np.zeros((np.size(yedges) - 1, np.size(xedges) - 1))
-        # for n in range(0, np.size(yedges) -1):
-        #     for m in range(0, np.size(xedges) - 1):
-        #         shell_volumes[n, m] = ((2 * np.pi * (xedges[m + 1]) ** 2) - (2 * np.pi * (xedges[m - 1]) ** 2)) * np.abs(yedges[2] - yedges[1])
-        shell_volumes = np.pi * (xedges[1:] ** 2 - xedges[:-1] ** 2) * np.abs(yedges[1] - yedges[0])
+        # plot evolution of the aggregate types
+        fig, ax = plt.subplots()
+        ax.plot(np.arange(len(agg_types)) , agg_types)
+        ax.set_yticks([0, 1, 2])
+        ax.set_yticklabels(["sphere", "oblate", "prolate"])
+        plt.savefig(names_prefix + f"agg_type_evolution_{agg_size}.pdf")
+        plt.show()
+        plt.close('all')
+
+        # CDF
+        shell_volumes_cdf = np.pi * (xedges[1:] ** 2 - xedges[:-1] ** 2) * np.abs(yedges[1] - yedges[0])
         xedges /= 10.0
         yedges /= 10.0
         # prepare to plot
@@ -336,78 +391,103 @@ def compute_rdfs(
         np.savetxt(names_prefix + f"{agg_size}_binsR.txt", xcenters)
         np.savetxt(names_prefix + f"{agg_size}_binsL.txt", ycenters)
 
-        # normalize CDFs and find the lower and largest values
-        minval = np.inf
-        maxval = -np.inf
-        for i in range(len(selections)):
-            cdfs[i] = cdfs[i] / (shell_volumes * nsnaps)
-            if minval > np.min(cdfs[i]):
-                minval = np.min(cdfs[i])
-            if maxval < np.max(cdfs[i]):
-                maxval = np.max(cdfs[i])
-
-        # normalize the CDF by dividing by the shell volume and number of snapshots and plot
-        fig, ax = plt.subplots(nrows=2, ncols=int(np.ceil(len(selections)/2)), figsize=fig_size_cdf)
-        fig.tight_layout(w_pad=0.4, h_pad=1.8)
-        for a in ax.flatten():
-            a.set_aspect(5/10)
-        if int(np.ceil(len(selections)/2)) == 1:
-            for i, sel in enumerate(selections):
-                ax[i].set_title(name_selections[i])
-                ax[i].set_xlim(xedges[[0, -1]])
-                ax[i].set_ylim(yedges[[0, -1]])
-                ax[i].set_xticks(np.linspace(xedges[0], xedges[-1], 3))
-                ax[i].set_yticks(np.linspace(yedges[0], yedges[-1], 7))
-                np.savetxt(names_prefix + f"CDFs_{agg_size}_" + sel.replace(" ", "_") + ".txt", cdfs[i])
-                im = ax[i].imshow(cdfs[i], extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], origin='lower', interpolation='bilinear', vmin=minval, vmax=maxval, cmap=plt.cm.RdBu)
-                ax[i].grid()
-                ax[i].set_xlabel(r"r (nm)")
-                ax[i].set_ylabel(r"h (nm)")
-        else:
-            # make the last plot blank if the number of selections is odd
-            if len(selections) % 2 != 0:
-                ax[-1][-1].axis('off')
-            for i, sel in enumerate(selections):
-                idx1, idx2 = i % 2, int(i / 2)
-                ax[idx1][idx2].set_title(name_selections[i])
-                ax[idx1][idx2].set_xlim(xedges[[0, -1]])
-                ax[idx1][idx2].set_ylim(yedges[[0, -1]])
-                ax[idx1][idx2].set_xticks(np.linspace(xedges[0], xedges[-1], 3))
-                ax[idx1][idx2].set_yticks(np.linspace(yedges[0], yedges[-1], 7))
-                np.savetxt(names_prefix + f"CDFs_{agg_size}_" + sel.replace(" ", "_") + ".txt", cdfs[i])
-                im = ax[idx1][idx2].imshow(cdfs[i], extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], origin='lower', interpolation='bilinear', vmin=minval, vmax=maxval, cmap=plt.cm.RdBu)
-                ax[idx1][idx2].grid()
-                ax[idx1][idx2].set_xlabel(r"r (nm)")
-                ax[idx1][idx2].set_ylabel(r"h (nm)")
-            # Add color bar
-        cax = fig.add_axes([start_colorbar, 0.15, width_colorbar, 0.7])
-        cbar = fig.colorbar(im, cax=cax)
-        cbar.set_label('CDF')
-        fig.subplots_adjust(hspace=0.35, right=start_colorbar)
-        plt.savefig(names_prefix + f"CDFs_{agg_size}.pdf")
-        plt.show()
-        plt.close('all')
-
-        # radial
-        # shell_volumes = np.pi * (bin_edges[1:] ** 2 - bin_edges[:-1] ** 2) * box_vectors[2]
-        shell_volumes = np.pi * (bin_edges[1:] ** 2 - bin_edges[:-1] ** 2) * 2.0 * lmax
+        # RDF
+        shell_volumes_rdf = np.pi * (bin_edges[1:] ** 2 - bin_edges[:-1] ** 2) * 2.0 * lmax
         # Prepare to plot
         mid_bin = (bin_edges[:-1] + bin_edges[1:]) / 2.0
         np.savetxt(names_prefix + f"gperp_{agg_size}_bins.txt", mid_bin)
 
-        # Normalize the RDF by dividing by the shell volume and number of snapshots and plot
-        for i, sel in enumerate(selections):
-            rdfs[i] = rdfs[i] / (shell_volumes * nsnaps)
+        # count agg by type and write to file
+        count_agg_types = {}
+        for i in type_map.values():
+            count_agg_types[i] = np.count_nonzero(np.array(agg_types) == i)
 
-            plt.plot(mid_bin / 10.0, rdfs[i], linewidth=3, label=name_selections[i])
+        # write results of agg type detection to file
+        with open("summary_compute_rdf_aggregates.txt", "a") as f:
+            f.write("\nNumber of aggregates classified by type:\n")
+            for k, v in count_agg_types.items():
+                f.write(f"{rev_type_map[k]}: {v} => {100.0 * v/nsnaps:.4f} %. <e> = {np.mean(np.array(eccentricities)[np.array(agg_types) == k]):.4f}\n")
 
-            np.savetxt(names_prefix + f"gperp_{agg_size}_" + sel.replace(" ", "_") + ".txt", rdfs[i])
+            f.write("\nSnapshot number by aggregate type:\n")
+            snap_map = np.array(snapshots)
+            for k, v in type_map.items():
+                f.write(f"{k}: ")
+                for snap in snap_map[np.array(agg_types) == v]:
+                    f.write(f"{snap}, ")
+                f.write("\n")
 
-        plt.legend(frameon=False)
-        plt.xlabel(r"r (nm)")
-        plt.ylabel(r"g$_\perp$(r)")
-        plt.savefig(names_prefix + f"radial_RDFs_{agg_size}.pdf", bbox_inches="tight")
-        plt.show()
+        # for each type of aggregate, normalize the CDFs/RDFs and plot
+        for agg_type in type_map.values():
+            # skip if there are no CDFs to plot
+            if count_agg_types[agg_type] == 0:
+                continue
+
+            # normalize CDFs and find the lower and largest values
+            minval = np.inf
+            maxval = -np.inf
+            for i in range(len(selections)):
+                cdfs[agg_type][i] = cdfs[agg_type][i] / (shell_volumes_cdf * count_agg_types[agg_type])
+                if minval > np.min(cdfs[agg_type][i]):
+                    minval = np.min(cdfs[agg_type][i])
+                if maxval < np.max(cdfs[agg_type][i]):
+                    maxval = np.max(cdfs[agg_type][i])
+
+            # normalize the CDF by dividing by the shell volume and number of snapshots and plot
+            fig, ax = plt.subplots(nrows=2, ncols=int(np.ceil(len(selections)/2)), figsize=fig_size_cdf)
+            fig.tight_layout(w_pad=0.4, h_pad=1.8)
+            for a in ax.flatten():
+                a.set_aspect(5/10)
+            if int(np.ceil(len(selections)/2)) == 1:
+                for i, sel in enumerate(selections):
+                    ax[i].set_title(name_selections[i])
+                    ax[i].set_xlim(xedges[[0, -1]])
+                    ax[i].set_ylim(yedges[[0, -1]])
+                    ax[i].set_xticks(np.linspace(xedges[0], xedges[-1], 3))
+                    ax[i].set_yticks(np.linspace(yedges[0], yedges[-1], 7))
+                    np.savetxt(names_prefix + f"CDFs_{agg_size}_" + sel.replace(" ", "_") + "_" + rev_type_map[agg_type] + ".txt", cdfs[agg_type][i])
+                    im = ax[i].imshow(cdfs[agg_type][i], extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], origin='lower', interpolation='bilinear', vmin=minval, vmax=maxval, cmap=plt.cm.RdBu)
+                    ax[i].grid()
+                    ax[i].set_xlabel(r"r (nm)")
+                    ax[i].set_ylabel(r"h (nm)")
+            else:
+                # make the last plot blank if the number of selections is odd
+                if len(selections) % 2 != 0:
+                    ax[-1][-1].axis('off')
+                for i, sel in enumerate(selections):
+                    idx1, idx2 = i % 2, int(i / 2)
+                    ax[idx1][idx2].set_title(name_selections[i])
+                    ax[idx1][idx2].set_xlim(xedges[[0, -1]])
+                    ax[idx1][idx2].set_ylim(yedges[[0, -1]])
+                    ax[idx1][idx2].set_xticks(np.linspace(xedges[0], xedges[-1], 3))
+                    ax[idx1][idx2].set_yticks(np.linspace(yedges[0], yedges[-1], 7))
+                    np.savetxt(names_prefix + f"CDFs_{agg_size}_" + sel.replace(" ", "_") + "_" + rev_type_map[agg_type] + ".txt", cdfs[agg_type][i])
+                    im = ax[idx1][idx2].imshow(cdfs[agg_type][i], extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], origin='lower', interpolation='bilinear', vmin=minval, vmax=maxval, cmap=plt.cm.RdBu)
+                    ax[idx1][idx2].grid()
+                    ax[idx1][idx2].set_xlabel(r"r (nm)")
+                    ax[idx1][idx2].set_ylabel(r"h (nm)")
+                # Add color bar
+            cax = fig.add_axes([start_colorbar, 0.15, width_colorbar, 0.7])
+            cbar = fig.colorbar(im, cax=cax)
+            cbar.set_label('CDF')
+            fig.subplots_adjust(hspace=0.35, right=start_colorbar)
+            plt.savefig(names_prefix + f"CDFs_{agg_size}_{rev_type_map[agg_type]}.pdf")
+            plt.show()
+            plt.close('all')
+
+            # radial
+            # Normalize the RDF by dividing by the shell volume and number of snapshots and plot
+            for i, sel in enumerate(selections):
+                rdfs[agg_type][i] = rdfs[agg_type][i] / (shell_volumes_rdf * count_agg_types[agg_type])
+
+                plt.plot(mid_bin / 10.0, rdfs[agg_type][i], linewidth=3, label=name_selections[i])
+
+                np.savetxt(names_prefix + f"gperp_{agg_size}_" + sel.replace(" ", "_") + ".txt", rdfs[agg_type][i])
+
+            plt.legend(frameon=False)
+            plt.xlabel(r"r (nm)")
+            plt.ylabel(r"g$_\perp$(r)")
+            plt.savefig(names_prefix + f"radial_RDFs_{agg_size}_{rev_type_map[agg_type]}.pdf", bbox_inches="tight")
+            plt.show()
 
     # check if rdfs are skipped
     elif not skip_rdfs:
@@ -482,7 +562,7 @@ def compute_rdfs(
             )
             f.write("a = {} A, b = {} A, c = {} A\n\n".format(a, b, c))
 
-            f.write("alpha = {}\n\n".format((2 * Ia - Ib - Ic) / (Ia + Ib + Ic)))
+            f.write("e = {}\n\n".format(1.0 - np.min([Ia, Ib, Ic]) / np.mean([Ia, Ib, Ic])))
             f.write("Rg = {}±{} A\n".format(Rgm, np.std(Rg)))
 
     if compute_pddf:
