@@ -323,10 +323,25 @@ def compute_rdfs(
                     )
                     cdfs[type_agg][i] += cdf * np.prod(box_vectors[:3]) / natoms_normalization
 
-                    # Compute the RDF using numpy histogram
-                    rdf, bin_edges = np.histogram(
-                        rdist, bins=nbins, range=(0, rmax), density=False
-                    )
+                    # Compute the RDF using numpy histogram (if sphere it's the actual RDF, not the perpendicular one)
+                    if type_agg == type_map["sphere"]:
+                        # Compute the distances between the target atoms and the center
+                        distances_matrix = distances.distance_array(
+                            cog, at_sel.positions, box=box_vectors, backend="OpenMP"
+                        )
+
+                        # Flatten the distances matrix to a 1D array
+                        flattened_distances = distances_matrix.flatten()
+
+                        # Compute the RDF using numpy histogram
+                        rdf, bin_edges = np.histogram(
+                            flattened_distances, bins=nbins, range=(0, rmax), density=False
+                        )
+                    else:
+                        rdf, bin_edges = np.histogram(
+                            rdist, bins=nbins, range=(0, rmax), density=False
+                        )
+                    
                     rdfs[type_agg][i] += rdf * np.prod(box_vectors[:3]) / natoms_normalization
 
 
@@ -378,7 +393,6 @@ def compute_rdfs(
         np.savetxt(names_prefix + f"{agg_size}_binsL.txt", ycenters)
 
         # RDF
-        shell_volumes_rdf = np.pi * (bin_edges[1:] ** 2 - bin_edges[:-1] ** 2) * 2.0 * lmax
         # Prepare to plot
         mid_bin = (bin_edges[:-1] + bin_edges[1:]) / 2.0
         np.savetxt(names_prefix + f"gperp_{agg_size}_bins.txt", mid_bin)
@@ -463,16 +477,24 @@ def compute_rdfs(
 
             # radial
             # Normalize the RDF by dividing by the shell volume and number of snapshots and plot
+            if agg_type == type_map["sphere"]:
+                shell_volumes_rdf = (4.0 / 3.0) * np.pi * (bin_edges[1:] ** 3 - bin_edges[:-1] ** 3)
+            else:
+                shell_volumes_rdf = np.pi * (bin_edges[1:] ** 2 - bin_edges[:-1] ** 2) * 2.0 * lmax
+
             for i, sel in enumerate(selections):
                 rdfs[agg_type][i] = rdfs[agg_type][i] / (shell_volumes_rdf * count_agg_types[agg_type])
 
                 plt.plot(mid_bin / 10.0, rdfs[agg_type][i], linewidth=3, label=name_selections[i])
 
-                np.savetxt(names_prefix + f"gperp_{agg_size}_" + sel.replace(" ", "_") + ".txt", rdfs[agg_type][i])
+                np.savetxt(names_prefix + f"gperp_{agg_size}_" + sel.replace(" ", "_") + rev_type_map[agg_type] + ".txt", rdfs[agg_type][i])
 
             plt.legend(frameon=False)
             plt.xlabel(r"r (nm)")
-            plt.ylabel(r"g$_\perp$(r)")
+            if agg_type == type_map["sphere"]:
+                plt.ylabel(r"g(r)")
+            else:
+                plt.ylabel(r"g$_\perp$(r)")
             plt.savefig(names_prefix + f"radial_RDFs_{agg_size}_{rev_type_map[agg_type]}.pdf", bbox_inches="tight")
             plt.show()
 
