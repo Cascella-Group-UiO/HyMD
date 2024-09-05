@@ -135,10 +135,11 @@ def compute_rdfs(
         if len(agg_resids) == 0:
             continue
 
-        snapshots.append(os.path.basename(snapshot))
-
         # for each aggregate of given size, accumulate the RDFs
-        for resid in agg_resids:
+        for ididx, resid in enumerate(agg_resids):
+            if ididx > 0:
+                u = mda.Universe(snapshot)
+            snapshots.append(os.path.basename(snapshot))
             nsnaps += 1
             box_vectors = u.dimensions
 
@@ -167,7 +168,7 @@ def compute_rdfs(
                 u.atoms.wrap(compound="atoms")
                 cog = box_center
 
-            if save_agg_only:
+            if save_agg_only and not compute_cdfs:
                 agg_sel = u.select_atoms(f"resid {resid}")
 
                 dirname = f"./agg_only_{agg_size}"
@@ -176,7 +177,7 @@ def compute_rdfs(
                     os.mkdir(dirname)
 
                 agg_sel.atoms.write(
-                    os.path.join(dirname, f"centered_{os.path.basename(snapshot)}")
+                    os.path.join(dirname, f"centered_{resid}_{os.path.basename(snapshot)}")
                 )
 
             if save_centered:
@@ -186,7 +187,7 @@ def compute_rdfs(
                     os.mkdir(dirname)
 
                 u.atoms.write(
-                    os.path.join(dirname, f"centered_{os.path.basename(snapshot)}")
+                    os.path.join(dirname, f"centered_{resid}_{os.path.basename(snapshot)}")
                 )
 
             # set the masses
@@ -298,6 +299,16 @@ def compute_rdfs(
                 ax = transformations.rotaxis(pa, [0,0,1])
                 u.atoms.rotateby(angle, ax, point=cog)
 
+                if save_agg_only:
+                    dirname = f"./agg_only_{agg_size}"
+
+                    if not os.path.exists(dirname):
+                        os.mkdir(dirname)
+
+                    agg_sel.atoms.write(
+                        os.path.join(dirname, f"centered_{resid}_{os.path.basename(snapshot)}")
+                    )
+
                 # create selections for which CDFs will be computed
                 for i, sel_string in enumerate(selections):
                     if sel_string.strip().lower() in ["name w", "type w", "name na", "type na", "name cl", "type cl"]:
@@ -368,6 +379,9 @@ def compute_rdfs(
 
                     rdfs[i] += rdf * np.prod(box_vectors[:3]) / natoms_normalization
 
+
+    if len(snapshots) == 0:
+        raise ValueError(f"No aggregates of size {agg_size} were found in the directory")
 
     plt.rcParams["figure.figsize"] = fig_size
     plt.rcParams["font.size"] = 22
