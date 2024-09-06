@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hymd.file_io &mdash; hymd 2.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sphinx-dropdown.css?v=995e94df" />
+      <link rel="stylesheet" type="text/css" href="../../_static/panels-bootstrap.min.css?v=21c0b90a" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=9ae11f4d" />
+
+  
+    <link rel="shortcut icon" href="../../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=0218eca2"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script src="../../_static/tabs.js?v=3030b3cb"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                2.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/config_file.html#pressure-keywords">3.1.7. Pressure keywords</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/config_file.html#id3">3.1.7.1. Simulation keywords</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/config_file.html#id4">3.1.7.2. Field keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/pressure.html">4. Pressure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interfaces.html">5. PLUMED interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interfaces.html#running-simulations-using-plumed">5.1. Running simulations using PLUMED</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc_pages/api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.integrator">4.1. Integrator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.integrator.integrate_position"><code class="docutils literal notranslate"><span class="pre">integrate_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.integrator.integrate_velocity"><code class="docutils literal notranslate"><span class="pre">integrate_velocity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.thermostat">4.2. Thermostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.thermostat._random_chi_squared"><code class="docutils literal notranslate"><span class="pre">_random_chi_squared()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.thermostat._random_gaussian"><code class="docutils literal notranslate"><span class="pre">_random_gaussian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.thermostat.csvr_thermostat"><code class="docutils literal notranslate"><span class="pre">csvr_thermostat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#barostat">4.3. Barostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.barostat">4.3.1. Berendsen Barostat</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#references">4.3.1.1. References</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.barostat.isotropic"><code class="docutils literal notranslate"><span class="pre">isotropic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.barostat.semiisotropic"><code class="docutils literal notranslate"><span class="pre">semiisotropic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#scr-barostat">4.3.2. SCR Barostat</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#hamiltonian">4.4. Hamiltonian</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.Hamiltonian"><code class="docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.Hamiltonian.__init__"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.Hamiltonian._setup"><code class="docutils literal notranslate"><span class="pre">Hamiltonian._setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.SquaredPhi"><code class="docutils literal notranslate"><span class="pre">SquaredPhi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.SquaredPhi.__init__"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.SquaredPhi.setup"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultNoChi"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultNoChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultNoChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultWithChi"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultWithChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.hamiltonian.DefaultWithChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.setup()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.force">4.5. Force</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Angle"><code class="docutils literal notranslate"><span class="pre">Angle</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Angle.atom_3"><code class="docutils literal notranslate"><span class="pre">Angle.atom_3</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Bond"><code class="docutils literal notranslate"><span class="pre">Bond</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Bond.atom_1"><code class="docutils literal notranslate"><span class="pre">Bond.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Bond.atom_2"><code class="docutils literal notranslate"><span class="pre">Bond.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Bond.equilibrium"><code class="docutils literal notranslate"><span class="pre">Bond.equilibrium</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Bond.strength"><code class="docutils literal notranslate"><span class="pre">Bond.strength</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Chi"><code class="docutils literal notranslate"><span class="pre">Chi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Chi.atom_1"><code class="docutils literal notranslate"><span class="pre">Chi.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Chi.atom_2"><code class="docutils literal notranslate"><span class="pre">Chi.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Chi.interaction_energy"><code class="docutils literal notranslate"><span class="pre">Chi.interaction_energy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dielectric_type"><code class="docutils literal notranslate"><span class="pre">Dielectric_type</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dielectric_type.atom_1"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dielectric_type.dielectric_value"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.dielectric_value</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dihedral"><code class="docutils literal notranslate"><span class="pre">Dihedral</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dihedral.atom_1"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dihedral.atom_2"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dihedral.atom_3"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dihedral.atom_4"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_4</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dihedral.coeffs"><code class="docutils literal notranslate"><span class="pre">Dihedral.coeffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.Dihedral.dih_type"><code class="docutils literal notranslate"><span class="pre">Dihedral.dih_type</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.compute_angle_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_angle_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.compute_bond_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_bond_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.compute_dihedral_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_dihedral_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.dipole_forces_redistribution"><code class="docutils literal notranslate"><span class="pre">dipole_forces_redistribution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.find_all_paths"><code class="docutils literal notranslate"><span class="pre">find_all_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.prepare_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.prepare_bonds_old"><code class="docutils literal notranslate"><span class="pre">prepare_bonds_old()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.prepare_index_based_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_index_based_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.force.propensity_potential_coeffs"><code class="docutils literal notranslate"><span class="pre">propensity_potential_coeffs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.pressure">4.6. Pressure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.pressure.comp_pressure"><code class="docutils literal notranslate"><span class="pre">comp_pressure()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#logger">4.7. Logger</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.logger.Logger.setup"><code class="docutils literal notranslate"><span class="pre">Logger.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.logger.MPIFilterRoot"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.logger.MPIFilterRoot.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot.filter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.logger.MPIFilterAll"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.logger.MPIFilterAll.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll.filter()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.input_parser">4.8. Input parser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.a"><code class="docutils literal notranslate"><span class="pre">Config.a</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.angle_bonds"><code class="docutils literal notranslate"><span class="pre">Config.angle_bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.barostat"><code class="docutils literal notranslate"><span class="pre">Config.barostat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.barostat_type"><code class="docutils literal notranslate"><span class="pre">Config.barostat_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.bonds"><code class="docutils literal notranslate"><span class="pre">Config.bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.box_size"><code class="docutils literal notranslate"><span class="pre">Config.box_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">Config.cancel_com_momentum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.chi"><code class="docutils literal notranslate"><span class="pre">Config.chi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.conv_crit"><code class="docutils literal notranslate"><span class="pre">Config.conv_crit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.convergence_type"><code class="docutils literal notranslate"><span class="pre">Config.convergence_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.coulomb_constant"><code class="docutils literal notranslate"><span class="pre">Config.coulomb_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.coulombtype"><code class="docutils literal notranslate"><span class="pre">Config.coulombtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.dielectric_const"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_const</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.dielectric_type"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.dihedrals"><code class="docutils literal notranslate"><span class="pre">Config.dihedrals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">Config.domain_decomposition</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.dtype"><code class="docutils literal notranslate"><span class="pre">Config.dtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.file_name"><code class="docutils literal notranslate"><span class="pre">Config.file_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.gas_constant"><code class="docutils literal notranslate"><span class="pre">Config.gas_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.hamiltonian"><code class="docutils literal notranslate"><span class="pre">Config.hamiltonian</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.initial_energy"><code class="docutils literal notranslate"><span class="pre">Config.initial_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.integrator"><code class="docutils literal notranslate"><span class="pre">Config.integrator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.kappa"><code class="docutils literal notranslate"><span class="pre">Config.kappa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.m"><code class="docutils literal notranslate"><span class="pre">Config.m</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.mass"><code class="docutils literal notranslate"><span class="pre">Config.mass</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.max_molecule_size"><code class="docutils literal notranslate"><span class="pre">Config.max_molecule_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.mesh_size"><code class="docutils literal notranslate"><span class="pre">Config.mesh_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.n_b"><code class="docutils literal notranslate"><span class="pre">Config.n_b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.n_flush"><code class="docutils literal notranslate"><span class="pre">Config.n_flush</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.n_particles"><code class="docutils literal notranslate"><span class="pre">Config.n_particles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.n_print"><code class="docutils literal notranslate"><span class="pre">Config.n_print</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.n_steps"><code class="docutils literal notranslate"><span class="pre">Config.n_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.name"><code class="docutils literal notranslate"><span class="pre">Config.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.pol_mixing"><code class="docutils literal notranslate"><span class="pre">Config.pol_mixing</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.pressure"><code class="docutils literal notranslate"><span class="pre">Config.pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.respa_inner"><code class="docutils literal notranslate"><span class="pre">Config.respa_inner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.rho0"><code class="docutils literal notranslate"><span class="pre">Config.rho0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.self_energy"><code class="docutils literal notranslate"><span class="pre">Config.self_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.sigma"><code class="docutils literal notranslate"><span class="pre">Config.sigma</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.start_temperature"><code class="docutils literal notranslate"><span class="pre">Config.start_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.tags"><code class="docutils literal notranslate"><span class="pre">Config.tags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.target_pressure"><code class="docutils literal notranslate"><span class="pre">Config.target_pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.target_temperature"><code class="docutils literal notranslate"><span class="pre">Config.target_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.tau"><code class="docutils literal notranslate"><span class="pre">Config.tau</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.tau_p"><code class="docutils literal notranslate"><span class="pre">Config.tau_p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_coupling_groups</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.thermostat_work"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_work</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.time_step"><code class="docutils literal notranslate"><span class="pre">Config.time_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.Config.type_charges"><code class="docutils literal notranslate"><span class="pre">Config.type_charges</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_NPT_conditions"><code class="docutils literal notranslate"><span class="pre">check_NPT_conditions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_angles"><code class="docutils literal notranslate"><span class="pre">check_angles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_bonds"><code class="docutils literal notranslate"><span class="pre">check_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_box_size"><code class="docutils literal notranslate"><span class="pre">check_box_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">check_cancel_com_momentum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_charges"><code class="docutils literal notranslate"><span class="pre">check_charges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_charges_types_list"><code class="docutils literal notranslate"><span class="pre">check_charges_types_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_chi"><code class="docutils literal notranslate"><span class="pre">check_chi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_config"><code class="docutils literal notranslate"><span class="pre">check_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_dielectric"><code class="docutils literal notranslate"><span class="pre">check_dielectric()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_dihedrals"><code class="docutils literal notranslate"><span class="pre">check_dihedrals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_domain_decomposition"><code class="docutils literal notranslate"><span class="pre">check_domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_hamiltonian"><code class="docutils literal notranslate"><span class="pre">check_hamiltonian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_integrator"><code class="docutils literal notranslate"><span class="pre">check_integrator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_m"><code class="docutils literal notranslate"><span class="pre">check_m()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_mass"><code class="docutils literal notranslate"><span class="pre">check_mass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_max_molecule_size"><code class="docutils literal notranslate"><span class="pre">check_max_molecule_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_n_b"><code class="docutils literal notranslate"><span class="pre">check_n_b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_n_flush"><code class="docutils literal notranslate"><span class="pre">check_n_flush()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_n_particles"><code class="docutils literal notranslate"><span class="pre">check_n_particles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_n_print"><code class="docutils literal notranslate"><span class="pre">check_n_print()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_name"><code class="docutils literal notranslate"><span class="pre">check_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_start_and_target_temperature"><code class="docutils literal notranslate"><span class="pre">check_start_and_target_temperature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_tau"><code class="docutils literal notranslate"><span class="pre">check_tau()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.check_thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">check_thermostat_coupling_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.parse_config_toml"><code class="docutils literal notranslate"><span class="pre">parse_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.read_config_toml"><code class="docutils literal notranslate"><span class="pre">read_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.input_parser.sort_dielectric_by_type_id"><code class="docutils literal notranslate"><span class="pre">sort_dielectric_by_type_id()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.field">4.9. Field</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.compute_field_and_kinetic_energy"><code class="docutils literal notranslate"><span class="pre">compute_field_and_kinetic_energy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.compute_field_energy_q_GPE"><code class="docutils literal notranslate"><span class="pre">compute_field_energy_q_GPE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.compute_field_force"><code class="docutils literal notranslate"><span class="pre">compute_field_force()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.compute_self_energy_q"><code class="docutils literal notranslate"><span class="pre">compute_self_energy_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.initialize_pm"><code class="docutils literal notranslate"><span class="pre">initialize_pm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.update_field"><code class="docutils literal notranslate"><span class="pre">update_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.update_field_force_q"><code class="docutils literal notranslate"><span class="pre">update_field_force_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.field.update_field_force_q_GPE"><code class="docutils literal notranslate"><span class="pre">update_field_force_q_GPE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.file_io">4.10. File input/output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.OutDataset"><code class="docutils literal notranslate"><span class="pre">OutDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.OutDataset.close_file"><code class="docutils literal notranslate"><span class="pre">OutDataset.close_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.OutDataset.flush"><code class="docutils literal notranslate"><span class="pre">OutDataset.flush()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.OutDataset.is_open"><code class="docutils literal notranslate"><span class="pre">OutDataset.is_open()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.distribute_input"><code class="docutils literal notranslate"><span class="pre">distribute_input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.setup_time_dependent_element"><code class="docutils literal notranslate"><span class="pre">setup_time_dependent_element()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.store_data"><code class="docutils literal notranslate"><span class="pre">store_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.file_io.store_static"><code class="docutils literal notranslate"><span class="pre">store_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../doc_pages/api.html#module-hymd.plumed">4.11. PLUMED</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../doc_pages/api.html#hymd.plumed.PlumedBias"><code class="docutils literal notranslate"><span class="pre">PlumedBias</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.plumed.PlumedBias.api_version"><code class="docutils literal notranslate"><span class="pre">PlumedBias.api_version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.plumed.PlumedBias.calc"><code class="docutils literal notranslate"><span class="pre">PlumedBias.calc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.plumed.PlumedBias.finalize"><code class="docutils literal notranslate"><span class="pre">PlumedBias.finalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../doc_pages/api.html#hymd.plumed.PlumedBias.prepare"><code class="docutils literal notranslate"><span class="pre">PlumedBias.prepare()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hymd.file_io</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hymd.file_io</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Handle file input/output in parllel HDF5 fashion</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">.logger</span> <span class="kn">import</span> <span class="n">Logger</span><span class="p">,</span> <span class="n">get_version</span>
+
+
+<div class="viewcode-block" id="OutDataset"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.OutDataset">[docs]</a><span class="k">class</span> <span class="nc">OutDataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;HDF5 dataset handler for file output&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dest_directory</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">,</span>
+        <span class="n">double_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">disable_mpio</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dest_directory : str</span>
+<span class="sd">            Ouput directory for saving data.</span>
+<span class="sd">        config : Config</span>
+<span class="sd">            Configuration object.</span>
+<span class="sd">        double_out : bool, optional</span>
+<span class="sd">            If :code:`True`, the output HDF5 objects are written in eight byte</span>
+<span class="sd">            floating point representation. Otherwise, four byte single</span>
+<span class="sd">            precision is used.</span>
+<span class="sd">        disable_mpio : bool, optional</span>
+<span class="sd">            If :code:`True`, disables parallel MPI-enabled HDF5 file output.</span>
+<span class="sd">            This is a compatibility option used if HDF5 is not compiled with</span>
+<span class="sd">            MPI support. This makes everything much harder by splitting all</span>
+<span class="sd">            output in one file per MPI rank, and having an MPI-enabled HDF5</span>
+<span class="sd">            library is **highly recommended**.</span>
+<span class="sd">        comm : mpi4py.Comm</span>
+<span class="sd">            MPI communicator to use for rank commuication.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disable_mpio</span> <span class="o">=</span> <span class="n">disable_mpio</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="k">if</span> <span class="n">double_out</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">float_dtype</span> <span class="o">=</span> <span class="s2">&quot;float64&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">float_dtype</span> <span class="o">=</span> <span class="s2">&quot;float32&quot;</span>
+
+        <span class="k">if</span> <span class="n">disable_mpio</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">dest_directory</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sim.hdf5-</span><span class="si">{</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2">-of-</span><span class="si">{</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span><span class="si">:</span><span class="s2">6d</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;w&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dest_directory</span><span class="p">,</span> <span class="s2">&quot;sim.H5&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s2">&quot;mpio&quot;</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">comm</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="OutDataset.is_open"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.OutDataset.is_open">[docs]</a>    <span class="k">def</span> <span class="nf">is_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if HDF5 output file is open</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        comm : mpi4py.Comm</span>
+<span class="sd">            MPI communicator to use for rank communication.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">comm</span><span class="o">.</span><span class="n">Barrier</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="fm">__bool__</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="OutDataset.close_file"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.OutDataset.close_file">[docs]</a>    <span class="k">def</span> <span class="nf">close_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Closes the HDF5 output file</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        comm : mpi4py.Comm</span>
+<span class="sd">            MPI communicator to use for rank communication.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">comm</span><span class="o">.</span><span class="n">Barrier</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="OutDataset.flush"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.OutDataset.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flushes output buffers, forcing file writes&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="setup_time_dependent_element"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.setup_time_dependent_element">[docs]</a><span class="k">def</span> <span class="nf">setup_time_dependent_element</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">,</span> <span class="n">parent_group</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function for setting up time-dependent HDF5 group datasets</span>
+
+<span class="sd">    All output groups must adhere to the H5MD standard, meaning a structure of</span>
+
+
+<span class="sd">    |    ┗━ **group** particle group (e.g. :code:`all`) or :code:`observables` group</span>
+<span class="sd">    |        ┗━ **group** time-dependent data</span>
+<span class="sd">    |            ┣━ **dataset** :code:`step` :code:`shape=(n_frames,)`</span>
+<span class="sd">    |            ┣━ **dataset** :code:`time` :code:`shape=(n_frames,)`</span>
+<span class="sd">    |            ┗━ **dataset** :code:`value` :code:`shape=(n_frames, *)`</span>
+
+<span class="sd">    is necessary.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    H5MD specification :</span>
+<span class="sd">        https://www.nongnu.org/h5md/h5md.html</span>
+<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">parent_group</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;step&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">n_frames</span><span class="p">,),</span> <span class="s2">&quot;int32&quot;</span><span class="p">)</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">n_frames</span><span class="p">,),</span> <span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">n_frames</span><span class="p">,</span> <span class="o">*</span><span class="n">shape</span><span class="p">),</span> <span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">units</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">value</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;unit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">units</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;unit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ps&quot;</span>
+    <span class="k">return</span> <span class="n">group</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">value</span></div>
+
+
+<div class="viewcode-block" id="store_static"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.store_static">[docs]</a><span class="k">def</span> <span class="nf">store_static</span><span class="p">(</span>
+    <span class="n">h5md</span><span class="p">,</span>
+    <span class="n">rank_range</span><span class="p">,</span>
+    <span class="n">names</span><span class="p">,</span>
+    <span class="n">types</span><span class="p">,</span>
+    <span class="n">indices</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">bonds_2_atom1</span><span class="p">,</span>
+    <span class="n">bonds_2_atom2</span><span class="p">,</span>
+    <span class="n">molecules</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">velocity_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">force_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">charges</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dielectrics</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">plumed_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Outputs all static time-independent quantities to the HDF5 output file</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h5md : OutDataset</span>
+<span class="sd">        HDF5 dataset handler.</span>
+<span class="sd">    rank_range : list[int]</span>
+<span class="sd">        Start and end indices for global arrays for each MPI rank.</span>
+<span class="sd">    names : (N,) numpy.ndarray</span>
+<span class="sd">        Array of names for :code:`N` particles.</span>
+<span class="sd">    types : (N,) numpy.ndarray</span>
+<span class="sd">        Array of type indices for :code:`N` particles.</span>
+<span class="sd">    indices : (N,) numpy.ndarray</span>
+<span class="sd">        Array of indices for :code:`N` particles.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+<span class="sd">    bonds_2_atom1 : (B,) numpy.ndarray</span>
+<span class="sd">        Array of indices of the first particle for :code:`B` total</span>
+<span class="sd">        two-particle bonds.</span>
+<span class="sd">    bonds_2_atom2 : (B,) numpy.ndarray</span>
+<span class="sd">        Array of indices of the second particle for :code:`B` total</span>
+<span class="sd">        two-particle bonds.</span>
+<span class="sd">    molecules : (N,) numpy.ndarray, optional</span>
+<span class="sd">        Array of integer molecule affiliation for each of :code:`N` particles.</span>
+<span class="sd">        Global (across all MPI ranks) or local (local indices on this MPI rank</span>
+<span class="sd">        only) may be used, both, without affecting the result.</span>
+<span class="sd">    velocity_out : bool, optional</span>
+<span class="sd">        If :code:`True`, velocities are written to output HDF5 file.</span>
+<span class="sd">    force_out : bool, optional</span>
+<span class="sd">        If :code:`True`, forces are written to output HDF5 file.</span>
+<span class="sd">    charges : (N,) numpy.ndarray</span>
+<span class="sd">        Array of particle charge values for :code:`N` particles.</span>
+<span class="sd">    dielectrics : (N,) numpy.ndarray</span>
+<span class="sd">        Array of particle relative dielectric values for :code:`N` particles.</span>
+<span class="sd">    plumed_out : bool, optional</span>
+<span class="sd">        If :code:`True`, PLUMED bias is written to output HDF5 file.</span>
+<span class="sd">    comm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank commuication.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    prepare_bonds :</span>
+<span class="sd">        Constructs two-, three-, and four-particle bonds from toplogy input</span>
+<span class="sd">        file and bond configuration information.</span>
+<span class="sd">    distribute_input :</span>
+<span class="sd">        Distributes input arrays onto MPI ranks, attempting load balancing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">float_dtype</span>
+
+    <span class="n">h5md_group</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;/h5md&quot;</span><span class="p">)</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">h5md_group</span> <span class="o">=</span> <span class="n">h5md_group</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;/observables&quot;</span><span class="p">)</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">connectivity</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;/connectivity&quot;</span><span class="p">)</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;/parameters&quot;</span><span class="p">)</span>
+
+    <span class="n">h5md_group</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">author_group</span> <span class="o">=</span> <span class="n">h5md_group</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;author&quot;</span><span class="p">)</span>
+    <span class="n">author_group</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="n">getpass</span><span class="o">.</span><span class="n">getuser</span><span class="p">())</span>
+    <span class="n">creator_group</span> <span class="o">=</span> <span class="n">h5md_group</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;creator&quot;</span><span class="p">)</span>
+    <span class="n">creator_group</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="s2">&quot;Hylleraas MD&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get HyMD version</span>
+    <span class="n">creator_group</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="n">get_version</span><span class="p">())</span>
+
+    <span class="n">h5md</span><span class="o">.</span><span class="n">particles_group</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;/particles&quot;</span><span class="p">)</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">particles_group</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+    <span class="n">mass</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;mass&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,),</span> <span class="n">dtype</span><span class="p">)</span>
+    <span class="n">mass</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span>
+
+    <span class="k">if</span> <span class="n">charges</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">charge</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+            <span class="s2">&quot;charge&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span>
+        <span class="p">)</span>
+        <span class="n">charge</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">charges</span>
+    <span class="k">if</span> <span class="n">dielectrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">dielectric</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+            <span class="s2">&quot;dielectric&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span>
+        <span class="p">)</span>
+        <span class="n">dielectric</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">dielectrics</span>
+
+    <span class="n">box</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;box&quot;</span><span class="p">)</span>
+    <span class="n">box</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;dimension&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">box</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;boundary&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">[</span><span class="s2">&quot;periodic&quot;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;S8&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">n_frames</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">n_steps</span> <span class="o">//</span> <span class="n">config</span><span class="o">.</span><span class="n">n_print</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">n_print</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">n_frames</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_steps</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">n_print</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">n_frames</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">n_frames</span> <span class="o">==</span> <span class="n">config</span><span class="o">.</span><span class="n">n_steps</span><span class="p">:</span>
+        <span class="n">n_frames</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">species</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+        <span class="s2">&quot;species&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;i&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">positions_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">positions_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">positions</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;position&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;nm&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">velocity_out</span><span class="p">:</span>
+        <span class="p">(</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">velocities_step</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">velocities_time</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">velocities</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+            <span class="s2">&quot;velocity&quot;</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="p">,</span>
+            <span class="n">n_frames</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">dtype</span><span class="p">,</span>
+            <span class="n">units</span><span class="o">=</span><span class="s2">&quot;nm ps-1&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">force_out</span><span class="p">:</span>
+        <span class="p">(</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">forces_step</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">forces_time</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">forces</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+            <span class="s2">&quot;force&quot;</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">all_particles</span><span class="p">,</span>
+            <span class="n">n_frames</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">dtype</span><span class="p">,</span>
+            <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1 nm-1&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_energy</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;total_energy&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">kinetc_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">kinetc_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">kinetc_energy</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;kinetic_energy&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">potential_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">potential_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">potential_energy</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;potential_energy&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">bond_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">bond_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">bond_energy</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;bond_energy&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angle_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angle_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angle_energy</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;angle_energy&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">dihedral_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">dihedral_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">dihedral_energy</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;dihedral_energy&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_energy</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;field_energy&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">charges</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="p">(</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">field_q_energy_step</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">field_q_energy_time</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">field_q_energy</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+            <span class="s2">&quot;field_q_energy&quot;</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+            <span class="n">n_frames</span><span class="p">,</span>
+            <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+            <span class="n">dtype</span><span class="p">,</span>
+            <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+        <span class="p">)</span>  <span class="c1"># &lt;-------- xinmeng</span>
+    <span class="k">if</span> <span class="n">plumed_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="p">(</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">plumed_bias_step</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">plumed_bias_time</span><span class="p">,</span>
+            <span class="n">h5md</span><span class="o">.</span><span class="n">plumed_bias</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+            <span class="s2">&quot;plumed_bias&quot;</span><span class="p">,</span> <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,),</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span>  <span class="c1"># noqa: E501</span>
+        <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_momentum_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_momentum_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_momentum</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">&quot;total_momentum&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;nm g ps-1 mol-1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angular_momentum_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angular_momentum_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angular_momentum</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">&quot;angular_momentum&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;nm+2 g ps-1 mol-1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">torque_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">torque_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">torque</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">&quot;torque&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ nm+2 mol-1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">temperature_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">temperature_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,),</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;K&quot;</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">thermostat_work_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">thermostat_work_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">thermostat_work</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;thermostat_work&quot;</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span>
+        <span class="n">n_frames</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
+        <span class="s2">&quot;float32&quot;</span><span class="p">,</span>
+        <span class="n">units</span><span class="o">=</span><span class="s2">&quot;kJ mol-1&quot;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+    <span class="p">)</span>
+    <span class="p">(</span>
+        <span class="n">_</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">pressure_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">pressure_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">pressure</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="n">h5md</span><span class="o">.</span><span class="n">observables</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">,</span> <span class="p">(</span><span class="mi">18</span><span class="p">,),</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;Bar&quot;</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">h5md</span><span class="o">.</span><span class="n">box_step</span><span class="p">,</span> <span class="n">h5md</span><span class="o">.</span><span class="n">box_time</span><span class="p">,</span> <span class="n">h5md</span><span class="o">.</span><span class="n">box_value</span><span class="p">,)</span> <span class="o">=</span> <span class="n">setup_time_dependent_element</span><span class="p">(</span>
+        <span class="s2">&quot;edges&quot;</span><span class="p">,</span> <span class="n">box</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;nm&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ind_sort</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ind_sort</span><span class="p">:</span>
+        <span class="n">species</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name_to_type_map</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)]</span>
+
+    <span class="n">h5md</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;config.toml&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+    <span class="n">vmd_group</span> <span class="o">=</span> <span class="n">h5md</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;vmd_structure&quot;</span><span class="p">)</span>
+    <span class="n">index_of_species</span> <span class="o">=</span> <span class="n">vmd_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+        <span class="s2">&quot;indexOfSpecies&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">,),</span> <span class="s2">&quot;i&quot;</span>
+    <span class="p">)</span>
+    <span class="n">index_of_species</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">)))</span>
+
+    <span class="c1"># VMD-h5mdplugin maximum name/type name length is 16 characters (for</span>
+    <span class="c1"># whatever reason [VMD internals?]).</span>
+    <span class="n">name_dataset</span> <span class="o">=</span> <span class="n">vmd_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">,),</span> <span class="s2">&quot;S16&quot;</span><span class="p">)</span>
+    <span class="n">type_dataset</span> <span class="o">=</span> <span class="n">vmd_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_types</span><span class="p">,),</span> <span class="s2">&quot;S16&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">molecules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resid_dataset</span> <span class="o">=</span> <span class="n">vmd_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+            <span class="s2">&quot;resid&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">n_particles</span><span class="p">,),</span>
+            <span class="s2">&quot;i&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Change this</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">type_to_name_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">name_dataset</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="n">n</span><span class="p">[:</span><span class="mi">16</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="s2">&quot;W&quot;</span><span class="p">:</span>
+            <span class="n">type_dataset</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="s2">&quot;solvent&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">type_dataset</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">(</span><span class="s2">&quot;membrane&quot;</span><span class="p">)</span>
+
+    <span class="n">total_bonds</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bonds_2_atom1</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+    <span class="n">n_bonds_local</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bonds_2_atom1</span><span class="p">)</span>
+
+    <span class="n">receive_buffer</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">n_bonds_local</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">n_bonds_global</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">n_bonds_global</span> <span class="o">=</span> <span class="n">receive_buffer</span>
+    <span class="n">n_bonds_global</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">n_bonds_global</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">rank_bond_start</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">n_bonds_global</span><span class="p">[:</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()])</span>
+
+    <span class="n">bonds_from</span> <span class="o">=</span> <span class="n">vmd_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;bond_from&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">total_bonds</span><span class="p">,),</span> <span class="s2">&quot;i&quot;</span><span class="p">)</span>
+    <span class="n">bonds_to</span> <span class="o">=</span> <span class="n">vmd_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;bond_to&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">total_bonds</span><span class="p">,),</span> <span class="s2">&quot;i&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_bonds_local</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">bonds_2_atom1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">bonds_2_atom2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">bonds_from</span><span class="p">[</span><span class="n">rank_bond_start</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">bonds_to</span><span class="p">[</span><span class="n">rank_bond_start</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">molecules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resid_dataset</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">ind_sort</span><span class="p">]]</span> <span class="o">=</span> <span class="n">molecules</span></div>
+
+
+<span class="c1"># store data old vs</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">h5md, step, frame, indices, positions, velocities, forces, box_size,</span>
+<span class="sd">temperature, kinetic_energy, bond2_energy, bond3_energy, bond4_energy,</span>
+<span class="sd">field_energy, field_q_energy, time_step, config, velocity_out=False,</span>
+<span class="sd">force_out=False, charge_out=False, dump_per_particle=False,</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="store_data"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.store_data">[docs]</a><span class="k">def</span> <span class="nf">store_data</span><span class="p">(</span>
+    <span class="n">h5md</span><span class="p">,</span>
+    <span class="n">step</span><span class="p">,</span>
+    <span class="n">frame</span><span class="p">,</span>
+    <span class="n">indices</span><span class="p">,</span>
+    <span class="n">positions</span><span class="p">,</span>
+    <span class="n">velocities</span><span class="p">,</span>
+    <span class="n">forces</span><span class="p">,</span>
+    <span class="n">box_size</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="p">,</span>
+    <span class="n">pressure</span><span class="p">,</span>
+    <span class="n">kinetic_energy</span><span class="p">,</span>
+    <span class="n">bond2_energy</span><span class="p">,</span>
+    <span class="n">bond3_energy</span><span class="p">,</span>
+    <span class="n">bond4_energy</span><span class="p">,</span>
+    <span class="n">field_energy</span><span class="p">,</span>
+    <span class="n">field_q_energy</span><span class="p">,</span>
+    <span class="n">plumed_bias</span><span class="p">,</span>
+    <span class="n">time_step</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">velocity_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">force_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">charge_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">plumed_out</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dump_per_particle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Writes time-step data to HDF5 output file</span>
+
+<span class="sd">    Handles all quantities which change during simulation, as opposed to</span>
+<span class="sd">    static quanitities (see :code:`store_static`).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h5md : OutDataset</span>
+<span class="sd">        HDF5 dataset handler.</span>
+<span class="sd">    step : int</span>
+<span class="sd">        Step number.</span>
+<span class="sd">    frame : int</span>
+<span class="sd">        Output frame number (:code:`step // n_print`).</span>
+<span class="sd">    indices : (N,) numpy.ndarray</span>
+<span class="sd">        Array of indices for :code:`N` particles.</span>
+<span class="sd">    positions : (N,) numpy.ndarray</span>
+<span class="sd">        Array of positions for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">    velocities : (N,) numpy.ndarray</span>
+<span class="sd">        Array of velocities for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">    forces : (N,) numpy.ndarray</span>
+<span class="sd">        Array of forces for :code:`N` particles in :code:`D` dimensions.</span>
+<span class="sd">    box_size : (D,) numpy.ndarray</span>
+<span class="sd">        Array containing the simulation box size.</span>
+<span class="sd">    temperature : float</span>
+<span class="sd">        Calculated instantaneous temperature.</span>
+<span class="sd">    kinetic_energy : float</span>
+<span class="sd">        Calculated instantaneous kinetic energy.</span>
+<span class="sd">    bond2_energy : float</span>
+<span class="sd">        Calculated instantaneous harmonic two-particle bond energy.</span>
+<span class="sd">    bond3_energy : float</span>
+<span class="sd">        Calculated instantaneous harmonic angular three-particle bond energy.</span>
+<span class="sd">    bond4_energy : float</span>
+<span class="sd">        Calculated instantaneous dihedral four-particle torsion energy.</span>
+<span class="sd">    field_energy : float</span>
+<span class="sd">        Calculated instantaneous particle-field energy.</span>
+<span class="sd">    field_q_energy : float</span>
+<span class="sd">        Calculated instantaneous electrostatic energy.</span>
+<span class="sd">    plumed_bias : float</span>
+<span class="sd">        PLUMED instantaneous bias energy.</span>
+<span class="sd">    time_step : float</span>
+<span class="sd">        Value of the time step.</span>
+<span class="sd">    config : Config</span>
+<span class="sd">        Configuration object.</span>
+<span class="sd">    velocity_out : bool, optional</span>
+<span class="sd">        If :code:`True`, velocities are written to output HDF5 file.</span>
+<span class="sd">    force_out : bool, optional</span>
+<span class="sd">        If :code:`True`, forces are written to output HDF5 file.</span>
+<span class="sd">    charge_out : bool, optional</span>
+<span class="sd">        If :code:`True`, electrostatic energies are written to the output</span>
+<span class="sd">        HDF5 file.</span>
+<span class="sd">    plumed_out : bool, optional</span>
+<span class="sd">        If :code:`True`, PLUMED bias is written to the output HDF5 file.</span>
+<span class="sd">    dump_per_particle : bool, optional</span>
+<span class="sd">        If :code:`True`, all quantities are written **per particle**.</span>
+<span class="sd">    comm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank commuication.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    store_static :</span>
+<span class="sd">        Outputs all static time-independent quantities to the HDF5 output file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">dset</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">positions_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">potential_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">kinetc_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">bond_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angle_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">dihedral_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_energy_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_momentum_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angular_momentum_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">torque_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">temperature_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">pressure_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">box_step</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">thermostat_work_step</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">dset</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span>
+
+    <span class="k">for</span> <span class="n">dset</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">positions_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">potential_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">kinetc_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">bond_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angle_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">dihedral_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_energy_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">total_momentum_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">angular_momentum_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">torque_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">temperature_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">pressure_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">box_time</span><span class="p">,</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">thermostat_work_time</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">dset</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span> <span class="o">*</span> <span class="n">time_step</span>
+
+    <span class="k">if</span> <span class="n">velocity_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">velocities_step</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">velocities_time</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span> <span class="o">*</span> <span class="n">time_step</span>
+    <span class="k">if</span> <span class="n">force_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">forces_step</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">forces_time</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span> <span class="o">*</span> <span class="n">time_step</span>
+    <span class="k">if</span> <span class="n">charge_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_q_energy_step</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_q_energy_time</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span> <span class="o">*</span> <span class="n">time_step</span>
+    <span class="k">if</span> <span class="n">plumed_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">plumed_bias_step</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">plumed_bias_time</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span> <span class="o">*</span> <span class="n">time_step</span>
+
+    <span class="n">ind_sort</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">positions</span><span class="p">[</span><span class="n">frame</span><span class="p">,</span> <span class="n">indices</span><span class="p">[</span><span class="n">ind_sort</span><span class="p">]]</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="n">ind_sort</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">velocity_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">velocities</span><span class="p">[</span><span class="n">frame</span><span class="p">,</span> <span class="n">indices</span><span class="p">[</span><span class="n">ind_sort</span><span class="p">]]</span> <span class="o">=</span> <span class="n">velocities</span><span class="p">[</span><span class="n">ind_sort</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">force_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">forces</span><span class="p">[</span><span class="n">frame</span><span class="p">,</span> <span class="n">indices</span><span class="p">[</span><span class="n">ind_sort</span><span class="p">]]</span> <span class="o">=</span> <span class="n">forces</span><span class="p">[</span><span class="n">ind_sort</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">charge_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">field_q_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_q_energy</span>
+    <span class="k">if</span> <span class="n">plumed_out</span><span class="p">:</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">plumed_bias</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">plumed_bias</span>
+
+    <span class="n">potential_energy</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">bond2_energy</span> <span class="o">+</span> <span class="n">bond3_energy</span> <span class="o">+</span> <span class="n">bond4_energy</span> <span class="o">+</span> <span class="n">field_energy</span> <span class="o">+</span> <span class="n">field_q_energy</span>
+    <span class="p">)</span>
+
+    <span class="n">total_momentum</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">velocities</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+    <span class="n">angular_momentum</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">velocities</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span>
+    <span class="p">)</span>
+    <span class="n">torque</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="n">comm</span><span class="o">.</span><span class="n">allreduce</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">forces</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span>
+    <span class="p">)</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">total_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">kinetic_energy</span> <span class="o">+</span> <span class="n">potential_energy</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">potential_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">potential_energy</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">kinetc_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">kinetic_energy</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">bond_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">bond2_energy</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">angle_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">bond3_energy</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">dihedral_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">bond4_energy</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">field_energy</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_energy</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">total_momentum</span><span class="p">[</span><span class="n">frame</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">total_momentum</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">angular_momentum</span><span class="p">[</span><span class="n">frame</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">angular_momentum</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">torque</span><span class="p">[</span><span class="n">frame</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">torque</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">temperature</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">pressure</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">pressure</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">h5md</span><span class="o">.</span><span class="n">box_value</span><span class="p">[</span><span class="n">frame</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">box_size</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+    <span class="n">h5md</span><span class="o">.</span><span class="n">thermostat_work</span><span class="p">[</span><span class="n">frame</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">thermostat_work</span>
+
+    <span class="n">fmt_</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;step&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;temp&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tot E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;kin E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pot E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;field E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;elec E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;bond E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ang E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dih E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;bias E&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Px&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Py&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Pz&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ΔH&quot;</span> <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">target_temperature</span> <span class="k">else</span> <span class="s2">&quot;ΔE&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">fmt_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fmt_</span><span class="p">)</span>
+
+    <span class="c1"># create mask to show only energies != 0</span>
+    <span class="n">en_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+        <span class="n">field_energy</span><span class="p">,</span>
+        <span class="n">field_q_energy</span><span class="p">,</span>
+        <span class="n">bond2_energy</span><span class="p">,</span>
+        <span class="n">bond3_energy</span><span class="p">,</span>
+        <span class="n">bond4_energy</span><span class="p">,</span>
+        <span class="n">plumed_bias</span><span class="p">,</span>
+    <span class="p">])</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">fmt_</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">12</span><span class="p">)]</span> <span class="o">=</span> <span class="n">en_array</span> <span class="o">!=</span> <span class="mf">0.</span>
+
+    <span class="n">header_</span> <span class="o">=</span> <span class="n">fmt_</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="s2">&quot;</span><span class="si">{:&gt;13}</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_energy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fmt_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">divide_by</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">if</span> <span class="n">dump_per_particle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
+            <span class="n">fmt_</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fmt_</span><span class="p">[</span><span class="n">i</span><span class="p">][:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;E/N&quot;</span>
+        <span class="n">fmt_</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot;/N&quot;</span>
+        <span class="n">divide_by</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">n_particles</span>
+    <span class="n">total_energy</span> <span class="o">=</span> <span class="n">kinetic_energy</span> <span class="o">+</span> <span class="n">potential_energy</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_energy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">target_temperature</span><span class="p">:</span>
+            <span class="n">H_tilde</span> <span class="o">=</span> <span class="n">total_energy</span> <span class="o">-</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_energy</span> <span class="o">-</span> <span class="n">config</span><span class="o">.</span><span class="n">thermostat_work</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">H_tilde</span> <span class="o">=</span> <span class="n">total_energy</span> <span class="o">-</span> <span class="n">config</span><span class="o">.</span><span class="n">initial_energy</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">H_tilde</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">header</span> <span class="o">=</span> <span class="n">header_</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">fmt_</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
+    <span class="n">data_fmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="s2">&quot;</span><span class="si">{:13}</span><span class="s2">&quot;</span><span class="si">}{</span><span class="p">(</span><span class="n">fmt_</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">{:13.5g}</span><span class="s2">&quot;</span><span class="w"> </span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">all_data</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">step</span><span class="p">,</span>
+        <span class="n">time_step</span> <span class="o">*</span> <span class="n">step</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="p">,</span>
+        <span class="n">total_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">kinetic_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">potential_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">field_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">field_q_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">bond2_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">bond3_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">bond4_energy</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">plumed_bias</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">total_momentum</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">total_momentum</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">total_momentum</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+        <span class="n">H_tilde</span> <span class="o">/</span> <span class="n">divide_by</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">val</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_data</span><span class="p">)</span> <span class="k">if</span> <span class="n">mask</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+    <span class="n">Logger</span><span class="o">.</span><span class="n">rank0</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">header</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">data</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="distribute_input"><a class="viewcode-back" href="../../doc_pages/api.html#hymd.file_io.distribute_input">[docs]</a><span class="k">def</span> <span class="nf">distribute_input</span><span class="p">(</span>
+    <span class="n">in_file</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">n_particles</span><span class="p">,</span> <span class="n">max_molecule_size</span><span class="o">=</span><span class="mi">201</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assign global arrays onto MPI ranks, attempting load balancing</span>
+
+<span class="sd">    Distributes approximately equal numbers of particles (workload) onto each</span>
+<span class="sd">    independent MPI rank, while respecting the requirement that any molecule</span>
+<span class="sd">    must be fully contained on a single MPI rank only (no splitting molecules</span>
+<span class="sd">    across multiple CPUs).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_file : h5py.File</span>
+<span class="sd">        HDF5 input file object.</span>
+<span class="sd">    rank : int</span>
+<span class="sd">        Local rank number for this MPI rank.</span>
+<span class="sd">    size : int</span>
+<span class="sd">        Global size of the MPI communicator (number of total CPUs).</span>
+<span class="sd">    n_particles : int</span>
+<span class="sd">        Total number of particles.</span>
+<span class="sd">    max_molecule_size : int, optional</span>
+<span class="sd">        Maximum size of any molecule present in the system. Used to initially</span>
+<span class="sd">        guess where the MPI rank boundaries (start/end indices) in the global</span>
+<span class="sd">        arrays should be placed. If molecules of size</span>
+<span class="sd">        :code:`&gt;max_molecule_size` exist in the simulation system, HyMD</span>
+<span class="sd">        **might** work as expected. Or it might fail spectacularly.</span>
+<span class="sd">    comm : mpi4py.Comm</span>
+<span class="sd">        MPI communicator to use for rank commuication.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rank_range :</span>
+<span class="sd">        Starting and ending indices in the global arrays for each MPI rank.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n_particles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n_particles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">in_file</span><span class="p">[</span><span class="s2">&quot;indices&quot;</span><span class="p">])</span>
+    <span class="n">np_per_MPI</span> <span class="o">=</span> <span class="n">n_particles</span> <span class="o">//</span> <span class="n">size</span>
+
+    <span class="n">molecules_flag</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="s2">&quot;molecules&quot;</span> <span class="ow">in</span> <span class="n">in_file</span><span class="p">:</span>
+        <span class="n">molecules_flag</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">molecules_flag</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">np_cum_mpi</span> <span class="o">=</span> <span class="p">[</span><span class="n">rank</span> <span class="o">*</span> <span class="n">np_per_MPI</span><span class="p">,</span> <span class="n">n_particles</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">np_cum_mpi</span> <span class="o">=</span> <span class="p">[</span><span class="n">rank</span> <span class="o">*</span> <span class="n">np_per_MPI</span><span class="p">,</span> <span class="p">(</span><span class="n">rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np_per_MPI</span><span class="p">]</span>
+        <span class="n">p_mpi_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">np_cum_mpi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np_cum_mpi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">p_mpi_range</span><span class="p">,</span> <span class="n">molecules_flag</span>
+
+    <span class="c1"># To avoid splitting molecules across multiple different ranks, we need</span>
+    <span class="c1"># to read in some extra indices before/after the expected break points</span>
+    <span class="c1"># and iterate until we find a molecule break.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Implicitly assuming no molecule is bigger than</span>
+    <span class="c1"># min(max_molecule_size, n_particles // n_MPI_ranks) atoms.</span>
+    <span class="n">max_molecule_size</span> <span class="o">+=</span> <span class="mi">2</span>
+    <span class="n">grab_extra</span> <span class="o">=</span> <span class="n">max_molecule_size</span> <span class="k">if</span> <span class="n">np_per_MPI</span> <span class="o">&gt;</span> <span class="n">max_molecule_size</span> <span class="k">else</span> <span class="n">np_per_MPI</span>
+    <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">mpi_range_start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">mpi_range_end</span> <span class="o">=</span> <span class="n">n_particles</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mpi_range_end</span> <span class="o">=</span> <span class="p">(</span><span class="n">rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np_per_MPI</span> <span class="o">+</span> <span class="n">grab_extra</span>
+    <span class="k">elif</span> <span class="n">rank</span> <span class="o">==</span> <span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">mpi_range_start</span> <span class="o">=</span> <span class="n">rank</span> <span class="o">*</span> <span class="n">np_per_MPI</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mpi_range_end</span> <span class="o">=</span> <span class="n">n_particles</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mpi_range_start</span> <span class="o">=</span> <span class="n">rank</span> <span class="o">*</span> <span class="n">np_per_MPI</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mpi_range_end</span> <span class="o">=</span> <span class="p">(</span><span class="n">rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np_per_MPI</span> <span class="o">+</span> <span class="n">grab_extra</span>
+
+    <span class="n">molecules</span> <span class="o">=</span> <span class="n">in_file</span><span class="p">[</span><span class="s2">&quot;molecules&quot;</span><span class="p">][</span><span class="n">mpi_range_start</span><span class="p">:</span><span class="n">mpi_range_end</span><span class="p">]</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">in_file</span><span class="p">[</span><span class="s2">&quot;indices&quot;</span><span class="p">][</span><span class="n">mpi_range_start</span><span class="p">:</span><span class="n">mpi_range_end</span><span class="p">]</span>
+    <span class="n">molecule_end_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">molecules</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">p_mpi_range</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_particles</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span>
+                <span class="n">molecule_end_indices</span><span class="p">[</span><span class="n">molecule_end_indices</span> <span class="o">&gt;=</span> <span class="n">np_per_MPI</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">]</span>
+    <span class="k">elif</span> <span class="n">rank</span> <span class="o">==</span> <span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">molecule_end_indices</span><span class="p">[</span><span class="n">molecule_end_indices</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_particles</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">molecule_end_indices</span><span class="p">[</span><span class="n">molecule_end_indices</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">indices</span><span class="p">[</span><span class="n">molecule_end_indices</span><span class="p">[</span><span class="n">molecule_end_indices</span> <span class="o">&gt;</span> <span class="n">np_per_MPI</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># noqa: E501</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p_mpi_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span> <span class="n">molecules_flag</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v2.1.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Releases</dt>
+      <dd><a href="../../../v1.0.1/index.html">v1.0.1</a></dd>
+      <dd><a href="../../../v1.0.2/index.html">v1.0.2</a></dd>
+      <dd><a href="../../../v1.0.3/index.html">v1.0.3</a></dd>
+      <dd><a href="../../../v1.0.4/index.html">v1.0.4</a></dd>
+      <dd><a href="../../../v1.0.5/index.html">v1.0.5</a></dd>
+      <dd><a href="../../../v1.0.6/index.html">v1.0.6</a></dd>
+      <dd><a href="../../../v1.0.7/index.html">v1.0.7</a></dd>
+      <dd><a href="../../../v1.0.8/index.html">v1.0.8</a></dd>
+      <dd><a href="../../../v1.0.9/index.html">v1.0.9</a></dd>
+      <dd><a href="../../../v2.0.0/index.html">v2.0.0</a></dd>
+      <dd><a href="../../../v2.0.1/index.html">v2.0.1</a></dd>
+      <dd><a href="../../../v2.0.2/index.html">v2.0.2</a></dd>
+      <dd><a href="file_io.html">v2.1.0</a></dd>
+      <dd><a href="../../../v2.2.0/index.html">v2.2.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Development</dt>
+      <dd><a href="../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

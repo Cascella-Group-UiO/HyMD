@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3. Configuration file &mdash; hymd 1.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-dropdown.css?v=995e94df" />
+      <link rel="stylesheet" type="text/css" href="../_static/panels-bootstrap.min.css?v=21c0b90a" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=9ae11f4d" />
+
+  
+    <link rel="shortcut icon" href="../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=98d46b1a"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="4. Topology and structure file" href="topology_input.html" />
+    <link rel="prev" title="2. Usage overview for HylleraasMD" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.3
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-in-docker">1.2. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#run-interactively-in-google-colaboratory">1.3. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#common-issues">1.4. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.4.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.4.2. Error building pfft-python due to missing curl/wget</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.integrator">4.1. Integrator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.integrator.integrate_position"><code class="docutils literal notranslate"><span class="pre">integrate_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.integrator.integrate_velocity"><code class="docutils literal notranslate"><span class="pre">integrate_velocity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.thermostat">4.2. Thermostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat._random_chi_squared"><code class="docutils literal notranslate"><span class="pre">_random_chi_squared()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat._random_gaussian"><code class="docutils literal notranslate"><span class="pre">_random_gaussian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat.csvr_thermostat"><code class="docutils literal notranslate"><span class="pre">csvr_thermostat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#hamiltonian">4.3. Hamiltonian</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian"><code class="docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian.__init__"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian._setup"><code class="docutils literal notranslate"><span class="pre">Hamiltonian._setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi"><code class="docutils literal notranslate"><span class="pre">SquaredPhi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi.__init__"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi.setup"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.setup()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.force">4.4. Force</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Angle"><code class="docutils literal notranslate"><span class="pre">Angle</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Angle.atom_3"><code class="docutils literal notranslate"><span class="pre">Angle.atom_3</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Bond"><code class="docutils literal notranslate"><span class="pre">Bond</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.atom_1"><code class="docutils literal notranslate"><span class="pre">Bond.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.atom_2"><code class="docutils literal notranslate"><span class="pre">Bond.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.equilibrium"><code class="docutils literal notranslate"><span class="pre">Bond.equilibrium</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.strength"><code class="docutils literal notranslate"><span class="pre">Bond.strength</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Chi"><code class="docutils literal notranslate"><span class="pre">Chi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.atom_1"><code class="docutils literal notranslate"><span class="pre">Chi.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.atom_2"><code class="docutils literal notranslate"><span class="pre">Chi.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.interaction_energy"><code class="docutils literal notranslate"><span class="pre">Chi.interaction_energy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Dielectric_type"><code class="docutils literal notranslate"><span class="pre">Dielectric_type</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dielectric_type.atom_1"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dielectric_type.dielectric_value"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.dielectric_value</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Dihedral"><code class="docutils literal notranslate"><span class="pre">Dihedral</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_1"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_2"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_3"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_4"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_4</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.coeffs"><code class="docutils literal notranslate"><span class="pre">Dihedral.coeffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.dih_type"><code class="docutils literal notranslate"><span class="pre">Dihedral.dih_type</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_angle_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_angle_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_bond_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_bond_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_dihedral_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_dihedral_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.dipole_forces_redistribution"><code class="docutils literal notranslate"><span class="pre">dipole_forces_redistribution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.find_all_paths"><code class="docutils literal notranslate"><span class="pre">find_all_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_bonds_old"><code class="docutils literal notranslate"><span class="pre">prepare_bonds_old()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_index_based_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_index_based_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.propensity_potential_coeffs"><code class="docutils literal notranslate"><span class="pre">propensity_potential_coeffs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#logger">4.5. Logger</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.Logger.setup"><code class="docutils literal notranslate"><span class="pre">Logger.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.MPIFilterRoot"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.MPIFilterRoot.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot.filter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.MPIFilterAll"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.MPIFilterAll.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll.filter()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.input_parser">4.6. Input parser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.a"><code class="docutils literal notranslate"><span class="pre">Config.a</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.angle_bonds"><code class="docutils literal notranslate"><span class="pre">Config.angle_bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.barostat"><code class="docutils literal notranslate"><span class="pre">Config.barostat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.barostat_type"><code class="docutils literal notranslate"><span class="pre">Config.barostat_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.bonds"><code class="docutils literal notranslate"><span class="pre">Config.bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.box_size"><code class="docutils literal notranslate"><span class="pre">Config.box_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">Config.cancel_com_momentum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.chi"><code class="docutils literal notranslate"><span class="pre">Config.chi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.conv_crit"><code class="docutils literal notranslate"><span class="pre">Config.conv_crit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.convergence_type"><code class="docutils literal notranslate"><span class="pre">Config.convergence_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.coulomb_constant"><code class="docutils literal notranslate"><span class="pre">Config.coulomb_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.coulombtype"><code class="docutils literal notranslate"><span class="pre">Config.coulombtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dielectric_const"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_const</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dielectric_type"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dihedrals"><code class="docutils literal notranslate"><span class="pre">Config.dihedrals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">Config.domain_decomposition</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dtype"><code class="docutils literal notranslate"><span class="pre">Config.dtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.file_name"><code class="docutils literal notranslate"><span class="pre">Config.file_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.gas_constant"><code class="docutils literal notranslate"><span class="pre">Config.gas_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.hamiltonian"><code class="docutils literal notranslate"><span class="pre">Config.hamiltonian</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.initial_energy"><code class="docutils literal notranslate"><span class="pre">Config.initial_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.integrator"><code class="docutils literal notranslate"><span class="pre">Config.integrator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.kappa"><code class="docutils literal notranslate"><span class="pre">Config.kappa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.m"><code class="docutils literal notranslate"><span class="pre">Config.m</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.mass"><code class="docutils literal notranslate"><span class="pre">Config.mass</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.max_molecule_size"><code class="docutils literal notranslate"><span class="pre">Config.max_molecule_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.mesh_size"><code class="docutils literal notranslate"><span class="pre">Config.mesh_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_b"><code class="docutils literal notranslate"><span class="pre">Config.n_b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_flush"><code class="docutils literal notranslate"><span class="pre">Config.n_flush</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_particles"><code class="docutils literal notranslate"><span class="pre">Config.n_particles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_print"><code class="docutils literal notranslate"><span class="pre">Config.n_print</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_steps"><code class="docutils literal notranslate"><span class="pre">Config.n_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.name"><code class="docutils literal notranslate"><span class="pre">Config.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.pol_mixing"><code class="docutils literal notranslate"><span class="pre">Config.pol_mixing</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.pressure"><code class="docutils literal notranslate"><span class="pre">Config.pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.respa_inner"><code class="docutils literal notranslate"><span class="pre">Config.respa_inner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.rho0"><code class="docutils literal notranslate"><span class="pre">Config.rho0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.self_energy"><code class="docutils literal notranslate"><span class="pre">Config.self_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.sigma"><code class="docutils literal notranslate"><span class="pre">Config.sigma</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.start_temperature"><code class="docutils literal notranslate"><span class="pre">Config.start_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tags"><code class="docutils literal notranslate"><span class="pre">Config.tags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.target_pressure"><code class="docutils literal notranslate"><span class="pre">Config.target_pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.target_temperature"><code class="docutils literal notranslate"><span class="pre">Config.target_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tau"><code class="docutils literal notranslate"><span class="pre">Config.tau</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tau_p"><code class="docutils literal notranslate"><span class="pre">Config.tau_p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_coupling_groups</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.thermostat_work"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_work</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.time_step"><code class="docutils literal notranslate"><span class="pre">Config.time_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.type_charges"><code class="docutils literal notranslate"><span class="pre">Config.type_charges</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_NPT_conditions"><code class="docutils literal notranslate"><span class="pre">check_NPT_conditions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_angles"><code class="docutils literal notranslate"><span class="pre">check_angles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_bonds"><code class="docutils literal notranslate"><span class="pre">check_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_box_size"><code class="docutils literal notranslate"><span class="pre">check_box_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">check_cancel_com_momentum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_charges"><code class="docutils literal notranslate"><span class="pre">check_charges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_charges_types_list"><code class="docutils literal notranslate"><span class="pre">check_charges_types_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_chi"><code class="docutils literal notranslate"><span class="pre">check_chi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_config"><code class="docutils literal notranslate"><span class="pre">check_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_dielectric"><code class="docutils literal notranslate"><span class="pre">check_dielectric()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_dihedrals"><code class="docutils literal notranslate"><span class="pre">check_dihedrals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_domain_decomposition"><code class="docutils literal notranslate"><span class="pre">check_domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_hamiltonian"><code class="docutils literal notranslate"><span class="pre">check_hamiltonian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_integrator"><code class="docutils literal notranslate"><span class="pre">check_integrator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_m"><code class="docutils literal notranslate"><span class="pre">check_m()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_mass"><code class="docutils literal notranslate"><span class="pre">check_mass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_max_molecule_size"><code class="docutils literal notranslate"><span class="pre">check_max_molecule_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_b"><code class="docutils literal notranslate"><span class="pre">check_n_b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_flush"><code class="docutils literal notranslate"><span class="pre">check_n_flush()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_particles"><code class="docutils literal notranslate"><span class="pre">check_n_particles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_print"><code class="docutils literal notranslate"><span class="pre">check_n_print()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_name"><code class="docutils literal notranslate"><span class="pre">check_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_start_and_target_temperature"><code class="docutils literal notranslate"><span class="pre">check_start_and_target_temperature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_tau"><code class="docutils literal notranslate"><span class="pre">check_tau()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">check_thermostat_coupling_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.parse_config_toml"><code class="docutils literal notranslate"><span class="pre">parse_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.read_config_toml"><code class="docutils literal notranslate"><span class="pre">read_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.sort_dielectric_by_type_id"><code class="docutils literal notranslate"><span class="pre">sort_dielectric_by_type_id()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.field">4.7. Field</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_and_kinetic_energy"><code class="docutils literal notranslate"><span class="pre">compute_field_and_kinetic_energy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_energy_q_GPE"><code class="docutils literal notranslate"><span class="pre">compute_field_energy_q_GPE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_force"><code class="docutils literal notranslate"><span class="pre">compute_field_force()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_self_energy_q"><code class="docutils literal notranslate"><span class="pre">compute_self_energy_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.initialize_pm"><code class="docutils literal notranslate"><span class="pre">initialize_pm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field"><code class="docutils literal notranslate"><span class="pre">update_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field_force_q"><code class="docutils literal notranslate"><span class="pre">update_field_force_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field_force_q_GPE"><code class="docutils literal notranslate"><span class="pre">update_field_force_q_GPE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.file_io">4.8. File input/output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.OutDataset"><code class="docutils literal notranslate"><span class="pre">OutDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.close_file"><code class="docutils literal notranslate"><span class="pre">OutDataset.close_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.flush"><code class="docutils literal notranslate"><span class="pre">OutDataset.flush()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.is_open"><code class="docutils literal notranslate"><span class="pre">OutDataset.is_open()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.distribute_input"><code class="docutils literal notranslate"><span class="pre">distribute_input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.setup_time_dependent_element"><code class="docutils literal notranslate"><span class="pre">setup_time_dependent_element()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.store_data"><code class="docutils literal notranslate"><span class="pre">store_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.store_static"><code class="docutils literal notranslate"><span class="pre">store_static()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">3. </span>Configuration file</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/doc_pages/config_file.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuration-file">
+<span id="config-label"></span><h1><span class="section-number">3. </span>Configuration file<a class="headerlink" href="#configuration-file" title="Permalink to this heading"></a></h1>
+<p>The HyMD configuration file specifies all aspects of the simulation, including
+temperature coupling, bond specifications and strengths, the hPF interaction
+energy potential, the integrator, and more. The keywords may be given in any
+order.</p>
+<p>The configuration file is a <a class="reference external" href="https://github.com/toml-lang/toml">toml</a> format file with keywords (strings) and
+values (strings, numbers, arrays, etc.) which is serialised and parsed to
+configure simulation runs.</p>
+<section id="configuration-file-keywords">
+<h2><span class="section-number">3.1. </span>Configuration file keywords<a class="headerlink" href="#configuration-file-keywords" title="Permalink to this heading"></a></h2>
+<p>The following constitutes every possible keyword specification in HyMD
+configuration files:</p>
+<section id="metadata-keywords">
+<h3><span class="section-number">3.1.1. </span>Metadata keywords<a class="headerlink" href="#metadata-keywords" title="Permalink to this heading"></a></h3>
+<p>Configuration keywords specifying metadata for the H5MD output trajectory.</p>
+<dl class="field-list">
+<dt class="field-odd">name<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">string</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">None</span></code>]</p>
+<p>Name for the simulation. Optional keyword specifying a name in the metadata for the H5MD output trajectory/energy file.</p>
+</dd>
+<dt class="field-even">tags<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">string</span></code>] [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">None</span></code>]</p>
+<p>Tags for the simulation. Optional keyword specifying metadata tags for the H5MD output trajectory/energy file.</p>
+</dd>
+</dl>
+</section>
+<section id="particle-keywords">
+<h3><span class="section-number">3.1.2. </span>Particle keywords<a class="headerlink" href="#particle-keywords" title="Permalink to this heading"></a></h3>
+<p>Configuration keywords specifying properties of particles and molecules in the
+system.</p>
+<dl class="field-list">
+<dt class="field-odd">n_particles<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">None</span></code>]</p>
+<p>Specifies the total number of particles in the input. Optional keyword for validation, ensuring the input HDF5 topology has the correct number of particles and molecules.</p>
+</dd>
+<dt class="field-even">mass<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">72.0</span></code>] {units: <span class="math notranslate nohighlight">\(\text{u}=\text{g}\,\text{mol}^{-1}\)</span>}</p>
+<p>Mass of the particles in the simulation. Unless masses are provided in the HDF5 topology/structure file, all masses are assumed equal.</p>
+</dd>
+<dt class="field-odd">max_molecule_size<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">201</span></code>]</p>
+<p>Maximum size of any single molecule in the system. Used to speed up distribution of particles onto MPI ranks in a parallel fashion. The code <strong>will</strong> crash if there are molecules larger than <code class="code docutils literal notranslate"><span class="pre">max_molecule_size</span></code> in the topology/structure input file.</p>
+</dd>
+</dl>
+</section>
+<section id="simulation-keywords">
+<h3><span class="section-number">3.1.3. </span>Simulation keywords<a class="headerlink" href="#simulation-keywords" title="Permalink to this heading"></a></h3>
+<p>Configuration keywords specifying simulation parameters.</p>
+<dl class="field-list">
+<dt class="field-odd">n_steps<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> [<span class="required">required</span>]</p>
+<p>Total number of integration steps to perform for this simulation.</p>
+</dd>
+<dt class="field-even">n_print<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> or <code class="code docutils literal notranslate"><span class="pre">boolean</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">False</span></code>]</p>
+<p>Frequency of trajectory/energy output to the H5MD trajectory/energy output file (in units of <em>number of time steps</em>).</p>
+</dd>
+<dt class="field-odd">n_flush<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">None</span></code>]</p>
+<p>Frequency of HDF5 write buffer flush, forcing trajectory/energy to be written to disk (in units of <em>number of</em> <code class="code docutils literal notranslate"><span class="pre">n_print</span></code>, i.e. <code class="code docutils literal notranslate"><span class="pre">n_print</span> <span class="pre">=</span> <span class="pre">13</span></code>, <code class="code docutils literal notranslate"><span class="pre">n_flush</span> <span class="pre">=</span> <span class="pre">3</span></code> would result in the trajectory/energy being written to disk every <code class="code docutils literal notranslate"><span class="pre">13</span> <span class="pre">x</span> <span class="pre">3</span> <span class="pre">=</span> <span class="pre">39</span></code> <em>simulation steps</em>)</p>
+</dd>
+<dt class="field-even">time_step<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> [<span class="required">required</span>] {units: <span class="math notranslate nohighlight">\(\text{ps}=10^{-12}~\text{s}\)</span>}</p>
+<p>The time step per integration step. If the rRESPA multiple time step integrator is used (<code class="code docutils literal notranslate"><span class="pre">integrator</span> <span class="pre">=</span> <span class="pre">&quot;respa&quot;</span></code>), this specifies the <strong>inner</strong> time step, i.e. the step size used for the intramolecular force integration. In that case, the step size for the field force impulses is <code class="code docutils literal notranslate"><span class="pre">respa_inner</span></code> times the <code class="code docutils literal notranslate"><span class="pre">time_step</span></code> , and the total simulation time is <code class="code docutils literal notranslate"><span class="pre">n_steps</span></code> times <code class="code docutils literal notranslate"><span class="pre">time_step</span></code> times <code class="code docutils literal notranslate"><span class="pre">respa_inner</span></code> .</p>
+</dd>
+<dt class="field-odd">box_size<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">float</span></code>]  [<span class="required">required</span>] {units: <span class="math notranslate nohighlight">\(\text{nm}=10^{-9}~\text{m}\)</span>}</p>
+<p>Size of the simulation box. Any particle outside the box is placed inside before the first time step is integrated, meaning no particles will be lost if the box size is specified too small, but the system may nevertheless be unstable.</p>
+</dd>
+<dt class="field-even">integrator<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">string</span></code> [<span class="required">required</span>] (options: <code class="code docutils literal notranslate"><span class="pre">velocity-verlet</span></code> or <code class="code docutils literal notranslate"><span class="pre">respa</span></code>)</p>
+<p>Specifies the time integrator used in the simulation. If <code class="code docutils literal notranslate"><span class="pre">respa</span></code>, the <em>reversible reference system propagator algorithm (rRESPA)</em> <span id="id1">[<a class="reference internal" href="../index.html#id15" title="MBBJM Tuckerman, Bruce J Berne, and Glenn J Martyna. Reversible multiple time scale molecular dynamics. J. Chem. Phys., 97(3):1990–2001, 1992. doi:10.1063/1.463137.">Tuckerman <em>et al.</em>, 1992</a>]</span> integrator is used, with <code class="code docutils literal notranslate"><span class="pre">respa_inner</span></code> number of inner (intramolecular force) time steps. If <code class="code docutils literal notranslate"><span class="pre">velocity-verlet</span></code>, a normal Velocity Verlet integrator is used. If <code class="code docutils literal notranslate"><span class="pre">respa</span></code> and <code class="code docutils literal notranslate"><span class="pre">respa_inner</span> <span class="pre">=</span> <span class="pre">1</span></code>, the rRESPA integrator is equivalent to the Velocity Verlet.</p>
+</dd>
+<dt class="field-odd">respa_inner<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">1</span></code>]</p>
+<p>The number of inner time steps in the rRESPA integrator. This denotes the number of intramolecular force calculations (stretching, bending, torsional) are performed between each impulse applied from the field forces.</p>
+</dd>
+<dt class="field-even">domain_decomposition<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> or <code class="code docutils literal notranslate"><span class="pre">boolean</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">False</span></code>]</p>
+<p>Specifies the interval (in time steps) of <em>domain decomposition exchange</em>, involving all MPI ranks sending and receiving particles according to the particles’ positions in the integration box and the MPI ranks’ assigned domain. Performing the decomposition is expensive in terms of MPI communication cost, but may reduce the communication of particle positions across MPI rank boundaries for some time during simulation. If <code class="code docutils literal notranslate"><span class="pre">True</span></code>, the decomposition is performed once (before starting the simulation). If <code class="code docutils literal notranslate"><span class="pre">False</span></code>, no decomposition is performed.</p>
+</dd>
+<dt class="field-odd">cancel_com_momentum<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">integer</span></code> or <code class="code docutils literal notranslate"><span class="pre">boolean</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">False</span></code>]</p>
+<p>If <code class="code docutils literal notranslate"><span class="pre">True</span></code>, the total linear momentum of the center of mass is removed before starting the simulation. If an integer is specifed, the total linear momentum of the center of mass is removed every <code class="code docutils literal notranslate"><span class="pre">remove_com_momentum</span></code> time steps. If <code class="code docutils literal notranslate"><span class="pre">False</span></code>, the linear momentum is never removed.</p>
+</dd>
+<dt class="field-even">start_temperature<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> or <code class="code docutils literal notranslate"><span class="pre">boolean</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">False</span></code>] {units: <span class="math notranslate nohighlight">\(\text{K}\)</span>}</p>
+<p>Generate starting temperature by assigning all particle velocities randomly according to the Maxwell-Boltzmann distribution at <code class="code docutils literal notranslate"><span class="pre">start_temperature</span></code> Kelvin prior to starting the simulation. If <code class="code docutils literal notranslate"><span class="pre">False</span></code>, the velocities are not changed before starting the simulation.</p>
+</dd>
+<dt class="field-odd">target_temperature<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> or <code class="code docutils literal notranslate"><span class="pre">boolean</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">False</span></code>] {units: <span class="math notranslate nohighlight">\(\text{K}\)</span>}</p>
+<p>Couple the system to a heat bath at <code class="code docutils literal notranslate"><span class="pre">target_temperature</span></code> Kelvin by applying a <em>Canonical sampling through velocity rescaling</em> <span id="id2">[<a class="reference internal" href="../index.html#id16" title="Giovanni Bussi, Davide Donadio, and Michele Parrinello. Canonical sampling through velocity rescaling. J. Chem. Phys., 126(1):014101, 2007. doi:10.1063/1.2408420.">Bussi <em>et al.</em>, 2007</a>]</span> thermostat with coupling strength <code class="code docutils literal notranslate"><span class="pre">tau</span></code>. If <code class="code docutils literal notranslate"><span class="pre">False</span></code>, no temperature control is applied.</p>
+</dd>
+<dt class="field-even">tau<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">0.7</span></code>] {units: <span class="math notranslate nohighlight">\(\text{ps}=10^{-12}~\text{s}\)</span>}</p>
+<p>The time scale of the CSVR thermostat coupling. In the limit of <code class="code docutils literal notranslate"><span class="pre">tau</span> <span class="pre">→</span> <span class="pre">∞</span></code>, the Hamiltonian dynamics are preserved and no temperature coupling takes place.</p>
+</dd>
+<dt class="field-odd">thermostat_coupling_groups<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">string</span></code>]] [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">[]</span></code>]</p>
+<p>Specifies individual groups coupling independently to the CSVR thermostat. E.g. in a system containing <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>, <code class="code docutils literal notranslate"><span class="pre">&quot;B&quot;</span></code>, and <code class="code docutils literal notranslate"><span class="pre">&quot;C&quot;</span></code> type particles, <code class="code docutils literal notranslate"><span class="pre">thermostat_coupling_groups</span> <span class="pre">=</span> <span class="pre">[[&quot;A&quot;,</span> <span class="pre">&quot;B&quot;],</span> <span class="pre">[&quot;C&quot;],]</span></code> would thermalise types <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code> and <code class="code docutils literal notranslate"><span class="pre">&quot;B&quot;</span></code> together and couple <code class="code docutils literal notranslate"><span class="pre">&quot;C&quot;</span></code> type particles to a different thermostat (all individual thermostats are at the same temperature, i.e. <code class="code docutils literal notranslate"><span class="pre">target_temperature</span></code> Kelvin).</p>
+</dd>
+<dt class="field-even">hamiltonian<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">string</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">&quot;DefaultNohChi&quot;</span></code>] (options: <code class="code docutils literal notranslate"><span class="pre">SquaredPhi</span></code>, <code class="code docutils literal notranslate"><span class="pre">DefaultNohChi</span></code>, or <code class="code docutils literal notranslate"><span class="pre">DefaultWithChi</span></code>)</p>
+<p>Specifies the interaction energy functional <span class="math notranslate nohighlight">\(W[\tilde\phi]\)</span> for use with the particle-field interactions. See <a class="reference internal" href="interaction_energy_functionals.html#functionals-label"><span class="std std-ref">Interaction energy functionals</span></a> for details.</p>
+</dd>
+</dl>
+</section>
+<section id="field-keywords">
+<h3><span class="section-number">3.1.4. </span>Field keywords<a class="headerlink" href="#field-keywords" title="Permalink to this heading"></a></h3>
+<p>Configuration keywords specifying field parameters.</p>
+<dl class="field-list">
+<dt class="field-odd">mesh_size<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">integer</span></code>] or <code class="code docutils literal notranslate"><span class="pre">integer</span></code> [<span class="required">required</span>]</p>
+<p>Either an integer or an array of three integers specifying the mesh grid size to use in each of the three spatial directions for the FFT operations. The grid spacing is <code class="code docutils literal notranslate"><span class="pre">box_size</span> <span class="pre">/</span> <span class="pre">mesh_size</span></code>.</p>
+</dd>
+<dt class="field-even">kappa<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> [<span class="required">required</span>] {units: <span class="math notranslate nohighlight">\(\text{kJ}^{-1}\text{mol}\)</span>}</p>
+<p>Compressibility parameter used in the relaxed incompressibility term in the interaction energy functional <span class="math notranslate nohighlight">\(W[\tilde\phi]\)</span>. See <a class="reference internal" href="interaction_energy_functionals.html#functionals-label"><span class="std std-ref">Interaction energy functionals</span></a> for more details.</p>
+</dd>
+<dt class="field-odd">sigma<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> [<span class="required">required</span>] {units: <span class="math notranslate nohighlight">\(\text{nm}=10^{-9}~\text{m}\)</span>}</p>
+<p>Filter width, representing the effective coarse-graining level of the particles in the simulation. If a Gaussian filter is used (by default), this specifies the standard deviation. See <a class="reference internal" href="filtering.html#filtering-label"><span class="std std-ref">Filtering</span></a> for more details.</p>
+</dd>
+<dt class="field-even">chi<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">string</span></code>, <code class="code docutils literal notranslate"><span class="pre">float</span></code>]] [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">[]</span></code>] {units: <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span>}</p>
+<p>Array of <span class="math notranslate nohighlight">\(\tilde\chi_\text{AB}\)</span>-parameters indicating the strength of the repulsive or attractive interaction between particles of type <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code> and the number density due to particles of type <code class="code docutils literal notranslate"><span class="pre">&quot;B&quot;</span></code>, and vice versa. Example: <code class="code docutils literal notranslate"><span class="pre">chi</span> <span class="pre">=</span> <span class="pre">[</span> <span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;B&quot;,</span> <span class="pre">7.28],</span> <span class="pre">[&quot;C&quot;,</span> <span class="pre">&quot;D&quot;,</span> <span class="pre">-1.32]</span> <span class="pre">]</span></code> would specify a repulsive <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>–<code class="code docutils literal notranslate"><span class="pre">&quot;B&quot;</span></code> type interaction, and a weakly attractive <code class="code docutils literal notranslate"><span class="pre">&quot;C&quot;</span></code>–<code class="code docutils literal notranslate"><span class="pre">&quot;D&quot;</span></code> interaction. Self-interaction <span class="math notranslate nohighlight">\(\tilde\chi\)</span>-terms are always zero. See <a class="reference internal" href="interaction_energy_functionals.html#functionals-label"><span class="std std-ref">Interaction energy functionals</span></a> for more details.</p>
+</dd>
+</dl>
+</section>
+<section id="bond-keywords">
+<h3><span class="section-number">3.1.5. </span>Bond keywords<a class="headerlink" href="#bond-keywords" title="Permalink to this heading"></a></h3>
+<p>Configuration keywords specifying bonds and bonds parameters.</p>
+<dl class="field-list">
+<dt class="field-odd">bonds<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">array</span></code> [2 <code class="code docutils literal notranslate"><span class="pre">string</span></code>, 2 <code class="code docutils literal notranslate"><span class="pre">float</span></code>]] [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">[]</span></code>] {units: <span class="math notranslate nohighlight">\(\text{nm}=10^{-9}~\text{m}\)</span> and <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span>}</p>
+<p>Specifies harmonic stretching potentials between particles in the same molecule. Each entry in the array specifies one bond between two types of particles, followed by the equilibrium distance and the bond stiffness. Example: <code class="code docutils literal notranslate"><span class="pre">bonds</span> <span class="pre">=</span> <span class="pre">[</span> <span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;A&quot;,</span> <span class="pre">0.47,</span> <span class="pre">980.0],</span> <span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;B&quot;,</span> <span class="pre">0.31,</span> <span class="pre">1250.0]</span> <span class="pre">]</span></code> indicates a <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>–<code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code> bond of equilibrium length <code class="code docutils literal notranslate"><span class="pre">0.47</span></code> <span class="math notranslate nohighlight">\(\text{nm}\)</span> with a bond strength of <code class="code docutils literal notranslate"><span class="pre">980.0</span></code> <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span> and a corresponding bond between <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code> and <code class="code docutils literal notranslate"><span class="pre">&quot;B&quot;</span></code> type particles with equilibrium length <code class="code docutils literal notranslate"><span class="pre">0.31</span></code> <span class="math notranslate nohighlight">\(\text{nm}\)</span> and a strength of <code class="code docutils literal notranslate"><span class="pre">1250.0</span></code> <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span>. See <a class="reference internal" href="intramolecular_bonds.html#bonds-label"><span class="std std-ref">Intramolecular bonds</span></a> for details about how to specify stretching bonds.</p>
+</dd>
+<dt class="field-even">angle_bonds<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">array</span></code> [3 <code class="code docutils literal notranslate"><span class="pre">string</span></code>, 2 <code class="code docutils literal notranslate"><span class="pre">float</span></code>]] [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">[]</span></code>] {units: <span class="math notranslate nohighlight">\({}^\circ\)</span> and <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span>}</p>
+<blockquote>
+<div><p>Specifies harmonic angular bending potentials between particles in the same molecule. Each entry in the array specifies one bond between three types of particles, followed by the equilibrium angle (in degrees) and the angle bond stiffness. Example: <code class="code docutils literal notranslate"><span class="pre">bonds</span> <span class="pre">=</span> <span class="pre">[</span> <span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;A&quot;,</span> <span class="pre">&quot;A&quot;,</span> <span class="pre">180.0,</span> <span class="pre">55.0],</span> <span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;B&quot;,</span> <span class="pre">&quot;B&quot;,</span> <span class="pre">120.0,</span> <span class="pre">25.0]</span> <span class="pre">]</span></code> indicates a <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>–<code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>–<code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code> angular bond that tries to keep the bond linear at <code class="code docutils literal notranslate"><span class="pre">180</span></code> degrees with a bending strength of <code class="code docutils literal notranslate"><span class="pre">55.0</span></code> <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span> and a corresponding angle bond between <code class="code docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>–<code class="code docutils literal notranslate"><span class="pre">&quot;B&quot;</span></code>–<code class="code docutils literal notranslate"><span class="pre">&quot;B&quot;</span></code> prefering the angle at <code class="code docutils literal notranslate"><span class="pre">120</span></code> degrees and a strength of <code class="code docutils literal notranslate"><span class="pre">25.0</span></code> <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\)</span>. See <a class="reference internal" href="intramolecular_bonds.html#bonds-label"><span class="std std-ref">Intramolecular bonds</span></a> for details about how to specify angular bonds.</p>
+</div></blockquote>
+</dd>
+<dt class="field-odd">dihedrals<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">array</span></code> [<code class="code docutils literal notranslate"><span class="pre">array</span></code> [4 <code class="code docutils literal notranslate"><span class="pre">string</span></code>, <code class="code docutils literal notranslate"><span class="pre">integer</span></code>, <code class="code docutils literal notranslate"><span class="pre">COSINE</span> <span class="pre">SERIES</span></code> ]] [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">[]</span></code>] {units: <span class="math notranslate nohighlight">\(\text{kJ}\,\text{mol}^{-1}\text{rad}^{-2}\)</span>}</p>
+<p>Specifies four-particle torsional potentials by cosine series. See <a class="reference internal" href="intramolecular_bonds.html#bonds-label"><span class="std std-ref">Intramolecular bonds</span></a> for details about how to specify dihedrals.</p>
+</dd>
+</dl>
+</section>
+<section id="electrostatic-keywords">
+<h3><span class="section-number">3.1.6. </span>Electrostatic keywords<a class="headerlink" href="#electrostatic-keywords" title="Permalink to this heading"></a></h3>
+<p>Configuration keywords specifying electrostatics and electrostatic parameters.</p>
+<dl class="field-list">
+<dt class="field-odd">coulombtype<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="code docutils literal notranslate"><span class="pre">string</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">None</span></code>] (options: <code class="code docutils literal notranslate"><span class="pre">PIC_Spectral</span></code>)</p>
+<p>Specifies the type of electrostatic Coulomb interactions in the system. The strength of the electrostatic forces is modulated by the relative dielectric constant of the simulation medium, specified with the <code class="code docutils literal notranslate"><span class="pre">dielectric_const</span></code> keyword. Charges for individual particles are specified in the structure/topology HDF5 input file, <em>not</em> in the configuration file. If no charges (or peptide backbone dipoles) are present, the electrostatic forces will not be calculated even if this keyword is set to <cite>PIC_Spectral</cite>.</p>
+</dd>
+<dt class="field-even">dielectric_const<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">float</span></code> [<strong>optional</strong>, default: <code class="code docutils literal notranslate"><span class="pre">None</span></code>]</p>
+<p>Specifies the relative dielectric constant of the simulation medium which regulates the strength of the electrostatic interactions. When using helical propensity dihedrals, this keyword must be specified—even if electrostatics are not included with the <code class="code docutils literal notranslate"><span class="pre">coulombtype</span></code> keyword.</p>
+</dd>
+</dl>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="overview.html" class="btn btn-neutral float-left" title="2. Usage overview for HylleraasMD" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="topology_input.html" class="btn btn-neutral float-right" title="4. Topology and structure file" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v1.0.3
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Releases</dt>
+      <dd><a href="../../v1.0.1/doc_pages/config_file.html">v1.0.1</a></dd>
+      <dd><a href="../../v1.0.2/doc_pages/config_file.html">v1.0.2</a></dd>
+      <dd><a href="config_file.html">v1.0.3</a></dd>
+      <dd><a href="../../v1.0.4/doc_pages/config_file.html">v1.0.4</a></dd>
+      <dd><a href="../../v1.0.5/doc_pages/config_file.html">v1.0.5</a></dd>
+      <dd><a href="../../v1.0.6/doc_pages/config_file.html">v1.0.6</a></dd>
+      <dd><a href="../../v1.0.7/doc_pages/config_file.html">v1.0.7</a></dd>
+      <dd><a href="../../v1.0.8/doc_pages/config_file.html">v1.0.8</a></dd>
+      <dd><a href="../../v1.0.9/doc_pages/config_file.html">v1.0.9</a></dd>
+      <dd><a href="../../v2.0.0/doc_pages/config_file.html">v2.0.0</a></dd>
+      <dd><a href="../../v2.0.1/doc_pages/config_file.html">v2.0.1</a></dd>
+      <dd><a href="../../v2.0.2/doc_pages/config_file.html">v2.0.2</a></dd>
+      <dd><a href="../../v2.1.0/doc_pages/config_file.html">v2.1.0</a></dd>
+      <dd><a href="../../v2.2.0/doc_pages/config_file.html">v2.2.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Development</dt>
+      <dd><a href="../../main/doc_pages/config_file.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

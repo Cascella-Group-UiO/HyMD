@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Installation &mdash; hymd 2.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-dropdown.css?v=995e94df" />
+      <link rel="stylesheet" type="text/css" href="../_static/panels-bootstrap.min.css?v=21c0b90a" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=9ae11f4d" />
+
+  
+    <link rel="shortcut icon" href="../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=90673249"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script src="../_static/tabs.js?v=3030b3cb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="2. Usage overview for HylleraasMD" href="overview.html" />
+    <link rel="prev" title="HylleraasMD documentation" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                2.2.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#pressure-keywords">3.1.7. Pressure keywords</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config_file.html#id3">3.1.7.1. Simulation keywords</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config_file.html#id4">3.1.7.2. Field keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pressure.html">4. Pressure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">5. PLUMED interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#running-simulations-using-plumed">5.1. Running simulations using PLUMED</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.integrator">4.1. Integrator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.integrator.integrate_position"><code class="docutils literal notranslate"><span class="pre">integrate_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.integrator.integrate_velocity"><code class="docutils literal notranslate"><span class="pre">integrate_velocity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.thermostat">4.2. Thermostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat._random_chi_squared"><code class="docutils literal notranslate"><span class="pre">_random_chi_squared()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat._random_gaussian"><code class="docutils literal notranslate"><span class="pre">_random_gaussian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat.csvr_thermostat"><code class="docutils literal notranslate"><span class="pre">csvr_thermostat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#barostat">4.3. Barostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#module-hymd.barostat">4.3.1. Berendsen Barostat</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#references">4.3.1.1. References</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.barostat.isotropic"><code class="docutils literal notranslate"><span class="pre">isotropic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.barostat.semiisotropic"><code class="docutils literal notranslate"><span class="pre">semiisotropic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#scr-barostat">4.3.2. SCR Barostat</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#hamiltonian">4.4. Hamiltonian</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian"><code class="docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian.__init__"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian._setup"><code class="docutils literal notranslate"><span class="pre">Hamiltonian._setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi"><code class="docutils literal notranslate"><span class="pre">SquaredPhi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi.__init__"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi.setup"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.setup()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.force">4.5. Force</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Angle"><code class="docutils literal notranslate"><span class="pre">Angle</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Angle.atom_3"><code class="docutils literal notranslate"><span class="pre">Angle.atom_3</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Bond"><code class="docutils literal notranslate"><span class="pre">Bond</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.atom_1"><code class="docutils literal notranslate"><span class="pre">Bond.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.atom_2"><code class="docutils literal notranslate"><span class="pre">Bond.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.equilibrium"><code class="docutils literal notranslate"><span class="pre">Bond.equilibrium</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.strength"><code class="docutils literal notranslate"><span class="pre">Bond.strength</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Chi"><code class="docutils literal notranslate"><span class="pre">Chi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.atom_1"><code class="docutils literal notranslate"><span class="pre">Chi.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.atom_2"><code class="docutils literal notranslate"><span class="pre">Chi.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.interaction_energy"><code class="docutils literal notranslate"><span class="pre">Chi.interaction_energy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Dielectric_type"><code class="docutils literal notranslate"><span class="pre">Dielectric_type</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dielectric_type.atom_1"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dielectric_type.dielectric_value"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.dielectric_value</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Dihedral"><code class="docutils literal notranslate"><span class="pre">Dihedral</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_1"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_2"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_3"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_4"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_4</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.coeffs"><code class="docutils literal notranslate"><span class="pre">Dihedral.coeffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.dih_type"><code class="docutils literal notranslate"><span class="pre">Dihedral.dih_type</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_angle_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_angle_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_bond_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_bond_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_dihedral_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_dihedral_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.dipole_forces_redistribution"><code class="docutils literal notranslate"><span class="pre">dipole_forces_redistribution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.find_all_paths"><code class="docutils literal notranslate"><span class="pre">find_all_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_bonds_old"><code class="docutils literal notranslate"><span class="pre">prepare_bonds_old()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_index_based_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_index_based_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.propensity_potential_coeffs"><code class="docutils literal notranslate"><span class="pre">propensity_potential_coeffs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.pressure">4.6. Pressure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.pressure.comp_pressure"><code class="docutils literal notranslate"><span class="pre">comp_pressure()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#logger">4.7. Logger</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.Logger.setup"><code class="docutils literal notranslate"><span class="pre">Logger.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.MPIFilterRoot"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.MPIFilterRoot.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot.filter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.MPIFilterAll"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.MPIFilterAll.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll.filter()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.input_parser">4.8. Input parser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.a"><code class="docutils literal notranslate"><span class="pre">Config.a</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.angle_bonds"><code class="docutils literal notranslate"><span class="pre">Config.angle_bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.barostat"><code class="docutils literal notranslate"><span class="pre">Config.barostat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.barostat_type"><code class="docutils literal notranslate"><span class="pre">Config.barostat_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.bonds"><code class="docutils literal notranslate"><span class="pre">Config.bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.box_size"><code class="docutils literal notranslate"><span class="pre">Config.box_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">Config.cancel_com_momentum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.chi"><code class="docutils literal notranslate"><span class="pre">Config.chi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.conv_crit"><code class="docutils literal notranslate"><span class="pre">Config.conv_crit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.convergence_type"><code class="docutils literal notranslate"><span class="pre">Config.convergence_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.coulomb_constant"><code class="docutils literal notranslate"><span class="pre">Config.coulomb_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.coulombtype"><code class="docutils literal notranslate"><span class="pre">Config.coulombtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dielectric_const"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_const</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dielectric_type"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dihedrals"><code class="docutils literal notranslate"><span class="pre">Config.dihedrals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">Config.domain_decomposition</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dtype"><code class="docutils literal notranslate"><span class="pre">Config.dtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.file_name"><code class="docutils literal notranslate"><span class="pre">Config.file_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.gas_constant"><code class="docutils literal notranslate"><span class="pre">Config.gas_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.hamiltonian"><code class="docutils literal notranslate"><span class="pre">Config.hamiltonian</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.initial_energy"><code class="docutils literal notranslate"><span class="pre">Config.initial_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.integrator"><code class="docutils literal notranslate"><span class="pre">Config.integrator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.kappa"><code class="docutils literal notranslate"><span class="pre">Config.kappa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.m"><code class="docutils literal notranslate"><span class="pre">Config.m</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.mass"><code class="docutils literal notranslate"><span class="pre">Config.mass</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.max_molecule_size"><code class="docutils literal notranslate"><span class="pre">Config.max_molecule_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.mesh_size"><code class="docutils literal notranslate"><span class="pre">Config.mesh_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_b"><code class="docutils literal notranslate"><span class="pre">Config.n_b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_flush"><code class="docutils literal notranslate"><span class="pre">Config.n_flush</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_particles"><code class="docutils literal notranslate"><span class="pre">Config.n_particles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_print"><code class="docutils literal notranslate"><span class="pre">Config.n_print</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_steps"><code class="docutils literal notranslate"><span class="pre">Config.n_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.name"><code class="docutils literal notranslate"><span class="pre">Config.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.pol_mixing"><code class="docutils literal notranslate"><span class="pre">Config.pol_mixing</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.pressure"><code class="docutils literal notranslate"><span class="pre">Config.pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.respa_inner"><code class="docutils literal notranslate"><span class="pre">Config.respa_inner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.rho0"><code class="docutils literal notranslate"><span class="pre">Config.rho0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.self_energy"><code class="docutils literal notranslate"><span class="pre">Config.self_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.sigma"><code class="docutils literal notranslate"><span class="pre">Config.sigma</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.start_temperature"><code class="docutils literal notranslate"><span class="pre">Config.start_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tags"><code class="docutils literal notranslate"><span class="pre">Config.tags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.target_pressure"><code class="docutils literal notranslate"><span class="pre">Config.target_pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.target_temperature"><code class="docutils literal notranslate"><span class="pre">Config.target_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tau"><code class="docutils literal notranslate"><span class="pre">Config.tau</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tau_p"><code class="docutils literal notranslate"><span class="pre">Config.tau_p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_coupling_groups</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.thermostat_work"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_work</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.time_step"><code class="docutils literal notranslate"><span class="pre">Config.time_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.type_charges"><code class="docutils literal notranslate"><span class="pre">Config.type_charges</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_NPT_conditions"><code class="docutils literal notranslate"><span class="pre">check_NPT_conditions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_angles"><code class="docutils literal notranslate"><span class="pre">check_angles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_bonds"><code class="docutils literal notranslate"><span class="pre">check_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_box_size"><code class="docutils literal notranslate"><span class="pre">check_box_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">check_cancel_com_momentum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_charges"><code class="docutils literal notranslate"><span class="pre">check_charges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_charges_types_list"><code class="docutils literal notranslate"><span class="pre">check_charges_types_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_chi"><code class="docutils literal notranslate"><span class="pre">check_chi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_config"><code class="docutils literal notranslate"><span class="pre">check_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_dielectric"><code class="docutils literal notranslate"><span class="pre">check_dielectric()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_dihedrals"><code class="docutils literal notranslate"><span class="pre">check_dihedrals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_domain_decomposition"><code class="docutils literal notranslate"><span class="pre">check_domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_hamiltonian"><code class="docutils literal notranslate"><span class="pre">check_hamiltonian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_integrator"><code class="docutils literal notranslate"><span class="pre">check_integrator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_m"><code class="docutils literal notranslate"><span class="pre">check_m()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_mass"><code class="docutils literal notranslate"><span class="pre">check_mass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_max_molecule_size"><code class="docutils literal notranslate"><span class="pre">check_max_molecule_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_b"><code class="docutils literal notranslate"><span class="pre">check_n_b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_flush"><code class="docutils literal notranslate"><span class="pre">check_n_flush()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_particles"><code class="docutils literal notranslate"><span class="pre">check_n_particles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_print"><code class="docutils literal notranslate"><span class="pre">check_n_print()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_name"><code class="docutils literal notranslate"><span class="pre">check_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_start_and_target_temperature"><code class="docutils literal notranslate"><span class="pre">check_start_and_target_temperature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_tau"><code class="docutils literal notranslate"><span class="pre">check_tau()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">check_thermostat_coupling_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.parse_config_toml"><code class="docutils literal notranslate"><span class="pre">parse_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.read_config_toml"><code class="docutils literal notranslate"><span class="pre">read_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.sort_dielectric_by_type_id"><code class="docutils literal notranslate"><span class="pre">sort_dielectric_by_type_id()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.field">4.9. Field</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_and_kinetic_energy"><code class="docutils literal notranslate"><span class="pre">compute_field_and_kinetic_energy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_energy_q_GPE"><code class="docutils literal notranslate"><span class="pre">compute_field_energy_q_GPE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_force"><code class="docutils literal notranslate"><span class="pre">compute_field_force()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_self_energy_q"><code class="docutils literal notranslate"><span class="pre">compute_self_energy_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.initialize_pm"><code class="docutils literal notranslate"><span class="pre">initialize_pm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field"><code class="docutils literal notranslate"><span class="pre">update_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field_force_q"><code class="docutils literal notranslate"><span class="pre">update_field_force_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field_force_q_GPE"><code class="docutils literal notranslate"><span class="pre">update_field_force_q_GPE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.file_io">4.10. File input/output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.OutDataset"><code class="docutils literal notranslate"><span class="pre">OutDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.close_file"><code class="docutils literal notranslate"><span class="pre">OutDataset.close_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.flush"><code class="docutils literal notranslate"><span class="pre">OutDataset.flush()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.is_open"><code class="docutils literal notranslate"><span class="pre">OutDataset.is_open()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.distribute_input"><code class="docutils literal notranslate"><span class="pre">distribute_input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.setup_time_dependent_element"><code class="docutils literal notranslate"><span class="pre">setup_time_dependent_element()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.store_data"><code class="docutils literal notranslate"><span class="pre">store_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.store_static"><code class="docutils literal notranslate"><span class="pre">store_static()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.plumed">4.11. PLUMED</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.plumed.PlumedBias"><code class="docutils literal notranslate"><span class="pre">PlumedBias</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.plumed.PlumedBias.api_version"><code class="docutils literal notranslate"><span class="pre">PlumedBias.api_version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.plumed.PlumedBias.calc"><code class="docutils literal notranslate"><span class="pre">PlumedBias.calc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.plumed.PlumedBias.finalize"><code class="docutils literal notranslate"><span class="pre">PlumedBias.finalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.plumed.PlumedBias.prepare"><code class="docutils literal notranslate"><span class="pre">PlumedBias.prepare()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">1. </span>Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/doc_pages/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<span id="installation-label"></span><h1><span class="section-number">1. </span>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h1>
+<section id="dependencies">
+<h2><span class="section-number">1.1. </span>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading"></a></h2>
+<p><strong>Installing non-Python dependencies</strong> may be done by</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-VWJ1bnR1IChhcHQp" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-0-VWJ1bnR1IChhcHQp" name="VWJ1bnR1IChhcHQp" role="tab" tabindex="0">Ubuntu (apt)</button><button aria-controls="panel-0-RmVkb3JhIChkbmYp" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-RmVkb3JhIChkbmYp" name="RmVkb3JhIChkbmYp" role="tab" tabindex="-1">Fedora (dnf)</button><button aria-controls="panel-0-TWFjIE9TWCAoYnJldyk=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-0-TWFjIE9TWCAoYnJldyk=" name="TWFjIE9TWCAoYnJldyk=" role="tab" tabindex="-1">Mac OSX (brew)</button></div><div aria-labelledby="tab-0-VWJ1bnR1IChhcHQp" class="sphinx-tabs-panel group-tab" id="panel-0-VWJ1bnR1IChhcHQp" name="VWJ1bnR1IChhcHQp" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span>-y
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>python3<span class="w"> </span>python3-pip<span class="w">  </span><span class="c1"># Install python3 and pip</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>libopenmpi-dev<span class="w">       </span><span class="c1"># Install MPI development headers</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>libhdf5-openmpi-dev<span class="w">  </span><span class="c1"># Install MPI-enabled HDF5</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>pkg-config<span class="w">           </span><span class="c1"># Install pkg-config, required for h5py install</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>curl<span class="w"> </span>wget
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-RmVkb3JhIChkbmYp" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-RmVkb3JhIChkbmYp" name="RmVkb3JhIChkbmYp" role="tabpanel" tabindex="0"><blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>dnf<span class="w"> </span>update<span class="w"> </span>-y
+sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>python3.9<span class="w"> </span>python3-devel<span class="w">  </span><span class="c1"># Install python3 and pip</span>
+sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>openmpi-devel<span class="w">            </span><span class="c1"># Install MPI development headers</span>
+sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>hdf5-openmpi-devel<span class="w">       </span><span class="c1"># Install MPI-enabled HDF5</span>
+sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>curl<span class="w"> </span>wget
+</pre></div>
+</div>
+</div></blockquote>
+<p>The automatic download and building of PFFT has some issues, so we
+manually build FFTW and PFFT before calling <code class="code docutils literal notranslate"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">pfft-python</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>git
+sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>libtool
+sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>fftw-openmpi-devel<span class="w"> </span>fftw-openmpi-libs
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/lib64/openmpi/bin/<span class="w">                 </span><span class="c1"># Ensure MPICC is in path</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/mpip/pfft.git
+<span class="nb">cd</span><span class="w"> </span>pfft/
+./bootstrap.sh
+./configure
+make
+make<span class="w"> </span>install
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-TWFjIE9TWCAoYnJldyk=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-0-TWFjIE9TWCAoYnJldyk=" name="TWFjIE9TWCAoYnJldyk=" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>brew<span class="w"> </span>update
+brew<span class="w"> </span>install<span class="w"> </span>python<span class="w">      </span><span class="c1"># Install python3 and pip</span>
+brew<span class="w"> </span>install<span class="w"> </span>open-mpi<span class="w">    </span><span class="c1"># Install MPI development headers</span>
+brew<span class="w"> </span>install<span class="w"> </span>hdf5-mpi<span class="w">    </span><span class="c1"># Install MPI-enabled HDF5</span>
+brew<span class="w"> </span>install<span class="w"> </span>pkg-config<span class="w">  </span><span class="c1"># Install pkg-config, required for h5py install</span>
+brew<span class="w"> </span>install<span class="w"> </span>curl<span class="w"> </span>wget
+</pre></div>
+</div>
+</div></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>There might be memory leaks when using HyMD with OpenMPI 4.1.1.
+Therefore, using a newer version of OpenMPI is recommended.
+See <a class="reference external" href="https://github.com/Cascella-Group-UiO/HyMD/issues/186">Issue #186</a> for more details.</p>
+</div>
+<p><strong>Installing Python dependencies</strong> may be done by</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-1-VWJ1bnR1IChhcHQp" aria-selected="true" class="sphinx-tabs-tab group-tab" id="tab-1-VWJ1bnR1IChhcHQp" name="VWJ1bnR1IChhcHQp" role="tab" tabindex="0">Ubuntu (apt)</button><button aria-controls="panel-1-RmVkb3JhIChkbmYp" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-RmVkb3JhIChkbmYp" name="RmVkb3JhIChkbmYp" role="tab" tabindex="-1">Fedora (dnf)</button><button aria-controls="panel-1-TWFjIE9TWCAoYnJldyk=" aria-selected="false" class="sphinx-tabs-tab group-tab" id="tab-1-TWFjIE9TWCAoYnJldyk=" name="TWFjIE9TWCAoYnJldyk=" role="tab" tabindex="-1">Mac OSX (brew)</button></div><div aria-labelledby="tab-1-VWJ1bnR1IChhcHQp" class="sphinx-tabs-panel group-tab" id="panel-1-VWJ1bnR1IChhcHQp" name="VWJ1bnR1IChhcHQp" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+<span class="nv">CC</span><span class="o">=</span><span class="s2">&quot;mpicc&quot;</span><span class="w"> </span><span class="nv">HDF5_MPI</span><span class="o">=</span><span class="s2">&quot;ON&quot;</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-binary<span class="o">=</span>h5py<span class="w"> </span>h5py
+python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>mpi4py<span class="w"> </span>numpy<span class="w"> </span>cython
+python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pmesh @ git+https://github.com/rainwoodman/pmesh&quot;</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-1-RmVkb3JhIChkbmYp" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-RmVkb3JhIChkbmYp" name="RmVkb3JhIChkbmYp" role="tabpanel" tabindex="0"><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3.9<span class="w"> </span>-m<span class="w"> </span>ensurepip<span class="w"> </span>--upgrade
+<span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/lib64/openmpi/bin/:/usr/lib64/openmpi/lib/
+python3.9<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>mpi4py<span class="w"> </span>numpy<span class="w"> </span>cython
+<span class="nb">export</span><span class="w"> </span><span class="nv">HDF5_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/lib64/openmpi/&quot;</span>
+<span class="nv">CC</span><span class="o">=</span><span class="s2">&quot;mpicc&quot;</span><span class="w"> </span><span class="nv">HDF5_MPI</span><span class="o">=</span><span class="s2">&quot;ON&quot;</span><span class="w"> </span>python3.9<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-binary<span class="o">=</span>h5py<span class="w"> </span>h5py
+python3.9<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pmesh @ git+https://github.com/rainwoodman/pmesh&quot;</span>
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-1-TWFjIE9TWCAoYnJldyk=" class="sphinx-tabs-panel group-tab" hidden="true" id="panel-1-TWFjIE9TWCAoYnJldyk=" name="TWFjIE9TWCAoYnJldyk=" role="tabpanel" tabindex="0"><blockquote>
+<div><p>Find the location of the installed <code class="code docutils literal notranslate"><span class="pre">hdf5-mpi</span></code> package by</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>find<span class="w"> </span>/usr<span class="w"> </span>-iname<span class="w"> </span><span class="s2">&quot;*hdf5.h&quot;</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>brew<span class="w"> </span>info<span class="w"> </span>hdf5-mpi
+</pre></div>
+</div>
+</div></blockquote>
+<p>and extract the path, which will look like for example
+<code class="code docutils literal notranslate"><span class="pre">/usr/local/Cellar/hdf5-mpi/1.13.0/</span></code>. Export it as <code class="code docutils literal notranslate"><span class="pre">HDF5_DIR</span></code></p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>ensurepip<span class="w"> </span>--upgrade
+<span class="nb">export</span><span class="w"> </span><span class="nv">HDF5_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/local/Cellar/hdf5-mpi/1.13.0/&quot;</span>
+<span class="nv">CC</span><span class="o">=</span><span class="s2">&quot;mpicc&quot;</span><span class="w"> </span><span class="nv">HDF5_MPI</span><span class="o">=</span><span class="s2">&quot;ON&quot;</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-binary<span class="o">=</span>h5py<span class="w"> </span>h5py
+python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>mpi4py<span class="w"> </span>numpy<span class="w"> </span>cython
+python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pmesh @ git+https://github.com/rainwoodman/pmesh&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If MPI-enabled HDF5 and <code class="code docutils literal notranslate"><span class="pre">h5py</span></code> can not be installed, limited support
+for serial HDF5 is available. Note that having MPI-enabled file IO is
+<strong>highly recommended</strong>, and simulation performance under serial HDF5 will
+potentially be very low.</p>
+<p>Example dependency install on Ubuntu (apt) using serial HDF5:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span>-y
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>python3<span class="w"> </span>python3-pip<span class="w">  </span><span class="c1"># Install python3 and pip</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>libopenmpi-dev<span class="w">       </span><span class="c1"># Install MPI development headers</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>libhdf5-serial-dev<span class="w">   </span><span class="c1"># Install serial HDF5</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>curl<span class="w"> </span>wget
+
+python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>h5py<span class="w"> </span>mpi4py<span class="w"> </span>numpy<span class="w"> </span>cython
+</pre></div>
+</div>
+<p>Running parallel simulations without a
+MPI-enabled HDF5 library available necessitates the use of the
+<code class="code docutils literal notranslate"><span class="pre">--disable-mpio</span></code> argument to HyMD, see <a class="reference internal" href="command_line.html#commandline-label"><span class="std std-ref">Command line arguments</span></a>. Note that
+due to the way HyMD is built, a working MPI compiler is required even if all
+intended simulations are serial.</p>
+</div>
+</section>
+<section id="installing-hymd">
+<h2><span class="section-number">1.2. </span>Installing HyMD<a class="headerlink" href="#installing-hymd" title="Permalink to this heading"></a></h2>
+<p>HyMD may be installed using <code class="code docutils literal notranslate"><span class="pre">pip</span></code> by</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>hymd
+</pre></div>
+</div>
+</section>
+<section id="install-in-docker">
+<h2><span class="section-number">1.3. </span>Install in docker<a class="headerlink" href="#install-in-docker" title="Permalink to this heading"></a></h2>
+<p>A docker image with build essentials setup is available at <a class="reference external" href="https://hub.docker.com/repository/docker/mortele/hymd">dockerhub</a> with tag
+<code class="code docutils literal notranslate"><span class="pre">mortele/hymd</span></code>,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>pull<span class="w"> </span>mortele/hymd:latest
+docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>mortele/hymd
+/app$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>hymd
+
+<span class="c1"># Grab example input files</span>
+/app$<span class="w"> </span>curl<span class="w"> </span>-O<span class="w"> </span>https://raw.githubusercontent.com/Cascella-Group-UiO/HyMD-tutorial/main/ideal_chain/ideal_chain.toml
+/app$<span class="w"> </span>curl<span class="w"> </span>-O<span class="w"> </span>https://raw.githubusercontent.com/Cascella-Group-UiO/HyMD-tutorial/main/ideal_chain/ideal_chain.HDF5
+
+<span class="c1"># Run simulation</span>
+/app$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>hymd<span class="w"> </span>ideal_chain.toml<span class="w"> </span>ideal_chain.HDF5<span class="w"> </span>--verbose
+</pre></div>
+</div>
+</section>
+<section id="run-interactively-in-google-colaboratory">
+<h2><span class="section-number">1.4. </span>Run interactively in Google Colaboratory<a class="headerlink" href="#run-interactively-in-google-colaboratory" title="Permalink to this heading"></a></h2>
+<p>A <a class="reference external" href="https://colab.research.google.com/">Google Colaboratory</a> jupyter notebook is setup <a class="reference external" href="https://colab.research.google.com/drive/1jfzRaXjL3q53J4U8OrCgADepmf_HuCOh?usp=sharing">here</a> with a working HyMD
+fully installed and executable in the browser. We do not recommend running
+large-scale simulations in colab for pretty obvious reasons.</p>
+</section>
+<section id="common-issues">
+<h2><span class="section-number">1.5. </span>Common issues<a class="headerlink" href="#common-issues" title="Permalink to this heading"></a></h2>
+<section id="numpy-errors-while-importing-the-fortran-force-kernels">
+<h3><span class="section-number">1.5.1. </span>Numpy errors while importing the Fortran force kernels<a class="headerlink" href="#numpy-errors-while-importing-the-fortran-force-kernels" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ne">RuntimeError</span><span class="p">:</span> <span class="n">module</span> <span class="n">compiled</span> <span class="n">against</span> <span class="n">API</span> <span class="n">version</span> <span class="mh">0xe</span> <span class="n">but</span> <span class="n">this</span> <span class="n">version</span> <span class="n">of</span> <span class="n">numpy</span> <span class="ow">is</span> <span class="mh">0xd</span>
+
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+
+  <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="n">File</span> <span class="s2">&quot;/..../HyMD/hymd/__init__.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">2</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+  <span class="kn">from</span> <span class="nn">.main</span> <span class="kn">import</span> <span class="n">main</span>  <span class="c1"># noqa: F401</span>
+<span class="n">File</span> <span class="s2">&quot;/..../HyMD/hymd/main.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">10</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+  <span class="kn">from</span> <span class="nn">.configure_runtime</span> <span class="kn">import</span> <span class="n">configure_runtime</span>
+<span class="n">File</span> <span class="s2">&quot;/..../hymd/configure_runtime.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">12</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+  <span class="kn">from</span> <span class="nn">.input_parser</span> <span class="kn">import</span> <span class="n">read_config_toml</span><span class="p">,</span> <span class="n">parse_config_toml</span>
+<span class="n">File</span> <span class="s2">&quot;/..../HyMD/hymd/input_parser.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">12</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+  <span class="kn">from</span> <span class="nn">.force</span> <span class="kn">import</span> <span class="n">Bond</span><span class="p">,</span> <span class="n">Angle</span><span class="p">,</span> <span class="n">Dihedral</span><span class="p">,</span> <span class="n">Chi</span>
+<span class="n">File</span> <span class="s2">&quot;/..../HyMD/hymd/force.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">8</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+  <span class="kn">from</span> <span class="nn">force_kernels</span> <span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
+<span class="ne">ImportError</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">multiarray</span> <span class="n">failed</span> <span class="n">to</span> <span class="kn">import</span>
+</pre></div>
+</div>
+<p>can normally be fixed by updating numpy versions,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>numpy
+</pre></div>
+</div>
+</section>
+<section id="error-building-pfft-python-due-to-missing-curl-wget">
+<h3><span class="section-number">1.5.2. </span>Error building pfft-python due to missing curl/wget<a class="headerlink" href="#error-building-pfft-python-due-to-missing-curl-wget" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>Building wheel for pfft-python (setup.py) ... error
+ERROR: Command errored out with exit status 1:
+command: /usr/bin/python3 -u -c &#39;import sys, setuptools, tokenize; sys.argv[0] = &#39;&quot;&#39;&quot;&#39;/tmp/pip-install-fr6nt9m4/pfft-python/setup.py&#39;&quot;&#39;&quot;&#39;; __file__=&#39;&quot;&#39;&quot;&#39;/tmp/pip-install-fr6nt9m4/pfft-python/setup.py&#39;&quot;&#39;&quot;&#39;;f=getattr(tokenize, &#39;&quot;&#39;&quot;&#39;open&#39;&quot;&#39;&quot;&#39;, open)(__file__);code=f.read().replace(&#39;&quot;&#39;&quot;&#39;\r\n&#39;&quot;&#39;&quot;&#39;, &#39;&quot;&#39;&quot;&#39;\n&#39;&quot;&#39;&quot;&#39;);f.close();exec(compile(code, __file__, &#39;&quot;&#39;&quot;&#39;exec&#39;&quot;&#39;&quot;&#39;))&#39; bdist_wheel -d /tmp/pip-wheel-ne5et1y_
+cwd: /tmp/pip-install-fr6nt9m4/pfft-python/
+Complete output (56 lines):
+running bdist_wheel
+running build
+running build_py
+
+  (...)
+
+curl -L -o /tmp/pip-install-fr6nt9m4/pfft-python/depends/..//depends/pfft-1.0.8-alpha3-fftw3-2don2d.tar.gz https://github.com/rainwoodman/pfft/releases/download/1.0.8-alpha3-fftw3-2don2d/pfft-1.0.8-alpha3-fftw3-2don2d.tar.gz
+/tmp/pip-install-fr6nt9m4/pfft-python/depends/install_pfft.sh: 19: curl: not found
+wget -P /tmp/pip-install-fr6nt9m4/pfft-python/depends/..//depends/ https://github.com/rainwoodman/pfft/releases/download/1.0.8-alpha3-fftw3-2don2d/pfft-1.0.8-alpha3-fftw3-2don2d.tar.gz
+/tmp/pip-install-fr6nt9m4/pfft-python/depends/install_pfft.sh: 26: wget: not found
+Failed to get https://github.com/rainwoodman/pfft/releases/download/1.0.8-alpha3-fftw3-2don2d/pfft-1.0.8-alpha3-fftw3-2don2d.tar.gz
+Please check curl or wget
+You can also download it manually to /tmp/pip-install-fr6nt9m4/pfft-python/depends/..//depends/
+Traceback (most recent call last):
+  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;
+  File &quot;/tmp/pip-install-fr6nt9m4/pfft-python/setup.py&quot;, line 86, in &lt;module&gt;
+    setup(
+  File &quot;/usr/lib/python3/dist-packages/setuptools/__init__.py&quot;, line 144, in setup
+    return distutils.core.setup(**attrs)
+  File &quot;/usr/lib/python3.8/distutils/core.py&quot;, line 148, in setup
+
+  (...)
+
+  File &quot;/tmp/pip-install-fr6nt9m4/pfft-python/setup.py&quot;, line 56, in build_extensions
+    build_pfft(self.pfft_build_dir, self.mpicc, &#39; &#39;.join(self.compiler.compiler_so[1:]))
+  File &quot;/tmp/pip-install-fr6nt9m4/pfft-python/setup.py&quot;, line 28, in build_pfft
+    raise ValueError(&quot;could not build fftw; check MPICC?&quot;)
+ValueError: could not build fftw; check MPICC?
+----------------------------------------
+ERROR: Failed building wheel for pfft-python
+Running setup.py clean for pfft-python
+Failed to build pfft-python
+</pre></div>
+</div>
+<p>can be fixed by installing either <a class="reference external" href="https://curl.se/">curl</a> or <a class="reference external" href="https://www.gnu.org/software/wget/">wget</a></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>curl<span class="w"> </span>wget
+</pre></div>
+</div>
+</section>
+<section id="error-running-parallel-hymd-without-mpi-enabled-h5py">
+<h3><span class="section-number">1.5.3. </span>Error running parallel HyMD without MPI-enabled h5py<a class="headerlink" href="#error-running-parallel-hymd-without-mpi-enabled-h5py" title="Permalink to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">197</span><span class="p">,</span> <span class="ow">in</span> <span class="n">_run_module_as_main</span>
+<span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">197</span><span class="p">,</span> <span class="ow">in</span> <span class="n">_run_module_as_main</span>
+    <span class="k">return</span> <span class="n">_run_code</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">main_globals</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">87</span><span class="p">,</span> <span class="ow">in</span> <span class="n">_run_code</span>
+    <span class="k">return</span> <span class="n">_run_code</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">main_globals</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/Cellar/python@3.9/3.9.8/Frameworks/Python.framework/Versions/3.9/lib/python3.9/runpy.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">87</span><span class="p">,</span> <span class="ow">in</span> <span class="n">_run_code</span>
+    <span class="n">exec</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">run_globals</span><span class="p">)</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/hymd/__main__.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">2</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+    <span class="n">exec</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">run_globals</span><span class="p">)</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/hymd/__main__.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">2</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+    <span class="n">main</span><span class="p">()</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/hymd/main.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">64</span><span class="p">,</span> <span class="ow">in</span> <span class="n">main</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">in_file</span><span class="p">:</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">502</span><span class="p">,</span> <span class="ow">in</span> <span class="fm">__init__</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">in_file</span><span class="p">:</span>
+    <span class="n">fapl</span> <span class="o">=</span> <span class="n">make_fapl</span><span class="p">(</span><span class="n">driver</span><span class="p">,</span> <span class="n">libver</span><span class="p">,</span> <span class="n">rdcc_nslots</span><span class="p">,</span> <span class="n">rdcc_nbytes</span><span class="p">,</span> <span class="n">rdcc_w0</span><span class="p">,</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">166</span><span class="p">,</span> <span class="ow">in</span> <span class="n">make_fapl</span>
+    <span class="n">fapl</span> <span class="o">=</span> <span class="n">make_fapl</span><span class="p">(</span><span class="n">driver</span><span class="p">,</span> <span class="n">libver</span><span class="p">,</span> <span class="n">rdcc_nslots</span><span class="p">,</span> <span class="n">rdcc_nbytes</span><span class="p">,</span> <span class="n">rdcc_w0</span><span class="p">,</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">166</span><span class="p">,</span> <span class="ow">in</span> <span class="n">make_fapl</span>
+    <span class="n">set_fapl</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">52</span><span class="p">,</span> <span class="ow">in</span> <span class="n">_set_fapl_mpio</span>
+    <span class="n">set_fapl</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+  <span class="n">File</span> <span class="s2">&quot;/usr/local/lib/python3.9/site-packages/h5py/_hl/files.py&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">52</span><span class="p">,</span> <span class="ow">in</span> <span class="n">_set_fapl_mpio</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;h5py was built without MPI support, can&#39;t use mpio driver&quot;</span><span class="p">)</span>
+<span class="ne">ValueError</span><span class="p">:</span> <span class="n">h5py</span> <span class="n">was</span> <span class="n">built</span> <span class="n">without</span> <span class="n">MPI</span> <span class="n">support</span><span class="p">,</span> <span class="n">can</span><span class="s1">&#39;t use mpio driver</span>
+</pre></div>
+</div>
+<p>Can be fixed by installing a MPI-enabled <code class="code docutils literal notranslate"><span class="pre">h5py</span></code> through</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>uninstall<span class="w"> </span>-y<span class="w"> </span>h5py
+<span class="nv">HDF5_MPI</span><span class="o">=</span><span class="s2">&quot;ON&quot;</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-binary<span class="o">=</span>h5py<span class="w"> </span>h5py
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="HylleraasMD documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="overview.html" class="btn btn-neutral float-right" title="2. Usage overview for HylleraasMD" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: main
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Releases</dt>
+      <dd><a href="../../v1.0.1/doc_pages/installation.html">v1.0.1</a></dd>
+      <dd><a href="../../v1.0.2/doc_pages/installation.html">v1.0.2</a></dd>
+      <dd><a href="../../v1.0.3/doc_pages/installation.html">v1.0.3</a></dd>
+      <dd><a href="../../v1.0.4/doc_pages/installation.html">v1.0.4</a></dd>
+      <dd><a href="../../v1.0.5/doc_pages/installation.html">v1.0.5</a></dd>
+      <dd><a href="../../v1.0.6/doc_pages/installation.html">v1.0.6</a></dd>
+      <dd><a href="../../v1.0.7/doc_pages/installation.html">v1.0.7</a></dd>
+      <dd><a href="../../v1.0.8/doc_pages/installation.html">v1.0.8</a></dd>
+      <dd><a href="../../v1.0.9/doc_pages/installation.html">v1.0.9</a></dd>
+      <dd><a href="../../v2.0.0/doc_pages/installation.html">v2.0.0</a></dd>
+      <dd><a href="../../v2.0.1/doc_pages/installation.html">v2.0.1</a></dd>
+      <dd><a href="../../v2.0.2/doc_pages/installation.html">v2.0.2</a></dd>
+      <dd><a href="../../v2.1.0/doc_pages/installation.html">v2.1.0</a></dd>
+      <dd><a href="../../v2.2.0/doc_pages/installation.html">v2.2.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Development</dt>
+      <dd><a href="installation.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

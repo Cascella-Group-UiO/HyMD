@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Theory &mdash; hymd 1.0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx-dropdown.css?v=995e94df" />
+      <link rel="stylesheet" type="text/css" href="../_static/panels-bootstrap.min.css?v=21c0b90a" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=9ae11f4d" />
+
+  
+    <link rel="shortcut icon" href="../_static/hymd_icon_white.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=8cbfd27f"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="2. Intramolecular bonds" href="intramolecular_bonds.html" />
+    <link rel="prev" title="1. Examples" href="examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/hymd_logl_white_text_abbr.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0.8
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+    
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#dependencies">1.1. Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installing-hymd">1.2. Installing HyMD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-in-docker">1.3. Install in docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#run-interactively-in-google-colaboratory">1.4. Run interactively in Google Colaboratory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#common-issues">1.5. Common issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#numpy-errors-while-importing-the-fortran-force-kernels">1.5.1. Numpy errors while importing the Fortran force kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#error-building-pfft-python-due-to-missing-curl-wget">1.5.2. Error building pfft-python due to missing curl/wget</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#error-running-parallel-hymd-without-mpi-enabled-h5py">1.5.3. Error running parallel HyMD without MPI-enabled h5py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">2. Usage overview for HylleraasMD</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-parallel-simulations">2.1. Running parallel simulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#running-tests">2.2. Running tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config_file.html">3. Configuration file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="config_file.html#configuration-file-keywords">3.1. Configuration file keywords</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#metadata-keywords">3.1.1. Metadata keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#particle-keywords">3.1.2. Particle keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#simulation-keywords">3.1.3. Simulation keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#field-keywords">3.1.4. Field keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#bond-keywords">3.1.5. Bond keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#electrostatic-keywords">3.1.6. Electrostatic keywords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="config_file.html#pressure-keywords">3.1.7. Pressure keywords</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="config_file.html#id3">3.1.7.1. Simulation keywords</a></li>
+<li class="toctree-l4"><a class="reference internal" href="config_file.html#id4">3.1.7.2. Field keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="topology_input.html">4. Topology and structure file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#required-datasets">4.1. Required datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="topology_input.html#optional-datasets">4.2. Optional datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command_line.html">5. Command line arguments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#required-arguments">5.1. Required arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command_line.html#optional-arguments">5.2. Optional arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="constants_and_units.html">6. Constants and Units</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">1. Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-gas">1.1. Ideal gas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#ideal-chains">1.2. Ideal chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#stiff-rods">1.3. Stiff rods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#helixes">1.4. Helixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#phase-separation">1.5. Phase separation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#diblock-copolymers">1.6. Diblock copolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#lipid-bilayer-self-assembly">1.7. Lipid bilayer self-assembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#peptide-in-lipid-bilayer">1.8. Peptide in lipid bilayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#sds">1.9. SDS</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Theory</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#external-potential">1.1. External potential</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#force-interpolation">1.2. Force interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reciprocal-space-calculations">1.3. Reciprocal space calculations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filter">1.4. Filter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hamiltonian-form">1.5. Hamiltonian form</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intramolecular_bonds.html">2. Intramolecular bonds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#two-particle-bonds">2.1. Two-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#three-particle-bonds">2.2. Three-particle bonds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intramolecular_bonds.html#four-particle-bonds">2.3. Four-particle bonds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="electrostatics.html">3. Electrostatic interactions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="electrostatics.html#specifying-electrostatics">3.1. Specifying electrostatics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pressure.html">4. Pressure</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="interaction_energy_functionals.html">1. Interaction energy functionals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#chi-interaction-and-kappa-incompressibility">1.1. <span class="math notranslate nohighlight">\(\chi\)</span>–interaction and <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-kappa-incompressibility">1.2. Only <span class="math notranslate nohighlight">\(\kappa\)</span>–incompressibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#only-phi-2">1.3. Only <span class="math notranslate nohighlight">\(\phi^2\)</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="interaction_energy_functionals.html#implementing-new-interaction-energy-forms">1.4. Implementing new interaction energy forms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="filtering.html">2. Filtering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="filtering.html#implementing-new-filters">2.1. Implementing new filters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">3. Benchmarks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#bonded-forces">3.1. Bonded forces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="benchmarks.html#particle-field-forces">3.2. Particle–field forces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">4. API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.integrator">4.1. Integrator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.integrator.integrate_position"><code class="docutils literal notranslate"><span class="pre">integrate_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.integrator.integrate_velocity"><code class="docutils literal notranslate"><span class="pre">integrate_velocity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.thermostat">4.2. Thermostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat._random_chi_squared"><code class="docutils literal notranslate"><span class="pre">_random_chi_squared()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat._random_gaussian"><code class="docutils literal notranslate"><span class="pre">_random_gaussian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.thermostat.csvr_thermostat"><code class="docutils literal notranslate"><span class="pre">csvr_thermostat()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#barostat">4.3. Barostat</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#module-hymd.barostat">4.3.1. Berendsen Barostat</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#references">4.3.1.1. References</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.barostat.isotropic"><code class="docutils literal notranslate"><span class="pre">isotropic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.barostat.semiisotropic"><code class="docutils literal notranslate"><span class="pre">semiisotropic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#scr-barostat">4.3.2. SCR Barostat</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#hamiltonian">4.4. Hamiltonian</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian"><code class="docutils literal notranslate"><span class="pre">Hamiltonian</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian.__init__"><code class="docutils literal notranslate"><span class="pre">Hamiltonian.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.Hamiltonian._setup"><code class="docutils literal notranslate"><span class="pre">Hamiltonian._setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi"><code class="docutils literal notranslate"><span class="pre">SquaredPhi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi.__init__"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.SquaredPhi.setup"><code class="docutils literal notranslate"><span class="pre">SquaredPhi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultNoChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultNoChi.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi.__init__"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.hamiltonian.DefaultWithChi.setup"><code class="docutils literal notranslate"><span class="pre">DefaultWithChi.setup()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.force">4.5. Force</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Angle"><code class="docutils literal notranslate"><span class="pre">Angle</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Angle.atom_3"><code class="docutils literal notranslate"><span class="pre">Angle.atom_3</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Bond"><code class="docutils literal notranslate"><span class="pre">Bond</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.atom_1"><code class="docutils literal notranslate"><span class="pre">Bond.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.atom_2"><code class="docutils literal notranslate"><span class="pre">Bond.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.equilibrium"><code class="docutils literal notranslate"><span class="pre">Bond.equilibrium</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Bond.strength"><code class="docutils literal notranslate"><span class="pre">Bond.strength</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Chi"><code class="docutils literal notranslate"><span class="pre">Chi</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.atom_1"><code class="docutils literal notranslate"><span class="pre">Chi.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.atom_2"><code class="docutils literal notranslate"><span class="pre">Chi.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Chi.interaction_energy"><code class="docutils literal notranslate"><span class="pre">Chi.interaction_energy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Dielectric_type"><code class="docutils literal notranslate"><span class="pre">Dielectric_type</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dielectric_type.atom_1"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dielectric_type.dielectric_value"><code class="docutils literal notranslate"><span class="pre">Dielectric_type.dielectric_value</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.Dihedral"><code class="docutils literal notranslate"><span class="pre">Dihedral</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_1"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_1</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_2"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_3"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_3</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.atom_4"><code class="docutils literal notranslate"><span class="pre">Dihedral.atom_4</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.coeffs"><code class="docutils literal notranslate"><span class="pre">Dihedral.coeffs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.force.Dihedral.dih_type"><code class="docutils literal notranslate"><span class="pre">Dihedral.dih_type</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_angle_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_angle_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_bond_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_bond_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.compute_dihedral_forces__plain"><code class="docutils literal notranslate"><span class="pre">compute_dihedral_forces__plain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.dipole_forces_redistribution"><code class="docutils literal notranslate"><span class="pre">dipole_forces_redistribution()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.find_all_paths"><code class="docutils literal notranslate"><span class="pre">find_all_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_bonds_old"><code class="docutils literal notranslate"><span class="pre">prepare_bonds_old()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.prepare_index_based_bonds"><code class="docutils literal notranslate"><span class="pre">prepare_index_based_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.force.propensity_potential_coeffs"><code class="docutils literal notranslate"><span class="pre">propensity_potential_coeffs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.pressure">4.6. Pressure</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.pressure.comp_pressure"><code class="docutils literal notranslate"><span class="pre">comp_pressure()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#logger">4.7. Logger</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.Logger"><code class="docutils literal notranslate"><span class="pre">Logger</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.Logger.setup"><code class="docutils literal notranslate"><span class="pre">Logger.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.MPIFilterRoot"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.MPIFilterRoot.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterRoot.filter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.logger.MPIFilterAll"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.logger.MPIFilterAll.filter"><code class="docutils literal notranslate"><span class="pre">MPIFilterAll.filter()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.input_parser">4.8. Input parser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.a"><code class="docutils literal notranslate"><span class="pre">Config.a</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.angle_bonds"><code class="docutils literal notranslate"><span class="pre">Config.angle_bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.barostat"><code class="docutils literal notranslate"><span class="pre">Config.barostat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.barostat_type"><code class="docutils literal notranslate"><span class="pre">Config.barostat_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.bonds"><code class="docutils literal notranslate"><span class="pre">Config.bonds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.box_size"><code class="docutils literal notranslate"><span class="pre">Config.box_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">Config.cancel_com_momentum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.chi"><code class="docutils literal notranslate"><span class="pre">Config.chi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.conv_crit"><code class="docutils literal notranslate"><span class="pre">Config.conv_crit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.convergence_type"><code class="docutils literal notranslate"><span class="pre">Config.convergence_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.coulomb_constant"><code class="docutils literal notranslate"><span class="pre">Config.coulomb_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.coulombtype"><code class="docutils literal notranslate"><span class="pre">Config.coulombtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dielectric_const"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_const</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dielectric_type"><code class="docutils literal notranslate"><span class="pre">Config.dielectric_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dihedrals"><code class="docutils literal notranslate"><span class="pre">Config.dihedrals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">Config.domain_decomposition</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.dtype"><code class="docutils literal notranslate"><span class="pre">Config.dtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.file_name"><code class="docutils literal notranslate"><span class="pre">Config.file_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.gas_constant"><code class="docutils literal notranslate"><span class="pre">Config.gas_constant</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.hamiltonian"><code class="docutils literal notranslate"><span class="pre">Config.hamiltonian</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.initial_energy"><code class="docutils literal notranslate"><span class="pre">Config.initial_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.integrator"><code class="docutils literal notranslate"><span class="pre">Config.integrator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.kappa"><code class="docutils literal notranslate"><span class="pre">Config.kappa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.m"><code class="docutils literal notranslate"><span class="pre">Config.m</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.mass"><code class="docutils literal notranslate"><span class="pre">Config.mass</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.max_molecule_size"><code class="docutils literal notranslate"><span class="pre">Config.max_molecule_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.mesh_size"><code class="docutils literal notranslate"><span class="pre">Config.mesh_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_b"><code class="docutils literal notranslate"><span class="pre">Config.n_b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_flush"><code class="docutils literal notranslate"><span class="pre">Config.n_flush</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_particles"><code class="docutils literal notranslate"><span class="pre">Config.n_particles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_print"><code class="docutils literal notranslate"><span class="pre">Config.n_print</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.n_steps"><code class="docutils literal notranslate"><span class="pre">Config.n_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.name"><code class="docutils literal notranslate"><span class="pre">Config.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.pol_mixing"><code class="docutils literal notranslate"><span class="pre">Config.pol_mixing</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.pressure"><code class="docutils literal notranslate"><span class="pre">Config.pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.respa_inner"><code class="docutils literal notranslate"><span class="pre">Config.respa_inner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.rho0"><code class="docutils literal notranslate"><span class="pre">Config.rho0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.self_energy"><code class="docutils literal notranslate"><span class="pre">Config.self_energy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.sigma"><code class="docutils literal notranslate"><span class="pre">Config.sigma</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.start_temperature"><code class="docutils literal notranslate"><span class="pre">Config.start_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tags"><code class="docutils literal notranslate"><span class="pre">Config.tags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.target_pressure"><code class="docutils literal notranslate"><span class="pre">Config.target_pressure</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.target_temperature"><code class="docutils literal notranslate"><span class="pre">Config.target_temperature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tau"><code class="docutils literal notranslate"><span class="pre">Config.tau</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.tau_p"><code class="docutils literal notranslate"><span class="pre">Config.tau_p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_coupling_groups</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.thermostat_work"><code class="docutils literal notranslate"><span class="pre">Config.thermostat_work</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.time_step"><code class="docutils literal notranslate"><span class="pre">Config.time_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.input_parser.Config.type_charges"><code class="docutils literal notranslate"><span class="pre">Config.type_charges</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_NPT_conditions"><code class="docutils literal notranslate"><span class="pre">check_NPT_conditions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_angles"><code class="docutils literal notranslate"><span class="pre">check_angles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_bonds"><code class="docutils literal notranslate"><span class="pre">check_bonds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_box_size"><code class="docutils literal notranslate"><span class="pre">check_box_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_cancel_com_momentum"><code class="docutils literal notranslate"><span class="pre">check_cancel_com_momentum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_charges"><code class="docutils literal notranslate"><span class="pre">check_charges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_charges_types_list"><code class="docutils literal notranslate"><span class="pre">check_charges_types_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_chi"><code class="docutils literal notranslate"><span class="pre">check_chi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_config"><code class="docutils literal notranslate"><span class="pre">check_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_dielectric"><code class="docutils literal notranslate"><span class="pre">check_dielectric()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_dihedrals"><code class="docutils literal notranslate"><span class="pre">check_dihedrals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_domain_decomposition"><code class="docutils literal notranslate"><span class="pre">check_domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_hamiltonian"><code class="docutils literal notranslate"><span class="pre">check_hamiltonian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_integrator"><code class="docutils literal notranslate"><span class="pre">check_integrator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_m"><code class="docutils literal notranslate"><span class="pre">check_m()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_mass"><code class="docutils literal notranslate"><span class="pre">check_mass()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_max_molecule_size"><code class="docutils literal notranslate"><span class="pre">check_max_molecule_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_b"><code class="docutils literal notranslate"><span class="pre">check_n_b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_flush"><code class="docutils literal notranslate"><span class="pre">check_n_flush()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_particles"><code class="docutils literal notranslate"><span class="pre">check_n_particles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_n_print"><code class="docutils literal notranslate"><span class="pre">check_n_print()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_name"><code class="docutils literal notranslate"><span class="pre">check_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_start_and_target_temperature"><code class="docutils literal notranslate"><span class="pre">check_start_and_target_temperature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_tau"><code class="docutils literal notranslate"><span class="pre">check_tau()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.check_thermostat_coupling_groups"><code class="docutils literal notranslate"><span class="pre">check_thermostat_coupling_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.parse_config_toml"><code class="docutils literal notranslate"><span class="pre">parse_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.read_config_toml"><code class="docutils literal notranslate"><span class="pre">read_config_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.input_parser.sort_dielectric_by_type_id"><code class="docutils literal notranslate"><span class="pre">sort_dielectric_by_type_id()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.field">4.9. Field</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_and_kinetic_energy"><code class="docutils literal notranslate"><span class="pre">compute_field_and_kinetic_energy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_energy_q_GPE"><code class="docutils literal notranslate"><span class="pre">compute_field_energy_q_GPE()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_field_force"><code class="docutils literal notranslate"><span class="pre">compute_field_force()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.compute_self_energy_q"><code class="docutils literal notranslate"><span class="pre">compute_self_energy_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.domain_decomposition"><code class="docutils literal notranslate"><span class="pre">domain_decomposition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.initialize_pm"><code class="docutils literal notranslate"><span class="pre">initialize_pm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field"><code class="docutils literal notranslate"><span class="pre">update_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field_force_q"><code class="docutils literal notranslate"><span class="pre">update_field_force_q()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.field.update_field_force_q_GPE"><code class="docutils literal notranslate"><span class="pre">update_field_force_q_GPE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-hymd.file_io">4.10. File input/output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.OutDataset"><code class="docutils literal notranslate"><span class="pre">OutDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.close_file"><code class="docutils literal notranslate"><span class="pre">OutDataset.close_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.flush"><code class="docutils literal notranslate"><span class="pre">OutDataset.flush()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#hymd.file_io.OutDataset.is_open"><code class="docutils literal notranslate"><span class="pre">OutDataset.is_open()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.distribute_input"><code class="docutils literal notranslate"><span class="pre">distribute_input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.setup_time_dependent_element"><code class="docutils literal notranslate"><span class="pre">setup_time_dependent_element()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.store_data"><code class="docutils literal notranslate"><span class="pre">store_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#hymd.file_io.store_static"><code class="docutils literal notranslate"><span class="pre">store_static()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    
+        <p class="caption">
+            <span class="caption-text">
+            
+                Links
+            
+            </span>
+        </p>
+        <ul>
+            
+                
+                    <li class="toctree-l1"><a href="https://pypi.org/project/hymd"><i class="fa fa-cube fa-fw"></i> PyPI</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd"><i class="fa fa-code fa-fw"></i> Source code</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="https://github.com/Cascella-Group-UiO/hymd/issues/"><i class="fa fa-bug fa-fw"></i> Issue tracker</a></li>
+                
+            
+                
+                    <li class="toctree-l1"><a href="about:blank"><i class="fa fa-file-text fa-fw"></i> Citation</a></li>
+                
+            
+        </ul>
+    
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hymd</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">1. </span>Theory</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/doc_pages/theory.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="theory">
+<span id="theory-label"></span><h1><span class="section-number">1. </span>Theory<a class="headerlink" href="#theory" title="Permalink to this heading"></a></h1>
+<p>Hybrid particle–field simulations switch out the ordinary particle–particle
+<a class="reference external" href="https://en.wikipedia.org/wiki/Lennard-Jones_potential">Lennard-Jones</a> interactions with interactions between particles and a slowly
+varying density field. In this way, the most expensive part of normal molecular
+dynamics simulations is circumvented. Hybrid particle–field densities are
+defined as</p>
+<div class="math notranslate nohighlight">
+\[\phi(\mathbf{r}) = \sum_{i=1}^NP(\mathbf{r}-\mathbf{r}_i),\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{r}\)</span> is a spatial coordinate, <span class="math notranslate nohighlight">\(P\)</span> is a window function
+used to distribute particle number densities onto a computational grid, and
+<span class="math notranslate nohighlight">\(\mathbf{r}_i\)</span> is the position of particle <span class="math notranslate nohighlight">\(i\)</span> (of total <span class="math notranslate nohighlight">\(N\)</span>).
+By default, HyMD uses a Cloud-In-Cell (CIC) window function. A Hamiltonian form
+for a system of <span class="math notranslate nohighlight">\(N\)</span> particles in <span class="math notranslate nohighlight">\(M\)</span> molecules is</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{H}(\{\mathbf{r}\})=\sum_{m=1}^MH_0(\{\mathbf{r},\mathbf{v}\}_m)+W[\phi(\mathbf{r})]\]</div>
+<p>with <span class="math notranslate nohighlight">\(H_0\)</span> being a standard intramolecular Hamiltonian form (see
+<a class="reference internal" href="intramolecular_bonds.html#bonds-label"><span class="std std-ref">Intramolecular bonds</span></a>) including kinetic terms, while <span class="math notranslate nohighlight">\(W\)</span> is a density
+dependent <em>interaction energy functional</em>.</p>
+<p>In the Hamiltonian hPF-MD formalism <span id="id1">[<a class="reference internal" href="../index.html#id9" title="Sigbjørn Løland Bore and Michele Cascella. Hamiltonian and alias-free hybrid particle–field molecular dynamics. J. Chem. Phys., 153(9):094106, 2020. doi:10.1063/5.0020733.">Bore and Cascella, 2020</a>]</span>, the density
+field is filtered using a grid-independent filtering function <span class="math notranslate nohighlight">\(H\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\tilde\phi(\mathbf{r})=\int\mathrm{d}\mathbf{x}\,\phi(\mathbf{x})H(\mathbf{r}-\mathbf{x}).\]</div>
+<p>The filter smooths the density, ensuring that <span class="math notranslate nohighlight">\(\tilde\phi\)</span> and
+<span class="math notranslate nohighlight">\(W[\tilde\phi([\phi])]\)</span> both converge as the grid size is reduced.</p>
+<section id="external-potential">
+<h2><span class="section-number">1.1. </span>External potential<a class="headerlink" href="#external-potential" title="Permalink to this heading"></a></h2>
+<p>The external potential acting on a particle is defined as the functional
+derivative of <span class="math notranslate nohighlight">\(W\)</span> with respect to <span class="math notranslate nohighlight">\(\phi\)</span>. In the filtered formalism,
+the potential takes the form</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}V(\mathbf{r}) &amp;= \int\mathrm{d}\mathbf{y}\,\frac{\delta w}{\delta\phi(\mathbf{r})} \\
+&amp;= \int\mathrm{d}\mathbf{y}\,\frac{\delta w}{\delta\tilde\phi(\mathbf{y})}\frac{\delta\tilde\phi(\mathbf{y})}{\delta\phi(\mathbf{r})},\end{split}\]</div>
+<p>under the assumption of a <em>local</em> form of the interaction energy functional,
+<span class="math notranslate nohighlight">\(W[\tilde\phi]=\int\mathrm{d}\mathbf{r}\,w[\tilde\phi(\mathbf{r})]\)</span>. Note
+that</p>
+<div class="math notranslate nohighlight">
+\[\frac{\delta \tilde\phi(\mathbf{y})}{\delta \phi(\mathbf{r})} = H(\mathbf{y}-\mathbf{r}).\]</div>
+</section>
+<section id="force-interpolation">
+<h2><span class="section-number">1.2. </span>Force interpolation<a class="headerlink" href="#force-interpolation" title="Permalink to this heading"></a></h2>
+<p>The forces on particle <span class="math notranslate nohighlight">\(i\)</span> are obtained by differentiation of the external
+potential,</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{F}_i=-\int\mathrm{d}\mathbf{r}\,\nabla V(\mathbf{r})P(\mathbf{r}-\mathbf{r}_i).\]</div>
+</section>
+<section id="reciprocal-space-calculations">
+<h2><span class="section-number">1.3. </span>Reciprocal space calculations<a class="headerlink" href="#reciprocal-space-calculations" title="Permalink to this heading"></a></h2>
+<p>The field operations in HyMD are discretised and performed on a grid in
+reciprocal space using (discrete) fast Fourier transform algorithms. After
+interpolating the density <span class="math notranslate nohighlight">\(\phi_{ijk}\)</span> with CIC, we apply the filtering
+and obtain the discrete version of the external potential by</p>
+<div class="math notranslate nohighlight">
+\[\tilde\phi_{ijk}=\mathrm{FFT}^{-1}\big[\mathrm{FFT}(\phi)\mathrm{FFT}(H)\big]\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[V_{ijk}=\mathrm{FFT}^{-1}\left[\mathrm{FFT}\left(\frac{\delta w(\tilde\phi)}{\delta \tilde\phi}\right)\mathrm{FFT}(H)\right].\]</div>
+<p>The forces are obtained by differentiation of <span class="math notranslate nohighlight">\(V\)</span> in Fourier space as</p>
+<div class="math notranslate nohighlight">
+\[\nabla V_{ijk} = \mathrm{FFT}^{-1}\left[i\mathbf{k}\mathrm{FFT}\left(\frac{\delta w(\tilde\phi)}{\delta \tilde\phi}\right)\mathrm{FFT}(H)\right].\]</div>
+</section>
+<section id="filter">
+<h2><span class="section-number">1.4. </span>Filter<a class="headerlink" href="#filter" title="Permalink to this heading"></a></h2>
+<p>By default, the filter used in HyMD is a simple Gaussian of the form</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}H(x) &amp;= \frac{1}{\sqrt{2\pi}\sigma}\exp\left[\frac{-x^2}{2\sigma^2}\right] \\
+\hat{H}(k) &amp;= \exp\left[\frac{-\sigma^2k^2}{2}\right].\end{split}\]</div>
+<p>For more details about the filtering, see <a class="reference internal" href="filtering.html#filtering-label"><span class="std std-ref">Filtering</span></a>.</p>
+</section>
+<section id="hamiltonian-form">
+<h2><span class="section-number">1.5. </span>Hamiltonian form<a class="headerlink" href="#hamiltonian-form" title="Permalink to this heading"></a></h2>
+<p>The default form of the interaction energy functional in HyMD is</p>
+<div class="math notranslate nohighlight">
+\[W=\frac{1}{2\phi_0}\int\mathrm{d}\mathbf{r}\sum_{\text{i},\text{j}}\tilde\chi_{\text{i}-\text{j}}\tilde\phi_\text{i}(\mathbf{r})\tilde\phi_\text{j}(\mathbf{r}) + \frac{1}{2\kappa}\left(\sum_\text{k}\tilde\phi_\text{k}(\mathbf{r})-\phi_0\right)^2.\]</div>
+<p>In the case of constant pressure simulations (NPT), the interaction energy functional becomes</p>
+<div class="math notranslate nohighlight">
+\[W=\frac{1}{2\rho_0}\int\mathrm{d}\mathbf{r}\sum_{\text{i},\text{j}}\tilde\chi_{\text{i}-\text{j}}\tilde\phi_\text{i}(\mathbf{r})\tilde\phi_\text{j}(\mathbf{r}) + \frac{1}{2\kappa}\left(\sum_\text{k}\tilde\phi_\text{k}(\mathbf{r})-a\right)^2.\]</div>
+<p>where, <span class="math notranslate nohighlight">\(\rho_0= 1 / ν\)</span> is an intrinsic parameter corresponding to the specific volume <span class="math notranslate nohighlight">\((ν)\)</span> of a coarse-grained particle,
+<span class="math notranslate nohighlight">\(a\)</span> is a calibrated parameter to obtain the correct average density at the target temperature and pressure.
+See <a class="reference internal" href="interaction_energy_functionals.html#functionals-label"><span class="std std-ref">Interaction energy functionals</span></a> for details.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples.html" class="btn btn-neutral float-left" title="1. Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="intramolecular_bonds.html" class="btn btn-neutral float-right" title="2. Intramolecular bonds" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Morten Ledum, Xinmeng Li, Samiran Sen, Manuel Carrer, Sigbjørn Løland Bore.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v2.0.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Releases</dt>
+      <dd><a href="../../v1.0.1/doc_pages/theory.html">v1.0.1</a></dd>
+      <dd><a href="../../v1.0.2/doc_pages/theory.html">v1.0.2</a></dd>
+      <dd><a href="../../v1.0.3/doc_pages/theory.html">v1.0.3</a></dd>
+      <dd><a href="../../v1.0.4/doc_pages/theory.html">v1.0.4</a></dd>
+      <dd><a href="../../v1.0.5/doc_pages/theory.html">v1.0.5</a></dd>
+      <dd><a href="../../v1.0.6/doc_pages/theory.html">v1.0.6</a></dd>
+      <dd><a href="../../v1.0.7/doc_pages/theory.html">v1.0.7</a></dd>
+      <dd><a href="../../v1.0.8/doc_pages/theory.html">v1.0.8</a></dd>
+      <dd><a href="../../v1.0.9/doc_pages/theory.html">v1.0.9</a></dd>
+      <dd><a href="theory.html">v2.0.0</a></dd>
+      <dd><a href="../../v2.0.1/doc_pages/theory.html">v2.0.1</a></dd>
+      <dd><a href="../../v2.0.2/doc_pages/theory.html">v2.0.2</a></dd>
+      <dd><a href="../../v2.1.0/doc_pages/theory.html">v2.1.0</a></dd>
+      <dd><a href="../../v2.2.0/doc_pages/theory.html">v2.2.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Development</dt>
+      <dd><a href="../../main/doc_pages/theory.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
